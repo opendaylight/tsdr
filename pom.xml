@@ -14,8 +14,8 @@
   <packaging>pom</packaging>
   <name>tsdr</name>
   <prerequisites>
-     <maven>3.0</maven>
-   </prerequisites>
+    <maven>3.0</maven>
+  </prerequisites>
 
   <modules>
     <module>model</module>
@@ -25,27 +25,12 @@
     <module>features</module>
   </modules>
 
- <properties>
-         <!-- Plugins -->
-        <compiler.plugin.version>3.1</compiler.plugin.version>
-        <resource.plugin.version>2.6</resource.plugin.version>
-        <helper.plugin.version>1.9.1</helper.plugin.version>
-        <surefire.plugin.version>2.15</surefire.plugin.version>
-        <bundle.plugin.version>2.5.3</bundle.plugin.version>
-        <javadoc.plugin.version>2.8.1</javadoc.plugin.version>
-
-        <!-- OSGi -->
-        <osgi.metatype.version>1.0.10</osgi.metatype.version>
-
-        <!-- ODL -->
-        <ietf.inet.types.version>2010.09.24.7-SNAPSHOT</ietf.inet.types.version>
-        <ietf.yang.types.version>2010.09.24.7-SNAPSHOT</ietf.yang.types.version>
-        <yang.ext.version>2013.09.07.7-SNAPSHOT</yang.ext.version>
-        <yangtools.version>0.7.0-SNAPSHOT</yangtools.version>
-        <jmxGeneratorPath>src/main/yang-gen-config</jmxGeneratorPath>
-        <salGeneratorPath>src/main/yang-gen-sal</salGeneratorPath>
-        <mdsal.version>1.2.0-SNAPSHOT</mdsal.version>
-</properties>
+  <properties>
+    <!-- ODL -->
+    <ietf.inet.types.version>2010.09.24.7-SNAPSHOT</ietf.inet.types.version>
+    <ietf.yang.types.version>2010.09.24.7-SNAPSHOT</ietf.yang.types.version>
+    <yang.ext.version>2013.09.07.7-SNAPSHOT</yang.ext.version>
+  </properties>
 
  <dependencyManagement>
          <dependencies>
