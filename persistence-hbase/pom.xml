@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>tsdr</artifactId>
+        <groupId>org.opendaylight.tsdr</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>tsdr-hbase</artifactId>
+    <packaging>bundle</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${bundle.plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-Name>org.opendaylight.tsdr.hbase</Bundle-Name>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>
+      <version>${hbase.version}</version>
+    </dependency>
+    <dependency>
+       <groupId>org.apache.hadoop</groupId>
+       <artifactId>hadoop-core</artifactId>
+    <version>${hadoop.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.opendaylight.tsdr</groupId>
+        <artifactId>tsdr-persistence</artifactId>
+        <version>${tsdr.project.version}</version>
+    </dependency>
+    </dependencies>
+</project>

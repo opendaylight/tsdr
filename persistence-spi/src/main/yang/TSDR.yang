@@ -1,0 +1,245 @@
+/*
+ * Copyright (c) 2015 Dell Inc. and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module TSDR {
+
+    yang-version 1;
+
+    namespace "opendaylight:TSDR";
+
+    prefix TSDR;
+    import config { prefix config; revision-date 2013-04-05; }
+    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
+    import opendaylight-flow-statistics {prefix flow-stats;revision-date "2013-08-19";}
+    import opendaylight-flow-table-statistics {prefix flow-table-stats;revision-date "2013-12-15";}
+    import opendaylight-group-statistics {prefix group-stats;revision-date "2013-11-11";}   
+    import opendaylight-port-statistics {prefix port-stats;revision-date "2013-12-14";} 
+    import opendaylight-queue-statistics {prefix queue-stats;revision-date "2013-12-16";}   
+    import rpc-context { prefix rpcx; revision-date 2013-06-17; }
+    import opendaylight-md-sal-dom {prefix sal;}
+    import opendaylight-md-sal-common {prefix common;}
+    import ietf-inet-types { prefix "inet"; revision-date 2010-09-24; }
+    import ietf-yang-types {prefix yang; revision-date "2010-09-24";}
+    contact
+      "YuLing Chen <yuling_c@dell.com>, Sharon Aicler <saichler@cisco.com>";
+
+    description
+      "YANG definition of TSDR Data Model.";
+
+    revision "2015-02-19" {
+      description
+        "TSDR Data Model.";
+    }
+
+    identity TSDR {
+        base config:module-type;
+        config:java-name-prefix TSDR;
+    }
+    typedef  DataCategory {
+        description
+            "Category of TSDR data.";
+        type enumeration {
+            enum FLOW_STATS;
+            enum FLOW_TABLE_STATS;
+            enum PORT_STATS;
+            enum QUEUE_STATS;
+            enum FLOW_GROUP_STATS;
+            enum FLOW_METER_STATS;
+            enum LOG_RECORDS;
+        }
+    }
+
+    typedef AggregationGranularity {
+        description
+            "Granularity of data aggregation.";
+        type enumeration {
+            enum 15_MIN;
+            enum 30_MIN;
+            enum HOURLY;
+            enum DAILY;
+            enum WEEKLY;
+            enum MONTHLY;
+            enum YEARLY;
+        }
+    }
+    grouping OpenFlowStats{
+        description
+            "OpenFlow statistics data from data collection module
+                 that needs to be converted to TSDR data model.";
+        list object-keys {
+            uses RecordKey;
+        }
+        leaf stats-type{
+            type DataCategory;
+        }
+        uses flow-stats:flow-statistics;
+        uses flow-table-stats:flow-table-statistics;
+        uses group-stats:group-statistics;
+        uses queue-stats:flow-capable-node-connector-queue-statistics;
+        uses port-stats:flow-capable-node-connector-statistics;
+    }
+    grouping Attribute{
+        description
+            "Attributes extracted from log record for data analysis purpose.";
+        leaf name {
+            description
+                "Name of the attribute.";
+            type string;
+        }
+        leaf value {
+            description
+                "Value of the attribute.";
+            type string;
+        }
+    }
+    grouping RecordKey{
+        description
+            "The keys of a TSDR record. For example, FlowTableID, FlowID, PortID
+            are keys of OpenFlow statistics data.";
+        leaf KeyName{
+            description
+                "The name of the key.";
+            type string;
+        }
+        leaf KeyValue{
+            description
+                "The value of the key.";
+            type string;
+        }
+    }
+    grouping TSDRRecord{
+        description
+            "The base type of TSDR data.";
+        leaf NodeID {
+            description
+                "The ID of the network element.";
+            type string;
+        }
+        leaf TSDRDataCategory {
+            description
+                "The category of the TSDR data.";
+            type DataCategory;
+        }
+        list RecordKeys{
+            description
+                "The key(s) of the TSDR data. For example, the Flow Table statistics data
+                would have FlowID + TableID as the combination keys.";
+            uses RecordKey;
+        }
+    }
+
+    grouping TSDRMetric{
+        uses TSDRRecord;
+        leaf MetricName {
+            description
+                "The name of the metric.";
+            type string;
+        }
+        leaf MetricValue {
+            description
+                "The value of the metric.";
+            type yang:counter64;
+        }
+        leaf TimeStamp {
+            description
+                "The time stamp of the data when it was collected.";
+            type uint64;
+        }
+    }
+    list TSDRAggregationMetric{
+        uses TSDRMetric;
+        description
+            "Aggregated TSDR Metric data.";
+        leaf MinValue {
+            description
+                "Metric min value over the last aggregation period.";
+            type decimal64 {
+                fraction-digits 4;
+            }
+        }
+        leaf MaxValue {
+            description
+                "metric max value over the last aggregation period.";
+            type decimal64 {
+                fraction-digits 4;
+            }
+        }
+        leaf AvgValue {
+            description
+                "metric avg value over the last aggregation period.";
+            type decimal64 {
+                fraction-digits 4;
+            }
+        }
+        leaf TSDRAggregationGranularity{
+            description
+                "Aggregation granularity.";
+            type AggregationGranularity;
+        }
+    }
+    list LatestMetric {
+        description
+            "Metrics data that was collected in the latest collection cycle.
+            For example,if the metrics data is collected every 1 minute, this
+            data structure would contain the metric values in the last minute.
+            This data structure is provided for convenience and performance
+            optimization for frequent queries on the metrics data collected
+            in the latest cycle.";
+        uses TSDRRecord;
+        leaf Name {
+            description
+                "Name of the metric.";
+            type string;
+        }
+        leaf Value {
+            description
+                "Value of the metric.";
+            type decimal64 {
+                fraction-digits 4;
+            }
+        }
+    }
+    list TSDRLogRecord {
+        description
+            "This data structure is designed for log type of data, such as syslog data.";
+        uses TSDRRecord;
+        list RecordAttributes {
+            description
+                "Attributes extracted from the logs for data analysis purpose.";
+            uses Attribute;
+        }
+        leaf RecordFullText {
+            description
+                "Full text of the log records collected from the data source.";
+            type string;
+        }
+        leaf TimeStamp{
+            description
+                "Time stamp of the log record when it was collected.";
+            type uint64;
+        }
+    }
+    rpc storeTSDRMetricRecord {
+        description
+            "The API to store a list of TSDRMetricRecord.";
+             input {
+                 list TSDRMetricRecord{
+                     uses TSDRMetric;
+                 }
+             }
+    }
+
+    rpc storeOFStats{
+        description
+            "The API to store a list of OpenFlow statistics data.";
+        input {
+            list TSDROFStats{
+                uses OpenFlowStats;
+            }
+        }
+    }
+}
