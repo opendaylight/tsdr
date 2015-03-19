@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+       Copyright (c) 2015 Cisco Systems,Inc. and others.  All rights reserved.
+
+        This program and the accompanying materials are made available under the
+        terms of the Eclipse Public License v1.0 which accompanies this distribution,
+        and is available at http://www.eclipse.org/legal/epl-v10.html
+
+        Created: March 03, 2015
+
+        Author : Basheeruddin Ahmed <syedbahm@cisco.com>
+
+-->
+
+<features name="odl-tsdr-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
+    <repository>mvn:org.opendaylight.controller/features-mdsal/${mdsal.version}/xml/features</repository>
+    <repository>mvn:org.opendaylight.controller/features-restconf/${mdsal.version}/xml/features</repository>
+    <repository>mvn:org.opendaylight.controller/features-flow/${mdsal.version}/xml/features</repository>
+    <repository>mvn:org.ops4j.pax.jdbc/pax-jdbc-features/0.5.0/xml/features</repository>
+
+
+    <feature name='odl-tsdr-all' version='${project.version}' description='OpenDaylight TSDR All'>
+
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <feature version='${project.version}'>odl-tsdr-H2-persistence</feature>
+
+    </feature>
+
+    <feature name='odl-tsdr-hbase' version='${project.version}' description='OpenDaylight TSDR HBase Data Store'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <feature version='${project.version}'>odl-tsdr-hbase-persistence</feature>
+    </feature>
+
+    <feature name='odl-tsdr-core' version='${project.version}' description='OpenDaylight TSDR Core'>
+        <feature version='${yangtools.version}'>odl-yangtools-common</feature>
+        <feature version='${yangtools.version}'>odl-yangtools-binding</feature>
+        <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
+        <feature version="0.2.0-SNAPSHOT">odl-l2switch-switch</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/150-TSDR-datastorage-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}/xml/config</configfile>
+
+      <!--  <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}</bundle>
+
+        <configfile finalname="${config.configfile.directory}/151-TSDR-datacollection-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}/xml/config</configfile>-->
+
+    </feature>
+
+    <feature name="odl-hbaseclient" version="0.94.15" resolver="(obr)" start-level="50">
+       <feature>war</feature>
+       <bundle dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jaxws-api-2.2/1.9.0</bundle>
+       <bundle dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.saaj-api-1.3/1.9.0</bundle>
+       <bundle dependency="true">mvn:org.apache.geronimo.specs/geronimo-jta_1.1_spec/1.1.1</bundle>
+       <bundle dependency="true">mvn:javax.mail/mail/1.4.5</bundle>
+       <bundle dependency="true">mvn:commons-codec/commons-codec/1.6</bundle>
+       <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.commons-beanutils/1.8.3_1</bundle>
+       <bundle dependency="true">mvn:commons-collections/commons-collections/3.2.1</bundle>
+       <bundle dependency="true">mvn:commons-digester/commons-digester/2.1</bundle>
+       <bundle dependency="true">mvn:commons-jxpath/commons-jxpath/1.3</bundle>
+       <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jdom/1.1_4</bundle>
+       <bundle dependency="true">mvn:commons-lang/commons-lang/2.6</bundle>
+       <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.ant/1.7.0_6</bundle>
+       <bundle dependency="true">mvn:commons-configuration/commons-configuration/1.6</bundle>
+       <bundle dependency="true">mvn:commons-daemon/commons-daemon/1.0.5</bundle>
+       <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.commons-httpclient/3.1_7</bundle>
+       <bundle dependency="true">mvn:org.apache.commons/commons-math/2.2</bundle>
+       <bundle dependency="true">mvn:commons-net/commons-net/3.1</bundle>
+       <bundle dependency="true">mvn:org.codehaus.jackson/jackson-core-asl/1.9.7</bundle>
+       <bundle dependency="true">mvn:org.codehaus.jackson/jackson-mapper-asl/1.9.7</bundle>
+       <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jetty/6.1.26_4</bundle>
+       <bundle dependency="true">mvn:org.apache.zookeeper/zookeeper/3.3.5</bundle>
+       <bundle>wrap:mvn:com.google.protobuf/protobuf-java/2.4.1</bundle>
+       <bundle>wrap:mvn:org.apache.hadoop/hadoop-core/1.0.4</bundle>
+       <bundle>wrap:mvn:org.apache.hbase/hbase/0.94.15</bundle>
+    </feature>
+
+
+    <feature name='odl-tsdr-hbase-persistence' version='${project.version}' description="OpenDaylight TSDR HBase Persistence">
+       <feature version='"0.94.15"'>odl-hbaseclient</feature>
+       <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-hbase/${project.version}</bundle>
+    </feature>
+    <feature name='odl-tsdr-H2-persistence' version='${project.version}' description="OpenDaylight TSDR H2 Persistence">
+        <feature>jndi</feature>
+        <feature>transaction</feature>
+        <feature version="0.5.0">pax-jdbc-h2</feature>
+        <feature version="0.5.0">pax-jdbc-pool-dbcp2</feature>
+        <feature version="0.5.0">pax-jdbc-config</feature>
+        <feature version="2.1.0">jpa</feature>
+        <feature version="4.3.6.Final">hibernate</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-h2/${project.version}</bundle>
+
+    </feature>
+
+
+</features>
+
+

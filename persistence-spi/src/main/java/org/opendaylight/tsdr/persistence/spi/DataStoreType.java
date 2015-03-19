@@ -1,13 +1,13 @@
-package org.opendaylight.tsdr.persistence;
+package org.opendaylight.tsdr.persistence.spi;
 
 /**
- * This class contains a list of enumerations of TSDR Data Store types.
- *
- * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
- *
- * Created: Feb 24, 2015
- *
- */
+     * This class contains a list of enumerations of TSDR Data Store types.
+     *
+     * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
+     *
+     * Created: Feb 24, 2015
+     *
+     */
 public enum DataStoreType {
     HBASE(0),
     H2(1),

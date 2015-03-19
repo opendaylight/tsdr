@@ -1,0 +1,59 @@
+/*
+ * Copyright (c) 2015 Dell Inc. and others.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems,  Inc. and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+package org.opendaylight.tsdr.persistence.spi;
+
+
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+
+import java.util.List;
+
+    /**
+     * This interface provides a list of APIs for accessing TSDR persistence data store.
+     *
+     * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
+     *
+     * Created: Feb 24, 2015
+     *
+     * Modified: Mar 18, 2015
+     *
+     * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
+     *
+     */
+ public interface TsdrPersistenceService {
+
+        /**
+         * Store TSDRMetricRecord.
+         * @param metricRecord
+         */
+        public void store(TSDRMetricRecord metricRecord);
+
+        /**
+         * Store a list of TSDRMetricRecord.
+         * @param metricRecordList
+         */
+        public void store(List<TSDRMetricRecord> metricRecordList);
+
+
+        /**
+         * Starts the persistence service
+         *
+         * @timeout -- indicates the time given for the starting of persistence,
+         * after which the caller will consider it non-funcational
+         */
+        public void start(int timeout);
+
+        /**
+         * Stops the persistence service
+         *
+         * @timeout -- indicates the time given for the stopping of persistence,
+         * after which the caller will assume its stopped
+         */
+        public void stop(int timeout);
+
+    }

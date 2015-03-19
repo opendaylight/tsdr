@@ -7,14 +7,16 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
-import java.util.List;
-
-import org.opendaylight.tsdr.persistence.TSDRPersistenceService;
+import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
+import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * This class provides HBase implementation of TSDRPersistenceService.
@@ -25,9 +27,16 @@ import org.slf4j.LoggerFactory;
  *
  *
  */
-public class TSDRHBasePersistenceServiceImpl  implements TSDRPersistenceService{
+public class TSDRHBasePersistenceServiceImpl  implements
+    TsdrPersistenceService {
 
     private static final Logger log = LoggerFactory.getLogger(TSDRHBasePersistenceServiceImpl.class);
+
+
+    public TSDRHBasePersistenceServiceImpl(){
+        TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
+        log.info("TSDRHBasePersistenceServiceImpl is initialized " + new Date());
+    }
     /**
      * Store TSDRMetrics.
      */
@@ -54,9 +63,18 @@ public class TSDRHBasePersistenceServiceImpl  implements TSDRPersistenceService{
         log.debug("Entering store(List<TSDRMetrics>)");
     }
 
+    @Override public void start(int timeout) {
+
+    }
+
+    @Override public void stop(int timeout) {
+        closeConnections();
+        TsdrPersistenceServiceUtil.setTsdrPersistenceService(null);
+    }
+
     /**
      * convert TSDRMetrics to HBaseEntity.
-     * @param recordData
+     * @param metrics
      * @return
     */
     private HBaseEntity convertToHBaseEntity(TSDRMetricRecord metrics){
@@ -75,7 +93,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TSDRPersistenceService{
         return entity;
      }
 
-    @Override
+
     /**
      * Close DB connections.
      */
