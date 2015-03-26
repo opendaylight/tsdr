@@ -7,11 +7,9 @@
  */
 package org.opendaylight.tsdr.datastorage;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Future;
+import com.google.common.util.concurrent.Futures;
 import org.opendaylight.tsdr.datastorage.persistence.TSDRPersistenceServiceFactory;
-import org.opendaylight.tsdr.persistence.DataStoreType;
+import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreOFStatsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
@@ -24,7 +22,9 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.Futures;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * TSDR storage service implementation class.
@@ -43,6 +43,8 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
 
      private static final Logger log = LoggerFactory
         .getLogger(TSDRStorageServiceImpl.class);
+
+
      /**
      * stores TSDRMetricRecord.
      *
@@ -56,8 +58,12 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
             return null;
         }
         List<TSDRMetricRecord> tsdrMetricRecordList = input.getTSDRMetricRecord();
-        TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().store(
-            tsdrMetricRecordList);
+        if(TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore() != null) {
+            TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().store(
+                tsdrMetricRecordList);
+        }else{
+            log.warn("storeTSDRMetricRecord: cannot store the metric -- persistence service is found to be null");
+        }
         log.debug("Exiting TSDRStorageService.storeTSDRMetrics()");
         return Futures.immediateFuture(RpcResultBuilder.<Void> success()
             .build());
@@ -113,9 +119,10 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
      * Close DB connections in the persistence data store.
      */
     public void close() throws Exception {
-        if ( TSDRPersistenceServiceFactory.getData_store_type() == DataStoreType.HBASE){
-            TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().closeConnections();
 
-        }
+            TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().stop(
+                TSDRConstants.STOP_PERSISTENCE_SERVICE_TIMEOUT);
+
+
     }
 }

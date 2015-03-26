@@ -42,6 +42,16 @@
         <sal.core.api>1.2.0-SNAPSHOT</sal.core.api>
         <tsdr.project.version>1.0-SNAPSHOT</tsdr.project.version>
         <yangtools.version>0.7.0-SNAPSHOT</yangtools.version>
+        <log4j-version>1.2.16</log4j-version>  <!--TODO-->
+        <slf4j-version>1.7.1</slf4j-version>  <!--TODO-->
+        <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
+        <hibernate.jpa.api.version>1.0.0.Final</hibernate.jpa.api.version>
+        <hibernate.entity.manager.version>4.3.6.Final</hibernate.entity.manager.version>
+        <hibernate.validator.version>4.3.1.Final</hibernate.validator.version>
+        <h2.store.version>1.3.174</h2.store.version>
+
+
+
 
     </properties>
 
@@ -259,6 +269,10 @@
   <modules>
     <module>persistence-spi</module>
     <module>persistence-hbase</module>
+    <module>persistence-h2</module>
     <module>datastorage</module>
+    <!-- TODO- remove this after datacollection code is merged-->
+    <!--<module>datacollection</module>-->
+    <module>features</module>
   </modules>
 </project>

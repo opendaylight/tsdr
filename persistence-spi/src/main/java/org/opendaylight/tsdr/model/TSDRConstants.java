@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015 Dell Inc. and others.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
@@ -14,6 +15,8 @@ package org.opendaylight.tsdr.model;
  *
  * Created: Feb 24, 2015
  *
+ * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
+ *
  */
 public class TSDRConstants {
     /**
@@ -26,4 +29,19 @@ public class TSDRConstants {
     public static final String GROUP_KEY_NAME = "GroupID";
     public static final String METER_KEY_NAME = "MeterID";
     public static final String BUCKET_KEY_NAME = "BucketID";
+
+
+    /**
+     * Default timeout for persistence service start and stop
+     */
+
+    public static final int STOP_PERSISTENCE_SERVICE_TIMEOUT = 1000;
+    public static final int START_PERSISTENCE_SERVICE_TIMEOUT = 1000;
+
+    /**
+     * Default max number of results to return from ListMetrics command
+     */
+    public static final int MAX_RESULTS_FROM_LIST_METRICS_COMMAND = 1000;
+
+
 }

@@ -82,7 +82,7 @@
                         <configuration>
                             <artifacts>
                                 <artifact>
-                                    <file>${project.build.directory}/classes/configuration/initial/151-datastorage-config.xml</file>
+                                    <file>${project.build.directory}/classes/configuration/initial/150-tsdr-datastorage-config.xml</file>
                                     <type>xml</type>
                                     <classifier>config</classifier>
                                 </artifact>
@@ -96,15 +96,21 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-persistence</artifactId>
-            <version>${tsdr.project.version}</version>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.console</artifactId>
+            <version> ${karaf.shell.command.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.commands</artifactId>
+            <version> ${karaf.shell.command.version}</version>
         </dependency>
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-hbase</artifactId>
+            <artifactId>tsdr-persistence-spi</artifactId>
             <version>${tsdr.project.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.opendaylight.controller</groupId>
             <artifactId>config-api</artifactId>
@@ -130,16 +136,7 @@
       <artifactId>org.eclipse.osgi</artifactId>
       <version>${equinox.osgi.version}</version>
     </dependency>
-    <dependency>
-       <groupId>org.apache.hbase</groupId>
-       <artifactId>hbase</artifactId>
-       <version>${hbase.version}</version>
-     </dependency>
-     <dependency>
-       <groupId>org.apache.hadoop</groupId>
-       <artifactId>hadoop-core</artifactId>
-       <version>${hadoop.version}</version>
-     </dependency>
+
      <dependency>
        <groupId>com.google.protobuf</groupId>
        <artifactId>protobuf-java</artifactId>

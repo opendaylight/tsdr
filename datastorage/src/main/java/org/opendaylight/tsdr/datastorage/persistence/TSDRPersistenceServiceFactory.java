@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015 Dell Inc. and others.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
@@ -8,9 +9,9 @@
 package org.opendaylight.tsdr.datastorage.persistence;
 
 
-import org.opendaylight.tsdr.persistence.DataStoreType;
-import org.opendaylight.tsdr.persistence.TSDRPersistenceService;
-import org.opendaylight.tsdr.persistence.hbase.TSDRHBasePersistenceServiceImpl;
+import org.opendaylight.tsdr.model.TSDRConstants;
+import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
+import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,22 +23,14 @@ import org.slf4j.LoggerFactory;
  *
  * Created: Feb 24, 2015
  *
+ * Revision: March 05, 2015
+ * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
+ *
  */
 public class TSDRPersistenceServiceFactory {
     private static final Logger log = LoggerFactory.getLogger(TSDRPersistenceServiceFactory.class);
 
-    private static TSDRPersistenceService data_store = null;
-    //To do: will change this to a configuration file look up
-    // to decide what data staore we need to configure
-    private static Enum<?> data_store_type = DataStoreType.HBASE;
-
-    public static Enum<?> getData_store_type() {
-        return data_store_type;
-    }
-
-    public static void setData_store_type(Enum<?> data_store_type) {
-        TSDRPersistenceServiceFactory.data_store_type = data_store_type;
-    }
+    private static TsdrPersistenceService persistenceService = null;
 
     /**
      * Default constructor
@@ -46,31 +39,25 @@ public class TSDRPersistenceServiceFactory {
         super();
     }
 
-    /**
-     * Obtain the TSDR Persistence Data Store based on specified data store type.
-     * @param data_store_type
-     * @return
-     */
-    public static TSDRPersistenceService getTSDRPersistenceDataStore(Enum<?> data_store_type){
-        log.debug("Entering getTSDRPersistenceDataStore(data_store_type)");
-        if ( data_store == null && data_store_type == DataStoreType.HBASE){
-            data_store = new TSDRHBasePersistenceServiceImpl();
-        }
-        log.debug("Exiting getTSDRPersistenceDataStore(data_store_type)");
-        return data_store;
-    }
 
     /**
      * Obtain the TSDR Persistence Data Store
      * @return
      */
-    public static TSDRPersistenceService getTSDRPersistenceDataStore( ){
+    public static TsdrPersistenceService getTSDRPersistenceDataStore( ){
         log.debug("Entering getTSDRPersistenceDataStore()");
-        if ( data_store == null && data_store_type == DataStoreType.HBASE){
-            data_store = new TSDRHBasePersistenceServiceImpl();
+        if(persistenceService== null){
+            persistenceService = TsdrPersistenceServiceUtil.getTsdrPersistenceService();
+            if(persistenceService != null) {
+                persistenceService
+                    .start(TSDRConstants.START_PERSISTENCE_SERVICE_TIMEOUT);
+            }else{
+                log.warn("persistenceService is found to be null");
+            }
         }
+
         log.debug("Exiting getTSDRPersistenceDataStore()");
-        return data_store;
+        return persistenceService;
     }
 
 }
