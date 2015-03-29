@@ -37,15 +37,14 @@
         <feature version='${yangtools.version}'>odl-yangtools-common</feature>
         <feature version='${yangtools.version}'>odl-yangtools-binding</feature>
         <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
+        <feature version="1.5.0-SNAPSHOT">odl-base-all</feature>
         <feature version="0.2.0-SNAPSHOT">odl-l2switch-switch</feature>
+        <bundle>mvn:org.opendaylight.controller.model/model-inventory/1.2.0-SNAPSHOT</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/150-TSDR-datastorage-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}/xml/config</configfile>
-
-        <!--  <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}</bundle>
-
-        <configfile finalname="${config.configfile.directory}/151-TSDR-datacollection-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}/xml/config</configfile>-->
-
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/151-TSDR-datacollection-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}/xml/config</configfile>
     </feature>
 
     <feature name="odl-hbaseclient" version="0.94.15" resolver="(obr)" start-level="50">
@@ -81,6 +80,7 @@
        <feature version='"0.94.15"'>odl-hbaseclient</feature>
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-hbase/${project.version}</bundle>
     </feature>
+
     <feature name='odl-tsdr-H2-persistence' version='${project.version}' description="OpenDaylight TSDR H2 Persistence">
         <feature>jndi</feature>
         <feature>transaction</feature>
@@ -90,10 +90,7 @@
         <feature version="2.1.0">jpa</feature>
         <feature version="4.3.6.Final">hibernate</feature>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-h2/${project.version}</bundle>
-
     </feature>
-
-
 </features>
 
 

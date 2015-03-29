@@ -24,7 +24,6 @@
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datastorage</artifactId>
           <version>${tsdr.project.version}</version>
-            <type>bundle</type>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
@@ -34,11 +33,10 @@
           <classifier>config</classifier>
       </dependency>
 
-<!--        <dependency>
+      <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datacollection</artifactId>
           <version>${tsdr.project.version}</version>
-            <type>bundle</type>
       </dependency>
 
      <dependency>
@@ -47,7 +45,7 @@
           <version>${tsdr.project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
-      </dependency>-->
+      </dependency>
 
 
       <dependency>
