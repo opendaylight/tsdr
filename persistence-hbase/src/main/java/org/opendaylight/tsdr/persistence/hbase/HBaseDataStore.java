@@ -13,6 +13,9 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;
@@ -38,6 +41,7 @@ public class HBaseDataStore  {
      private int poolSize;
      private HTablePool htablePool;
      private Map<String, HTableInterface> htableMap = new HashMap<String, HTableInterface>();
+     private Configuration conf = null;
 
      /**
       * Default constructor
@@ -66,10 +70,12 @@ public class HBaseDataStore  {
       */
      private Configuration getConfiguration() {
         log.debug("Entering getConfiguration()");
-        Configuration conf;
-        conf = HBaseConfiguration.create();
-        conf.set(HBaseDataStoreConstants.ZOOKEEPER_QUORUM, zookeeperQuorum);
-        conf.set(HBaseDataStoreConstants.ZOOKEEPER_CLIENTPORT, zookeeperClientport);
+        if ( conf == null){
+            conf = HBaseConfiguration.create();
+            conf.set(HBaseDataStoreConstants.ZOOKEEPER_QUORUM, zookeeperQuorum);
+            conf.set(HBaseDataStoreConstants.ZOOKEEPER_CLIENTPORT, zookeeperClientport);
+        }
+        log.debug("Configuration of HBaseDataStore is initialized");
         log.debug("Exiting getConfiguration()");
         return conf;
      }
@@ -105,6 +111,42 @@ public class HBaseDataStore  {
          return htableResult;
      }
 
+     /**
+      * Create HBase tables.
+      * @param tableName
+      */
+     public void createTable(String tableName){
+         log.debug("Entering createTable(tableName)");
+         HBaseAdmin hbase = null;
+         ClassLoader ocl = Thread.currentThread().getContextClassLoader();
+         try{
+             Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader());
+             if (tableName != null){
+                hbase = new HBaseAdmin(getConfiguration());
+                HTableDescriptor desc = new HTableDescriptor(tableName);
+                HColumnDescriptor column = new HColumnDescriptor("c1".getBytes());
+                desc.addFamily(column);
+                if (!hbase.tableExists(tableName)){
+                    hbase.createTable(desc);
+                }
+             }
+         }catch ( IOException ioe){
+             log.error("Error creating table.",ioe);
+         }catch ( Exception e){
+             log.error("Error creating table.", e);
+         }
+         finally{
+             try{
+                 if(hbase != null){
+                    hbase.close();
+                 }
+                 Thread.currentThread().setContextClassLoader(ocl);
+             }catch(IOException ioe){
+                 log.error("Error closing HBaseAdmin.", ioe);
+             }
+         }
+         log.debug("Exiting createTable(tableName)");
+     }
      /**
       * Create a row in HTable.
       *
@@ -145,9 +187,11 @@ public class HBaseDataStore  {
                      Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader());
                      htable = getConnection(entity.getTableName());
                      htable.put(p);
-                 } catch (IOException e) {
-                     log.error("Cannot put Data to Hbase", e);
-                 } finally {
+                 } catch (IOException ioe) {
+                     log.error("Cannot put Data into HBase.",ioe);
+                 } catch ( Exception e) {
+                     log.error("Cannot put Data into HBase.",e);
+                 }finally {
                      closeConnection(htable);
                      Thread.currentThread().setContextClassLoader(ocl);
                  }

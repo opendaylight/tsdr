@@ -33,52 +33,66 @@ public class TSDRHBasePersistenceServiceImpl  implements
     private static final Logger log = LoggerFactory.getLogger(TSDRHBasePersistenceServiceImpl.class);
 
 
+    /**
+     * Constructor.
+     */
     public TSDRHBasePersistenceServiceImpl(){
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
         log.info("TSDRHBasePersistenceServiceImpl is initialized " + new Date());
     }
     /**
-     * Store TSDRMetrics.
+     * Store TSDRMetricRecord.
      */
     @Override
     public void store(TSDRMetricRecord metrics){
-        log.debug("Entering store(TSDRMetrics)");
+        log.debug("Entering store(TSDRMetricRecord)");
         //convert TSDRRecord to HBaseEntities
         HBaseEntity entity = convertToHBaseEntity(metrics);
         HBaseDataStoreFactory.getHBaseDataStore().create(entity);
-         log.debug("Exiting store(TSDRMetrics)");
+         log.debug("Exiting store(TSDRMetricRecord)");
      }
 
     /**
-     * Store a list of TSDRMetrics.
+     * Store a list of TSDRMetricRecord.
     */
     @Override
     public void store(List<TSDRMetricRecord> metricList){
-        log.debug("Entering store(List<TSDRMetrics>)");
+        log.debug("Entering store(List<TSDRMetricRecord>)");
         if ( metricList != null && metricList.size() != 0){
             for(TSDRMetricRecord metrics: metricList){
                store(metrics);
             }
         }
-        log.debug("Entering store(List<TSDRMetrics>)");
-    }
-
-    @Override public void start(int timeout) {
-
-    }
-
-    @Override public void stop(int timeout) {
-        closeConnections();
-        TsdrPersistenceServiceUtil.setTsdrPersistenceService(null);
+        log.debug("Exiting store(List<TSDRMetricRecord>)");
     }
 
     /**
-     * convert TSDRMetrics to HBaseEntity.
+     * Start TSDRHBasePersistenceService.
+     */
+    @Override public void start(int timeout) {
+         log.debug("Entering start(timeout)");
+        //create the HTables used in TSDR.
+        createTables();
+        log.debug("Exiting start(timeout)");
+    }
+
+    /**
+     * Stop TSDRHBasePersistenceService.
+     */
+    @Override public void stop(int timeout) {
+        log.debug("Entering stop(timeout)");
+        closeConnections();
+        TsdrPersistenceServiceUtil.setTsdrPersistenceService(null);
+        log.debug("Exiting stop(timeout)");
+    }
+
+    /**
+     * convert TSDRMetricRecord to HBaseEntity.
      * @param metrics
      * @return
     */
     private HBaseEntity convertToHBaseEntity(TSDRMetricRecord metrics){
-        log.debug("Entering convertToHBaseEntity(TSDRMetrics)");
+        log.debug("Entering convertToHBaseEntity(TSDRMetricRecord)");
         HBaseEntity entity = new HBaseEntity();
 
         TSDRMetric metricData = metrics;
@@ -89,21 +103,33 @@ public class TSDRHBasePersistenceServiceImpl  implements
                  entity = HBasePersistenceUtil.getEntityFromMetricStats(metricData, dataCategory);
              }
         }
-        log.debug("Exiting convertToHBaseEntity(TSDRMetrics)");
+        log.debug("Exiting convertToHBaseEntity(TSDRMetricRecord)");
         return entity;
      }
 
 
     /**
-     * Close DB connections.
+     * Close connections to the data store.
      */
     public void closeConnections(){
+        log.debug("Entering closeConnections()");
         List<String> tableNames = HBasePersistenceUtil.getTSDRHBaseTables();
         for ( String tableName: tableNames){
             HBaseDataStoreFactory.getHBaseDataStore().closeConnection(tableName);
         }
+        log.debug("Exiting closeConnections()");
         return;
     }
 
-
+    /**
+     * Create TSDR Tables.
+     */
+    public void createTables(){
+         log.debug("Entering createTables()");
+         List<String> tableNames = HBasePersistenceUtil.getTSDRHBaseTables();
+         for ( String tableName: tableNames){
+             HBaseDataStoreFactory.getHBaseDataStore().createTable(tableName);
+         }
+         log.debug("Exiting createTables()");
+    }
 }
