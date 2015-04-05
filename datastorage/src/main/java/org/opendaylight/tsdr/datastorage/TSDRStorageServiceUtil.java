@@ -299,7 +299,7 @@ public class TSDRStorageServiceUtil {
          return metricList;
      }
 /**
- * Return the metric value based on the passed method Name and Tsdrstats data structure.
+ * Return the metric value of the specified data object and method name.
  * @param statEntry
  * @param methodName
  * @return the metricValue with the type of Counter64
@@ -336,11 +336,11 @@ public class TSDRStorageServiceUtil {
              return null;
          }
      }catch(InvocationTargetException ite){
-         log.error("Error executing method {}",methodName);
+         log.error("Error executing method {}",methodName, ite);
      }catch(NoSuchMethodException nsme){
-         log.error("No such method {} in {}class.",methodName, stats.getClass().toString());
+         log.error("No such method {} in {}class.",methodName, stats.getClass().toString(), nsme);
      }catch(IllegalAccessException iae){
-         log.error("Illegal access of the method {} in {} class.",methodName,stats.getClass().toString());
+         log.error("Illegal access of the method {} in {} class.",methodName,stats.getClass().toString(), iae);
      }
      if (result instanceof Counter32){
          Counter32 counter = (Counter32) result;
@@ -351,6 +351,78 @@ public class TSDRStorageServiceUtil {
      return metricValue;
   }
 
+   /**
+    * Get metrics value of the specified statistics data and the method names that need to
+    * be applied to the data object.
+    * @param stats
+    * @param methodName
+    * @param methodName2
+    * @return
+    */
+   private static Counter64 getMetricValue(DataObject stats, String methodName, String methodName2){
+       Counter64 metricValue = new Counter64(new BigInteger("0"));
+       Object result1 = null;
+       Object result2 = null;
+    try{
+       if ( stats instanceof FlowStatistics){
+           FlowStatistics flowStats = (FlowStatistics) stats;
+           Method method = FlowStatistics.class.getMethod(methodName);
+           if ( method == null){
+               log.warn("method {} of FlowStatistics is null", methodName);
+               return null;
+           }
+           result1 = method.invoke(flowStats);
+           result2 = getResultFrom(result1, methodName2);
+
+       }else if (stats instanceof FlowTableStatistics){
+           FlowTableStatistics flowTableStats = (FlowTableStatistics)stats;
+           Method method = FlowTableStatistics.class.getMethod(methodName);
+           result1 = method.invoke(flowTableStats);
+           result2 = getResultFrom(result1, methodName2);
+       }
+       else if(stats instanceof FlowCapableNodeConnectorStatistics){
+          FlowCapableNodeConnectorStatistics portStats =
+               (FlowCapableNodeConnectorStatistics)stats;
+          Method method = FlowCapableNodeConnectorStatistics.class.getMethod(methodName);
+          result1 = method.invoke(portStats);
+          result2 = getResultFrom(result1, methodName2);
+       }else if(stats instanceof FlowCapableNodeConnectorQueueStatistics){
+          FlowCapableNodeConnectorQueueStatistics queueStats
+           = (FlowCapableNodeConnectorQueueStatistics)stats;
+          Method method = FlowCapableNodeConnectorQueueStatistics.class.getMethod(methodName);
+          result1 = method.invoke(queueStats);
+          result2 = getResultFrom(result1, methodName2);
+       }else if(stats instanceof GroupStatistics){
+          GroupStatistics groupStats = (GroupStatistics)stats;
+          Method method = GroupStatistics.class.getMethod(methodName);
+          result1 = method.invoke(groupStats);
+          result2 = getResultFrom(result1, methodName2);
+       }else {
+           log.error("Not a supported TSDR metrics category  {}", stats.getClass().toString());
+           return null;
+       }
+   }catch(InvocationTargetException ite){
+       log.error("Error executing method {}",methodName, ite);
+   }catch(NoSuchMethodException nsme){
+       log.error("No such method {} in {}class",methodName,
+           stats.getClass().toString(), nsme);
+   }catch(IllegalAccessException iae){
+       log.error("Illegal access of the method {} in {} class.",
+           methodName,stats.getClass().toString(), iae);
+   }
+   if (result1 instanceof Counter32){
+       Counter32 counter = (Counter32) result1;
+       metricValue = new Counter64(new BigInteger(counter.getValue().toString()));
+   }else if ( result1 instanceof Counter64){
+       metricValue = (Counter64)result1;
+   }else if ( result2 instanceof Counter32){
+       Counter32 counter = (Counter32) result2;
+       metricValue = new Counter64(new BigInteger(counter.getValue().toString()));
+   }else if (result2 instanceof Counter64){
+       metricValue = (Counter64)result2;
+   }
+   return metricValue;
+}
    /**
     * Add the metric records to the metric list with type List<TSDRMetricRecord>
     * @param tsdrMetricsStructList
@@ -374,18 +446,57 @@ public class TSDRStorageServiceUtil {
           }
           TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
           String methodName = struct.getMethodName();
+          //some metrics has two methods that need to be applied on the statistics data
+          String methodName2 = struct.getMethodName2();
           if ( methodName == null || methodName.length() == 0){
               //the methodName is invalid, continue to the next struct
               continue;
+          }else if ( methodName2 != null && methodName2.length() != 0){
+              TSDRMetric tsdrMetric =   builder.setMetricName(struct.getMetricName())
+                      .setMetricValue(getMetricValue(stats,methodName,methodName2))
+                      .setNodeID(nodeID)
+                      .setRecordKeys(recordKeys)
+                      .setTSDRDataCategory(dataCategory)
+                      .setTimeStamp(new BigInteger(timeStamp)).build();
+                 metricList.add((TSDRMetricRecord) tsdrMetric);
+          }else{//methodName is not null, but methodName2 is null. This indicates this
+                //metric only has one method that needs to be applied to the statistics data
+              TSDRMetric tsdrMetric =   builder.setMetricName(struct.getMetricName())
+                   .setMetricValue(getMetricValue(stats,methodName))
+                   .setNodeID(nodeID)
+                   .setRecordKeys(recordKeys)
+                   .setTSDRDataCategory(dataCategory)
+                   .setTimeStamp(new BigInteger(timeStamp)).build();
+              metricList.add((TSDRMetricRecord) tsdrMetric);
           }
-          TSDRMetric tsdrMetric =   builder.setMetricName(struct.getMetricName())
-               .setMetricValue(getMetricValue(stats,methodName))
-               .setNodeID(nodeID)
-               .setRecordKeys(recordKeys)
-               .setTSDRDataCategory(dataCategory)
-               .setTimeStamp(new BigInteger(timeStamp)).build();
-          metricList.add((TSDRMetricRecord) tsdrMetric);
       }//end of for
       return metricList;
+  }
+
+  /**
+   * Invoke the specified method on the data object and return the result.
+   * @param dataObj
+   * @param methodName
+   * @return
+   */
+  public static Object getResultFrom(Object dataObj, String methodName)
+      throws InvocationTargetException, NoSuchMethodException, IllegalAccessException{
+      Object result = null;
+      if ( dataObj == null )
+      {
+           log.warn("result1 or portStats is null: methodName is {}. ");
+      }else if ( dataObj.getClass() == null){
+           log.warn("result1.getClass() is null");
+
+      }else {
+         Method method = dataObj.getClass().getMethod(methodName);
+         if ( method != null){
+             if(!method.isAccessible()){
+                 method.setAccessible(true);
+             }
+             result = method.invoke(dataObj);
+         }
+      }
+      return result;
   }
 }

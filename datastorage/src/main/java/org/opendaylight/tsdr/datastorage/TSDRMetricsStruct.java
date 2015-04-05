@@ -26,6 +26,19 @@ public class TSDRMetricsStruct {
      */
     private String methodName = "";
 
+    /*
+     * Second MethodName, such as getPackets().getReceived() in FlowCapableNodeConnectorStatistics class.
+     */
+    private String methodName2 = "";
+
+    public String getMethodName2() {
+        return methodName2;
+    }
+
+    public void setMethodName2(String methodName2) {
+        this.methodName2 = methodName2;
+    }
+
     /**
      * Constructor that takes the metricName and methodName
      * @param metricName
@@ -37,6 +50,17 @@ public class TSDRMetricsStruct {
         this.setMethodName(methodName);
     }
 
+    /**
+     * Constructor that takes the metricName and methodName
+     * @param metricName
+     * @param methodName
+     */
+    public TSDRMetricsStruct(String metricName, String methodName, String methodName2){
+        super();
+        this.setMetricName(metricName);
+        this.setMethodName(methodName);
+        this.setMethodName2(methodName2);
+    }
     public String getMetricName() {
         return metricName;
     }

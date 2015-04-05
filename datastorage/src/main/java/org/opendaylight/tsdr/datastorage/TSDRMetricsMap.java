@@ -42,12 +42,19 @@ public class TSDRMetricsMap {
     public static final String PACKETS_LOOKED_UP_FLOWTABLE = "PacketsLookedUp";
     //port metrics
     public static final String COLLISION_COUNT_PORT = "CollisionCount";
+    public static final String RECEIVE_CRC_ERROR_PORT = "ReceiveCRCError";
     public static final String RECEIVED_DROPS_PORT = "ReceivedDrops";
     public static final String RECEIVED_ERRORS_PORT = "ReceivedErrors";
     public static final String RECEIVE_FRAME_ERROR_PORT = "ReceiveFrameError";
     public static final String RECEIVE_OVERRUN_ERROR_PORT = "ReceiveOverRunError";
     public static final String TRANSMIT_DROPS_PORT = "TransmitDrops";
     public static final String TRANSMIT_ERRORS_PORT = "TransmitErrors";
+    public static final String RECEIVED_PACKETS_PORT = "ReceivedPackets";
+    public static final String TRANSMITTED_PACKETS_PORT = "TransmittedPackets";
+    public static final String RECEIVED_BYTES_PORT = "ReceivedBytes";
+    public static final String TRANSMITTED_BYTES_PORT = "TransmittedBytes";
+    public static final String DURATION_IN_SECONDS_PORT = "DurationInSeconds";
+    public static final String DURATION_IN_NANOSEC_PORT = "DurationInNanoSeconds";
     //group metrics
     public static final String PACKET_COUNT_GROUP = "PacketCount";
     public static final String BYTE_COUNT_GROUP = "ByteCount";
@@ -70,12 +77,21 @@ public class TSDRMetricsMap {
     public static final String GET_PACKETS_LOOKED_UP_FLOWTABLE = "getPacketsLookedUp";
     //port metrics method names
     public static final String GET_COLLISION_COUNT_PORT = "getCollisionCount";
+    public static final String GET_RECEIVE_CRC_ERROR_PORT = "getReceiveCrcError";
     public static final String GET_RECEIVED_DROPS_PORT = "getReceiveDrops";
     public static final String GET_RECEIVED_ERRORS_PORT = "getReceiveErrors";
     public static final String GET_RECEIVE_FRAME_ERROR_PORT = "getReceiveFrameError";
     public static final String GET_RECEIVE_OVERRUN_ERROR_PORT = "getReceiveOverRunError";
     public static final String GET_TRANSMIT_DROPS_PORT = "getTransmitDrops";
     public static final String GET_TRANSMIT_ERRORS_PORT = "getTransmitErrors";
+    public static final String GET_PACKETS_PORT = "getPackets";
+    public static final String GET_TRANSMITTED_PORT = "getTransmitted";
+    public static final String GET_RECEIVED_PORT = "getReceived";
+    public static final String GET_BYTES_PORT = "getBytes";
+    public static final String GET_DURATION_PORT = "getDuration";
+    public static final String GET_DURATION_IN_SECONDS_PORT = "getSecond";
+    public static final String GET_DURATION_IN_NANO_SEC_PORT = "getNanosecond";
+
     //group metrics method names
     public static final String GET_BYTE_COUNT_GROUP = "getByteCount";
     public static final String GET_PACKET_COUNT_GROUP = "getPacketCount";
@@ -104,12 +120,20 @@ public class TSDRMetricsMap {
      //PortMetrics
      List<TSDRMetricsStruct> portMetricsList = new ArrayList<TSDRMetricsStruct>();
      portMetricsList.add(new TSDRMetricsStruct(COLLISION_COUNT_PORT, GET_COLLISION_COUNT_PORT));
+     portMetricsList.add(new TSDRMetricsStruct(RECEIVE_CRC_ERROR_PORT, GET_RECEIVE_CRC_ERROR_PORT));
      portMetricsList.add(new TSDRMetricsStruct(RECEIVED_DROPS_PORT, GET_RECEIVED_DROPS_PORT));
      portMetricsList.add(new TSDRMetricsStruct(RECEIVED_ERRORS_PORT, GET_RECEIVED_ERRORS_PORT));
      portMetricsList.add(new TSDRMetricsStruct(RECEIVE_FRAME_ERROR_PORT, GET_RECEIVE_FRAME_ERROR_PORT));
      portMetricsList.add(new TSDRMetricsStruct(RECEIVE_OVERRUN_ERROR_PORT, GET_RECEIVE_OVERRUN_ERROR_PORT));
      portMetricsList.add(new TSDRMetricsStruct(TRANSMIT_DROPS_PORT, GET_TRANSMIT_DROPS_PORT));
      portMetricsList.add(new TSDRMetricsStruct(TRANSMIT_ERRORS_PORT, GET_TRANSMIT_ERRORS_PORT));
+     portMetricsList.add(new TSDRMetricsStruct(RECEIVED_PACKETS_PORT, GET_PACKETS_PORT, GET_RECEIVED_PORT));
+     portMetricsList.add(new TSDRMetricsStruct(TRANSMITTED_PACKETS_PORT, GET_PACKETS_PORT, GET_TRANSMITTED_PORT));
+     portMetricsList.add(new TSDRMetricsStruct(RECEIVED_BYTES_PORT, GET_BYTES_PORT, GET_RECEIVED_PORT));
+     portMetricsList.add(new TSDRMetricsStruct(TRANSMITTED_BYTES_PORT, GET_BYTES_PORT, GET_TRANSMITTED_PORT));
+     portMetricsList.add(new TSDRMetricsStruct(DURATION_IN_SECONDS_PORT, GET_DURATION_PORT, GET_DURATION_IN_SECONDS_PORT));
+     portMetricsList.add(new TSDRMetricsStruct(DURATION_IN_NANOSEC_PORT, GET_DURATION_PORT, GET_DURATION_IN_NANO_SEC_PORT));
+
      tsdrMetricsMap.put(PortMetrics, portMetricsList);
      //GroupMetrics
      List<TSDRMetricsStruct> groupMetricsList = new ArrayList<TSDRMetricsStruct>();
