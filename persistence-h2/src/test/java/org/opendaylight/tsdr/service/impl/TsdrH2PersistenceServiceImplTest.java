@@ -69,7 +69,7 @@ public class TsdrH2PersistenceServiceImplTest {
         em.getTransaction().commit();
 
         //now let us try to get the saved metric
-        List<Metric>metricList = tsdrJpaService.getAll(1000);
+        List<Metric>metricList = tsdrJpaService.getMetricsFilteredByCategory(DataCategory.FLOWSTATS.name(),null,null);
         Assert.assertEquals(1, metricList.size());
         Assert.assertEquals("METRIC_NAME", metricList.get(0).getMetricName());
         Assert.assertEquals(64.0,metricList.get(0).getMetricValue(),0.02);

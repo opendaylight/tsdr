@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015 Dell Inc. and others.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
@@ -24,6 +25,12 @@ import java.util.List;
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  *
  * Created: Feb 24, 2015
+ *
+ *
+ * Revision: April 2, 2015
+ * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed </a>
+ *    --- Introduction of getMetrics in persistence SPI
+ *
  *
  *
  */
@@ -84,6 +91,12 @@ public class TSDRHBasePersistenceServiceImpl  implements
         closeConnections();
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(null);
         log.debug("Exiting stop(timeout)");
+    }
+
+    @Override
+    public List<?> getMetrics(String metricsCategory, Date startDateTime, Date endDateTime) {
+        //TODO:
+        return null;
     }
 
     /**

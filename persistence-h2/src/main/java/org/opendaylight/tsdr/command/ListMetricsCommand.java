@@ -18,50 +18,42 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- * This command is provided to get 1000 recent metrics
- * collected in the JPA store.
  *
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
  *
  */
-@Command(scope = "metric", name = "list", description = "Lists recent 1000 metrics")
-public class ListMetricsCommand extends OsgiCommandSupport {
+
+public class ListMetricsCommand extends AbstractListMetricsCommand {
     private final Logger
         log = LoggerFactory.getLogger(ListMetricsCommand.class);
-    private TsdrJpaService persistenceService;
-
-    public void setPersistenceService(TsdrJpaService persistenceService) {
-        this.persistenceService = persistenceService;
-    }
 
 
-    @Override protected Object doExecute() throws Exception {
-        if(persistenceService !=null) {
-            List<Metric> metrics = persistenceService.getAll(TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
-            StringBuffer buffer = null;
-            for (Metric metric : metrics) {
-                buffer = new StringBuffer();
-                buffer.append(metric.getId())
+    @Override
+    protected String listMetrics(List<?> metrics) {
+        List<Metric> metricList = (List<Metric>) metrics;
+        StringBuffer buffer = null;
+        buffer = new StringBuffer();
+
+        //TODO: MetricID=<MetricID>|ObjectKeys =<concatenated_object_keys>|TimeStamp = <timestamp>|MetricValue = <MetricValue
+        for (Metric metric : metricList) {
+
+            buffer.append(metric.getId())
                     .append(" | ")
                     .append(metric.getMetricName())
                     .append(" | ")
                     .append(metric.getMetricValue())
                     .append(" | ")
                     .append(metric.getMetricTimeStamp())
-                    .append("|")
+                    .append(" | ")
                     .append(metric.getNodeId())
-                    .append("|")
+                    .append(" | ")
                     .append(metric.getMetricCategory())
-                    .append("|")
-                    .append(metric.getInfo());
-                //this will output to Karaf console hence requires doing output std output.
-                System.out.println(buffer.toString());
+                    .append(" | ")
+                    .append(metric.getInfo())
+                    .append("\n");
 
-            }
-        }else{
-            log.warn("ListMetricsCommand: persistence service is found to be null.");
         }
 
-        return null;
+        return buffer.toString();
     }
 }

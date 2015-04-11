@@ -2,6 +2,7 @@ package org.opendaylight.tsdr.service;
 
 import org.opendaylight.tsdr.entity.Metric;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -27,10 +28,24 @@ public interface TsdrJpaService {
      *
      * if maxResults is not specified defaults to 1000
      *
-     * <Note>Used maxResutls with  caution to not cause performance issue </Note>
+     * <Note>Used maxResults with  caution to not cause performance issue </Note>
      * @param maxResults
      */
-    List<Metric> getAll(int maxResults);
+    List<Metric> getMetricsFilteredByCategory(String category,int maxResults);
+
+
+    /**
+     *  Gets the specified number of metrics from store filtered by startDate and endDate
+     * for a specific metric category
+     *
+     * @param category  -- the category of metrics to filter upon
+     * @param startDateTime -- indicates from this time
+     * @param endDateTime  --- indicate to this time
+     * @return List<Metric> of metrics if found else empty list
+     */
+
+
+    List<Metric> getMetricsFilteredByCategory(String category,Date startDateTime,Date endDateTime );
 
     void close();
 

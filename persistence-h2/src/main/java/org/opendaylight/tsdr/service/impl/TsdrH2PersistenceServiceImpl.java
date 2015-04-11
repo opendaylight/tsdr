@@ -9,6 +9,7 @@ package org.opendaylight.tsdr.service.impl;
 
 import com.google.common.base.Preconditions;
 import org.opendaylight.tsdr.entity.Metric;
+import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
 import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
@@ -17,8 +18,13 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Implementation of the TSDR Persistence SPI utilizing JPA based store
@@ -50,8 +56,12 @@ public class TsdrH2PersistenceServiceImpl implements
         Preconditions.checkArgument(metrics != null);
         DataCategory dc =metrics.getTSDRDataCategory();
         Preconditions.checkArgument( dc != null);
-        Metric metric = getEntityFromModel(metrics);
-        jpaService.add(metric);
+        if(jpaService != null) {
+            Metric metric = getEntityFromModel(metrics);
+            jpaService.add(metric);
+        }else{
+            log.error(metrics.getMetricName() + " could not be saved as the JPA Service is null.");
+        }
      }
 
     /**
@@ -79,6 +89,18 @@ public class TsdrH2PersistenceServiceImpl implements
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(null);
 
 
+    }
+
+
+    @Override
+    public List<?> getMetrics(String metricsCategory, Date startDateTime, Date endDateTime) {
+
+        if(jpaService != null){
+            return jpaService.getMetricsFilteredByCategory(metricsCategory, startDateTime, endDateTime);
+        }else{
+            log.warn("JPA store service is found to be null in getMetrics");
+            return new ArrayList<Metric>();
+        }
     }
 
     /**

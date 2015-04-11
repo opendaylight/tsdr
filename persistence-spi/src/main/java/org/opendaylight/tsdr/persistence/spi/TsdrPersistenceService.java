@@ -11,6 +11,7 @@ package org.opendaylight.tsdr.persistence.spi;
 
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 
+import java.util.Date;
 import java.util.List;
 
     /**
@@ -55,5 +56,16 @@ import java.util.List;
          * after which the caller will assume its stopped
          */
         public void stop(int timeout);
+
+        /**
+         * Returns the list of metrics based on startDateTime and endDateTime
+         * If startDateTime OR(/AND)  endDateTime is not specified returns the recent
+         * predefined N metrics
+         * @param metricsCategory
+         * @param startDateTime
+         * @param endDateTime
+         * @return List of persistence store dependents records
+         */
+         public List<?> getMetrics(String metricsCategory,Date startDateTime, Date endDateTime);
 
     }

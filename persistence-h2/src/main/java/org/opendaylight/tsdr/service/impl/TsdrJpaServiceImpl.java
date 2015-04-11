@@ -10,11 +10,13 @@ package org.opendaylight.tsdr.service.impl;
 
 import com.google.common.base.Preconditions;
 import org.opendaylight.tsdr.entity.Metric;
+import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.service.TsdrJpaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -59,15 +61,38 @@ public class TsdrJpaServiceImpl implements TsdrJpaService {
         }
     }
 
-    @Override public List<Metric> getAll(int maxResults) {
+    @Override
+    public List<Metric> getMetricsFilteredByCategory(String category,int maxResults) {
         Preconditions.checkArgument(em != null, "EntityManager found to be null");
         //default to 1000 results
         if(maxResults <=0){
             maxResults = 1000;
         }
+        //TODO:FIXME
+        //return em.createQuery("select metric from Metric metric where metric.metricCategory = :metricCategory order by metric.metricTimeStamp", Metric.class).setMaxResults(
+        //        maxResults).setParameter("metricCategory", category).getResultList();
         return em.createQuery("select metric from Metric metric order by metric.metricTimeStamp", Metric.class).setMaxResults(
-            maxResults).getResultList();
+                maxResults).getResultList();
+
     }
+
+    @Override
+    public List<Metric> getMetricsFilteredByCategory(String category, Date startDateTime, Date endDateTime) {
+        Preconditions.checkArgument(em != null, "EntityManager found to be null");
+        if((startDateTime == null )||(endDateTime == null)){
+            return getMetricsFilteredByCategory(category,TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
+        }else{
+            return em.createQuery("select metric from Metric metric where metric.metricCategory = :metricCategory " +
+                    "and metric.metricTimeStamp >= :startDateTime " +
+                    "and metric.metricTimeStamp <= :endDateTime order by metric.metricTimeStamp", Metric.class)
+                    .setParameter("metricCategory", category)
+                    .setParameter("startDateTime", startDateTime)
+                    .setParameter("endDateTime",endDateTime)
+                    .getResultList();
+        }
+
+    }
+
 
     @Override public void close() {
         try{
