@@ -43,7 +43,7 @@
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/150-TSDR-datastorage-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}/xml/config</configfile>
 
-      <!--  <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}</bundle>
+        <!--  <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}</bundle>
 
         <configfile finalname="${config.configfile.directory}/151-TSDR-datacollection-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}/xml/config</configfile>-->
 
@@ -73,7 +73,7 @@
        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jetty/6.1.26_4</bundle>
        <bundle dependency="true">mvn:org.apache.zookeeper/zookeeper/3.3.5</bundle>
        <bundle>wrap:mvn:com.google.protobuf/protobuf-java/2.4.1</bundle>
-       <bundle>wrap:mvn:org.apache.hadoop/hadoop-core/1.0.4</bundle>
+       <bundle>wrap:mvn:org.apache.hadoop/hadoop-core/1.2.0</bundle>
        <bundle>wrap:mvn:org.apache.hbase/hbase/0.94.15</bundle>
     </feature>
 

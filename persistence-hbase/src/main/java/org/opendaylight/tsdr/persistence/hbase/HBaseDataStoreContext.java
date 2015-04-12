@@ -32,7 +32,9 @@ public class HBaseDataStoreContext {
      * This parameter indicates the size of the pool for the HBase
      * Client to connect with the server(Zookeeper node).
      */
-    private  int poolSize = 20;
+    private  int poolSize = 5;
+
+    private int writeBufferSize = 512;
 
     public  String getZookeeperQuorum() {
         return zookeeperQuorum;
@@ -52,6 +54,11 @@ public class HBaseDataStoreContext {
     public void setPoolSize(int poolSize) {
         this.poolSize = poolSize;
     }
-
+    public int getWriteBufferSize() {
+        return writeBufferSize;
+    }
+    public void setWriteBufferSize(int writeBufferSize) {
+        this.writeBufferSize = writeBufferSize;
+    }
 
 }
