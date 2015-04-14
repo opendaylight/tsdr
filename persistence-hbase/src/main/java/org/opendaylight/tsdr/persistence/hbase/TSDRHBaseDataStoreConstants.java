@@ -35,4 +35,8 @@ public class TSDRHBaseDataStoreConstants {
     public static final String COLUMN_FAMILY_NAME = "c1";
     public static final String COLUMN_QUALIFIER_NAME = "raw";
 
+    /**
+     * Constants related to ListMetricsCommand
+     */
+    public static final int MAX_QUERY_RECORDS = 1000;
 }

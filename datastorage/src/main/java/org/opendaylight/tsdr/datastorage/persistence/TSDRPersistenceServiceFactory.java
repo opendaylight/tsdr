@@ -48,11 +48,8 @@ public class TSDRPersistenceServiceFactory {
         log.debug("Entering getTSDRPersistenceDataStore()");
         if(persistenceService== null){
             persistenceService = TsdrPersistenceServiceUtil.getTsdrPersistenceService();
-            if(persistenceService != null) {
-                persistenceService
-                    .start(TSDRConstants.START_PERSISTENCE_SERVICE_TIMEOUT);
-            }else{
-                log.warn("persistenceService is found to be null");
+            if(persistenceService == null) {
+                log.error("persistenceService is found to be null");
             }
         }
 

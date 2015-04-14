@@ -7,8 +7,12 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
@@ -49,7 +53,6 @@ public class HBasePersistenceUtil {
         }
 
         HBaseEntity entity = new HBaseEntity();
-        String nodeID = metricData.getNodeID();
         String metricName = metricData.getMetricName();
         String metricValue = new Long(metricData.getMetricValue().getValue()
             .longValue()).toString();
@@ -59,7 +62,6 @@ public class HBasePersistenceUtil {
 
         StringBuffer rowKey = new StringBuffer();
         rowKey.append(metricName).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
-            .append(nodeID)
             .append(keyString).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
             .append(timeStamp);
         entity.setTableName(tableName);
@@ -108,34 +110,14 @@ public class HBasePersistenceUtil {
         List<RecordKeys> recordKeys = metricData.getRecordKeys();
         if ( recordKeys != null && recordKeys.size() != 0){
             for(RecordKeys key: recordKeys){
-                if (key.getKeyName() != null && key.getKeyName()
-                   .equalsIgnoreCase(TSDRConstants.FLOW_TABLE_KEY_NAME)){
-                        keyString = keyString.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
-                          .append(key.getKeyValue());
-                        }else if ( key.getKeyName() != null && key.getKeyName()
-                              .equalsIgnoreCase(TSDRConstants.FLOW_KEY_NAME)){
-                              keyString = keyString.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
-                               .append(key.getKeyValue());
-                        }else if (key.getKeyName() != null && key.getKeyName()
-                                 .equalsIgnoreCase(TSDRConstants.GROUP_KEY_NAME)){
-                                 keyString = keyString.append(TSDRHBaseDataStoreConstants
-                                     .ROWKEY_SPLIT).append(key.getKeyValue());
-                        }else if (key.getKeyName() != null && key.getKeyName()
-                                         .equalsIgnoreCase(TSDRConstants.BUCKET_KEY_NAME)){
-                                         keyString = keyString.append(TSDRHBaseDataStoreConstants
-                                             .ROWKEY_SPLIT).append(key.getKeyValue());
-                        }else if (key.getKeyName() != null && key.getKeyName()
-                                 .equalsIgnoreCase(TSDRConstants.QUEUE_KEY_NAME)){
-                                     keyString = keyString.append(TSDRHBaseDataStoreConstants
-                                 .ROWKEY_SPLIT).append(key.getKeyValue());
-                        }else if (key.getKeyName() != null && key.getKeyName()
-                                 .equalsIgnoreCase(TSDRConstants.INTERNFACE_KEY_NAME)){
-                                     keyString = keyString.append(TSDRHBaseDataStoreConstants
-                                     .ROWKEY_SPLIT).append(key.getKeyValue());
-                        }
+                if (key.getKeyValue() != null && key.getKeyValue().length() != 0){
+                    keyString = keyString.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+                            .append(key.getKeyValue());
+                }
+
            }
         }
-        return keyString.toString();
+        return removeLeadingSplit(keyString.toString());
     }
 
     /**
@@ -151,4 +133,94 @@ public class HBasePersistenceUtil {
         hbaseTables.add(TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME);
         return hbaseTables;
     }
+    /**
+     * Convert HBaseEntity to String result list
+     * @param entities
+     * @return
+     */
+        public static List<String> convertToStringResultList(List<HBaseEntity> entities){
+            List<String> result = new ArrayList<String>();
+            for ( HBaseEntity entity : entities ){
+                 String rowKey = entity.getRowKey();
+                 String metricID = getMetricIDFromRowKey(rowKey);
+                 String formattedTimeStamp = getFormattedTimeStampFromRowKey(rowKey);
+                 String objectKeys = getObjectKeysFromRowKey(rowKey);
+                 String cellValue = entity.getColumns().get(0).getValue();
+                 StringBuffer recordbuff = new StringBuffer();
+                 recordbuff.append("MetricID = ");
+                 recordbuff.append(metricID);
+                 recordbuff.append("|");
+                 recordbuff.append("ObjectKeys = ");
+                 recordbuff.append(objectKeys);
+                 recordbuff.append("|");
+                 recordbuff.append("TimeStamp = ");
+                 recordbuff.append(formattedTimeStamp);
+                 recordbuff.append("|");
+                 recordbuff.append("MetricValue = ");
+                 recordbuff.append(cellValue);
+                 result.add(recordbuff.toString());
+            }
+            return result;
+        }
+
+        /**
+         * Get metricsID, which is at the leading position of rowKey, from the rowKey
+         * @param rowKey
+         * @return
+         */
+        public static String getMetricIDFromRowKey(String rowKey){
+            String[] sections = rowKey.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+            if (sections != null && sections.length != 0){
+                //the leading section is the metric ID
+                return sections[0];
+            }
+            return null;
+        }
+
+        public static String getFormattedTimeStampFromRowKey(String rowKey){
+            String[] sections = rowKey.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+            if (sections != null && sections.length >2 ){
+                //the last section of rowkey is the timestamp
+                String timestamp = getFormattedTimeStamp(new Long(sections[sections.length-1]));
+                return timestamp;
+            }
+            return null;
+        }
+
+        public static String getFormattedTimeStamp(long timestamp){
+            Date date = new Date(timestamp);
+            DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.US);
+            return(formatter.format(date));
+        }
+
+        public static String getObjectKeysFromRowKey(String rowKey){
+           String[] sections = rowKey.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+           if (sections != null && sections.length >2 ){
+               //the middle sections of rowkey are the object keys
+               StringBuffer buffer = new StringBuffer();
+               for (int i = 1; i < sections.length - 1; i++){
+                   buffer.append(sections[i]);
+                   if ( i != sections.length - 2){
+                       buffer.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+                   }
+               }
+                return buffer.toString();
+
+               }
+           return null;
+        }
+
+        /**
+         * remove the leading split from the object key string
+         * @param keyString
+         * @return
+         */
+        private static String removeLeadingSplit(String keyString){
+            String result = "";
+            if (keyString != null && keyString.length() != 0 &&
+                keyString.startsWith(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)){
+                result = keyString.substring(1);
+            }
+            return result;
+        }
 }
