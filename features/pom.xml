@@ -47,6 +47,14 @@
           <classifier>config</classifier>
       </dependency>
 
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-persistence-h2</artifactId>
+          <version>${tsdr.project.version}</version>
+          <type>xml</type>
+          <classifier>config</classifier>
+      </dependency>
+
 
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>

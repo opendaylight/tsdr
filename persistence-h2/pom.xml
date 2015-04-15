@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>tsdr</artifactId>
@@ -11,6 +12,28 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-artifacts</id>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>${project.build.directory}/classes/configuration/initial/org.ops4j.datasource-metric.cfg</file>
+                                    <type>xml</type>
+                                    <classifier>config</classifier>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>${bundle.plugin.version}</version>
@@ -20,14 +43,14 @@
                         <Bundle-Name>org.opendaylight.tsdr.persistence.h2</Bundle-Name>
                         <Meta-Persistence>META-INF/persistence.xml</Meta-Persistence>
                         <Import>
-                        <ImportPackage>
+                            <ImportPackage>
 
-                            org.hibernate.proxy,
-                            javassist.util.proxy,
-                            javax.persistence,
-                            *
+                                org.hibernate.proxy,
+                                javassist.util.proxy,
+                                javax.persistence,
+                                *
 
-                        </ImportPackage>
+                            </ImportPackage>
 
                         </Import>
                         <!--<ExportPakcage>org.opendaylight.tsdr.model.Metric</ExportPakcage>-->
