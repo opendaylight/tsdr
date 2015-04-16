@@ -347,7 +347,9 @@ public class HBaseDataStore  {
             HTableInterface htable = null;
             ResultScanner rs=null;
             try {
-                    scan.setTimeRange(startTime, endTime);
+                    if ( startTime != 0 && endTime != 0){
+                        scan.setTimeRange(startTime, endTime);
+                    }
                     htable=getConnection(tableName);
                     rs = htable.getScanner(scan);
                     int count = 0;
@@ -371,6 +373,7 @@ public class HBaseDataStore  {
             return resultEntityList;
 
      }
+
 
      /**
       * Convert the result from HBase query API to HBaseEntity.

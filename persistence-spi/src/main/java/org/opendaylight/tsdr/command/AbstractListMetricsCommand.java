@@ -36,11 +36,11 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
     protected TsdrPersistenceService persistenceService;
 
 
-    @Argument(index=0, name="Category", required=true, description="The category of the metrics we want to get", multiValued=false)
+    @Argument(index=0, name="Category", required=false, description="The category of the metrics we want to get", multiValued=false)
     protected String metricsCategory;
-    @Argument(index=1, name="StartDateTime", required=true, description="list the metrics from this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
+    @Argument(index=1, name="StartDateTime", required=false, description="list the metrics from this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
     protected String startDateTime;
-    @Argument(index=2, name="EndDateTime", required=true, description="list the metrics till this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
+    @Argument(index=2, name="EndDateTime", required=false, description="list the metrics till this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
     protected String endDateTime;
 
     public void setPersistenceService(TsdrPersistenceService persistenceService) {
