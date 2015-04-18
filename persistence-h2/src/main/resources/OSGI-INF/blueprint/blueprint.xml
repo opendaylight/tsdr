@@ -39,23 +39,22 @@
 </bean>
 
 <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.0.0">
-    <!-- Uncomment the following when debugging-->
-      <command name="tsdr/add">
+    <!-- Uncomment the following when debugging
+      <command name="metric/add">
           <action class="org.opendaylight.tsdr.command.AddMetricCommand">
-              <property name="persistenceService" ref="tsdrPersistenceService"/>
+              <property name="persistenceService" ref="tsdrJpaService"/>
           </action>
-      </command>
+      </command>-->
     <command name="tsdr/list">
         <action class="org.opendaylight.tsdr.command.ListMetricsCommand">
             <property name="persistenceService" ref="tsdrPersistenceService"/>
         </action>
     </command>
-    <!-- Uncomment the following when debugging
-      <command name="metric/deleteAll">
-          <action class="org.opendaylight.tsdr.command.DeleteAllMetricsCommand">
-              <property name="persistenceService" ref="tsdrJpaService"/>
-          </action>
-      </command> -->
+    <command name="tsdr/purgeAll">
+        <action class="org.opendaylight.tsdr.command.DeleteAllMetricsCommand">
+            <property name="persistenceService" ref="tsdrPersistenceService"/>
+        </action>
+    </command>
 </command-bundle>
 </blueprint>
 
