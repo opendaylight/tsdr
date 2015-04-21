@@ -99,6 +99,10 @@ public class TSDRHBasePersistenceServiceImpl  implements
  */
     @Override
     public List<?> getMetrics(String metricsCategory, Date startDateTime, Date endDateTime) {
+        //this is for testing only. Eventually the metricsCategory is required argument in the list command
+        if ( metricsCategory == null || metricsCategory.length() == 0){
+            metricsCategory = TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME;
+        }
         List<HBaseEntity> resultEntities = null;
         long startTime = startDateTime == null? 0: startDateTime.getTime();
         long endTime = endDateTime == null? 0: endDateTime.getTime();
@@ -127,7 +131,8 @@ public class TSDRHBasePersistenceServiceImpl  implements
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
                 (tableName,startTime, endTime);
         }else{
-            log.warn("The metricsCategory {} is not supported", metricsCategory);;
+            log.warn("The metricsCategory {} is not supported", metricsCategory);
+            return null;
         }
         List<String> resultRecords = HBasePersistenceUtil.convertToStringResultList( resultEntities);
         return resultRecords;
