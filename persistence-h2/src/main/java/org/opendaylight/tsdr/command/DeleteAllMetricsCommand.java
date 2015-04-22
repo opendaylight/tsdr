@@ -9,36 +9,40 @@ package org.opendaylight.tsdr.command;
 
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.console.OsgiCommandSupport;
+import org.opendaylight.tsdr.entity.Metric;
+import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
 import org.opendaylight.tsdr.service.TsdrJpaService;
+import org.opendaylight.tsdr.service.impl.TsdrH2PersistenceServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This command is useful during debugging to check the
- * working of the JPA persistence store and
- * should not be exposed in the production environment
- * by not exposing the same in blueprint.xml
+ * This command is available only in default datastore wherein
+ * user wants to try out the TSDR feature. This command helps
+ * in purging all collected data.
  *
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
  *
  */
 
-@Command(scope = "metric", name = "deleteAll", description = "Delete all metrics")
+@Command(scope = "tsdr", name = "purgeAll", description = "Delete all metrics")
 public class DeleteAllMetricsCommand extends OsgiCommandSupport {
     private final Logger
         log = LoggerFactory.getLogger(DeleteAllMetricsCommand.class);
-    private TsdrJpaService persistenceService;
+    private TsdrPersistenceService persistenceService;
 
-    public void setPersistenceService(TsdrJpaService persistenceService) {
+    public void setPersistenceService(TsdrPersistenceService persistenceService) {
         this.persistenceService = persistenceService;
     }
 
 
     @Override protected Object doExecute() throws Exception {
         if(persistenceService !=null) {
-            persistenceService.deleteAll();
-        }else{
-           log.warn("DeleteAllMetricsCommand: persistence service is found to be null.");
+            log.info("purgeAll command invoked from console");
+            ((TsdrH2PersistenceServiceImpl) persistenceService).getJpaService().deleteAll();
+        }
+        else {
+            log.warn("DeleteAllMetricsCommand: persistence service is found to be null.");
         }
         return null;
     }
