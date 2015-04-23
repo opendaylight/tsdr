@@ -82,7 +82,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
     public void start(int timeout) {
          log.debug("Entering start(timeout)");
          //create the HTables used in TSDR.
-         createTables();
+       //  createTables();
          log.debug("Exiting start(timeout)");
     }
     /**
