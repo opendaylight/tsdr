@@ -45,8 +45,6 @@
         <tsdr.project.version>1.0-SNAPSHOT</tsdr.project.version>
         <project.version>1.0-SNAPSHOT</project.version>
         <yangtools.version>0.7.0-SNAPSHOT</yangtools.version>
-        <log4j-version>1.2.16</log4j-version>  <!--TODO-->
-        <slf4j-version>1.7.1</slf4j-version>  <!--TODO-->
         <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
         <karaf.distro.empty.version>1.5.0-SNAPSHOT</karaf.distro.empty.version>
         <hibernate.jpa.api.version>1.0.0.Final</hibernate.jpa.api.version>
