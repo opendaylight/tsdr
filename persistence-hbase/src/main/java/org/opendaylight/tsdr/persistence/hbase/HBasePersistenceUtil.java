@@ -131,6 +131,7 @@ public class HBasePersistenceUtil {
         hbaseTables.add(TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME);
         hbaseTables.add(TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME);
         hbaseTables.add(TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME);
+        hbaseTables.add(TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME);
         return hbaseTables;
     }
     /**

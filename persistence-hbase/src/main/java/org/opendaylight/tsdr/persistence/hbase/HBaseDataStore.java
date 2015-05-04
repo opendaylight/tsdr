@@ -84,6 +84,8 @@ public class HBaseDataStore  {
             conf = HBaseConfiguration.create();
             conf.set(HBaseDataStoreConstants.ZOOKEEPER_QUORUM, zookeeperQuorum);
             conf.set(HBaseDataStoreConstants.ZOOKEEPER_CLIENTPORT, zookeeperClientport);
+            conf.setInt("timeout", 5000);
+
         }
         log.debug("Configuration of HBaseDataStore is initialized");
         log.debug("Exiting getConfiguration()");
@@ -124,7 +126,8 @@ public class HBaseDataStore  {
                  }
               }
          }catch (Exception e) {
-              log.error("Error getting connection to the htable", e);
+              log.error("Error getting connection to the htable", e.getMessage());
+              log.trace("Error getting connection to the htable. StackTrace is:", e);
          } finally {
               Thread.currentThread().setContextClassLoader(ocl);
          }
@@ -136,7 +139,7 @@ public class HBaseDataStore  {
       * Create HBase tables.
       * @param tableName
       */
-     public void createTable(String tableName){
+     public void createTable(String tableName) throws Exception{
          log.debug("Entering createTable(tableName)");
          HBaseAdmin hbase = null;
          ClassLoader ocl = Thread.currentThread().getContextClassLoader();
@@ -153,9 +156,17 @@ public class HBaseDataStore  {
                 }
              }
          }catch ( IOException ioe){
-             log.error("Error creating table.",ioe);
+             log.error("Error creating htable {}",tableName, ioe.getMessage());
+             log.trace("Error creating htable. StackTrace is:", ioe);
+             throw new Exception("Error creating table.", ioe);
          }catch ( Exception e){
-             log.error("Error creating table.", e);
+             log.error("Error creating table.", e.getMessage());
+             log.trace("Error creating htable. StackTrace is:", e);
+             throw new Exception("Error creating table.", e);
+         }catch (Throwable t){
+             log.error("Error creating table.", t.getMessage());
+             log.trace("Error creating htable. StackTrace is:", t);
+             throw new Exception("Error creating table.", t);
          }
          finally{
              try{
@@ -208,9 +219,14 @@ public class HBaseDataStore  {
                      htable = getConnection(entity.getTableName());
                      htable.put(p);
                  } catch (IOException ioe) {
-                     log.error("Cannot put Data into Hbase", ioe);
+                     log.error("Cannot put Data into Hbase", ioe.getMessage());
+                     log.debug("Cannot put Data into HBase", ioe);
                  } catch ( Exception e){
-                     log.error("Cannot put Data into HBase.", e);
+                     log.error("Cannot put Data into HBase.", e.getMessage());
+                     log.debug("Cannot put Data into HBase", e);
+                 } catch (Throwable t){
+                     log.error("Cannot put Data into HBase.", t.getMessage());
+                     log.debug("Cannot put Data into HBase", t);
                  }
          }
          log.debug("Exiting create(HBaseEntity entity)");

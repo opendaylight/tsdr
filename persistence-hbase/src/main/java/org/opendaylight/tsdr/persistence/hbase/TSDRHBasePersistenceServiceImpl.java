@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
+import org.opendaylight.tsdr.scheduler.SchedulerService;
 import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
@@ -82,7 +83,8 @@ public class TSDRHBasePersistenceServiceImpl  implements
     public void start(int timeout) {
          log.debug("Entering start(timeout)");
          //create the HTables used in TSDR.
-       //  createTables();
+         CreateTableTask createTableTask = new CreateTableTask();
+         SchedulerService.getInstance().scheduleTask(createTableTask);
          log.debug("Exiting start(timeout)");
     }
     /**
@@ -175,7 +177,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
     /**
      * Create TSDR Tables.
      */
-    public void createTables(){
+    public void createTables() throws Exception{
         log.debug("Entering createTables()");
         List<String> tableNames = HBasePersistenceUtil.getTSDRHBaseTables();
         for ( String tableName: tableNames){

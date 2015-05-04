@@ -34,9 +34,9 @@ public class HBaseDataStoreFactory {
      * @return HBaseDataStore
      */
     public static HBaseDataStore getHBaseDataStore(){
-        //load XML and initialize HBase data store
-        HBaseDataStoreContext context = initialize_datastore_context();
         if ( datastore == null){
+            //load XML and initialize HBase data store
+            HBaseDataStoreContext context = initialize_datastore_context();
             datastore = new HBaseDataStore(context);
         }
         return datastore;
