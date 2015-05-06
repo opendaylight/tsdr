@@ -471,7 +471,7 @@ public class TSDRDOMCollector {
         TSDRService tsdrService = this.rpcRegistry
                 .getRpcService(TSDRService.class);
         tsdrService.storeTSDRMetricRecord(input);
-        log("Data Storage called", INFO);
+        log("Data Storage called", DEBUG);
     }
 
     // For debugging, enable the ability to output to a different file to avoid

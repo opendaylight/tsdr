@@ -66,8 +66,7 @@ public abstract class TSDRBaseDataChangeListener implements DataChangeListener {
                             LogicalDatastoreType.OPERATIONAL, this.IID, this,
                             DataChangeScope.SUBTREE);
             collector.addListener(nodeID, this.IID, this.keyName, this);
-            TSDRDOMCollector.log("Added Listener for " + this.keyName,
-                    TSDRDOMCollector.INFO);
+            TSDRDOMCollector.log("Added Listener for " + this.keyName,TSDRDOMCollector.DEBUG);
         } catch (Exception e) {
             // If the data does not exist in the node, we might hit this error a
             // lot.

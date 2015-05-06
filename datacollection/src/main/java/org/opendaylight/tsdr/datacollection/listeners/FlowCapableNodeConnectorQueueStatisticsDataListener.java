@@ -52,13 +52,13 @@ public class FlowCapableNodeConnectorQueueStatisticsDataListener extends
         if (bc == null) {
             List<RecordKeys> recKeys = createRecordKeys(IID);
             getCollector().createTSDRMetricRecordBuilder(IID, recKeys,
-                    "TransmissionErrors", "" + gs.getTransmissionErrors(),
+                    "TransmissionErrors", "" + gs.getTransmissionErrors().getValue(),
                     DataCategory.QUEUESTATS);
             getCollector().createTSDRMetricRecordBuilder(IID, recKeys,
-                    "TransmittedBytes", "" + gs.getTransmittedBytes(),
+                    "TransmittedBytes", "" + gs.getTransmittedBytes().getValue(),
                     DataCategory.QUEUESTATS);
             getCollector().createTSDRMetricRecordBuilder(IID, recKeys,
-                    "TransmittedPackets", "" + gs.getTransmittedPackets(),
+                    "TransmittedPackets", "" + gs.getTransmittedPackets().getValue(),
                     DataCategory.QUEUESTATS);
         }
     }
@@ -80,26 +80,26 @@ public class FlowCapableNodeConnectorQueueStatisticsDataListener extends
                     TSDRMetricRecordBuilder builder[] = bc.getBuilders();
                     BigInteger timeStamp = getTimeStamp();
                     builder[0].setMetricValue(new Counter64(new BigInteger(""
-                            + gs.getTransmissionErrors())));
+                            + gs.getTransmissionErrors().getValue())));
                     builder[0].setTimeStamp(timeStamp);
                     builder[1].setMetricValue(new Counter64(new BigInteger(""
-                            + gs.getTransmittedBytes())));
+                            + gs.getTransmittedBytes().getValue())));
                     builder[1].setTimeStamp(timeStamp);
                     builder[2].setMetricValue(new Counter64(new BigInteger(""
-                            + gs.getTransmittedPackets())));
+                            + gs.getTransmittedPackets().getValue())));
                     builder[2].setTimeStamp(timeStamp);
                 } else {
                     List<RecordKeys> recKeys = createRecordKeys(id);
                     getCollector().createTSDRMetricRecordBuilder(id, recKeys,
                             "TransmissionErrors",
-                            "" + gs.getTransmissionErrors(),
+                            "" + gs.getTransmissionErrors().getValue(),
                             DataCategory.QUEUESTATS);
                     getCollector().createTSDRMetricRecordBuilder(id, recKeys,
-                            "TransmittedBytes", "" + gs.getTransmittedBytes(),
+                            "TransmittedBytes", "" + gs.getTransmittedBytes().getValue(),
                             DataCategory.QUEUESTATS);
                     getCollector().createTSDRMetricRecordBuilder(id, recKeys,
                             "TransmittedPackets",
-                            "" + gs.getTransmittedPackets(),
+                            "" + gs.getTransmittedPackets().getValue(),
                             DataCategory.QUEUESTATS);
                 }
             }
