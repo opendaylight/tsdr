@@ -27,7 +27,9 @@ public interface TsdrJpaService {
 
     /**
      * Deletes all  metrics in store
-     * <Note>Used currently for debugging purpose only</Note>
+     * <p>
+     * Used currently for debugging purpose only
+     * </p>
      */
     void deleteAll();
 
@@ -35,8 +37,9 @@ public interface TsdrJpaService {
      * Gets the specified number of recent metrics from store
      *
      * if maxResults is not specified defaults to 1000
-     *
-     * <Note>Used maxResults with  caution to not cause performance issue </Note>
+     * <p>
+     * Note: Used maxResults with  caution to not cause performance issue
+     * </p>
      * @param maxResults
      */
     List<Metric> getMetricsFilteredByCategory(String category,int maxResults);
@@ -49,7 +52,7 @@ public interface TsdrJpaService {
      * @param category  -- the category of metrics to filter upon
      * @param startDateTime -- indicates from this time
      * @param endDateTime  --- indicate to this time
-     * @return List<Metric> of metrics if found else empty list
+     * @return List&lt;Metric&gt; of metrics if found else empty list
      */
 
 

@@ -104,7 +104,7 @@ public class TsdrH2PersistenceServiceImpl implements
      *
      * @param data
      * @return <code>Metric</code> persitence entity populated
-     * @throws <code>IllegalArgumentException</code> if any of preconditions fails
+     * @throws IllegalArgumentException if any of preconditions fails
      */
     public Metric getEntityFromModel(TSDRMetricRecord data){
         Preconditions.checkArgument(data != null,"getEntityFromModel found metric data = null");
