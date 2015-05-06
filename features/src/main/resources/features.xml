@@ -28,19 +28,19 @@
     <repository>mvn:org.opendaylight.l2switch/features-l2switch/${l2switch.version}/xml/features</repository>
     <repository>mvn:org.ops4j.pax.jdbc/pax-jdbc-features/0.5.0/xml/features</repository>
 
-    <feature name='odl-tsdr-all' version='${project.version}' description='OpenDaylight TSDR All'>
+    <feature name='odl-tsdr-all' version='${project.version}' description='OpenDaylight :: TSDR :: ALL'>
 
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <feature version='${project.version}'>odl-tsdr-H2-persistence</feature>
 
     </feature>
 
-    <feature name='odl-tsdr-hbase' version='${project.version}' description='OpenDaylight TSDR HBase Data Store'>
+    <feature name='odl-tsdr-hbase' version='${project.version}' description='OpenDaylight :: TSDR :: HBase Data Store'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <feature version='${project.version}'>odl-tsdr-hbase-persistence</feature>
     </feature>
 
-    <feature name='odl-tsdr-core' version='${project.version}' description='OpenDaylight TSDR Core'>
+    <feature name='odl-tsdr-core' version='${project.version}' description='OpenDaylight :: TSDR :: Core'>
         <feature version='${yangtools.version}'>odl-yangtools-common</feature>
         <feature version='${yangtools.version}'>odl-yangtools-binding</feature>
         <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
@@ -52,7 +52,7 @@
         <configfile finalname="${config.configfile.directory}/151-TSDR-datacollection-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}/xml/config</configfile>
     </feature>
 
-    <feature name="odl-hbaseclient" version="0.94.15" resolver="(obr)" start-level="50">
+    <feature name="odl-hbaseclient" version="0.94.15" resolver="(obr)" start-level="50" description='OpenDaylight :: TSDR :: HBase Client'>
        <feature>war</feature>
        <bundle dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jaxws-api-2.2/1.9.0</bundle>
        <bundle dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.saaj-api-1.3/1.9.0</bundle>
@@ -81,7 +81,7 @@
     </feature>
 
 
-    <feature name='odl-tsdr-hbase-persistence' version='${project.version}' description="OpenDaylight TSDR HBase Persistence">
+    <feature name='odl-tsdr-hbase-persistence' version='${project.version}' description="OpenDaylight :: TSDR :: HBase Persistence">
        <feature version='"0.94.15"'>odl-hbaseclient</feature>
        <feature version='${yangtools.version}'>odl-yangtools-common</feature>
        <feature version='${yangtools.version}'>odl-yangtools-binding</feature>
@@ -90,7 +90,7 @@
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-hbase/${project.version}</bundle>
     </feature>
-    <feature name='odl-tsdr-H2-persistence' version='${project.version}' description="OpenDaylight TSDR H2 Persistence">
+    <feature name='odl-tsdr-H2-persistence' version='${project.version}' description="OpenDaylight :: TSDR :: H2 Persistence">
         <feature>jndi</feature>
         <feature>transaction</feature>
         <feature version="0.5.0">pax-jdbc-h2</feature>
