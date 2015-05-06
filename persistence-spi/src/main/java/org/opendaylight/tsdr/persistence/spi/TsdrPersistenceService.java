@@ -61,9 +61,9 @@ import java.util.List;
          * Returns the list of metrics based on startDateTime and endDateTime
          * If startDateTime OR(/AND)  endDateTime is not specified returns the recent
          * predefined N metrics
-         * @param metricsCategory
-         * @param startDateTime
-         * @param endDateTime
+         * @param metricsCategory -- this is required value for category
+         * @param startDateTime  -- can be null else will be the startDateTime
+         * @param endDateTime   -- can be null else will be the endDateTime
          * @return List of persistence store dependents records
          */
          public List<?> getMetrics(String metricsCategory,Date startDateTime, Date endDateTime);

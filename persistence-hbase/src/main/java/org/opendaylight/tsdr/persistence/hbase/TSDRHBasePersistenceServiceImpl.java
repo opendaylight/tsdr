@@ -113,7 +113,6 @@ public class TSDRHBasePersistenceServiceImpl  implements
     @Override public void stop(int timeout) {
        log.debug("Entering stop(timeout)");
         closeConnections();
-        TsdrPersistenceServiceUtil.setTsdrPersistenceService(null);
         log.debug("Exiting stop(timeout)");
     }
 /**

@@ -7,20 +7,19 @@
  */
 package org.opendaylight.tsdr.command;
 
+import org.apache.karaf.shell.commands.Argument;
+import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.console.OsgiCommandSupport;
+import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
-import org.apache.karaf.shell.commands.Argument;
-import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.console.OsgiCommandSupport;
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
-import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This command is provided to get a list of metrics based on arguments passed
@@ -34,12 +33,12 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
             log = LoggerFactory.getLogger(AbstractListMetricsCommand.class);
     protected TsdrPersistenceService persistenceService;
 
-    @Argument(index=0, name="Category", required=false, description="The category of the metrics we want to get", multiValued=false)
-    protected String metricsCategory;
-    @Argument(index=1, name="StartDateTime", required=false, description="list the metrics from this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
-    protected String startDateTime;
-    @Argument(index=2, name="EndDateTime", required=false, description="list the metrics till this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
-    protected String endDateTime;
+    @Argument(index=0, name="category", required=true, description="The category of the metrics we want to get", multiValued=false)
+    public String category = null;
+    @Argument(index=1, name="startDateTime", required=false, description="list the metrics from this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
+    public String startDateTime = null;
+    @Argument(index=2, name="endDateTime", required=false, description="list the metrics till this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
+    public String endDateTime = null;
 
     public void setPersistenceService(TsdrPersistenceService persistenceService) {
         this.persistenceService = persistenceService;
@@ -66,14 +65,24 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
 
     @Override
     protected Object doExecute() throws Exception {
-        if(persistenceService !=null  ) {
-            List<?> metrics = persistenceService.getMetrics(metricsCategory, getDate(startDateTime), getDate(endDateTime));
-            if ( metrics == null || metrics.isEmpty()){
+
+        Date startDate = getDate(startDateTime);
+        Date endDate = getDate(endDateTime);
+
+        if ((startDate != null) && (endDate != null)) {
+            if (startDate.getTime() >= endDate.getTime()) {
+                System.out.println("StatDateTime value cannot be greater or equal to EndDateTime");
+                return null;
+            }
+        }
+        if (persistenceService != null) {
+            List<?> metrics = persistenceService.getMetrics(category, startDate, endDate);
+            if (metrics == null || metrics.isEmpty()) {
                 System.out.println("Either the category is not supported or no data of this category in the specified time range. ");
                 return null;
             }
             System.out.println(listMetrics(metrics));
-        }else{
+        } else {
             log.warn("ListMetricsCommand: persistence service is found to be null.");
         }
         return null;

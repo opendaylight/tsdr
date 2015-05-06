@@ -12,44 +12,49 @@ import org.apache.karaf.shell.console.OsgiCommandSupport;
 import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.service.TsdrJpaService;
+import org.opendaylight.tsdr.util.FormatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  *
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
  *
  */
-
+@Command(scope = "tsdr", name = "list", description = "Lists recent 1000 metrics(default) or returns time specified metrics")
 public class ListMetricsCommand extends AbstractListMetricsCommand {
     private final Logger
         log = LoggerFactory.getLogger(ListMetricsCommand.class);
 
-
+    public static String getFixedFormatString(String value,long length){
+        return String.format("%1$"+length+"s",value);
+    }
     @Override
     protected String listMetrics(List<?> metrics) {
         List<Metric> metricList = (List<Metric>) metrics;
         StringBuffer buffer = null;
         buffer = new StringBuffer();
 
-        //TODO: MetricID=<MetricID>|ObjectKeys =<concatenated_object_keys>|TimeStamp = <timestamp>|MetricValue = <MetricValue
         for (Metric metric : metricList) {
 
-            buffer.append(metric.getId())
-                    .append(" | ")
+                   //.append(getFixedFormatString(String.valueOf(metric.getId()),15))
+                    buffer.append("TimeStamp = ")
+                    .append(FormatUtil.getFormattedTimeStamp(metric.getMetricTimeStamp().getTime(),
+                            FormatUtil.COMMAND_OUT_TIMESTAMP))
+                    .append("|MetricName = ")
                     .append(metric.getMetricName())
-                    .append(" | ")
+                    .append("|MetricValue = ")
                     .append(metric.getMetricValue())
-                    .append(" | ")
-                    .append(metric.getMetricTimeStamp())
-                    .append(" | ")
-                    .append(metric.getNodeId())
-                    .append(" | ")
+                    .append("|MetricCategory = ")
                     .append(metric.getMetricCategory())
-                    .append(" | ")
-                    .append(metric.getInfo())
+                    .append("|MetricDetails = ")
+                    .append(metric.getMetricDetails())
                     .append("\n");
 
         }

@@ -12,10 +12,12 @@ import com.google.common.base.Preconditions;
 import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.service.TsdrJpaService;
+import org.opendaylight.tsdr.util.FormatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.util.Date;
 import java.util.List;
 
@@ -66,29 +68,43 @@ public class TsdrJpaServiceImpl implements TsdrJpaService {
         Preconditions.checkArgument(em != null, "EntityManager found to be null");
         //default to 1000 results
         if(maxResults <=0){
-            maxResults = 1000;
+            maxResults = TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND;
         }
-        //TODO:FIXME
-        //return em.createQuery("select metric from Metric metric where metric.metricCategory = :metricCategory order by metric.metricTimeStamp", Metric.class).setMaxResults(
-        //        maxResults).setParameter("metricCategory", category).getResultList();
-        return em.createQuery("select metric from Metric metric order by metric.metricTimeStamp", Metric.class).setMaxResults(
-                maxResults).getResultList();
+        StringBuffer sb = new StringBuffer();
+        sb.append("select * from Metric where metriccategory = '")
+                .append(category.toUpperCase())
+                .append("' order by metrictimestamp desc");
+        log.info("getMetricsFilteredByCategory: query being sent is "+ sb.toString());
+        Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
+        return nativeQuery.getResultList();
+
 
     }
 
     @Override
     public List<Metric> getMetricsFilteredByCategory(String category, Date startDateTime, Date endDateTime) {
         Preconditions.checkArgument(em != null, "EntityManager found to be null");
+        log.info("getMetricsFilteredByCateory:called with category={},startDateTime={},endDateTime ={}",
+                category, startDateTime, endDateTime);
+
         if((startDateTime == null )||(endDateTime == null)){
             return getMetricsFilteredByCategory(category,TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
         }else{
-            return em.createQuery("select metric from Metric metric where metric.metricCategory = :metricCategory " +
-                    "and metric.metricTimeStamp >= :startDateTime " +
-                    "and metric.metricTimeStamp <= :endDateTime order by metric.metricTimeStamp", Metric.class)
-                    .setParameter("metricCategory", category)
-                    .setParameter("startDateTime", startDateTime)
-                    .setParameter("endDateTime",endDateTime)
-                    .getResultList();
+            StringBuffer sb = new StringBuffer();
+            sb.append("select * from Metric where metrictimestamp ")
+              .append("between '")
+              .append(FormatUtil.getFormattedTimeStamp(startDateTime.getTime(),
+                      FormatUtil.QUERY_TIMESTAMP))
+              .append("' and '")
+              .append(FormatUtil.getFormattedTimeStamp(endDateTime.getTime(),
+                            FormatUtil.QUERY_TIMESTAMP))
+              .append("' and metriccategory = '")
+              .append(category.toUpperCase())
+              .append("'")
+              .append(" order by metrictimestamp desc");
+            log.info("getMetricsFilteredByCategory with start date and end date: query being sent is "+ sb.toString());
+            Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
+            return nativeQuery.getResultList();
         }
 
     }

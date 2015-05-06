@@ -44,4 +44,15 @@ public class TSDRConstants {
     public static final int MAX_RESULTS_FROM_LIST_METRICS_COMMAND = 1000;
 
 
+    /**
+     * constants for metrics categories
+     */
+    public static final String FLOW_STATS_CATEGORY_NAME = "FlowStats";
+    public static final String FLOW_TABLE_STATS_CATEGORY_NAME = "FlowTableStats";;
+    public static final String PORT_STATS_CATEGORY_NAME = "PortStats";
+    public static final String QUEUE_STATS_CATEGORY_NAME = "QueueStats";
+    public static final String FLOW_GROUP_STATS_CATEGORY_NAME = "FlowGroupStats";
+    public static final String FLOW_METER_STATS_CATEGORY_NAME = "FlowMeterStats";
+
+    public static final String ROWKEY_SPLIT = "_";
 }

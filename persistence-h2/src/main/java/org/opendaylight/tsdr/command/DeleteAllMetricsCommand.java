@@ -42,7 +42,7 @@ public class DeleteAllMetricsCommand extends OsgiCommandSupport {
             ((TsdrH2PersistenceServiceImpl) persistenceService).getJpaService().deleteAll();
         }
         else {
-            log.warn("DeleteAllMetricsCommand: persistence service is found to be null.");
+            log.warn("purge all command: persistence service is found to be null.");
         }
         return null;
     }

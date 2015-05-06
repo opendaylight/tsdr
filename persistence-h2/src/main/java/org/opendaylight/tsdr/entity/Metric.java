@@ -30,10 +30,10 @@ public class Metric {
     private Long id;
     private Date metricTimeStamp;
     private String metricName;
-    private double metricValue;
+    private Double metricValue;
     private String metricCategory;
     private String nodeId;
-    private String info;
+    private String metricDetails;
 
 
 
@@ -70,10 +70,10 @@ public class Metric {
         this.id = id;
     }
 
-    public void setMetricValue(double metricValue) {
+    public void setMetricValue(Double metricValue) {
         this.metricValue = metricValue;
     }
-    public double getMetricValue() {
+    public Double getMetricValue() {
         return metricValue;
     }
 
@@ -94,11 +94,11 @@ public class Metric {
         this.nodeId = nodeId;
     }
 
-    public String getInfo() {
-        return info;
+    public String getMetricDetails() {
+        return metricDetails;
     }
 
-    public void setInfo(String info) {
-        this.info = info;
+    public void setMetricDetails(String details) {
+        this.metricDetails = details;
     }
 }

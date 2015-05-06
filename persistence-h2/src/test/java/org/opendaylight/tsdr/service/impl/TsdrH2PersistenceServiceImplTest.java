@@ -9,6 +9,7 @@ package org.opendaylight.tsdr.service.impl;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.opendaylight.tsdr.command.ListMetricsCommand;
 import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
@@ -50,7 +51,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         RecordKeys recordKeys = new RecordKeysBuilder()
             .setKeyName("recordKeyName")
-            .setKeyValue("recordKeyValue").build();
+            .setKeyValue("node_table_flow").build();
 
         List<RecordKeys> recordKeysList= new ArrayList<RecordKeys>();
         recordKeysList.add(recordKeys);
@@ -74,10 +75,25 @@ public class TsdrH2PersistenceServiceImplTest {
         Assert.assertEquals("METRIC_NAME", metricList.get(0).getMetricName());
         Assert.assertEquals(64.0,metricList.get(0).getMetricValue(),0.02);
         Assert.assertEquals("openflow:dummy",metricList.get(0).getNodeId());
-        Assert.assertEquals("recordKeyName_recordKeyValue_",metricList.get(0).getInfo());;
+        Assert.assertEquals("{ 'Node':'node','Table':'table','Flow':'flow'}",metricList.get(0).getMetricDetails());;
         Assert.assertEquals(new Date(new BigInteger(timeStamp).longValue()).toString(),metricList.get(0).getMetricTimeStamp().toString());
         Assert.assertEquals(DataCategory.FLOWSTATS.toString(),metricList.get(0).getMetricCategory());
 
+    }
+
+    @Test
+    //simple test to see having fixed format strings as output works
+    public void testFormatString (){
+        long x = 12356;
+        long y = 1;
+        long z = 123456789;
+        String resX = "          12356";
+        String resY = "              1";
+        String resZ = "      123456789";
+
+        Assert.assertEquals(resX, ListMetricsCommand.getFixedFormatString(String.valueOf(x),15));
+        Assert.assertEquals(resY,ListMetricsCommand.getFixedFormatString(String.valueOf(y),15));
+        Assert.assertEquals(resZ,ListMetricsCommand.getFixedFormatString(String.valueOf(z),15));
     }
 
 

@@ -11,6 +11,7 @@ import com.google.common.base.Preconditions;
 import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
+import org.opendaylight.tsdr.util.FormatUtil;
 import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
@@ -58,7 +59,7 @@ public class TsdrH2PersistenceServiceImpl implements
     public void store(TSDRMetricRecord metrics){
         Preconditions.checkArgument(metrics != null);
         DataCategory dc =metrics.getTSDRDataCategory();
-        Preconditions.checkArgument( dc != null);
+        Preconditions.checkArgument(dc != null);
         if(jpaService != null) {
             Metric metric = getEntityFromModel(metrics);
             jpaService.add(metric);
@@ -85,13 +86,10 @@ public class TsdrH2PersistenceServiceImpl implements
     }
 
     @Override public void stop(int timeout) {
-        if(jpaService != null){
+        if(jpaService != null) {
             jpaService.close();
             jpaService = null;
         }
-        TsdrPersistenceServiceUtil.setTsdrPersistenceService(null);
-
-
     }
 
 
@@ -130,38 +128,16 @@ public class TsdrH2PersistenceServiceImpl implements
         metric.setMetricCategory(data.getTSDRDataCategory().name());
         Date timeStamp = new Date(data.getTimeStamp().longValue());
         metric.setMetricTimeStamp(timeStamp);
-        String detail = getDetailInfoFromModel(data);
+        String detail = FormatUtil.convertToMetricDetailsJSON(FormatUtil.getMetricsDetails(data), data.getTSDRDataCategory().name());
         if(null != detail && !detail.isEmpty()) {
-            metric.setInfo(detail);
+            metric.setMetricDetails(detail);
         }
 
         return metric;
     }
 
 
-    /**
-     * Gets detail info from TSDRMetric data.
-     * @param metricData
-     * @return
-     */
-    private static String getDetailInfoFromModel(TSDRMetricRecord metricData){
-        StringBuffer keyString = new StringBuffer();
-        List<RecordKeys> recordKeys = metricData.getRecordKeys();
-        if ( recordKeys != null && recordKeys.size() != 0){
-            for(RecordKeys key: recordKeys){
-                if (key.getKeyName() != null){
 
-                    keyString.append(key.getKeyName())
-                        .append(SEPARATOR)
-                        .append(key.getKeyValue())
-                        .append(SEPARATOR);
-                }else{
-                    log.warn("getDetailInfoFromModel: metric data contained null key name");
-                }
-            }
-        }
-        return keyString.toString();
-    }
 
 
     public  TsdrJpaServiceImpl getJpaService() {
