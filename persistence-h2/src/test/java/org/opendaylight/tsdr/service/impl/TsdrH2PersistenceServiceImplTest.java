@@ -54,14 +54,14 @@ public class TsdrH2PersistenceServiceImplTest {
 
         List<RecordKeys> recordKeysList= new ArrayList<RecordKeys>();
         recordKeysList.add(recordKeys);
-        String timeStamp = (new Long((new Date()).getTime())).toString();
+        String timeStamp = ""+System.currentTimeMillis();
 
         TSDRMetricRecordBuilder tsdrMetricBuilder = new TSDRMetricRecordBuilder();
         TSDRMetricRecord tsdrMetrics = tsdrMetricBuilder.setMetricName("METRIC_NAME")
             .setMetricValue(new Counter64(new BigInteger("64")))
             .setNodeID("openflow:dummy")
             .setRecordKeys(recordKeysList)
-            .setTimeStamp(new BigInteger(timeStamp))
+            .setTimeStamp(Long.parseLong(timeStamp))
             .setTSDRDataCategory(DataCategory.FLOWSTATS).build();
 
         tsdrH2PersistenceService.store(

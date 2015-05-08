@@ -457,7 +457,7 @@ public class TSDRStorageServiceUtil {
                       .setNodeID(nodeID)
                       .setRecordKeys(recordKeys)
                       .setTSDRDataCategory(dataCategory)
-                      .setTimeStamp(new BigInteger(timeStamp)).build();
+                      .setTimeStamp(Long.parseLong(timeStamp)).build();
                  metricList.add((TSDRMetricRecord) tsdrMetric);
           }else{//methodName is not null, but methodName2 is null. This indicates this
                 //metric only has one method that needs to be applied to the statistics data
@@ -466,7 +466,7 @@ public class TSDRStorageServiceUtil {
                    .setNodeID(nodeID)
                    .setRecordKeys(recordKeys)
                    .setTSDRDataCategory(dataCategory)
-                   .setTimeStamp(new BigInteger(timeStamp)).build();
+                   .setTimeStamp(Long.parseLong(timeStamp)).build();
               metricList.add((TSDRMetricRecord) tsdrMetric);
           }
       }//end of for

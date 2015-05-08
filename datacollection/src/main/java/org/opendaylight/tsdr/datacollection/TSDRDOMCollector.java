@@ -204,7 +204,7 @@ public class TSDRDOMCollector {
                     + value, ERROR);
         }
         builder.setMetricValue(_value);
-        builder.setTimeStamp(new BigInteger("" + System.currentTimeMillis()));
+        builder.setTimeStamp(System.currentTimeMillis());
         addBuilderToContainer(id, builder);
     }
 

@@ -67,7 +67,7 @@ public class FlowStatisticsDataListener extends TSDRBaseDataChangeListener {
                         .getTSDRMetricRecordBuilderContainer(id);
                 if (bc != null) {
                     TSDRMetricRecordBuilder builder[] = bc.getBuilders();
-                    BigInteger timeStamp = getTimeStamp();
+                    long timeStamp = getTimeStamp();
                     builder[0].setMetricValue(new Counter64(new BigInteger(""
                             + gs.getByteCount().getValue())));
                     builder[0].setTimeStamp(timeStamp);
