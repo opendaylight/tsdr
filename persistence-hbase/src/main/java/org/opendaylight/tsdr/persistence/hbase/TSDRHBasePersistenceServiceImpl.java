@@ -48,7 +48,10 @@ public class TSDRHBasePersistenceServiceImpl  implements
      */
     public TSDRHBasePersistenceServiceImpl(){
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
-        log.info("TSDRHBasePersistenceServiceImpl is initialized " + new Date());
+        log.info("TSDR HBase Data Store is initialized.");
+        System.out.println("TSDR HBase Data Store is initialized. "
+            + "Please do not install another TSDR Data Store without uninstalling HBase Data Store.");
+
     }
 
 
@@ -120,32 +123,32 @@ public class TSDRHBasePersistenceServiceImpl  implements
     public List<?> getMetrics(String metricsCategory, Date startDateTime, Date endDateTime) {
         //this is for testing only. Eventually the metricsCategory is required argument in the list command
         if ( metricsCategory == null || metricsCategory.length() == 0){
-            metricsCategory = TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME;
+            metricsCategory = TSDRHBaseDataStoreConstants.INTERFACE_STATS_CATEGORY_NAME;
         }
         List<HBaseEntity> resultEntities = null;
         long startTime = startDateTime == null? 0: startDateTime.getTime();
         long endTime = endDateTime == null? 0: endDateTime.getTime();
-        if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME)){
+        if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.FLOW_STATS_CATEGORY_NAME)){
             String tableName = TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME;
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
                 (tableName,startTime, endTime);
-        }else if (metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_TABLE_NAME)){
+        }else if (metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_CATEGORY_NAME)){
             String tableName = TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_TABLE_NAME;
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
                 (tableName,startTime, endTime);
-        }else if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME)){
+        }else if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.INTERFACE_STATS_CATEGORY_NAME)){
             String tableName = TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME;
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
                 (tableName,startTime, endTime);
-        }else if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME)){
+        }else if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.QUEUE_STATS_CATEGORY_NAME)){
             String tableName = TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME;
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
                 (tableName,startTime, endTime);
-        }else if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME)){
+        }else if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.GROUP_STATS_CATEGORY_NAME)){
             String tableName = TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME;
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
                 (tableName,startTime, endTime);
-        }else if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME)){
+        }else if ( metricsCategory.equalsIgnoreCase(TSDRHBaseDataStoreConstants.METER_STATS_CATEGORY_NAME)){
             String tableName = TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME;
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
                 (tableName,startTime, endTime);

@@ -103,6 +103,35 @@ public class HBasePersistenceUtil {
         return "";
     }
     /**
+     * Return Data Category Name from HBase Table name.
+     * @param datacategory
+     * @return
+     */
+    private static String getCategoryNameFrom(String tableName){
+        if ( tableName.equalsIgnoreCase(
+            TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME)){
+            return TSDRHBaseDataStoreConstants.FLOW_STATS_CATEGORY_NAME;
+        }else  if ( tableName.equalsIgnoreCase(
+            TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_TABLE_NAME)){
+            return TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_CATEGORY_NAME;
+        }else if ( tableName.equalsIgnoreCase(
+                TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME)){
+                return TSDRHBaseDataStoreConstants.INTERFACE_STATS_CATEGORY_NAME;
+        }else if ( tableName.equalsIgnoreCase(
+                TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME)){
+                return TSDRHBaseDataStoreConstants.INTERFACE_STATS_CATEGORY_NAME;
+        }else if ( tableName.equalsIgnoreCase(
+                TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME)){
+                return TSDRHBaseDataStoreConstants.QUEUE_STATS_CATEGORY_NAME;
+        }if ( tableName.equalsIgnoreCase(
+                TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME)){
+                return TSDRHBaseDataStoreConstants.METER_STATS_CATEGORY_NAME;
+        }else{
+            log.warn("The table name is not supported: {}", tableName);
+            return null;
+        }
+    }
+    /**
      * Get KeyString from TSDRMetric data.
      * @param metricData
      * @return
@@ -150,17 +179,20 @@ public class HBasePersistenceUtil {
                  String objectKeys = getObjectKeysFromRowKey(rowKey);
                  String cellValue = entity.getColumns().get(0).getValue();
                  StringBuffer recordbuff = new StringBuffer();
-                 recordbuff.append("MetricID = ");
-                 recordbuff.append(metricID);
-                 recordbuff.append("|");
-                 recordbuff.append("ObjectKeys = ");
-                 recordbuff.append(objectKeys);
-                 recordbuff.append("|");
                  recordbuff.append("TimeStamp = ");
                  recordbuff.append(formattedTimeStamp);
                  recordbuff.append("|");
+                 recordbuff.append("MetricName = ");
+                 recordbuff.append(metricID);
+                 recordbuff.append("|");
                  recordbuff.append("MetricValue = ");
                  recordbuff.append(cellValue);
+                 recordbuff.append("|");
+                 recordbuff.append("MetricCategory = ");
+                 recordbuff.append(getCategoryNameFrom(entity.getTableName()));
+                 recordbuff.append("|");
+                 recordbuff.append("MetricDetails = ");
+                 recordbuff.append(convertToJason(objectKeys, entity.getTableName()));
                  result.add(recordbuff.toString());
             }
             return result;
@@ -225,5 +257,64 @@ public class HBasePersistenceUtil {
                 result = keyString.substring(1);
             }
             return result;
+        }
+
+        /**
+         * Convert the object keys to Jason format.
+         * @param objectKeys
+         * @param tableName
+         * @return
+         */
+        private static String convertToJason(String objectKeys, String tableName){
+            if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME)){
+                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+                if (keys == null || keys.length < 3){
+                    return null;
+                }else{
+                    return "{ 'Node':'" + keys[0] + "'," + "'Table':'" + keys[1] + "',"
+                        + "'Flow':'" + keys[2] + "'}";
+                }
+            } if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_TABLE_NAME)){
+                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+                if(keys == null || keys.length < 2){
+                    return null;
+                }else{
+                    return "{ 'Node':'" + keys[0] + "'," + "'Table':'" + keys[1] + "'}";
+                }
+            }if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME)){
+                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+                if(keys == null || keys.length < 2){
+                    return null;
+                }else{
+                    return "{ 'Node':'" + keys[0] + "'," + "'InterfaceName':'" + keys[1] + "'}";
+                }
+            }if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME)){
+                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+                if(keys == null || keys.length < 3){
+                    return null;
+                }else{
+                    return "{ 'Node':'" + keys[0] + "'," + "'InterfaceName':'" + keys[1] + "',"
+                        + "'QueueName':'" + keys[2] + "'}";
+                }
+            }if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME)){
+                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+                if(keys == null || keys.length < 3){
+                    return null;
+                }else{
+                    return "{ 'Node':'" + keys[0] + "'," + "'GroupName':'" + keys[1] + "',"
+                        + "'BucketID':'" + keys[2] + "'}";
+                }
+            }if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME)){
+                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+                if(keys == null || keys.length < 3){
+                    return null;
+                }else{
+                    return "{ 'Node':'" + keys[0] + "'," + "'GroupName':'" + keys[1] + "',"
+                        + "'MeterName':'" + keys[2] + "'}";
+                }
+            }else{
+                log.warn("The table name is not supported:{}", tableName);
+                return null;
+            }
         }
 }

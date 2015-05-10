@@ -46,6 +46,9 @@ public class TsdrH2PersistenceServiceImpl implements
 
     public TsdrH2PersistenceServiceImpl(){
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
+        log.info("TSDR H2 Data Store initialized.");
+        System.out.println("TSDR H2 Data Store initialized."
+            + " Please do not install another TSDR Data Store without uninstalling H2 data store.");
     }
 
     /**
