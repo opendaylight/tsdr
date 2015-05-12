@@ -48,6 +48,16 @@ public class TSDRHBasePersistenceServiceImpl  implements
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
         log.info("TSDRHBasePersistenceServiceImpl is initialized " + new Date());
     }
+
+
+    /*
+    *  This overloaded constructor version is added for UT purpose.
+    *  Refrain from calling it(except from UT)
+    */
+    public TSDRHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore){
+       HBaseDataStoreFactory.setHBaseDataStoreIfAbsent(hbaseDataStore);
+    }
+
     /**
      * Store TSDRMetricRecord.
      */

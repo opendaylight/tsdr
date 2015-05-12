@@ -186,7 +186,7 @@ public class HBaseDataStore  {
       * @param entity - an object of HBaseEntity.
       * @return HBaseEntity - the object being created in HTable.
       */
-     public final HBaseEntity create(final HBaseEntity entity) {
+     public HBaseEntity create(final HBaseEntity entity) {
          log.debug("Entering create(HBaseEntity entity)");
          if (entity != null && entity.getRowKey() != null) {
                  Put p = new Put(Bytes.toBytes(entity.getRowKey()));

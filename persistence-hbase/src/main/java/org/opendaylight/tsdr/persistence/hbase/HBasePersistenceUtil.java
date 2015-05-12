@@ -96,6 +96,8 @@ public class HBasePersistenceUtil {
             return  TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME;
         }else if (datacategory == DataCategory.QUEUESTATS){
             return TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME;
+        }else if (datacategory == DataCategory.FLOWMETERSTATS){
+            return TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME;
         }
 
         return "";

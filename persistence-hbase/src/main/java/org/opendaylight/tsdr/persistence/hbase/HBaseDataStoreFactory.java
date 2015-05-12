@@ -16,11 +16,23 @@ package org.opendaylight.tsdr.persistence.hbase;
  *
  * Created: Feb 24, 2015
  *
+ * Modified: May 4, 2015
+ *
+ * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
  *
  */
+
+import java.util.Properties;
+import java.io.InputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class HBaseDataStoreFactory {
 
+    private static final Logger log = LoggerFactory.getLogger(HBaseDataStoreFactory.class);
     private static HBaseDataStore datastore = null;
+    private static String hbasePropsFilename = "hbase-configuration.properties";
 
     /**
      * Default constructor
@@ -34,12 +46,22 @@ public class HBaseDataStoreFactory {
      * @return HBaseDataStore
      */
     public static HBaseDataStore getHBaseDataStore(){
+        //load XML and initialize HBase data store
         if ( datastore == null){
-            //load XML and initialize HBase data store
             HBaseDataStoreContext context = initialize_datastore_context();
             datastore = new HBaseDataStore(context);
         }
         return datastore;
+    }
+
+    /*
+     * Setter for UT purpose which is invoked from the factory
+     */
+    static void setHBaseDataStoreIfAbsent(HBaseDataStore hbaseDataStore){
+        if(datastore == null){
+            initialize_datastore_context();//just for UT purpose
+            datastore = hbaseDataStore;
+        }
     }
 
     /**
@@ -49,10 +71,42 @@ public class HBaseDataStoreFactory {
     */
     private static HBaseDataStoreContext initialize_datastore_context(){
         HBaseDataStoreContext context = new HBaseDataStoreContext();
-        //To do: load xml files and set the context object
-        context.setPoolSize(20);
-        context.setZookeeperClientport("2181");
-        context.setZookeeperQuorum("localhost");
+        Properties properties = new Properties();
+        InputStream inputStream = HBaseDataStoreContext.class.getClassLoader().getResourceAsStream(hbasePropsFilename);
+
+        try{
+            properties.load(inputStream);
+        } catch(Exception e){
+            log.error("Exception while loading the hbase-configuration.properties stream", e);
+        }
+
+        if(inputStream == null || !properties.propertyNames().hasMoreElements()){
+            log.error("Properties stream is null or properties failed to load, check the file=" + hbasePropsFilename +" exists in classpath");
+            log.warn("Initializing HbaseDataStoreContext default values");
+            context.setPoolSize(20);
+            context.setZookeeperClientport("2181");
+            context.setZookeeperQuorum("localhost");
+            if(inputStream != null){
+                try{
+                    inputStream.close();
+                } catch(Exception e){
+                    log.error("Exception while closing the hbase-configuration.properties stream", e);
+                }
+            }
+            return context;
+        }
+
+        log.info("Loading properties from hbase-configuration.properties");
+
+        context.setPoolSize(Integer.valueOf(properties.getProperty("poolsize")));
+        context.setZookeeperClientport(properties.getProperty("zoo.keeper.client.port"));
+        context.setZookeeperQuorum(properties.getProperty("zoo.keeper.quorum"));
+
+        try{
+            inputStream.close();
+        } catch(Exception e){
+            log.error("Exception while closing the hbase-configuration.properties stream", e);
+        }
         return context;
     }
 }

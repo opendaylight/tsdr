@@ -11,22 +11,28 @@ package org.opendaylight.tsdr.datastorage.test;
 import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
+import java.lang.Long;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.Date;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import org.opendaylight.tsdr.datastorage.TSDRStorageServiceImpl;
+import org.opendaylight.tsdr.persistence.hbase.HBaseDataStoreFactory;
+import org.opendaylight.tsdr.persistence.hbase.HBaseDataStore;
 import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
+import org.opendaylight.tsdr.persistence.hbase.TSDRHBaseDataStoreConstants;
+import org.opendaylight.tsdr.persistence.hbase.TSDRHBasePersistenceServiceImpl;
+import org.opendaylight.tsdr.persistence.hbase.HBaseEntity;
+import org.opendaylight.tsdr.persistence.hbase.HBaseColumn;
+import org.opendaylight.tsdr.persistence.hbase.HBasePersistenceUtil;
 
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreOFStatsInputBuilder;
@@ -38,7 +44,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter32;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
@@ -71,98 +76,138 @@ import static org.mockito.Matchers.any;
 import org.mockito.invocation.InvocationOnMock;
 
 import org.mockito.stubbing.Answer;
-
 /**
- * Unit Test for TSDR Data Storage Service.
+ * Unit Test for HBase data store under TSDR.
  * * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
  *
  * Created: Apr 27, 2015
  */
 import org.opendaylight.yangtools.yang.common.RpcResult;
 
-public class TSDRStorageImplTest {
+public class HBaseDataStoreTest {
 
-    public TSDRStorageServiceImpl storageService;
-    public TsdrPersistenceService persistenceService;
-    private static Map<String, List<TSDRMetricRecord>> tableRecordMap;
+    public TSDRHBasePersistenceServiceImpl storageService;
+    private HBaseDataStore hbaseDataStore;
+    private static Map<String, Map<String,List<HBaseEntity>>> tableEntityMap;
 
     @Before
     public void setup() {
-        storageService = new TSDRStorageServiceImpl();
-        persistenceService = mock(TsdrPersistenceService.class);
-        TsdrPersistenceServiceUtil.setTsdrPersistenceService(persistenceService);
-        tableRecordMap = new HashMap<String, List<TSDRMetricRecord>>();
+        hbaseDataStore = mock(HBaseDataStore.class);
+        storageService = new TSDRHBasePersistenceServiceImpl(hbaseDataStore);
+        tableEntityMap = new HashMap<String, Map<String, List<HBaseEntity>>>();
 
-        Answer answerStore = new Answer<Void>() {
+        doAnswer(new Answer<HBaseEntity>() {
             @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
+            public HBaseEntity answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
-                BigInteger timeStampBigInteger = new BigInteger((new Long((new Date()).getTime())).toString());
-                String tableName = null;
                 if (arguments != null && arguments.length > 0 && arguments[0] != null) {
-                    if(arguments[0] instanceof TSDRMetricRecord){
-                        TSDRMetricRecord record = (TSDRMetricRecord)arguments[0];
-                        tableName = getTableNameFrom(record.getTSDRDataCategory());
-                        if(!tableRecordMap.containsKey(tableName)){
-                            tableRecordMap.put(tableName, new ArrayList<TSDRMetricRecord>());
-                        }
-                        List<TSDRMetricRecord> recordCol = tableRecordMap.get(tableName);
-                        System.out.println("Creating record " + record + " under table " + tableName);
-                        recordCol.add(record);
-                        return null;
+                    HBaseEntity entity = (HBaseEntity) arguments[0];
+                    if(!tableEntityMap.containsKey(entity.getTableName())){
+                        tableEntityMap.put(entity.getTableName(),new TreeMap<String,List<HBaseEntity>>());
                     }
-                    List<TSDRMetricRecord> recordCol = (List<TSDRMetricRecord>)arguments[0];
-                    for(TSDRMetricRecord record: recordCol){
-                        tableName = getTableNameFrom(record.getTSDRDataCategory());
-                        if(!tableRecordMap.containsKey(tableName)){
-                            tableRecordMap.put(tableName, new ArrayList<TSDRMetricRecord>());
-                        }
-                        List<TSDRMetricRecord> existingRecordCol = tableRecordMap.get(tableName);
-                        System.out.println("Creating record " + record + " under table " + tableName);
-                        existingRecordCol.add(record);
+                    Map<String,List<HBaseEntity>> entityMap = tableEntityMap.get(entity.getTableName());
+                    if(!entityMap.containsKey(entity.getRowKey())){
+                        entityMap.put(entity.getRowKey(), new ArrayList<HBaseEntity>());
                     }
+                    List<HBaseEntity> entitiesCol = entityMap.get(entity.getRowKey());
+                    entitiesCol.add(entity);
+                    System.out.println("Creating entity:"+entity.getRowKey() + ",table:" + entity.getTableName());
+                    return entity;
                 }
                 return null;
             }
-        };
+        }).when(hbaseDataStore).create(any(HBaseEntity.class));
 
-        doAnswer(answerStore).when(persistenceService).store(any(TSDRMetricRecord.class));
-        doAnswer(answerStore).when(persistenceService).store(any(List.class));
-
-        Answer answerGetMetrics = new Answer() {
+        Answer answerDataByRowFamilyQualifier = new Answer() {
             @Override
-            public List<?> answer(InvocationOnMock invocation) throws Throwable {
+            public Object answer(InvocationOnMock invocation) throws Throwable {
                 Object[] arguments = invocation.getArguments();
-                List<TSDRMetricRecord> recordCol = new ArrayList<TSDRMetricRecord>();
+                List<HBaseEntity> entityCol = new ArrayList<HBaseEntity>();
                 if (arguments != null && arguments.length > 0 && arguments[0] != null) {
-                    String tableName = (String)arguments[0];
-                    Date startDate = (Date)arguments[1];
-                    Date endDate = (Date)arguments[2];
-                    System.out.println("Retrieving metrics from table name " + tableName + " records:"+tableRecordMap);
-                    List<TSDRMetricRecord> allRecordCol = tableRecordMap.get(tableName);
-                    System.out.println(allRecordCol);
-                    if(allRecordCol == null){
-                        return recordCol;
+                    String tableName = (String) arguments[0];
+                    String startRow = (String) arguments[1];
+                    String endRow = (String) arguments[2];
+                    String family = (String) arguments[3];
+                    String qualifier = (String) arguments[4];
+                    Long pagesize = 0l;
+                    boolean pagesizeset = false;
+                    if(arguments.length == 5){
+                        pagesizeset = true;
+                        pagesize = (Long) arguments[5];
                     }
-                    for(TSDRMetricRecord record: allRecordCol){
-                        if(record.getTimeStamp().longValue() >= startDate.getTime() && record.getTimeStamp().longValue() <= endDate.getTime()){
-                            recordCol.add(record);
+
+                    TreeMap<String, List<HBaseEntity>> entityMap = (TreeMap<String, List<HBaseEntity>>)tableEntityMap.get(tableName);
+                    if(entityMap == null){
+                        return entityCol;
+                    }
+
+                    entityMap = new TreeMap<String, List<HBaseEntity>>(entityMap.subMap(startRow, endRow));
+                    for(List<HBaseEntity> entityValues: entityMap.values()){
+                        for(HBaseEntity entity: entityValues){
+                            for (HBaseColumn currentColumn : entity.getColumns()) {
+                                if(currentColumn.getColumnFamily().equals(family) && currentColumn.getColumnQualifier().equals(qualifier)){
+                                    entityCol.add(entity);
+                                    if(pagesizeset){
+                                        pagesize--;
+                                        if(pagesize == 0){
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
                         }
                     }
+                    System.out.println("Retrieving entities:"+entityCol + ",table:" + tableName);
                 }
-                System.out.println("Get metrics of size " + recordCol.size() + ", records:" + recordCol);
-                return recordCol;
+                return entityCol;
             }
         };
 
-        doAnswer(answerGetMetrics).when(persistenceService).getMetrics(any(String.class),any(Date.class),any(Date.class));
+        doAnswer(answerDataByRowFamilyQualifier).when(hbaseDataStore).getDataByRowFamilyQualifier(any(String.class), any(String.class), any(String.class)
+                                                            ,any(String.class), any(String.class));
+        doAnswer(answerDataByRowFamilyQualifier).when(hbaseDataStore).getDataByRowFamilyQualifier(any(String.class), any(String.class), any(String.class)
+                                                            ,any(String.class), any(String.class), any(Long.class));
 
+       doAnswer(new Answer() {
+            @Override
+            public List<HBaseEntity> answer(InvocationOnMock invocation) throws Throwable {
+                Object[] arguments = invocation.getArguments();
+                List<HBaseEntity> entityCol = new ArrayList<HBaseEntity>();
+                if (arguments != null && arguments.length > 0 && arguments[0] != null) {
+                    String tableName = (String) arguments[0];
+                    Long startTime = (Long) arguments[1];
+                    Long endTime = (Long) arguments[2];
+                    Map<String, List<HBaseEntity>> entityMap = tableEntityMap.get(tableName);
+                    if(entityMap == null){
+                        return entityCol;
+                    }
+
+                    for(List<HBaseEntity> entityValues: entityMap.values()){
+                        for(HBaseEntity entity: entityValues){
+                            for (HBaseColumn currentColumn : entity.getColumns()) {
+                                if(currentColumn.getTimeStamp() >= startTime && currentColumn.getTimeStamp() <= endTime){
+                                     entityCol.add(entity);
+                                     break;
+                                }
+                            }
+                        }
+                    }
+                    System.out.println("Retrieving entities:"+entityCol + ",table:" + tableName + " from date:"+startTime + " end date" + endTime);
+                }
+                return entityCol;
+            }
+       }).when(hbaseDataStore).getDataByTimeRange(any(String.class), any(Long.class), any(Long.class));
+
+       try{
+           Mockito.doNothing().when(hbaseDataStore).createTable(any(String.class));//.thenReturn(true);
+       } catch(Exception e){
+       }
+       Mockito.doNothing().when(hbaseDataStore).closeConnection(any(String.class));//.thenReturn(true);
     }
 
     @Test
     public void testFlowStatistics() {
-        Date startDate = new Date();
-        List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
         String timeStamp = (new Long((new Date()).getTime())).toString();
         List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
         RecordKeys recordKey1 = new RecordKeysBuilder()
@@ -192,28 +237,24 @@ public class TSDRStorageImplTest {
             .setTSDRDataCategory(DataCategory.FLOWSTATS)
             .setTimeStamp(new BigInteger(timeStamp)).build();
 
-        metricCol.add((TSDRMetricRecord)tsdrMetric1);
-        metricCol.add((TSDRMetricRecord)tsdrMetric2);
-        storageService
-            .storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
-
-        Date endDate = new Date();
-        boolean result = false;
+        boolean result = true;
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.FLOWSTATS), startDate, endDate).size() == 2;
+            storageService.store((TSDRMetricRecord)tsdrMetric1);
+            storageService.store((TSDRMetricRecord)tsdrMetric2);
+
+            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 2);
+
+
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow stats table with specified time range.");
             result = false;
             ee.printStackTrace();
         }
-
         assertTrue(result);
     }
 
     @Test
     public void testFlowTableStatistics() {
-        Date startDate = new Date();
-        List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
         String timeStamp = (new Long((new Date()).getTime())).toString();
         List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
         RecordKeys recordKey = new RecordKeysBuilder()
@@ -248,30 +289,24 @@ public class TSDRStorageImplTest {
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
             .setTimeStamp(new BigInteger(timeStamp)).build();
 
-        metricCol.add((TSDRMetricRecord)tsdrMetric1);
-        metricCol.add((TSDRMetricRecord)tsdrMetric2);
-        metricCol.add((TSDRMetricRecord)tsdrMetric3);
-        storageService
-            .storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
-
-        boolean result = false;
-        Date endDate = new Date();
+        boolean result = true;
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.FLOWTABLESTATS),startDate, endDate).size() == 3;
+            storageService.store((TSDRMetricRecord)tsdrMetric1);
+            storageService.store((TSDRMetricRecord)tsdrMetric2);
+            storageService.store((TSDRMetricRecord)tsdrMetric3);
+
+            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_TABLE_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
+
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flowtable stats table with specified time range.");
             result = false;
             ee.printStackTrace();
         }
-
         assertTrue(result);
-
     }
 
     @Test
     public void testPortStatistics() {
-        Date startDate = new Date();
-        List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
         String timeStamp = (new Long((new Date()).getTime())).toString();
         List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
         RecordKeys recordKey = new RecordKeysBuilder()
@@ -416,40 +451,34 @@ public class TSDRStorageImplTest {
             .setTSDRDataCategory(DataCategory.PORTSTATS)
             .setTimeStamp(new BigInteger(timeStamp)).build();
 
-        metricCol.add((TSDRMetricRecord)tsdrMetric1);
-        metricCol.add((TSDRMetricRecord)tsdrMetric2);
-        metricCol.add((TSDRMetricRecord)tsdrMetric3);
-        metricCol.add((TSDRMetricRecord)tsdrMetric4);
-        metricCol.add((TSDRMetricRecord)tsdrMetric5);
-        metricCol.add((TSDRMetricRecord)tsdrMetric6);
-        metricCol.add((TSDRMetricRecord)tsdrMetric7);
-        metricCol.add((TSDRMetricRecord)tsdrMetric8);
-        metricCol.add((TSDRMetricRecord)tsdrMetric9);
-        metricCol.add((TSDRMetricRecord)tsdrMetric10);
-        metricCol.add((TSDRMetricRecord)tsdrMetric11);
-        metricCol.add((TSDRMetricRecord)tsdrMetric12);
-        metricCol.add((TSDRMetricRecord)tsdrMetric13);
-        metricCol.add((TSDRMetricRecord)tsdrMetric14);
-        storageService
-            .storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
-
-        boolean result = false;
-        Date endDate = new Date();
+        boolean result = true; 
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.PORTSTATS),startDate, endDate).size() == 14;
+            storageService.store((TSDRMetricRecord)tsdrMetric1);
+            storageService.store((TSDRMetricRecord)tsdrMetric2);
+            storageService.store((TSDRMetricRecord)tsdrMetric3);
+            storageService.store((TSDRMetricRecord)tsdrMetric4);
+            storageService.store((TSDRMetricRecord)tsdrMetric5);
+            storageService.store((TSDRMetricRecord)tsdrMetric6);
+            storageService.store((TSDRMetricRecord)tsdrMetric7);
+            storageService.store((TSDRMetricRecord)tsdrMetric8);
+            storageService.store((TSDRMetricRecord)tsdrMetric9);
+            storageService.store((TSDRMetricRecord)tsdrMetric10);
+            storageService.store((TSDRMetricRecord)tsdrMetric11);
+            storageService.store((TSDRMetricRecord)tsdrMetric12);
+            storageService.store((TSDRMetricRecord)tsdrMetric13);
+            storageService.store((TSDRMetricRecord)tsdrMetric14);
+
+            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 14);
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from port stats table with specified time range.");
             result = false;
             ee.printStackTrace();
         }
-
         assertTrue(result);
     }
 
     @Test
     public void testQueueStatistics() {
-        Date startDate = new Date();
-        List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
         String timeStamp = (new Long((new Date()).getTime())).toString();
         List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
         RecordKeys recordKey1 = new RecordKeysBuilder()
@@ -487,30 +516,26 @@ public class TSDRStorageImplTest {
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.QUEUESTATS)
             .setTimeStamp(new BigInteger(timeStamp)).build();
-        metricCol.add((TSDRMetricRecord)tsdrMetric1);
-        metricCol.add((TSDRMetricRecord)tsdrMetric2);
-        metricCol.add((TSDRMetricRecord)tsdrMetric3);
-        storageService
-            .storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
 
-        boolean result = false;
-        Date endDate = new Date();
+        boolean result = true;
+
         try{
-            int colsize = persistenceService.getMetrics(getTableNameFrom(DataCategory.QUEUESTATS),startDate, endDate).size();
-            System.out.println("collection size " + colsize);
-            result = colsize == 3;
+           storageService.store((TSDRMetricRecord)tsdrMetric1);
+           storageService.store((TSDRMetricRecord)tsdrMetric2);
+           storageService.store((TSDRMetricRecord)tsdrMetric3);
+
+            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
+
         }catch(Exception ee){
-            System.out.println("Error retrieving metrics from queue stats table with specified time range.");
+            System.out.println("Error retrieving metrics from queue meter stats table with specified time range.");
             result = false;
             ee.printStackTrace();
         }
-
         assertTrue(result);
     }
 
     @Test
     public void testFlowMeterStatistics() {
-        Date startDate = new Date();
         List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
         String timeStamp = (new Long((new Date()).getTime())).toString();
         List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
@@ -550,17 +575,13 @@ public class TSDRStorageImplTest {
             .setTSDRDataCategory(DataCategory.FLOWMETERSTATS)
             .setTimeStamp(new BigInteger(timeStamp)).build();
 
-        metricCol.add((TSDRMetricRecord)tsdrMetric1);
-        metricCol.add((TSDRMetricRecord)tsdrMetric2);
-        metricCol.add((TSDRMetricRecord)tsdrMetric3);
-        storageService
-            .storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
-
-
-        boolean result = false;
-        Date endDate = new Date();
+        boolean result = true;
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.FLOWMETERSTATS),startDate, endDate).size() == 3;
+            storageService.store((TSDRMetricRecord)tsdrMetric1);
+            storageService.store((TSDRMetricRecord)tsdrMetric2);
+            storageService.store((TSDRMetricRecord)tsdrMetric3);
+
+            result = storageService.getMetrics(TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME,new Date(0L),new Date(Long.parseLong(timeStamp))).size() == 3;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow meter stats table with specified time range.");
             result = false;
@@ -573,8 +594,6 @@ public class TSDRStorageImplTest {
 
     @Test
     public void testGroupStatistics() {
-        Date startDate = new Date();
-        List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
         String timeStamp = (new Long((new Date()).getTime())).toString();
         List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
         RecordKeys recordKey1 = new RecordKeysBuilder()
@@ -613,55 +632,26 @@ public class TSDRStorageImplTest {
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
             .setTimeStamp(new BigInteger(timeStamp)).build();
 
-        metricCol.add((TSDRMetricRecord)tsdrMetric1);
-        metricCol.add((TSDRMetricRecord)tsdrMetric2);
-        metricCol.add((TSDRMetricRecord)tsdrMetric3);
-        storageService
-            .storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
+        boolean result = true;
 
-
-        boolean result = false;
-        Date endDate = new Date();
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.FLOWGROUPSTATS),startDate, endDate).size() == 3;
+           storageService.store((TSDRMetricRecord)tsdrMetric1);
+           storageService.store((TSDRMetricRecord)tsdrMetric2);
+           storageService.store((TSDRMetricRecord)tsdrMetric3);
+
+            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
+
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow group stats table with specified time range.");
             result = false;
             ee.printStackTrace();
         }
-
         assertTrue(result);
-    }
-
-    private static final String FLOW_STATS_TABLE_NAME = "FlowMetrics";
-    private static final String FLOW_TABLE_STATS_TABLE_NAME = "FlowTableMetrics";
-    private static final String INTERFACE_METRICS_TABLE_NAME = "InterfaceMetrics";
-    private static final String QUEUE_METRICS_TABLE_NAME = "QueueMetrics";
-    private static final String GROUP_METRICS_TABLE_NAME = "GroupMetrics";
-    private static final String METER_METRICS_TABLE_NAME = "MeterMetrics";
-
-    private static String getTableNameFrom(DataCategory datacategory){
-        if ( datacategory == DataCategory.FLOWSTATS){
-            return FLOW_STATS_TABLE_NAME;
-        }else if ( datacategory == DataCategory.FLOWTABLESTATS){
-            return FLOW_TABLE_STATS_TABLE_NAME;
-        }else if ( datacategory == DataCategory.FLOWGROUPSTATS){
-            return GROUP_METRICS_TABLE_NAME;
-        }else if (datacategory == DataCategory.PORTSTATS){
-            return  INTERFACE_METRICS_TABLE_NAME;
-        }else if (datacategory == DataCategory.QUEUESTATS){
-            return QUEUE_METRICS_TABLE_NAME;
-        }else if (datacategory == DataCategory.FLOWMETERSTATS){
-            return METER_METRICS_TABLE_NAME;
-        }
-
-        return "";
     }
 
     @After
     public void teardown() {
-        storageService = null;
-        persistenceService = null;
-        tableRecordMap.clear();
+        tableEntityMap.clear();
+        tableEntityMap = null;
     }
 }
