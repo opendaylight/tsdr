@@ -48,13 +48,14 @@ public class TSDRInventoryNodesPoller extends Thread {
                     InstanceIdentifier<Node> nodeID = id.child(Node.class,
                             n.getKey());
                     nodeSet.add(nodeID);
+                    collector.collectStatistics(n);
                 }
                 // Register on added nodes
                 for (InstanceIdentifier<Node> nodeID : nodeSet) {
                     knownNodes.add(nodeID);
                     // The registration won't register on those nodes that
                     // already have a registration in place
-                    collector.registerOnStatistics(nodeID);
+                    // collector.registerOnStatistics(nodeID);
                 }
                 // unregister on removed nodes
                 for (Iterator<InstanceIdentifier<Node>> iter = knownNodes
@@ -62,7 +63,7 @@ public class TSDRInventoryNodesPoller extends Thread {
                     InstanceIdentifier<Node> nodeID = iter.next();
                     if (!nodeSet.contains(nodeID)) {
                         iter.remove();
-                        collector.removeAllNodeListeners(nodeID);
+                        collector.removeAllNodeBuilders(nodeID);
                     }
                 }
             } catch (Exception err) {
