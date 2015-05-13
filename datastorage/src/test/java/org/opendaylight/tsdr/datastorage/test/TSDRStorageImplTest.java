@@ -181,7 +181,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
@@ -190,7 +190,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         metricCol.add((TSDRMetricRecord)tsdrMetric1);
         metricCol.add((TSDRMetricRecord)tsdrMetric2);
@@ -228,7 +228,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
@@ -237,7 +237,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
@@ -246,7 +246,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         metricCol.add((TSDRMetricRecord)tsdrMetric1);
         metricCol.add((TSDRMetricRecord)tsdrMetric2);
@@ -286,7 +286,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
@@ -296,7 +296,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
@@ -306,7 +306,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder4 = new TSDRMetricRecordBuilder();
@@ -316,7 +316,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder5 = new TSDRMetricRecordBuilder();
@@ -326,7 +326,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder6 = new TSDRMetricRecordBuilder();
@@ -336,7 +336,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder7 = new TSDRMetricRecordBuilder();
@@ -346,7 +346,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder8 = new TSDRMetricRecordBuilder();
@@ -356,7 +356,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder9 = new TSDRMetricRecordBuilder();
@@ -366,7 +366,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         TSDRMetricRecordBuilder builder10 = new TSDRMetricRecordBuilder();
 
@@ -375,7 +375,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder11 = new TSDRMetricRecordBuilder();
@@ -385,7 +385,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder12 = new TSDRMetricRecordBuilder();
@@ -395,7 +395,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         TSDRMetricRecordBuilder builder13 = new TSDRMetricRecordBuilder();
 
@@ -404,7 +404,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
 
         TSDRMetricRecordBuilder builder14 = new TSDRMetricRecordBuilder();
@@ -414,7 +414,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         metricCol.add((TSDRMetricRecord)tsdrMetric1);
         metricCol.add((TSDRMetricRecord)tsdrMetric2);
@@ -468,7 +468,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.QUEUESTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
        TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
@@ -477,7 +477,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.QUEUESTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
        TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
@@ -486,7 +486,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.QUEUESTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
         metricCol.add((TSDRMetricRecord)tsdrMetric1);
         metricCol.add((TSDRMetricRecord)tsdrMetric2);
         metricCol.add((TSDRMetricRecord)tsdrMetric3);
@@ -530,7 +530,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWMETERSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
        TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
@@ -539,7 +539,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWMETERSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
        TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
@@ -548,7 +548,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWMETERSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         metricCol.add((TSDRMetricRecord)tsdrMetric1);
         metricCol.add((TSDRMetricRecord)tsdrMetric2);
@@ -593,7 +593,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
        TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
@@ -602,7 +602,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
        TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
@@ -611,7 +611,7 @@ public class TSDRStorageImplTest {
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
-            .setTimeStamp(new BigInteger(timeStamp)).build();
+            .setTimeStamp(new Long(timeStamp)).build();
 
         metricCol.add((TSDRMetricRecord)tsdrMetric1);
         metricCol.add((TSDRMetricRecord)tsdrMetric2);
