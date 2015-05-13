@@ -7,7 +7,6 @@
  */
 package org.opendaylight.tsdr.datacollection;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,7 +151,7 @@ public abstract class TSDRBaseDataChangeListener implements DataChangeListener {
         return rec.build();
     }
 
-    public static BigInteger getTimeStamp() {
-        return BigInteger.valueOf(System.currentTimeMillis());
+    public static long getTimeStamp() {
+        return System.currentTimeMillis();
     }
 }

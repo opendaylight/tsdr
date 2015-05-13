@@ -147,7 +147,7 @@ module TSDR {
         leaf TimeStamp {
             description
                 "The time stamp of the data when it was collected.";
-            type uint64;
+            type int64;
         }
     }
     list TSDRAggregationMetric{
@@ -220,7 +220,7 @@ module TSDR {
         leaf TimeStamp{
             description
                 "Time stamp of the log record when it was collected.";
-            type uint64;
+            type int64;
         }
     }
     rpc storeTSDRMetricRecord {
