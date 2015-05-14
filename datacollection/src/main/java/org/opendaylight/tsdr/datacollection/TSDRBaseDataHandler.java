@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.meters.MeterKey;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.tables.TableKey;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.tables.table.FlowKey;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.types.port.rev130925.queues.QueueKey;
@@ -83,6 +84,11 @@ public abstract class TSDRBaseDataHandler {
             IdentifiableItem<?, Identifier<?>> ia) {
         RecordKeysBuilder rec = new RecordKeysBuilder();
         rec.setKeyName(ia.getType().getSimpleName());
+
+        if (ia.getKey() instanceof MeterKey){
+            MeterKey mk = (MeterKey)ia.getKey();
+            rec.setKeyValue(""+mk.getMeterId().getValue());
+        } else
         if (ia.getKey() instanceof FlowKey) {
             FlowKey flowKey = (FlowKey) ia.getKey();
             rec.setKeyValue("" + flowKey.getId().getValue());
@@ -102,8 +108,7 @@ public abstract class TSDRBaseDataHandler {
             TableKey tk = (TableKey) ia.getKey();
             rec.setKeyValue("" + tk.getId());
         } else {
-            TSDRDOMCollector.log("Error! - Missed Key Of type "
-                    + ia.getType().getName(), TSDRDOMCollector.ERROR);
+            throw new IllegalArgumentException("Unknown DataObject Key of type "+ia.getType().getName());
         }
         return rec.build();
     }

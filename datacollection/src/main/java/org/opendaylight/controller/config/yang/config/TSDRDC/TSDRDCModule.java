@@ -1,22 +1,11 @@
-/*
- * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
- *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
- */
 package org.opendaylight.controller.config.yang.config.TSDRDC;
 
-/**
- * @author Sharon Aicler(saichler@gmail.com)
- **/
 import org.opendaylight.controller.config.spi.Module;
 import org.opendaylight.tsdr.datacollection.TSDRDOMCollector;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdrdc.rev140523.TSDRDCService;
 
 public class TSDRDCModule extends org.opendaylight.controller.config.yang.config.TSDRDC.AbstractTSDRDCModule {
-
     private TSDRDOMCollector domCollector = null;
-
     public TSDRDCModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver) {
         super(identifier, dependencyResolver);
     }
@@ -33,14 +22,16 @@ public class TSDRDCModule extends org.opendaylight.controller.config.yang.config
     @Override
     public java.lang.AutoCloseable createInstance() {
         domCollector = new TSDRDOMCollector(getDataBrokerDependency(),getRpcRegistryDependency());
+        getRpcRegistryDependency().addRpcImplementation(TSDRDCService.class,domCollector);
         return new AutoCloseable() {
             @Override
             public void close() throws Exception {
             }
         };
     }
+
     @Override
     public boolean canReuse(Module arg0) {
-        return true;
+        return false;
     }
 }

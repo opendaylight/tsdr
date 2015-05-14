@@ -29,7 +29,11 @@ module TSDRDC {
             base config:module-type;
             config:java-name-prefix TSDRDC;
     }
-
+    container TSDRDCConfig{
+       leaf polling-interval{
+          type int64;
+       }
+    }
     augment "/config:modules/config:module/config:configuration" {
                 case TSDRDC {
                     when "/config:modules/config:module/config:type = 'TSDRDC'";
@@ -51,4 +55,15 @@ module TSDRDC {
                     }
                 }
             }
+
+    rpc setPollingInterval  {
+        description
+          "set the polling interval of the collector";
+        input {
+            leaf interval {
+              type int64;
+              description "interval";
+            }
+        }
+    }
 }
