@@ -36,6 +36,8 @@ public class HBaseDataStoreContext {
 
     private int writeBufferSize = 512;
 
+    private boolean autoFlush = false;
+
     public  String getZookeeperQuorum() {
         return zookeeperQuorum;
     }
@@ -59,6 +61,12 @@ public class HBaseDataStoreContext {
     }
     public void setWriteBufferSize(int writeBufferSize) {
         this.writeBufferSize = writeBufferSize;
+    }
+    public void setAutoFlush(boolean autoFlush) {
+        this.autoFlush = autoFlush;
+    }
+    public boolean getAutoFlush() {
+        return this.autoFlush;
     }
 
 }

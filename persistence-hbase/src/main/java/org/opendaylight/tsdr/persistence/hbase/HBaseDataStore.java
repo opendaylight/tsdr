@@ -48,6 +48,7 @@ public class HBaseDataStore  {
      private static String zookeeperClientport;
      private static int poolSize;
      private static int writeBufferSize;
+     private static boolean autoFlush;
      private static HTablePool htablePool;
      private static Configuration conf;
      private static Map<String, HTableInterface> htableMap = new HashMap<String, HTableInterface>();
@@ -71,6 +72,7 @@ public class HBaseDataStore  {
          zookeeperClientport = context.getZookeeperClientport();
          poolSize = context.getPoolSize();
          writeBufferSize = context.getWriteBufferSize();
+         autoFlush = context.getAutoFlush();
          log.debug("Exiting constructor HBaseDataStore()");
      }
 
@@ -121,7 +123,7 @@ public class HBaseDataStore  {
                  }
                  if ( htablePool != null){
                      htableResult =   htablePool.getTable(tableName);
-                     htableResult.setAutoFlush(false);
+                     htableResult.setAutoFlush(autoFlush);
                      htableResult.setWriteBufferSize(writeBufferSize);
                  }
               }
@@ -419,6 +421,25 @@ public class HBaseDataStore  {
                  resultEntity.setColumns(noSQLColumnList);
          return resultEntity;
 
+     }
+
+     /**
+      * Flush the commits for the given tablename
+      */
+     public void flushCommit(String tableName){
+         log.debug("Entering flushCommit(tableName)");
+         HTableInterface htableResult=null;
+         htableResult=htableMap.get(tableName);
+         if(htableResult != null) {
+             if(!autoFlush){
+                 try{
+                     htableResult.flushCommits();
+                 }catch(IOException e){
+                     log.error("Flushcommit failed", e);
+                 }
+             }
+         }
+         log.debug("Exiting flushCommit(tableName)");
      }
 
      /**
