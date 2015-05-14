@@ -11,6 +11,8 @@ package org.opendaylight.tsdr.persistence.hbase;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
 import org.opendaylight.tsdr.scheduler.SchedulerService;
@@ -67,6 +69,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
         //convert TSDRRecord to HBaseEntities
         HBaseEntity entity = convertToHBaseEntity(metrics);
         HBaseDataStoreFactory.getHBaseDataStore().create(entity);
+        flushCommit(entity.getTableName());
          log.debug("Exiting store(TSDRMetricRecord)");
      }
 
@@ -77,9 +80,13 @@ public class TSDRHBasePersistenceServiceImpl  implements
     public void store(List<TSDRMetricRecord> metricList){
         log.debug("Entering store(List<TSDRMetricRecord>)");
         if ( metricList != null && metricList.size() != 0){
+            Set<String> tableNames = new HashSet<String>();
             for(TSDRMetricRecord metrics: metricList){
-               store(metrics);
+                HBaseEntity entity = convertToHBaseEntity(metrics);
+                tableNames.add(entity.getTableName());
+                HBaseDataStoreFactory.getHBaseDataStore().create(entity);
             }
+            flushCommit(tableNames);
             closeConnections();
         }
         log.debug("Exiting store(List<TSDRMetricRecord>)");
@@ -195,5 +202,17 @@ public class TSDRHBasePersistenceServiceImpl  implements
         }
         log.debug("Exiting createTables()");
         return;
+    }
+
+    private  void flushCommit(String tableName){
+        HBaseDataStoreFactory.getHBaseDataStore().flushCommit(tableName);
+    }
+
+    private void flushCommit(Set<String> tableNames){
+        log.debug("Entering flushing commits");
+        for ( String tableName: tableNames){
+            flushCommit(tableName);
+        }
+        log.debug("Exiting flushing commits");
     }
 }

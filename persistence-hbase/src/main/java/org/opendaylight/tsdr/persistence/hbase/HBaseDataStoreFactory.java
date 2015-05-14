@@ -86,6 +86,8 @@ public class HBaseDataStoreFactory {
             context.setPoolSize(20);
             context.setZookeeperClientport("2181");
             context.setZookeeperQuorum("localhost");
+            context.setAutoFlush(false);
+            context.setWriteBufferSize(512);
             if(inputStream != null){
                 try{
                     inputStream.close();
@@ -101,6 +103,8 @@ public class HBaseDataStoreFactory {
         context.setPoolSize(Integer.valueOf(properties.getProperty("poolsize")));
         context.setZookeeperClientport(properties.getProperty("zoo.keeper.client.port"));
         context.setZookeeperQuorum(properties.getProperty("zoo.keeper.quorum"));
+        context.setAutoFlush(Boolean.valueOf(properties.getProperty("autoflush")));
+        context.setWriteBufferSize(Integer.valueOf(properties.getProperty("writebuffersize")));
 
         try{
             inputStream.close();
