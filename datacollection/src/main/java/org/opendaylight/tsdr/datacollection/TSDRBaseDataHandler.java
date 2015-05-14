@@ -10,10 +10,6 @@ package org.opendaylight.tsdr.datacollection;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opendaylight.controller.md.sal.binding.api.DataChangeListener;
-import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
-import org.opendaylight.controller.md.sal.common.api.data.AsyncDataBroker.DataChangeScope;
-import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.tables.TableKey;
@@ -23,7 +19,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.group.types.rev131018.group
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.node.NodeConnectorKey;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.Node;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.NodeKey;
-import org.opendaylight.yangtools.concepts.ListenerRegistration;
 import org.opendaylight.yangtools.yang.binding.DataObject;
 import org.opendaylight.yangtools.yang.binding.Identifier;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
@@ -35,67 +30,29 @@ import org.opendaylight.yangtools.yang.binding.InstanceIdentifier.PathArgument;
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 /*
- * This class is an abstract listener where all listeners should inherit as it
- * gives services of tracking the registration of the listener + retrieving the
- * initial data.
+ * This class is an abstract handler where all handlers should inherit as it has
+ * a reference to the main collector and provide some common methods to use by
+ * the handlers.
  */
-public abstract class TSDRBaseDataChangeListener implements DataChangeListener {
-    private InstanceIdentifier<? extends DataObject> IID = null;
-    private ListenerRegistration<DataChangeListener> registration = null;
-    private String keyName = null;
-    private String key = null;
-    private DataObject baseLine = null;
+public abstract class TSDRBaseDataHandler {
     private TSDRDOMCollector collector = null;
 
-    public TSDRBaseDataChangeListener(InstanceIdentifier<Node> nodeID,
-            InstanceIdentifier<? extends DataObject> _IID, String _keyName,
-            TSDRDOMCollector _collector) {
-        this.IID = _IID;
-        this.keyName = _keyName;
-        this.key = this.IID.toString() + this.keyName;
+    public TSDRBaseDataHandler(TSDRDOMCollector _collector) {
         this.collector = _collector;
-        ReadOnlyTransaction rot = collector.getDataBroker()
-                .newReadOnlyTransaction();
-        try {
-            this.baseLine = rot
-                    .read(LogicalDatastoreType.OPERATIONAL, this.IID).get()
-                    .get();
-            this.registration = collector.getDataBroker()
-                    .registerDataChangeListener(
-                            LogicalDatastoreType.OPERATIONAL, this.IID, this,
-                            DataChangeScope.SUBTREE);
-            collector.addListener(nodeID, this.IID, this.keyName, this);
-            TSDRDOMCollector.log("Added Listener for " + this.keyName,TSDRDOMCollector.DEBUG);
-        } catch (Exception e) {
-            // If the data does not exist in the node, we might hit this error a
-            // lot.
-            // Not logging this error as if the operation fails, the listener
-            // will not be added
-            // And we will wait for the next iteration to see if the data is
-            // there.
-        } finally {
-            rot.close();
-        }
     }
 
-    public String getKey() {
-        return key;
-    }
+    /*
+     * An abstract method that each handler should implement accordign to the
+     * type of data it is handling.
+     */
+    public abstract void handleData(InstanceIdentifier<Node> nodeID,
+            InstanceIdentifier<?> id, DataObject dataObject);
 
-    public void closeRegistrations() {
-        this.registration.close();
-    }
-
-    public InstanceIdentifier<? extends DataObject> getIID() {
-        return this.IID;
-    }
-
+    /*
+     * Returns a reference to the main collector
+     */
     public TSDRDOMCollector getCollector() {
         return this.collector;
-    }
-
-    public DataObject getBaseLine() {
-        return this.baseLine;
     }
 
     /*

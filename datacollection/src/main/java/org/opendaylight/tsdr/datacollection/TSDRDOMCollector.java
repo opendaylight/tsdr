@@ -18,17 +18,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
-import org.opendaylight.controller.md.sal.binding.api.DataChangeListener;
-import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
-import org.opendaylight.controller.md.sal.common.api.data.AsyncDataChangeEvent;
-import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
-import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
-import org.opendaylight.tsdr.datacollection.listeners.FlowCapableNodeConnectorQueueStatisticsDataListener;
-import org.opendaylight.tsdr.datacollection.listeners.FlowStatisticsDataListener;
-import org.opendaylight.tsdr.datacollection.listeners.NodeConnectorStatisticsChangeListener;
-import org.opendaylight.tsdr.datacollection.listeners.NodeGroupStatisticsChangeListener;
-import org.opendaylight.tsdr.datacollection.listeners.NodeTableStatisticsChangeListener;
+import org.opendaylight.tsdr.datacollection.handlers.FlowCapableNodeConnectorQueueStatisticsDataHandler;
+import org.opendaylight.tsdr.datacollection.handlers.FlowStatisticsDataHandler;
+import org.opendaylight.tsdr.datacollection.handlers.NodeConnectorStatisticsChangeHandler;
+import org.opendaylight.tsdr.datacollection.handlers.NodeGroupStatisticsChangeHandler;
+import org.opendaylight.tsdr.datacollection.handlers.NodeMeterStatisticsChangeHandler;
+import org.opendaylight.tsdr.datacollection.handlers.NodeTableStatisticsChangeHandler;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
@@ -39,6 +35,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.FlowCapableNode;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.FlowCapableNodeConnector;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.meters.Meter;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.tables.Table;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.tables.table.Flow;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.statistics.rev130819.FlowStatisticsData;
@@ -46,20 +43,16 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.table.statistics.rev13
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.types.port.rev130925.queues.Queue;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.group.statistics.rev131111.NodeGroupStatistics;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.group.types.rev131018.groups.Group;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.NodeId;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.Nodes;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.node.NodeConnector;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.Node;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.NodeKey;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.meter.statistics.rev131111.NodeMeterStatistics;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.FlowCapableNodeConnectorStatisticsData;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.queue.statistics.rev131216.FlowCapableNodeConnectorQueueStatisticsData;
 import org.opendaylight.yangtools.yang.binding.DataObject;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Optional;
-import com.google.common.util.concurrent.CheckedFuture;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
@@ -98,25 +91,28 @@ public class TSDRDOMCollector {
     // karaf log
     private static boolean logToExternalFile = false;
 
-    // The registered listeners so we could remove and unregister them on demand
-    private Map<InstanceIdentifier<?>, Map<InstanceIdentifier<?>, Map<String, TSDRBaseDataChangeListener>>> listeners = new ConcurrentHashMap<>();
+    // collectors
+    private Map<Class<? extends DataObject>, TSDRBaseDataHandler> handlers = new ConcurrentHashMap<>();
+    private Map<InstanceIdentifier<Node>, Set<InstanceIdentifier<?>>> nodeID2SubIDs = new ConcurrentHashMap<>();
 
     public TSDRDOMCollector(DataBroker _dataBroker,
             RpcProviderRegistry _rpcRegistry) {
         log("TSDR DOM Collector Started", INFO);
         this.dataBroker = _dataBroker;
         this.rpcRegistry = _rpcRegistry;
-        /*
-         * try { //Register of the main inventory node (nodes) to receive
-         * notification when //a node is being added InstanceIdentifier<Nodes>
-         * id = InstanceIdentifier.builder(Nodes.class).build();
-         * this.dataBroker.registerDataChangeListener(
-         * LogicalDatastoreType.OPERATIONAL, id, new
-         * TSDRDOMCollector.MyStatisticsChangeListener(), DataChangeScope.ONE);
-         * new StoringThread(); } catch (Exception err) {
-         * TSDRDOMCollector.log(err); }
-         */
-
+        // initialize handlers
+        handlers.put(FlowCapableNodeConnectorQueueStatisticsData.class,
+                new FlowCapableNodeConnectorQueueStatisticsDataHandler(this));
+        handlers.put(FlowStatisticsData.class, new FlowStatisticsDataHandler(
+                this));
+        handlers.put(FlowCapableNodeConnectorStatisticsData.class,
+                new NodeConnectorStatisticsChangeHandler(this));
+        handlers.put(NodeGroupStatistics.class,
+                new NodeGroupStatisticsChangeHandler(this));
+        handlers.put(FlowTableStatisticsData.class,
+                new NodeTableStatisticsChangeHandler(this));
+        handlers.put(NodeMeterStatistics.class,
+                new NodeMeterStatisticsChangeHandler(this));
         new TSDRInventoryNodesPoller(this);
         new StoringThread();
     }
@@ -124,8 +120,8 @@ public class TSDRDOMCollector {
     // Adds a new builder to the builder container, the first metric for the
     // InstanceIdenfier will create
     // the builder container.
-    public void addBuilderToContainer(InstanceIdentifier<?> id,
-            TSDRMetricRecordBuilder builder) {
+    public void addBuilderToContainer(InstanceIdentifier<Node> nodeID,
+            InstanceIdentifier<?> id, TSDRMetricRecordBuilder builder) {
         TSDRMetricRecordBuilderContainer container = null;
         // We want to synchronize here because when adding a new builder we want
         // to make sure there
@@ -142,6 +138,12 @@ public class TSDRDOMCollector {
                 TSDRMetricRecordBuilderContainer temp[] = new TSDRMetricRecordBuilderContainer[containers.length + 1];
                 System.arraycopy(containers, 0, temp, 0, containers.length);
                 id2Index.put(id, new ContainerIndex(containers.length));
+                Set<InstanceIdentifier<?>> nodeIDs = nodeID2SubIDs.get(nodeID);
+                if (nodeIDs == null) {
+                    nodeIDs = new HashSet<InstanceIdentifier<?>>();
+                    nodeID2SubIDs.put(nodeID, nodeIDs);
+                }
+                nodeIDs.add(id);
                 temp[containers.length] = container;
                 containers = temp;
             }
@@ -188,9 +190,9 @@ public class TSDRDOMCollector {
 
     // Create a new TSDRMetricRecordBuilder and adds it to its builder container
     // according to the instanceIdentifier
-    public void createTSDRMetricRecordBuilder(InstanceIdentifier<?> id,
-            List<RecordKeys> recKeys, String metricName, String value,
-            DataCategory category) {
+    public void createTSDRMetricRecordBuilder(InstanceIdentifier<Node> nodeID,
+            InstanceIdentifier<?> id, List<RecordKeys> recKeys,
+            String metricName, String value, DataCategory category) {
         TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
         builder.setRecordKeys(recKeys);
         builder.setNodeID(getNodeIDFrom(recKeys));
@@ -205,27 +207,52 @@ public class TSDRDOMCollector {
         }
         builder.setMetricValue(_value);
         builder.setTimeStamp(System.currentTimeMillis());
-        addBuilderToContainer(id, builder);
+        addBuilderToContainer(nodeID, id, builder);
     }
 
-    // this method receives a Node InstanceIdentifier, retrieve all its info
-    // from the dataBroker
-    // and traverse it to find and register on the different statistics
-    public void registerOnStatistics(InstanceIdentifier<Node> nodeID) {
-        ReadOnlyTransaction rot = dataBroker.newReadOnlyTransaction();
-        CheckedFuture<Optional<Node>, ReadFailedException> cf = rot.read(
-                LogicalDatastoreType.OPERATIONAL, nodeID);
+    // Finds the handler for this statistics and apply it
+    public void applyCollector(InstanceIdentifier<Node> nodeID,
+            InstanceIdentifier<?> id, DataObject dataObject,
+            Class<? extends DataObject> cls) {
+        if (dataObject == null)
+            return;
+        TSDRBaseDataHandler c = handlers.get(cls);
+        if (c == null) {
+            log("Error, can't find collector for " + cls.getSimpleName(), ERROR);
+            return;
+        }
+        c.handleData(nodeID, id, dataObject);
+    }
 
+    // Extract the statistics from a node and updates the builders with the
+    // updated data
+    public void collectStatistics(Node node) {
         try {
-            Node node = cf.get().get();
             if (node != null) {
+                InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
+                        Nodes.class).child(Node.class, node.getKey());
                 FlowCapableNode fcnode = node
                         .getAugmentation(FlowCapableNode.class);
                 if (fcnode != null) {
-                    // Node Flow Statistics
-                    if (!listeners.containsKey(nodeID)) {
-                        log(node.getId().toString(), INFO);
+                    List<Meter> meters = fcnode.getMeter();
+                    if (meters != null) {
+                        for (Meter meter : meters) {
+                            NodeMeterStatistics nodeMeterStatistics = meter
+                                    .getAugmentation(NodeMeterStatistics.class);
+                            if (nodeMeterStatistics != null) {
+                                InstanceIdentifier<NodeMeterStatistics> mIID = InstanceIdentifier
+                                        .create(Nodes.class)
+                                        .child(Node.class, node.getKey())
+                                        .augmentation(FlowCapableNode.class)
+                                        .child(Meter.class, meter.getKey())
+                                        .augmentation(NodeMeterStatistics.class);
+                                applyCollector(nodeID, mIID,
+                                        nodeMeterStatistics,
+                                        NodeMeterStatistics.class);
+                            }
+                        }
                     }
+                    // Node Flow Statistics
                     List<Table> tables = fcnode.getTable();
                     if (tables != null) {
                         for (Table t : tables) {
@@ -239,11 +266,8 @@ public class TSDRDOMCollector {
                                         .child(Table.class, t.getKey())
                                         .augmentation(
                                                 FlowTableStatisticsData.class);
-                                if (!checkIfListenerExist(nodeID, tIID,
-                                        "NodeTableStatisticsChangeListener")) {
-                                    new NodeTableStatisticsChangeListener(
-                                            nodeID, tIID, this);
-                                }
+                                applyCollector(nodeID, tIID, data,
+                                        FlowTableStatisticsData.class);
                             }
                             // Flow Statistics
                             if (t.getFlow() != null) {
@@ -262,11 +286,9 @@ public class TSDRDOMCollector {
                                                         flow.getKey())
                                                 .augmentation(
                                                         FlowStatisticsData.class);
-                                        if (!checkIfListenerExist(nodeID, tIID,
-                                                "FlowStatisticsDataListener")) {
-                                            new FlowStatisticsDataListener(
-                                                    nodeID, tIID, this);
-                                        }
+                                        applyCollector(nodeID, tIID,
+                                                flowStatisticsData,
+                                                FlowStatisticsData.class);
                                     }
                                 }
                             }
@@ -284,11 +306,8 @@ public class TSDRDOMCollector {
                                     .augmentation(FlowCapableNode.class)
                                     .child(Group.class, g.getKey())
                                     .augmentation(NodeGroupStatistics.class);
-                            if (!checkIfListenerExist(nodeID, tIID,
-                                    "NodeGroupStatisticsChangeListener")) {
-                                new NodeGroupStatisticsChangeListener(nodeID,
-                                        tIID, this);
-                            }
+                            applyCollector(nodeID, tIID, ngs,
+                                    NodeGroupStatistics.class);
                         }
                     }
                 }
@@ -305,11 +324,9 @@ public class TSDRDOMCollector {
                                 .child(NodeConnector.class, nc.getKey())
                                 .augmentation(
                                         FlowCapableNodeConnectorStatisticsData.class);
-                        if (!checkIfListenerExist(nodeID, tIID,
-                                "NodeConnectorStatisticsChangeListener")) {
-                            new NodeConnectorStatisticsChangeListener(nodeID,
-                                    tIID, this);
-                        }
+
+                        applyCollector(nodeID, tIID, fnc,
+                                FlowCapableNodeConnectorStatisticsData.class);
 
                         FlowCapableNodeConnector fcnc = nc
                                 .getAugmentation(FlowCapableNodeConnector.class);
@@ -325,11 +342,11 @@ public class TSDRDOMCollector {
                                         .child(Queue.class, q.getKey())
                                         .augmentation(
                                                 FlowCapableNodeConnectorQueueStatisticsData.class);
-                                if (!checkIfListenerExist(nodeID, tIID2,
-                                        "FlowCapableNodeConnectorQueueStatisticsDataListener")) {
-                                    new FlowCapableNodeConnectorQueueStatisticsDataListener(
-                                            nodeID, tIID2, this);
-                                }
+                                applyCollector(
+                                        nodeID,
+                                        tIID2,
+                                        q.getAugmentation(FlowCapableNodeConnectorQueueStatisticsData.class),
+                                        FlowCapableNodeConnectorQueueStatisticsData.class);
                             }
                         }
                     }
@@ -339,71 +356,6 @@ public class TSDRDOMCollector {
             log("Failed to register on metric data due to the following exception:",
                     ERROR);
             log(err);
-        }
-    }
-
-    // This is the main listener, it sole purpose is to get notified on a new
-    // node and then invoke a thread
-    // that waits for 5 seconds (just in case the transactions on the node are
-    // not finished yet) and
-    // then invoke the register method to register on the nodes different
-    // statistics.
-    private class MyStatisticsChangeListener implements DataChangeListener {
-        private Set<NodeId> availableNodes = new HashSet<NodeId>();
-
-        public void process(Map<InstanceIdentifier<?>, DataObject> map) {
-            try {
-                for (DataObject dobj : map.values()) {
-                    Nodes nodes = (Nodes) dobj;
-                    for (Node node : nodes.getNode()) {
-                        if (!availableNodes.contains(node.getId())) {
-                            final InstanceIdentifier<Node> nodeIID = InstanceIdentifier
-                                    .create(Nodes.class)
-                                    .child(Node.class,
-                                            new NodeKey(node.getId()))
-                                    .builder().build();
-                            Runnable runthis = new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        Thread.sleep(5000);
-                                    } catch (InterruptedException err) {
-                                        log("Interrupted while sleeping before processing",
-                                                ERROR);
-                                    }
-                                    registerOnStatistics(nodeIID);
-                                }
-                            };
-                            new Thread(runthis).start();
-                        }
-                    }
-                }
-            } catch (Exception err) {
-                log("Unknown Error has occured as follows:", ERROR);
-                log(err);
-            }
-        }
-
-        @Override
-        public void onDataChanged(
-                AsyncDataChangeEvent<InstanceIdentifier<?>, DataObject> arg0) {
-            if (arg0.getCreatedData() != null) {
-                process(arg0.getCreatedData());
-            }
-            if (arg0.getUpdatedData() != null) {
-                process(arg0.getUpdatedData());
-            }
-            if (arg0.getRemovedPaths() != null) {
-                for (InstanceIdentifier<?> id : arg0.getRemovedPaths()) {
-                    try {
-                        removeAllNodeListeners((InstanceIdentifier<Node>) id);
-                    } catch (Exception err) {
-                        log("Failed to remove node listeners due to the following exception:",
-                                ERROR);
-                        log(err);
-                    }
-                }
-            }
         }
     }
 
@@ -531,49 +483,12 @@ public class TSDRDOMCollector {
         }
     }
 
-    private boolean checkIfListenerExist(InstanceIdentifier<Node> nodeID,
-            InstanceIdentifier<?> statID, String listenerName) {
-        Map<InstanceIdentifier<?>, Map<String, TSDRBaseDataChangeListener>> nodeListeners = listeners
-                .get(nodeID);
-        if (nodeListeners == null)
-            return false;
-        Map<String, TSDRBaseDataChangeListener> statsListeners = nodeListeners
-                .get(statID);
-        if (statsListeners == null)
-            return false;
-        return statsListeners.containsKey(listenerName);
-    }
-
-    public void addListener(InstanceIdentifier<Node> nodeID,
-            InstanceIdentifier<?> statID, String listenerName,
-            TSDRBaseDataChangeListener listener) {
-        Map<InstanceIdentifier<?>, Map<String, TSDRBaseDataChangeListener>> nodeListeners = listeners
-                .get(nodeID);
-        if (nodeListeners == null) {
-            nodeListeners = new ConcurrentHashMap<>();
-            listeners.put(nodeID, nodeListeners);
+    public void removeAllNodeBuilders(InstanceIdentifier<Node> nodeID) {
+        Set<InstanceIdentifier<?>> subIDs = nodeID2SubIDs.get(nodeID);
+        for (InstanceIdentifier<?> subID : subIDs) {
+            removeBuilderContailer(subID);
         }
-        Map<String, TSDRBaseDataChangeListener> statsListeners = nodeListeners
-                .get(statID);
-        if (statsListeners == null) {
-            statsListeners = new ConcurrentHashMap<>();
-            nodeListeners.put(statID, statsListeners);
-        }
-        statsListeners.put(listenerName, listener);
-    }
-
-    public void removeAllNodeListeners(InstanceIdentifier<Node> nodeID) {
-        Map<InstanceIdentifier<?>, Map<String, TSDRBaseDataChangeListener>> nodeListeners = listeners
-                .get(nodeID);
-        if (nodeListeners == null)
-            return;
-        for (Map<String, TSDRBaseDataChangeListener> l : nodeListeners.values()) {
-            for (TSDRBaseDataChangeListener listener : l.values()) {
-                listener.closeRegistrations();
-                removeBuilderContailer(listener.getIID());
-            }
-        }
-        listeners.remove(nodeID);
+        log("Removed all data for node-" + nodeID, INFO);
     }
 
     public DataBroker getDataBroker() {
