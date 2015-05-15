@@ -27,16 +27,6 @@ public class TSDRHBaseDataStoreConstants {
     public static final String METER_METRICS_TABLE_NAME = "MeterMetrics";
 
     /**
-     * Data Category Name for OpenFlow statistics data.
-    */
-    public static final String FLOW_STATS_CATEGORY_NAME = "FlowStats";
-    public static final String FLOW_TABLE_STATS_CATEGORY_NAME = "FlowTableStats";
-    public static final String INTERFACE_STATS_CATEGORY_NAME = "PortStats";
-    public static final String QUEUE_STATS_CATEGORY_NAME = "QueueStats";
-    public static final String GROUP_STATS_CATEGORY_NAME = "FlowGroupStats";
-    public static final String METER_STATS_CATEGORY_NAME = "FlowMeterStats";
-
-    /**
      * Other constants used in HBase tables for OpenFlow statistics data.
     */
     public static final String ROWKEY_SPLIT = "_";

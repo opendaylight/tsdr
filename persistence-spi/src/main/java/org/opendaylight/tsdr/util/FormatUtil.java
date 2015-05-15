@@ -49,33 +49,48 @@ public class FormatUtil {
      */
     public static String convertToMetricDetailsJSON(String objectKeys, String category) {
         String[] keys = objectKeys.split(TSDRConstants.ROWKEY_SPLIT);
-        if (keys == null || keys.length < 2) {
-            return null;
-        }
 
         if (category.equalsIgnoreCase(TSDRConstants.FLOW_STATS_CATEGORY_NAME)) {
+            if (keys == null || keys.length < 3){
+                return null;
+            }
             return "{ 'Node':'" + keys[0] + "'," + "'Table':'" + keys[1] + "',"
                     + "'Flow':'" + keys[2] + "'}";
         }
 
         if (category.equalsIgnoreCase(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME)) {
+            if (keys == null || keys.length < 2) {
+                return null;
+            }
             return "{ 'Node':'" + keys[0] + "'," + "'Table':'" + keys[1] + "'}";
         }
 
         if (category.equalsIgnoreCase(TSDRConstants.PORT_STATS_CATEGORY_NAME)) {
+            if (keys == null || keys.length < 2) {
+                return null;
+            }
             return "{ 'Node':'" + keys[0] + "'," + "'InterfaceName':'" + keys[1] + "'}";
         }
 
         if (category.equalsIgnoreCase(TSDRConstants.QUEUE_STATS_CATEGORY_NAME)) {
+            if ( keys == null || keys.length < 3){
+                return null;
+            }
             return "{ 'Node':'" + keys[0] + "'," + "'InterfaceName':'" + keys[1] + "',"
                     + "'QueueName':'" + keys[2] + "'}";
         }
 
         if (category.equalsIgnoreCase(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME)) {
+            if ( keys == null || keys.length < 3){
+                 return null;
+             }
             return "{ 'Node':'" + keys[0] + "'," + "'GroupName':'" + keys[1] + "',"
                     + "'BucketID':'" + keys[2] + "'}";
         }
         if (category.equalsIgnoreCase(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME)) {
+            if ( keys == null || keys.length < 3){
+                 return null;
+             }
             return "{ 'Node':'" + keys[0] + "'," + "'GroupName':'" + keys[1] + "',"
                     + "'MeterName':'" + keys[2] + "'}";
         } else {

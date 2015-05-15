@@ -31,7 +31,7 @@
             </completers>
       </command>
     </command-bundle>
-    <bean id="listMetricsCommandCompleter" class="org.opendaylight.tsdr.persistence.hbase.command.ListMetricsCommandCompleter"/>
+    <bean id="listMetricsCommandCompleter" class="org.opendaylight.tsdr.command.completer.ListMetricsCommandCompleter"/>
 </blueprint>
 
 

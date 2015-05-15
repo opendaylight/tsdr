@@ -242,7 +242,7 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord)tsdrMetric1);
             storageService.store((TSDRMetricRecord)tsdrMetric2);
 
-            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.FLOW_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 2);
+            result = ((storageService.getMetrics(TSDRConstants.FLOW_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 2);
 
 
         }catch(Exception ee){
@@ -295,7 +295,7 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord)tsdrMetric2);
             storageService.store((TSDRMetricRecord)tsdrMetric3);
 
-            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
+            result = ((storageService.getMetrics(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
 
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flowtable stats table with specified time range.");
@@ -468,7 +468,7 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord)tsdrMetric13);
             storageService.store((TSDRMetricRecord)tsdrMetric14);
 
-            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.INTERFACE_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 14);
+            result = ((storageService.getMetrics(TSDRConstants.PORT_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 14);
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from port stats table with specified time range.");
             result = false;
@@ -524,7 +524,7 @@ public class HBaseDataStoreTest {
            storageService.store((TSDRMetricRecord)tsdrMetric2);
            storageService.store((TSDRMetricRecord)tsdrMetric3);
 
-            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.QUEUE_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
+            result = ((storageService.getMetrics(TSDRConstants.QUEUE_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
 
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from queue meter stats table with specified time range.");
@@ -581,7 +581,7 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord)tsdrMetric2);
             storageService.store((TSDRMetricRecord)tsdrMetric3);
 
-            result = storageService.getMetrics(TSDRHBaseDataStoreConstants.METER_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp))).size() == 3;
+            result = storageService.getMetrics(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp))).size() == 3;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow meter stats table with specified time range.");
             result = false;
@@ -639,7 +639,7 @@ public class HBaseDataStoreTest {
            storageService.store((TSDRMetricRecord)tsdrMetric2);
            storageService.store((TSDRMetricRecord)tsdrMetric3);
 
-            result = ((storageService.getMetrics(TSDRHBaseDataStoreConstants.GROUP_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
+            result = ((storageService.getMetrics(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
 
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow group stats table with specified time range.");

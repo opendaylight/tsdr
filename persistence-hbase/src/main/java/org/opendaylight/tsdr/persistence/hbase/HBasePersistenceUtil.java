@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.opendaylight.tsdr.model.TSDRConstants;
+import org.opendaylight.tsdr.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
@@ -110,22 +111,22 @@ public class HBasePersistenceUtil {
     private static String getCategoryNameFrom(String tableName){
         if ( tableName.equalsIgnoreCase(
             TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME)){
-            return TSDRHBaseDataStoreConstants.FLOW_STATS_CATEGORY_NAME;
+            return TSDRConstants.FLOW_STATS_CATEGORY_NAME;
         }else  if ( tableName.equalsIgnoreCase(
             TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_TABLE_NAME)){
-            return TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_CATEGORY_NAME;
+            return TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME;
         }else if ( tableName.equalsIgnoreCase(
                 TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME)){
-                return TSDRHBaseDataStoreConstants.INTERFACE_STATS_CATEGORY_NAME;
+                return TSDRConstants.PORT_STATS_CATEGORY_NAME;
         }else if ( tableName.equalsIgnoreCase(
                 TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME)){
-                return TSDRHBaseDataStoreConstants.INTERFACE_STATS_CATEGORY_NAME;
+                return TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME;
         }else if ( tableName.equalsIgnoreCase(
                 TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME)){
-                return TSDRHBaseDataStoreConstants.QUEUE_STATS_CATEGORY_NAME;
+                return TSDRConstants.QUEUE_STATS_CATEGORY_NAME;
         }if ( tableName.equalsIgnoreCase(
                 TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME)){
-                return TSDRHBaseDataStoreConstants.METER_STATS_CATEGORY_NAME;
+                return TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME;
         }else{
             log.warn("The table name is not supported: {}", tableName);
             return null;
@@ -192,7 +193,7 @@ public class HBasePersistenceUtil {
                  recordbuff.append(getCategoryNameFrom(entity.getTableName()));
                  recordbuff.append("|");
                  recordbuff.append("MetricDetails = ");
-                 recordbuff.append(convertToJason(objectKeys, entity.getTableName()));
+                 recordbuff.append(FormatUtil.convertToMetricDetailsJSON(objectKeys, getCategoryNameFrom(entity.getTableName())));
                  result.add(recordbuff.toString());
             }
             return result;
@@ -257,64 +258,5 @@ public class HBasePersistenceUtil {
                 result = keyString.substring(1);
             }
             return result;
-        }
-
-        /**
-         * Convert the object keys to Jason format.
-         * @param objectKeys
-         * @param tableName
-         * @return
-         */
-        private static String convertToJason(String objectKeys, String tableName){
-            if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME)){
-                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
-                if (keys == null || keys.length < 3){
-                    return null;
-                }else{
-                    return "{ 'Node':'" + keys[0] + "'," + "'Table':'" + keys[1] + "',"
-                        + "'Flow':'" + keys[2] + "'}";
-                }
-            } if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_TABLE_NAME)){
-                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
-                if(keys == null || keys.length < 2){
-                    return null;
-                }else{
-                    return "{ 'Node':'" + keys[0] + "'," + "'Table':'" + keys[1] + "'}";
-                }
-            }if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME)){
-                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
-                if(keys == null || keys.length < 2){
-                    return null;
-                }else{
-                    return "{ 'Node':'" + keys[0] + "'," + "'InterfaceName':'" + keys[1] + "'}";
-                }
-            }if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME)){
-                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
-                if(keys == null || keys.length < 3){
-                    return null;
-                }else{
-                    return "{ 'Node':'" + keys[0] + "'," + "'InterfaceName':'" + keys[1] + "',"
-                        + "'QueueName':'" + keys[2] + "'}";
-                }
-            }if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME)){
-                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
-                if(keys == null || keys.length < 3){
-                    return null;
-                }else{
-                    return "{ 'Node':'" + keys[0] + "'," + "'GroupName':'" + keys[1] + "',"
-                        + "'BucketID':'" + keys[2] + "'}";
-                }
-            }if ( tableName.equalsIgnoreCase(TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME)){
-                String[] keys =  objectKeys.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
-                if(keys == null || keys.length < 3){
-                    return null;
-                }else{
-                    return "{ 'Node':'" + keys[0] + "'," + "'GroupName':'" + keys[1] + "',"
-                        + "'MeterName':'" + keys[2] + "'}";
-                }
-            }else{
-                log.warn("The table name is not supported:{}", tableName);
-                return null;
-            }
         }
 }
