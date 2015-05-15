@@ -29,6 +29,7 @@ public class ListMetricsCommandCompleter implements Completer{
         delegate.getStrings().add(TSDRHBaseDataStoreConstants.FLOW_STATS_CATEGORY_NAME);
         delegate.getStrings().add(TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_CATEGORY_NAME);
         delegate.getStrings().add(TSDRHBaseDataStoreConstants.INTERFACE_STATS_CATEGORY_NAME);
+        delegate.getStrings().add(TSDRHBaseDataStoreConstants.QUEUE_STATS_CATEGORY_NAME);
         delegate.getStrings().add(TSDRHBaseDataStoreConstants.GROUP_STATS_CATEGORY_NAME);
         delegate.getStrings().add(TSDRHBaseDataStoreConstants.METER_STATS_CATEGORY_NAME);
         return delegate.complete(buffer, cursor, candidates);
