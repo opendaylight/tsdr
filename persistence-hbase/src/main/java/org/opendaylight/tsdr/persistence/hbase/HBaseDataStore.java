@@ -436,6 +436,8 @@ public class HBaseDataStore  {
                      htableResult.flushCommits();
                  }catch(IOException e){
                      log.error("Flushcommit failed", e);
+                 }catch(Exception e){
+                     log.error("Exception during flushcommit", e);
                  }
              }
          }

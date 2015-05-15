@@ -89,6 +89,7 @@
        <feature version="0.2.0-SNAPSHOT">odl-l2switch-switch</feature>
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-hbase/${project.version}</bundle>
+       <configfile finalname="etc/tsdr-persistence-hbase.properties">mvn:org.opendaylight.tsdr/${artifactName}-persistence-hbase/${project.version}/xml/config</configfile>
     </feature>
     <feature name='odl-tsdr-H2-persistence' version='${project.version}' description="OpenDaylight :: TSDR :: H2 Persistence">
         <feature>jndi</feature>

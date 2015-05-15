@@ -24,6 +24,8 @@ package org.opendaylight.tsdr.persistence.hbase;
 
 import java.util.Properties;
 import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.File;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +34,7 @@ public class HBaseDataStoreFactory {
 
     private static final Logger log = LoggerFactory.getLogger(HBaseDataStoreFactory.class);
     private static HBaseDataStore datastore = null;
-    private static String hbasePropsFilename = "hbase-configuration.properties";
+    private static String hbasePropsFilename = "tsdr-persistence-hbase.properties";
 
     /**
      * Default constructor
@@ -72,44 +74,51 @@ public class HBaseDataStoreFactory {
     private static HBaseDataStoreContext initialize_datastore_context(){
         HBaseDataStoreContext context = new HBaseDataStoreContext();
         Properties properties = new Properties();
-        InputStream inputStream = HBaseDataStoreContext.class.getClassLoader().getResourceAsStream(hbasePropsFilename);
+        InputStream inputStream = null;
 
         try{
-            properties.load(inputStream);
+            String  fileFullPath = System.getProperty("karaf.etc") + "/" + hbasePropsFilename;
+            File f = new File(fileFullPath);
+            if(f.exists()){
+                log.info("Loading properties from " + fileFullPath);
+                inputStream = new FileInputStream(f);
+                properties.load(inputStream);
+            }
+            else{
+                log.error("Property file " + fileFullPath + " missing");
+            }
         } catch(Exception e){
             log.error("Exception while loading the hbase-configuration.properties stream", e);
         }
 
-        if(inputStream == null || !properties.propertyNames().hasMoreElements()){
-            log.error("Properties stream is null or properties failed to load, check the file=" + hbasePropsFilename +" exists in classpath");
-            log.warn("Initializing HbaseDataStoreContext default values");
-            context.setPoolSize(20);
-            context.setZookeeperClientport("2181");
-            context.setZookeeperQuorum("localhost");
-            context.setAutoFlush(false);
-            context.setWriteBufferSize(512);
+        try{
+            if(inputStream == null || !properties.propertyNames().hasMoreElements()){
+                log.error("Properties stream is null or properties failed to load, check the file=" + hbasePropsFilename +" exists in classpath");
+                log.warn("Initializing HbaseDataStoreContext default values");
+                context.setPoolSize(20);
+                context.setZookeeperClientport("2181");
+                context.setZookeeperQuorum("localhost");
+                context.setAutoFlush(false);
+                context.setWriteBufferSize(512);
+                return context;
+            }
+
+            log.info("Updating properties onto context");
+
+            context.setPoolSize(Integer.valueOf(properties.getProperty("poolsize")));
+            context.setZookeeperClientport(properties.getProperty("zoo.keeper.client.port"));
+            context.setZookeeperQuorum(properties.getProperty("zoo.keeper.quorum"));
+            context.setAutoFlush(Boolean.valueOf(properties.getProperty("autoflush")));
+            context.setWriteBufferSize(Integer.valueOf(properties.getProperty("writebuffersize")));
+
+        } finally{
             if(inputStream != null){
                 try{
                     inputStream.close();
-                } catch(Exception e){
-                    log.error("Exception while closing the hbase-configuration.properties stream", e);
+                }catch(Exception e){
+                    log.error("Exception while closing the stream", e);
                 }
             }
-            return context;
-        }
-
-        log.info("Loading properties from hbase-configuration.properties");
-
-        context.setPoolSize(Integer.valueOf(properties.getProperty("poolsize")));
-        context.setZookeeperClientport(properties.getProperty("zoo.keeper.client.port"));
-        context.setZookeeperQuorum(properties.getProperty("zoo.keeper.quorum"));
-        context.setAutoFlush(Boolean.valueOf(properties.getProperty("autoflush")));
-        context.setWriteBufferSize(Integer.valueOf(properties.getProperty("writebuffersize")));
-
-        try{
-            inputStream.close();
-        } catch(Exception e){
-            log.error("Exception while closing the hbase-configuration.properties stream", e);
         }
         return context;
     }
