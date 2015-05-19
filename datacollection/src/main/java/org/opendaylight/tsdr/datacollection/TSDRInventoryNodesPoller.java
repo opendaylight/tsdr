@@ -31,6 +31,7 @@ public class TSDRInventoryNodesPoller extends Thread {
     public TSDRInventoryNodesPoller(TSDRDOMCollector _collector) {
         super("TSDR Inventory Nodes Poller");
         this.collector = _collector;
+        _collector.loadConfigData();
         this.start();
     }
 
@@ -72,14 +73,17 @@ public class TSDRInventoryNodesPoller extends Thread {
             } finally {
                 read.close();
             }
+            synchronized(this.collector){
+                this.collector.notifyAll();
+            }
             try {
-                Thread.sleep(15000);
+                Thread.sleep(this.collector.getConfigData().getPollingInterval());
             } catch (InterruptedException err) {
                 TSDRDOMCollector.log(
                         "Unknown error when sleeping in TSDR poller",
                         TSDRDOMCollector.ERROR);
             }
-            ;
+            this.collector.loadConfigData();
         }
     }
 }
