@@ -42,6 +42,7 @@
         <salGeneratorPath>src/main/yang-gen-sal</salGeneratorPath>
         <sal.binding.config>1.2.0-SNAPSHOT</sal.binding.config>
         <sal.core.api>1.2.0-SNAPSHOT</sal.core.api>
+        <jacoco.version>0.6.2.201302030002</jacoco.version>
         <tsdr.project.version>1.0-SNAPSHOT</tsdr.project.version>
         <project.version>1.0-SNAPSHOT</project.version>
         <yangtools.version>0.7.0-SNAPSHOT</yangtools.version>
@@ -252,12 +253,41 @@
             </lifecycleMappingMetadata>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>${jacoco.version}</version>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>org.opendaylight.controller.*</include> MODIFY this with your project's groupID
+          </includes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>pre-test</id>
+            <goals>
+              <goal>prepare-agent</goal>
+             </goals>
+          </execution>
+          <execution>
+            <id>post-test</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <phase>test</phase>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
