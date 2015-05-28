@@ -50,6 +50,7 @@ module TSDR {
             enum FLOW_GROUP_STATS;
             enum FLOW_METER_STATS;
             enum LOG_RECORDS;
+            enum EXTERNAL;
         }
     }
 

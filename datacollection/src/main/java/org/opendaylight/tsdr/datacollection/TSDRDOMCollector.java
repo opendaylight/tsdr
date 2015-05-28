@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
@@ -37,6 +38,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.FlowCapableNode;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.FlowCapableNodeConnector;
@@ -52,6 +54,7 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.Nodes;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.node.NodeConnector;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.Node;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.meter.statistics.rev131111.NodeMeterStatistics;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdrdc.rev140523.AddMetricInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdrdc.rev140523.SetPollingIntervalInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdrdc.rev140523.TSDRDCConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdrdc.rev140523.TSDRDCConfigBuilder;
@@ -77,7 +80,7 @@ import com.google.common.util.concurrent.CheckedFuture;
  * the data broker and every 30 seconds persists the data to the TSDR data
  * storage
  */
-public class TSDRDOMCollector implements TSDRDCService{
+public class TSDRDOMCollector implements TSDRDCService {
     // A reference to the data broker
     private DataBroker dataBroker = null;
     // A map representing the instance identifier of the metric collection to
@@ -136,43 +139,48 @@ public class TSDRDOMCollector implements TSDRDCService{
         new StoringThread();
     }
 
-    public void loadConfigData(){
-        //try to load the configuration data from the configuration data store
+    public void loadConfigData() {
+        // try to load the configuration data from the configuration data store
         ReadOnlyTransaction rot = null;
-        try{
-            InstanceIdentifier<TSDRDCConfig> cid = InstanceIdentifier.create(TSDRDCConfig.class);
+        try {
+            InstanceIdentifier<TSDRDCConfig> cid = InstanceIdentifier
+                    .create(TSDRDCConfig.class);
             rot = this.dataBroker.newReadOnlyTransaction();
-            CheckedFuture<Optional<TSDRDCConfig>, ReadFailedException> read = rot.read(LogicalDatastoreType.CONFIGURATION, cid);
-            if(read!=null && read.get()!=null){
-                if(read.get().isPresent()){
+            CheckedFuture<Optional<TSDRDCConfig>, ReadFailedException> read = rot
+                    .read(LogicalDatastoreType.CONFIGURATION, cid);
+            if (read != null && read.get() != null) {
+                if (read.get().isPresent()) {
                     this.config = read.get().get();
                 }
             }
-        }catch(Exception err){
-            log("Failed to read TSDR Data Collection configuration from data store, using defaults.",WARNING);
-        }finally{
-            if(rot!=null){
+        } catch (Exception err) {
+            log("Failed to read TSDR Data Collection configuration from data store, using defaults.",
+                    WARNING);
+        } finally {
+            if (rot != null) {
                 rot.close();
             }
         }
     }
 
-    public void saveConfigData(){
-        try{
-            InstanceIdentifier<TSDRDCConfig> cid = InstanceIdentifier.create(TSDRDCConfig.class);
+    public void saveConfigData() {
+        try {
+            InstanceIdentifier<TSDRDCConfig> cid = InstanceIdentifier
+                    .create(TSDRDCConfig.class);
             WriteTransaction wrt = this.dataBroker.newWriteOnlyTransaction();
-            wrt.put(LogicalDatastoreType.CONFIGURATION,cid,this.config);
+            wrt.put(LogicalDatastoreType.CONFIGURATION, cid, this.config);
             wrt.submit();
-        }catch(Exception err){
-            log("Failed to write TSDR Data Collection configuration  to data store.",WARNING);
+        } catch (Exception err) {
+            log("Failed to write TSDR Data Collection configuration  to data store.",
+                    WARNING);
         }
     }
 
-    public TSDRDCConfig getConfigData(){
+    public TSDRDCConfig getConfigData() {
         return this.config;
     }
 
-    public void shutdown(){
+    public void shutdown() {
         this.running = false;
     }
 
@@ -305,8 +313,7 @@ public class TSDRDOMCollector implements TSDRDCService{
                                         .augmentation(FlowCapableNode.class)
                                         .child(Meter.class, meter.getKey())
                                         .augmentation(NodeMeterStatistics.class);
-                                handle(nodeID, mIID,
-                                        nodeMeterStatistics,
+                                handle(nodeID, mIID, nodeMeterStatistics,
                                         NodeMeterStatistics.class);
                             }
                         }
@@ -365,8 +372,7 @@ public class TSDRDOMCollector implements TSDRDCService{
                                     .augmentation(FlowCapableNode.class)
                                     .child(Group.class, g.getKey())
                                     .augmentation(NodeGroupStatistics.class);
-                            handle(nodeID, tIID, ngs,
-                                    NodeGroupStatistics.class);
+                            handle(nodeID, tIID, ngs, NodeGroupStatistics.class);
                         }
                     }
                 }
@@ -387,22 +393,23 @@ public class TSDRDOMCollector implements TSDRDCService{
                         handle(nodeID, tIID, fnc,
                                 FlowCapableNodeConnectorStatisticsData.class);
 
-                        FlowCapableNodeConnector fcnc = nc.getAugmentation(FlowCapableNodeConnector.class);
-                        if(fcnc!=null){
+                        FlowCapableNodeConnector fcnc = nc
+                                .getAugmentation(FlowCapableNodeConnector.class);
+                        if (fcnc != null) {
                             List<Queue> queues = fcnc.getQueue();
                             if (queues != null) {
                                 for (Queue q : queues) {
                                     InstanceIdentifier<FlowCapableNodeConnectorQueueStatisticsData> tIID2 = InstanceIdentifier
                                             .create(Nodes.class)
                                             .child(Node.class, node.getKey())
-                                            .child(NodeConnector.class, nc.getKey())
+                                            .child(NodeConnector.class,
+                                                    nc.getKey())
                                             .augmentation(
                                                     FlowCapableNodeConnector.class)
                                             .child(Queue.class, q.getKey())
                                             .augmentation(
                                                     FlowCapableNodeConnectorQueueStatisticsData.class);
-                                    handle(
-                                            nodeID,
+                                    handle(nodeID,
                                             tIID2,
                                             q.getAugmentation(FlowCapableNodeConnectorQueueStatisticsData.class),
                                             FlowCapableNodeConnectorQueueStatisticsData.class);
@@ -445,15 +452,18 @@ public class TSDRDOMCollector implements TSDRDCService{
 
         public void run() {
             while (running) {
-                synchronized(TSDRDOMCollector.this){
+                synchronized (TSDRDOMCollector.this) {
                     try {
                         /*
-                         * We wait for 2x the polling interval just for the case where the polling thread is dead
-                         * and there will be no thread to wake this thread up if we do "wait()", e.g. to avoid 
-                         * "stuck" thread.
-                         * Disregarding the case where storing will take more than the polling interval, we have bigger issues in that case...:o)
+                         * We wait for 2x the polling interval just for the case
+                         * where the polling thread is dead and there will be no
+                         * thread to wake this thread up if we do "wait()", e.g.
+                         * to avoid "stuck" thread. Disregarding the case where
+                         * storing will take more than the polling interval, we
+                         * have bigger issues in that case...:o)
                          */
-                        TSDRDOMCollector.this.wait(getConfigData().getPollingInterval()*2);
+                        TSDRDOMCollector.this.wait(getConfigData()
+                                .getPollingInterval() * 2);
                     } catch (InterruptedException err) {
                         log("Storing Thread Interrupted.", ERROR);
                     }
@@ -552,9 +562,10 @@ public class TSDRDOMCollector implements TSDRDCService{
     }
 
     public void removeAllNodeBuilders(InstanceIdentifier<Node> nodeID) {
-        synchronized(id2Index){
+        synchronized (id2Index) {
             Set<InstanceIdentifier<?>> subIDs = nodeID2SubIDs.get(nodeID);
-            if(subIDs==null) return;
+            if (subIDs == null)
+                return;
             for (InstanceIdentifier<?> subID : subIDs) {
                 removeBuilderContailer(subID);
             }
@@ -580,12 +591,48 @@ public class TSDRDOMCollector implements TSDRDCService{
     }
 
     @Override
-    public Future<RpcResult<Void>> setPollingInterval(SetPollingIntervalInput input) {
+    public Future<RpcResult<Void>> setPollingInterval(
+            SetPollingIntervalInput input) {
         TSDRDCConfigBuilder builder = new TSDRDCConfigBuilder();
         builder.setPollingInterval(input.getInterval());
         this.config = builder.build();
         saveConfigData();
         RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
         return rpc.buildFuture();
+    }
+
+    @Override
+    public Future<RpcResult<Void>> addMetric(AddMetricInput input) {
+        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+        b.setMetricName(input.getName());
+        b.setMetricValue(new Counter64(new BigInteger(input.getValue())));
+        b.setNodeID(input.getNodeID());
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.forValue(input.getCategory()));
+        b.setRecordKeys(parseRecordKeys(input.getPath()));
+        StoreTSDRMetricRecordInputBuilder in = new StoreTSDRMetricRecordInputBuilder();
+        List<TSDRMetricRecord> list = new LinkedList<>();
+        list.add(b.build());
+        in.setTSDRMetricRecord(list);
+        store(in.build());
+        RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
+        return rpc.buildFuture();
+    }
+
+    public List<RecordKeys> parseRecordKeys(String str) {
+        List<RecordKeys> result = new LinkedList<>();
+        StringTokenizer tokens = new StringTokenizer(str, ".");
+        RecordKeysBuilder bld = new RecordKeysBuilder();
+        bld.setKeyName("rpc");
+        bld.setKeyValue("rpc");
+        result.add(bld.build());
+        while (tokens.hasMoreTokens()) {
+            RecordKeysBuilder b = new RecordKeysBuilder();
+            String key = tokens.nextToken();
+            b.setKeyName(key);
+            b.setKeyValue(key);
+            result.add(b.build());
+        }
+        return result;
     }
 }
