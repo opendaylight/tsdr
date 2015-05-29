@@ -73,7 +73,7 @@ public class TsdrJpaServiceImpl implements TsdrJpaService {
         StringBuffer sb = new StringBuffer();
         sb.append("select * from Metric where metriccategory = '")
                 .append(category.toUpperCase())
-                .append("' order by metrictimestamp desc");
+                .append("' order by metrictimestamp desc LIMIT " + maxResults);
         log.info("getMetricsFilteredByCategory: query being sent is "+ sb.toString());
         Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
         return nativeQuery.getResultList();
