@@ -270,7 +270,7 @@
         <artifactId>jacoco-maven-plugin</artifactId>
         <configuration>
           <includes>
-            <include>org.opendaylight.controller.*</include> MODIFY this with your project's groupID
+            <include>org.opendaylight.tsdr.*</include>
           </includes>
         </configuration>
         <executions>
