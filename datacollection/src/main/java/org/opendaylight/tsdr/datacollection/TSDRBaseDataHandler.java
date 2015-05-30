@@ -67,7 +67,7 @@ public abstract class TSDRBaseDataHandler {
             if (pa instanceof Item) {
                 RecordKeysBuilder rec = new RecordKeysBuilder();
                 rec.setKeyName(pa.getType().getSimpleName());
-                rec.setKeyValue("");
+                rec.setKeyValue(pa.getType().getSimpleName());
                 recKeys.add(rec.build());
             } else if (pa instanceof IdentifiableItem) {
                 recKeys.add(getIdentifiableItemID((IdentifiableItem) pa));
