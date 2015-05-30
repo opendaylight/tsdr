@@ -64,11 +64,6 @@ public class TSDRDatastorageModule
 
     }
 
-    @Override
-    public boolean canReuse(Module oldModule) {
-        return true;
-    }
-
     /**
      * createInstance() is used for plugging in logics when TSDRDatastorage
      * module is created.

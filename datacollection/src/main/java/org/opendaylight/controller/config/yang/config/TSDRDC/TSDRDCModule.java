@@ -30,8 +30,4 @@ public class TSDRDCModule extends org.opendaylight.controller.config.yang.config
         };
     }
 
-    @Override
-    public boolean canReuse(Module arg0) {
-        return false;
-    }
 }
