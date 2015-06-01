@@ -368,6 +368,8 @@ public class HBaseDataStore  {
                     if ( startTime != 0 && endTime != 0){
                         scan.setTimeRange(startTime, endTime);
                     }
+                    scan.setFilter(new PageFilter(TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS));
+                    scan.setCaching(TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS);
                     htable=getConnection(tableName);
                     rs = htable.getScanner(scan);
                     int count = 0;
