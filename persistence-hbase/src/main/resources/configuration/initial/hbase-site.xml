@@ -34,4 +34,12 @@
      <name>hbase.defaults.for.version</name>
      <value>0.94.15</value>
  </property>
+ <property>
+     <name>hbase.client.retries.number</name>
+     <value>7</value>
+ </property>
+ <property>
+     <name>hbase.client.pause</name>
+     <value>500</value>
+ </property>
 </configuration>

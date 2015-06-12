@@ -8,6 +8,11 @@
 package org.opendaylight.tsdr.persistence.hbase;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
 
 import org.opendaylight.tsdr.scheduler.Task;
 import org.slf4j.Logger;
@@ -24,8 +29,11 @@ import org.slf4j.LoggerFactory;
  */
 public class CreateTableTask extends Task{
     private static final Logger log = LoggerFactory.getLogger(CreateTableTask.class);
+    private ScheduledFuture future = null;
+    private List<String> pendingTableNames = new ArrayList<String>();
     public CreateTableTask(){
         super();
+        pendingTableNames = new ArrayList<String>(HBasePersistenceUtil.getTSDRHBaseTables());
     }
 
     @Override
@@ -36,16 +44,28 @@ public class CreateTableTask extends Task{
 
     public void createTables(){
          log.debug("Entering createTables()");
-             List<String> tableNames = HBasePersistenceUtil.getTSDRHBaseTables();
-             for ( String tableName: tableNames){
-                 try{
-                     HBaseDataStoreFactory.getHBaseDataStore().createTable(tableName);
-                 }catch ( Throwable t){
-                     log.error("Exception caught creating tables", t.getMessage());
-                     log.trace("Exception caught creating tables", t);
-                 }
+         Iterator<String> tableNameIter = pendingTableNames.iterator();
+         while( tableNameIter.hasNext()){
+             String  tableName = tableNameIter.next();
+             try{
+                 HBaseDataStoreFactory.getHBaseDataStore().createTable(tableName);
+                 tableNameIter.remove();
+             }catch ( Throwable t){
+                 log.error("Exception caught creating tables", t);
+                 log.trace("Exception caught creating tables", t);
              }
+         }
+         log.info("Exiting createTables()..pending tables count:" + pendingTableNames.size());
+         synchronized(future){
+             if(pendingTableNames.size() == 0){
+                 future.cancel(true);
+             }
+         }
          return;
+    }
+
+    public void setScheduledFuture(ScheduledFuture scheduledFuture){
+       future = scheduledFuture; 
     }
 
 }
