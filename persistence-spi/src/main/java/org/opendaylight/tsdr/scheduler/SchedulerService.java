@@ -9,6 +9,7 @@ package org.opendaylight.tsdr.scheduler;
 
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -34,18 +35,25 @@ public class SchedulerService {
         log.debug("Scheduler Service created the Thread Pool with Threads {}\n" , ThreadsCount);
     }
 
-
     public  synchronized  static SchedulerService getInstance(){
         if(schedulerService==null){
             schedulerService = new SchedulerService();
         }
         return schedulerService;
     }
-    public void scheduleTask(Task task){
-        scheduleTask(task,0L);
+    public ScheduledFuture scheduleTask(Task task){
+        return scheduleTask(task,0L);
     }
 
-    public void scheduleTask(Task task, long delay){
-        scheduler.schedule(task, delay, TimeUnit.SECONDS);
+    public ScheduledFuture scheduleTaskAtFixedRate(Task task, long initialDelay, long retryInterval){
+        final ScheduledFuture<?> scheduledFuture = scheduler.scheduleAtFixedRate(task, initialDelay, retryInterval, TimeUnit.SECONDS);
+        task.setScheduledFuture(scheduledFuture);
+        return scheduledFuture;
+    }
+
+    public ScheduledFuture scheduleTask(Task task, long delay){
+        final ScheduledFuture<?> scheduledFuture = scheduler.schedule(task, delay, TimeUnit.SECONDS);
+        task.setScheduledFuture(scheduledFuture);
+        return scheduledFuture;
     }
 }

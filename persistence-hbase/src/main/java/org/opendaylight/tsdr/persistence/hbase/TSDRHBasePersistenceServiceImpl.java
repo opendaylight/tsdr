@@ -12,6 +12,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ScheduledFuture;
+import org.apache.hadoop.hbase.TableNotFoundException;
 
 import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
@@ -42,6 +44,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
     TsdrPersistenceService {
 
     private static final Logger log = LoggerFactory.getLogger(TSDRHBasePersistenceServiceImpl.class);
+    private ScheduledFuture future;
 
     /**
      * Constructor.
@@ -70,9 +73,20 @@ public class TSDRHBasePersistenceServiceImpl  implements
     public void store(TSDRMetricRecord metrics){
         log.debug("Entering store(TSDRMetricRecord)");
         //convert TSDRRecord to HBaseEntities
-        HBaseEntity entity = convertToHBaseEntity(metrics);
-        HBaseDataStoreFactory.getHBaseDataStore().create(entity);
-        flushCommit(entity.getTableName());
+        try{
+            HBaseEntity entity = convertToHBaseEntity(metrics);
+            HBaseDataStoreFactory.getHBaseDataStore().create(entity);
+            flushCommit(entity.getTableName());
+        } catch(TableNotFoundException e){
+            synchronized(future){
+                if(future.isDone() || future.isCancelled()){
+                    log.info("Triggering CreateTableTask");
+                    CreateTableTask createTableTask = new CreateTableTask();
+                    Long interval = HBaseDataStoreContext.getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
+                    future = SchedulerService.getInstance().scheduleTaskAtFixedRate(createTableTask, 0L, interval);
+                }
+            }
+        }
          log.debug("Exiting store(TSDRMetricRecord)");
      }
 
@@ -83,14 +97,25 @@ public class TSDRHBasePersistenceServiceImpl  implements
     public void store(List<TSDRMetricRecord> metricList){
         log.debug("Entering store(List<TSDRMetricRecord>)");
         if ( metricList != null && metricList.size() != 0){
-            Set<String> tableNames = new HashSet<String>();
-            for(TSDRMetricRecord metrics: metricList){
-                HBaseEntity entity = convertToHBaseEntity(metrics);
-                tableNames.add(entity.getTableName());
-                HBaseDataStoreFactory.getHBaseDataStore().create(entity);
+            try{
+                Set<String> tableNames = new HashSet<String>();
+                for(TSDRMetricRecord metrics: metricList){
+                    HBaseEntity entity = convertToHBaseEntity(metrics);
+                    tableNames.add(entity.getTableName());
+                    HBaseDataStoreFactory.getHBaseDataStore().create(entity);
+                }
+                flushCommit(tableNames);
+                closeConnections();
+            } catch(TableNotFoundException e){
+                synchronized(future){
+                    if(future.isDone() || future.isCancelled()){
+                        log.info("Triggering CreateTableTask");
+                        CreateTableTask createTableTask = new CreateTableTask();
+                        Long interval = HBaseDataStoreContext.getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
+                        future = SchedulerService.getInstance().scheduleTaskAtFixedRate(createTableTask, 0L, interval);
+                    }
+                }
             }
-            flushCommit(tableNames);
-            closeConnections();
         }
         log.debug("Exiting store(List<TSDRMetricRecord>)");
     }
@@ -104,7 +129,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
          log.debug("Entering start(timeout)");
          //create the HTables used in TSDR.
          CreateTableTask createTableTask = new CreateTableTask();
-         SchedulerService.getInstance().scheduleTask(createTableTask);
+         future = SchedulerService.getInstance().scheduleTask(createTableTask);
          log.debug("Exiting start(timeout)");
     }
     /**

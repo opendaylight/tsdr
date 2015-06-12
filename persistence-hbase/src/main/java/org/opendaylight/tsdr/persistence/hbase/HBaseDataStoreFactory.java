@@ -100,6 +100,7 @@ public class HBaseDataStoreFactory {
                 context.setZookeeperQuorum("localhost");
                 context.setAutoFlush(false);
                 context.setWriteBufferSize(512);
+                HBaseDataStoreContext.addProperty(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL,300L);
                 return context;
             }
 
@@ -110,6 +111,7 @@ public class HBaseDataStoreFactory {
             context.setZookeeperQuorum(properties.getProperty("zoo.keeper.quorum"));
             context.setAutoFlush(Boolean.valueOf(properties.getProperty("autoflush")));
             context.setWriteBufferSize(Integer.valueOf(properties.getProperty("writebuffersize")));
+            HBaseDataStoreContext.addProperty(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL, Long.valueOf(properties.getProperty("createTableRetryInterval")));
 
         } finally{
             if(inputStream != null){

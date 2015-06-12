@@ -96,27 +96,29 @@ public class HBaseDataStoreTest {
         storageService = new TSDRHBasePersistenceServiceImpl(hbaseDataStore);
         tableEntityMap = new HashMap<String, Map<String, List<HBaseEntity>>>();
 
-        doAnswer(new Answer<HBaseEntity>() {
-            @Override
-            public HBaseEntity answer(InvocationOnMock invocation) throws Throwable {
-                Object[] arguments = invocation.getArguments();
-                if (arguments != null && arguments.length > 0 && arguments[0] != null) {
-                    HBaseEntity entity = (HBaseEntity) arguments[0];
-                    if(!tableEntityMap.containsKey(entity.getTableName())){
-                        tableEntityMap.put(entity.getTableName(),new TreeMap<String,List<HBaseEntity>>());
+        try{
+            doAnswer(new Answer<HBaseEntity>() {
+                @Override
+                public HBaseEntity answer(InvocationOnMock invocation) throws Throwable {
+                    Object[] arguments = invocation.getArguments();
+                    if (arguments != null && arguments.length > 0 && arguments[0] != null) {
+                        HBaseEntity entity = (HBaseEntity) arguments[0];
+                        if(!tableEntityMap.containsKey(entity.getTableName())){
+                            tableEntityMap.put(entity.getTableName(),new TreeMap<String,List<HBaseEntity>>());
+                        }
+                        Map<String,List<HBaseEntity>> entityMap = tableEntityMap.get(entity.getTableName());
+                        if(!entityMap.containsKey(entity.getRowKey())){
+                            entityMap.put(entity.getRowKey(), new ArrayList<HBaseEntity>());
+                        }
+                        List<HBaseEntity> entitiesCol = entityMap.get(entity.getRowKey());
+                        entitiesCol.add(entity);
+                        System.out.println("Creating entity:"+entity.getRowKey() + ",table:" + entity.getTableName());
+                        return entity;
                     }
-                    Map<String,List<HBaseEntity>> entityMap = tableEntityMap.get(entity.getTableName());
-                    if(!entityMap.containsKey(entity.getRowKey())){
-                        entityMap.put(entity.getRowKey(), new ArrayList<HBaseEntity>());
-                    }
-                    List<HBaseEntity> entitiesCol = entityMap.get(entity.getRowKey());
-                    entitiesCol.add(entity);
-                    System.out.println("Creating entity:"+entity.getRowKey() + ",table:" + entity.getTableName());
-                    return entity;
+                    return null;
                 }
-                return null;
-            }
-        }).when(hbaseDataStore).create(any(HBaseEntity.class));
+            }).when(hbaseDataStore).create(any(HBaseEntity.class));
+        }catch(Exception e){}
 
         Answer answerDataByRowFamilyQualifier = new Answer() {
             @Override
