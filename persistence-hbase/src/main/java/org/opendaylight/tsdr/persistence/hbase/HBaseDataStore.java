@@ -19,6 +19,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;
@@ -29,6 +30,7 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.PageFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,7 +112,7 @@ public class HBaseDataStore  {
       * @param tableName
       * @return HTableInterface, which is used to communicate with the HTable.
       */
-     public HTableInterface getConnection(String tableName) {
+     public HTableInterface getConnection(String tableName) throws TableNotFoundException {
          log.debug("Entering getConnection()");
          HTableInterface htableResult = null;
          htableResult = htableMap.get(tableName);
@@ -127,13 +129,16 @@ public class HBaseDataStore  {
                      htableResult.setWriteBufferSize(writeBufferSize);
                  }
               }
+              htableMap.put(tableName, htableResult);
+         }catch(TableNotFoundException nfe){
+              throw nfe;
          }catch (Exception e) {
-              log.error("Error getting connection to the htable", e.getMessage());
+              closeConnection(tableName);
+              log.error("Error getting connection to the htable", e);
               log.trace("Error getting connection to the htable. StackTrace is:", e);
          } finally {
               Thread.currentThread().setContextClassLoader(ocl);
          }
-         htableMap.put(tableName, htableResult);
          log.debug("Exiting getConnection()");
          return htableResult;
      }
@@ -188,7 +193,7 @@ public class HBaseDataStore  {
       * @param entity - an object of HBaseEntity.
       * @return HBaseEntity - the object being created in HTable.
       */
-     public HBaseEntity create(final HBaseEntity entity) {
+     public HBaseEntity create(final HBaseEntity entity) throws TableNotFoundException{
          log.debug("Entering create(HBaseEntity entity)");
          if (entity != null && entity.getRowKey() != null) {
                  Put p = new Put(Bytes.toBytes(entity.getRowKey()));
@@ -220,15 +225,16 @@ public class HBaseDataStore  {
                  try {
                      htable = getConnection(entity.getTableName());
                      htable.put(p);
-                 } catch (IOException ioe) {
-                     log.error("Cannot put Data into Hbase", ioe.getMessage());
-                     log.debug("Cannot put Data into HBase", ioe);
-                 } catch ( Exception e){
-                     log.error("Cannot put Data into HBase.", e.getMessage());
-                     log.debug("Cannot put Data into HBase", e);
+                 } catch (TableNotFoundException nfe) {
+                     throw nfe;
+                 } catch (Exception exception) {
+                     log.error("Cannot put Data into Hbase", exception.getMessage());
+                     log.trace("Cannot put Data into HBase", exception);
+                     closeConnection(entity.getTableName());
+                     HConnectionManager.deleteAllConnections();
                  } catch (Throwable t){
-                     log.error("Cannot put Data into HBase.", t.getMessage());
-                     log.debug("Cannot put Data into HBase", t);
+                     log.error("Cannot put Data into HBase", t.getMessage());
+                     log.trace("Cannot put Data into HBase", t);
                  }
          }
          log.debug("Exiting create(HBaseEntity entity)");
@@ -282,6 +288,8 @@ public class HBaseDataStore  {
                                  resultEntityList.add(convertResultToEntity(tableName, currentResult));
                          }
                  } catch (IOException e) {
+                     log.error("Scanner error", e);
+                 } catch (Exception e) {
                      log.error("Scanner error", e);
                  }finally{
                          if (rs!=null){
@@ -341,6 +349,8 @@ public class HBaseDataStore  {
                                  resultEntityList.add(convertResultToEntity(tableName, currentResult));
                          }
                  } catch (IOException e) {
+                     log.error("Scanner error", e);
+                 } catch(Exception e) {
                      log.error("Scanner error", e);
                  }finally{
                          if (rs!=null){

@@ -7,6 +7,8 @@
  */
 package org.opendaylight.tsdr.scheduler;
 
+import java.util.concurrent.ScheduledFuture;
+
 /**
  * This class is the abstract class for all tasks tha can be scheduled
  * by the SchedulerService.
@@ -23,5 +25,7 @@ public abstract class Task implements Runnable{
     }
 
     public abstract void runTask();
+
+    public abstract void setScheduledFuture(ScheduledFuture scheduledFuture);
 
 }

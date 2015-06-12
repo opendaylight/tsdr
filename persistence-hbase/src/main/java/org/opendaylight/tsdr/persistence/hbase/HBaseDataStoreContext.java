@@ -17,6 +17,10 @@ package org.opendaylight.tsdr.persistence.hbase;
  *
  *
  */
+
+import java.util.Map;
+import java.util.HashMap;
+
 public class HBaseDataStoreContext {
     /**
      * This parameter indicates the host name of the server(Zookeeper node)
@@ -37,6 +41,9 @@ public class HBaseDataStoreContext {
     private int writeBufferSize = 512;
 
     private boolean autoFlush = false;
+
+    private static Map<String,Object> commonHbasePropertiesMap = new HashMap<String,Object>();
+    public static String HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL = "hbase-common-prop-create-table-retry-interval";
 
     public  String getZookeeperQuorum() {
         return zookeeperQuorum;
@@ -69,4 +76,11 @@ public class HBaseDataStoreContext {
         return this.autoFlush;
     }
 
+    public static void addProperty(String property, long createTableRetryInterval){
+        commonHbasePropertiesMap.put(property, createTableRetryInterval);
+    }
+
+    public static Long getPropertyInLong(String property){
+        return (Long)commonHbasePropertiesMap.get(property);
+    }
 }
