@@ -138,6 +138,15 @@
           <version>${l2switch.version}</version>
           <type>xml</type>
        </dependency>
+
+    <dependency>
+       <groupId>org.ops4j.pax.jdbc</groupId>
+       <artifactId>pax-jdbc-features</artifactId>
+       <classifier>features</classifier>
+       <version>0.5.0</version>
+       <type>xml</type>
+    </dependency>
+
         <!-- test the features.xml -->
       <dependency>
           <groupId>org.opendaylight.odlparent</groupId>
