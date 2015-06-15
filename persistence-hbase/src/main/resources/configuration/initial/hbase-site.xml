@@ -42,4 +42,8 @@
      <name>hbase.client.pause</name>
      <value>500</value>
  </property>
+ <property>
+     <name>hbase.client.scanner.max.result.size</name>
+     <value>1000</value>
+ </property>
 </configuration>
