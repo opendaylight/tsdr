@@ -8,13 +8,18 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
-import org.apache.hadoop.hbase.TableNotFoundException;
 
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
 import org.opendaylight.tsdr.scheduler.SchedulerService;
@@ -96,15 +101,27 @@ public class TSDRHBasePersistenceServiceImpl  implements
     @Override
     public void store(List<TSDRMetricRecord> metricList){
         log.debug("Entering store(List<TSDRMetricRecord>)");
+        //tableName, entityList Map
+        Map<String, List<HBaseEntity>> entityListMap = new HashMap<String, List<HBaseEntity>>();
+        List<HBaseEntity> entityList = new ArrayList<HBaseEntity>();
         if ( metricList != null && metricList.size() != 0){
             try{
-                Set<String> tableNames = new HashSet<String>();
                 for(TSDRMetricRecord metrics: metricList){
                     HBaseEntity entity = convertToHBaseEntity(metrics);
-                    tableNames.add(entity.getTableName());
-                    HBaseDataStoreFactory.getHBaseDataStore().create(entity);
+                    String tableName = entity.getTableName();
+                    if ( entityListMap.get(tableName) == null){
+                        entityListMap.put(tableName, new ArrayList<HBaseEntity>());
+                    }
+                    entityListMap.get(tableName).add(entity);
+                    entityList.add(entity);
                 }
-                flushCommit(tableNames);
+                Set<String> keys = entityListMap.keySet();
+                Iterator<String> iter = keys.iterator();
+                while ( iter.hasNext()){
+                    String tableName = iter.next();
+                    HBaseDataStoreFactory.getHBaseDataStore().create(entityListMap.get(tableName));
+                    flushCommit(tableName);
+                }
                 closeConnections();
             } catch(TableNotFoundException e){
                 synchronized(future){

@@ -103,7 +103,7 @@ public class HBaseDataStore  {
       */
      private HTablePool getHTablePool() {
         log.debug("Entering getHTablePool()");
-        HTablePool htablePool = new HTablePool(getConfiguration(), poolSize);
+        HTablePool htablePool = new HTablePool(getConfiguration(), 1);
         log.debug("Exiting getHTablePool()");
         return htablePool;
      }
@@ -115,23 +115,24 @@ public class HBaseDataStore  {
      public HTableInterface getConnection(String tableName) throws TableNotFoundException {
          log.debug("Entering getConnection()");
          HTableInterface htableResult = null;
-         htableResult = htableMap.get(tableName);
          ClassLoader ocl = Thread.currentThread().getContextClassLoader();
          try {
              Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader());
-             if (htableResult == null) {
                  if (htablePool == null || htablePool.getTable(tableName) == null) {
                      htablePool = getHTablePool();
                  }
                  if ( htablePool != null){
                      htableResult =   htablePool.getTable(tableName);
-                     htableResult.setAutoFlush(autoFlush);
+                     log.debug("Obtained connection to table:" + tableName);
+                     htableResult.setAutoFlush(true);
                      htableResult.setWriteBufferSize(writeBufferSize);
                  }
-              }
-              htableMap.put(tableName, htableResult);
+             htableMap.put(tableName, htableResult);
          }catch(TableNotFoundException nfe){
               throw nfe;
+         }catch(IOException ioe){
+              closeConnection(tableName);
+             log.error("Error getting connection to the table", ioe);
          }catch (Exception e) {
               closeConnection(tableName);
               log.error("Error getting connection to the htable", e);
@@ -174,8 +175,7 @@ public class HBaseDataStore  {
              log.error("Error creating table.", t.getMessage());
              log.trace("Error creating htable. StackTrace is:", t);
              throw new Exception("Error creating table.", t);
-         }
-         finally{
+         }finally{
              try{
                  if(hbase != null){
                     hbase.close();
@@ -227,6 +227,10 @@ public class HBaseDataStore  {
                      htable.put(p);
                  } catch (TableNotFoundException nfe) {
                      throw nfe;
+                 } catch ( IOException ioe){
+                     log.error("Cannot put Data into HBase", ioe.getMessage());
+                     closeConnection(entity.getTableName());
+                     HConnectionManager.deleteAllConnections();
                  } catch (Exception exception) {
                      log.error("Cannot put Data into Hbase", exception.getMessage());
                      log.trace("Cannot put Data into HBase", exception);
@@ -235,10 +239,95 @@ public class HBaseDataStore  {
                  } catch (Throwable t){
                      log.error("Cannot put Data into HBase", t.getMessage());
                      log.trace("Cannot put Data into HBase", t);
+                 } finally{
+                    try{
+                           htablePool.putTable(htable);
+                           htable.close();
+                           log.info("returned connection back to pool" + htable.getTableName());
+                        }catch ( IOException ioe){
+                            log.error("IOException caught");
+                        }
+
                  }
          }
          log.debug("Exiting create(HBaseEntity entity)");
          return entity;
+}
+     /**
+      * Create a list of rows in HTable.
+      * The assumption is that all the entities belong to the same htable.
+      *
+      * @param entity - an object of HBaseEntity.
+      * @return HBaseEntity - the object being created in HTable.
+      */
+     public List<HBaseEntity> create(List<HBaseEntity> entityList) throws TableNotFoundException{
+         log.debug("Entering create(HBaseEntity entity)");
+         if((entityList==null)||(entityList.size()==0)){
+             return entityList;
+         }
+         List <Put> putList=new ArrayList<Put>();
+         String tableName = "";
+         for(HBaseEntity entity: entityList){
+             if (entity != null && entity.getRowKey() != null) {
+                 tableName = entity.getTableName();
+                 Put p = new Put(Bytes.toBytes(entity.getRowKey()));
+                 for (HBaseColumn currentColumn : entity.getColumns()) {
+                         if(currentColumn.getTimeStamp()==0){
+                                 if(currentColumn.getColumnQualifier()!=null){
+                                     p.add(Bytes.toBytes(currentColumn.getColumnFamily()),
+                                             Bytes.toBytes(currentColumn.getColumnQualifier()),
+                                             Bytes.toBytes(currentColumn.getValue()));
+                                 }else{
+                                     p.add(Bytes.toBytes(currentColumn.getColumnFamily()),
+                                         null,
+                                         Bytes.toBytes(currentColumn.getValue()));
+                                 }
+                         }else{
+                                 if(currentColumn.getColumnQualifier()!=null){
+                                     p.add(Bytes.toBytes(currentColumn.getColumnFamily()),
+                                                 Bytes.toBytes(currentColumn.getColumnQualifier()),
+                                                 currentColumn.getTimeStamp(),
+                                                 Bytes.toBytes(currentColumn.getValue()));
+                                 }else{
+                                     p.add(Bytes.toBytes(currentColumn.getColumnFamily()),
+                                         Bytes.toBytes(currentColumn.getColumnQualifier()),
+                                         Bytes.toBytes(currentColumn.getValue()));
+                                 }
+                         }
+                 }
+                 putList.add(p);
+             }
+         }
+                 HTableInterface htable = null;
+                 try {
+                     htable = getConnection(tableName);
+                     htable.put(putList);
+                 } catch (TableNotFoundException nfe) {
+                     throw nfe;
+                 } catch ( IOException ioe){
+                     log.error("Cannot put Data into HBase", ioe.getMessage());
+                     closeConnection(tableName);
+                     HConnectionManager.deleteAllConnections();
+                 } catch (Exception exception) {
+                     log.error("Cannot put Data into Hbase", exception.getMessage());
+                     log.trace("Cannot put Data into HBase", exception);
+                     closeConnection(tableName);
+                     HConnectionManager.deleteAllConnections();
+                 } catch (Throwable t){
+                     log.error("Cannot put Data into HBase", t.getMessage());
+                     log.trace("Cannot put Data into HBase", t);
+                 } finally{
+                     try{
+                           htablePool.putTable(htable);
+                           htable.close();
+                           log.debug("Returned connection back to pool" + htable.getTableName());
+                        }catch ( IOException ioe){
+                            log.error("IOException caught");
+                        }
+
+                 }
+         log.debug("Exiting create(HBaseEntity entity)");
+         return entityList;
 }
 
      /**
