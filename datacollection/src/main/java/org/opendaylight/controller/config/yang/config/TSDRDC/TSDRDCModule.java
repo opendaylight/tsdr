@@ -26,6 +26,7 @@ public class TSDRDCModule extends org.opendaylight.controller.config.yang.config
         return new AutoCloseable() {
             @Override
             public void close() throws Exception {
+                domCollector.shutdown();
             }
         };
     }
