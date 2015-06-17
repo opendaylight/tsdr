@@ -124,7 +124,7 @@ public class HBaseDataStore  {
                  if ( htablePool != null){
                      htableResult =   htablePool.getTable(tableName);
                      log.debug("Obtained connection to table:" + tableName);
-                     htableResult.setAutoFlush(true);
+                     htableResult.setAutoFlush(autoFlush);
                      htableResult.setWriteBufferSize(writeBufferSize);
                  }
              htableMap.put(tableName, htableResult);
