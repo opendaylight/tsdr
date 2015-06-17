@@ -65,10 +65,12 @@ public abstract class TSDRBaseDataHandler {
         List<RecordKeys> recKeys = new ArrayList<RecordKeys>(5);
         for (PathArgument pa : instanceID.getPathArguments()) {
             if (pa instanceof Item) {
+                /* Bug 3465 - metric detail missleading issue 
                 RecordKeysBuilder rec = new RecordKeysBuilder();
                 rec.setKeyName(pa.getType().getSimpleName());
                 rec.setKeyValue(pa.getType().getSimpleName());
                 recKeys.add(rec.build());
+                */
             } else if (pa instanceof IdentifiableItem) {
                 recKeys.add(getIdentifiableItemID((IdentifiableItem) pa));
             } else {
