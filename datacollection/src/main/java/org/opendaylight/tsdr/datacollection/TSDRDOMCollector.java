@@ -112,6 +112,7 @@ public class TSDRDOMCollector implements TSDRDCService {
     private Map<Class<? extends DataObject>, TSDRBaseDataHandler> handlers = new ConcurrentHashMap<>();
     private Map<InstanceIdentifier<Node>, Set<InstanceIdentifier<?>>> nodeID2SubIDs = new ConcurrentHashMap<>();
     private TSDRDCConfig config = null;
+    protected Object pollerSyncObject = new Object();
 
     public TSDRDOMCollector(DataBroker _dataBroker,
             RpcProviderRegistry _rpcRegistry) {
@@ -182,6 +183,12 @@ public class TSDRDOMCollector implements TSDRDCService {
 
     public void shutdown() {
         this.running = false;
+        synchronized(TSDRDOMCollector.this.pollerSyncObject){
+            TSDRDOMCollector.this.pollerSyncObject.notifyAll();
+        }
+        synchronized(TSDRDOMCollector.this){
+            TSDRDOMCollector.this.notifyAll();
+        }
     }
 
     // Adds a new builder to the builder container, the first metric for the
