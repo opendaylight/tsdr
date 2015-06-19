@@ -88,6 +88,8 @@ public class HBaseDataStore  {
             conf = HBaseConfiguration.create();
             conf.set(HBaseDataStoreConstants.ZOOKEEPER_QUORUM, zookeeperQuorum);
             conf.set(HBaseDataStoreConstants.ZOOKEEPER_CLIENTPORT, zookeeperClientport);
+            conf.set(HBaseDataStoreConstants.HBASE_CLIENT_RETRIES_NUMBER,"7");
+            conf.set(HBaseDataStoreConstants.HBASE_CLIENT_PAUSE, "500");
             conf.setInt("timeout", 5000);
 
         }
