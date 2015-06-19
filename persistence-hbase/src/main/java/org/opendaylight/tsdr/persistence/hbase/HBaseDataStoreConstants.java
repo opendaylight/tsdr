@@ -20,6 +20,8 @@ public class HBaseDataStoreConstants {
      */
      public static final String ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
      public static final String ZOOKEEPER_CLIENTPORT = "hbase.zookeeper.property.clientPort";
+     public static final String HBASE_CLIENT_RETRIES_NUMBER = "hbase.client.retries.number";
+     public static final String HBASE_CLIENT_PAUSE = "hbase.client.pause";
 
 
 }
