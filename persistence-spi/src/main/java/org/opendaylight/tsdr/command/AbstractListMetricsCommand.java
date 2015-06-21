@@ -10,6 +10,7 @@ package org.opendaylight.tsdr.command;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.console.OsgiCommandSupport;
+import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,10 +76,19 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
                 return null;
             }
         }
+
+        //validate the category names
+        if (!category.equalsIgnoreCase(TSDRConstants.FLOW_STATS_CATEGORY_NAME)
+            && !category.equalsIgnoreCase(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME)
+            && !category.equalsIgnoreCase(TSDRConstants.PORT_STATS_CATEGORY_NAME)
+            && !category.equalsIgnoreCase(TSDRConstants.QUEUE_STATS_CATEGORY_NAME)){
+                System.out.println("Category:" + category + " is not supported.");
+                return null;
+            }
         if (persistenceService != null) {
             List<?> metrics = persistenceService.getMetrics(category, startDate, endDate);
             if (metrics == null || metrics.isEmpty()) {
-                System.out.println("Either the category is not supported or no data of this category in the specified time range. ");
+                System.out.println("No data of this category in the specified time range. ");
                 return null;
             }
             System.out.println(listMetrics(metrics));
