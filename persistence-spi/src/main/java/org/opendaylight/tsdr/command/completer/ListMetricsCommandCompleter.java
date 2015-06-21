@@ -32,8 +32,8 @@ public class ListMetricsCommandCompleter implements Completer {
             completer.getStrings().add(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME);
             completer.getStrings().add(TSDRConstants.PORT_STATS_CATEGORY_NAME);
             completer.getStrings().add(TSDRConstants.QUEUE_STATS_CATEGORY_NAME);
-            completer.getStrings().add(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME);
-            completer.getStrings().add(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME);
+           // completer.getStrings().add(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME);
+            //completer.getStrings().add(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME);
             return completer.complete(buffer, cursor, candidates);
         }
 }
