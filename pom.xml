@@ -4,34 +4,34 @@
    <parent>
      <groupId>org.opendaylight.odlparent</groupId>
      <artifactId>odlparent</artifactId>
-     <version>1.5.0-Lithium</version>
+     <version>1.5.1-SNAPSHOT</version>
      <relativePath/>
    </parent>
 
   <packaging>pom</packaging>
   <groupId>org.opendaylight.tsdr</groupId>
   <artifactId>tsdr</artifactId>
-  <version>1.0-Lithium</version>
+  <version>1.0.1-SNAPSHOT</version>
 
 
     <properties>
         <bundle.plugin.version>2.3.7</bundle.plugin.version>
-        <config.version>0.3.0-Lithium</config.version>
+        <config.version>0.3.1-SNAPSHOT</config.version>
         <config.configfile.directory>etc/opendaylight/karaf</config.configfile.directory>
         <equinox.osgi.version>3.8.1.v20120830-144521</equinox.osgi.version>
-        <features.test.version>1.5.0-Lithium</features.test.version>
+        <features.test.version>1.5.1-SNAPSHOT</features.test.version>
         <hbase.version>0.94.15</hbase.version>
         <hadoop.version>1.2.0</hadoop.version>
-        <ietf-inet-types.version>2010.09.24.7-Lithium</ietf-inet-types.version>
-        <ietf-yang-types.version>2010.09.24.7-Lithium</ietf-yang-types.version>
+        <ietf-inet-types.version>2010.09.24.7.1-SNAPSHOT</ietf-inet-types.version>
+        <ietf-yang-types.version>2010.09.24.7.1-SNAPSHOT</ietf-yang-types.version>
         <java.version.source>1.7</java.version.source>
         <java.version.target>1.7</java.version.target>
         <jmxGeneratorPath>src/main/yang-gen-config</jmxGeneratorPath>
-        <l2switch.version>0.2.0-Lithium</l2switch.version>
+        <l2switch.version>0.2.1-SNAPSHOT</l2switch.version>
         <maven.compile.plugin.version>2.5.1</maven.compile.plugin.version>
-        <mdsal.version>1.2.0-Lithium</mdsal.version>
-        <model.version>1.5.0-Lithium</model.version>
-        <model.flow.statistics>0.1.0-Lithium</model.flow.statistics>
+        <mdsal.version>1.2.1-SNAPSHOT</mdsal.version>
+        <model.version>1.5.1-SNAPSHOT</model.version>
+        <model.flow.statistics>0.1.1-SNAPSHOT</model.flow.statistics>
         <nexusproxy>http://nexus.opendaylight.org/content</nexusproxy>
         <osgi.compendium.version>5.0.0</osgi.compendium.version>
         <osgi.core.version>5.0.0</osgi.core.version>
@@ -40,14 +40,14 @@
         <sitedeploy>dav:http://nexus.opendaylight.org/content/sites/site</sitedeploy>
         <spring.version>3.1.3.RELEASE</spring.version>
         <salGeneratorPath>src/main/yang-gen-sal</salGeneratorPath>
-        <sal.binding.config>1.2.0-Lithium</sal.binding.config>
-        <sal.core.api>1.2.0-Lithium</sal.core.api>
+        <sal.binding.config>1.2.1-SNAPSHOT</sal.binding.config>
+        <sal.core.api>1.2.1-SNAPSHOT</sal.core.api>
         <jacoco.version>0.6.2.201302030002</jacoco.version>
-        <tsdr.project.version>1.0-Lithium</tsdr.project.version>
-        <project.version>1.0-Lithium</project.version>
-        <yangtools.version>0.7.0-Lithium</yangtools.version>
+        <tsdr.project.version>1.0.1-SNAPSHOT</tsdr.project.version>
+        <project.version>1.0.1-SNAPSHOT</project.version>
+        <yangtools.version>0.7.1-SNAPSHOT</yangtools.version>
         <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
-        <karaf.distro.empty.version>1.5.0-Lithium</karaf.distro.empty.version>
+        <karaf.distro.empty.version>1.5.1-SNAPSHOT</karaf.distro.empty.version>
         <hibernate.jpa.api.version>1.0.0.Final</hibernate.jpa.api.version>
         <hibernate.entity.manager.version>4.3.6.Final</hibernate.entity.manager.version>
         <hibernate.validator.version>4.3.1.Final</hibernate.validator.version>
