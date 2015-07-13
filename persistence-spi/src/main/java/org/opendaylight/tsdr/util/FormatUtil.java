@@ -125,4 +125,23 @@ public class FormatUtil {
         }
         return keyString;
     }
+
+    public static String getMetricID(TSDRMetric m){
+        StringBuilder sb = new StringBuilder();
+        sb.append(m.getTSDRDataCategory());
+        sb.append(TSDRConstants.ID_SPLIT);
+        sb.append(m.getMetricName());
+        sb.append(TSDRConstants.ID_SPLIT);
+        sb.append(m.getNodeID());
+        List<RecordKeys> keys = m.getRecordKeys();
+        if(keys!=null){
+            for(RecordKeys key:keys){
+                sb.append(TSDRConstants.ID_SPLIT);
+                sb.append(key.getKeyName());
+                sb.append(TSDRConstants.ID_SPLIT_ARG);
+                sb.append(key.getKeyValue());
+            }
+        }
+        return sb.toString();
+    }
 }

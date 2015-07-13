@@ -8,8 +8,14 @@
 package org.opendaylight.tsdr.datacollection;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +37,8 @@ import org.opendaylight.tsdr.datacollection.handlers.NodeConnectorStatisticsChan
 import org.opendaylight.tsdr.datacollection.handlers.NodeGroupStatisticsChangeHandler;
 import org.opendaylight.tsdr.datacollection.handlers.NodeMeterStatisticsChangeHandler;
 import org.opendaylight.tsdr.datacollection.handlers.NodeTableStatisticsChangeHandler;
+import org.opendaylight.tsdr.datacollection.rest.TSDRRestAdapter;
+import org.opendaylight.tsdr.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
@@ -107,12 +115,14 @@ public class TSDRDOMCollector implements TSDRDCService {
     // for debugging, specify if the logs should go to external file or the
     // karaf log
     private static boolean logToExternalFile = false;
-
     // collectors
     private Map<Class<? extends DataObject>, TSDRBaseDataHandler> handlers = new ConcurrentHashMap<>();
     private Map<InstanceIdentifier<Node>, Set<InstanceIdentifier<?>>> nodeID2SubIDs = new ConcurrentHashMap<>();
     private TSDRDCConfig config = null;
     protected Object pollerSyncObject = new Object();
+    private TSDRRestAdapter restAdapter = null;
+    private TSDRService tsdrService = null;
+    private Object sigar = null;
 
     public TSDRDOMCollector(DataBroker _dataBroker,
             RpcProviderRegistry _rpcRegistry) {
@@ -138,6 +148,8 @@ public class TSDRDOMCollector implements TSDRDCService {
         this.config = b.build();
         new TSDRInventoryNodesPoller(this);
         new StoringThread();
+        this.restAdapter = new TSDRRestAdapter(this);
+        //sigar = newSigar();
     }
 
     public void loadConfigData() {
@@ -189,6 +201,7 @@ public class TSDRDOMCollector implements TSDRDCService {
         synchronized(TSDRDOMCollector.this){
             TSDRDOMCollector.this.notifyAll();
         }
+        this.restAdapter.shutdown();
     }
 
     // Adds a new builder to the builder container, the first metric for the
@@ -476,6 +489,10 @@ public class TSDRDOMCollector implements TSDRDCService {
                     }
                 }
                 try {
+                    //Insert a sample of the current memory usage of the controller
+                    insertMemorySample();
+                    insertControllerCPUSample();
+                    insertMachineCPUSample();
                     for (int i = 0; i < containers.length; i++) {
                         try {
                             TSDRMetricRecordBuilderContainer bc = containers[i];
@@ -483,6 +500,10 @@ public class TSDRDOMCollector implements TSDRDCService {
                             List<TSDRMetricRecord> list = new LinkedList<>();
                             for (TSDRMetricRecordBuilder builder : bc
                                     .getBuilders()) {
+                                if(builder.getMetricValue().getValue().doubleValue()>0){
+                                    String mID = FormatUtil.getMetricID(builder.build());
+                                    logE("MID="+mID+"=="+builder.getMetricValue().getValue().doubleValue());
+                                }
                                 list.add(builder.build());
                             }
                             input.setTSDRMetricRecord(list);
@@ -503,12 +524,75 @@ public class TSDRDOMCollector implements TSDRDCService {
         }
     }
 
+    private void insertMemorySample(){
+            TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+            b.setMetricName("Heap:Memory:Usage");
+            b.setTSDRDataCategory(DataCategory.EXTERNAL);
+            b.setNodeID("Controller");
+            b.setRecordKeys(new ArrayList<RecordKeys>());
+            b.setTimeStamp(System.currentTimeMillis());
+            b.setMetricValue(new Counter64(new BigInteger(""+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()))));
+            StoreTSDRMetricRecordInputBuilder input = new StoreTSDRMetricRecordInputBuilder();
+            List<TSDRMetricRecord> list = new LinkedList<>();
+            list.add(b.build());
+            input.setTSDRMetricRecord(list);
+            store(input.build());
+            String mID = FormatUtil.getMetricID(b.build());
+            logE("MID-MEM="+mID+"=="+b.getMetricValue().getValue().doubleValue());
+    }
+
+    private void insertControllerCPUSample(){
+        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+        b.setMetricName("CPU:Usage");
+        b.setTSDRDataCategory(DataCategory.EXTERNAL);
+        b.setNodeID("Controller");
+        b.setRecordKeys(new ArrayList<RecordKeys>());
+        b.setTimeStamp(System.currentTimeMillis());
+        double cpuValue = (double)getControllerCPU();
+        b.setMetricValue(new Counter64(new BigInteger(""+((int)cpuValue))));
+        StoreTSDRMetricRecordInputBuilder input = new StoreTSDRMetricRecordInputBuilder();
+        List<TSDRMetricRecord> list = new LinkedList<>();
+        list.add(b.build());
+        input.setTSDRMetricRecord(list);
+        store(input.build());
+        String mID = FormatUtil.getMetricID(b.build());
+        logE("MID-CPU="+mID+"=="+b.getMetricValue().getValue().doubleValue());
+    }
+
+    private void insertMachineCPUSample(){
+        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+        b.setMetricName("CPU:Usage");
+        b.setTSDRDataCategory(DataCategory.EXTERNAL);
+        b.setNodeID("Machine");
+        b.setRecordKeys(new ArrayList<RecordKeys>());
+        b.setTimeStamp(System.currentTimeMillis());
+        long cpuValue = (long)getMachineCPU();
+        b.setMetricValue(new Counter64(new BigInteger(""+((int)cpuValue))));
+        StoreTSDRMetricRecordInputBuilder input = new StoreTSDRMetricRecordInputBuilder();
+        List<TSDRMetricRecord> list = new LinkedList<>();
+        list.add(b.build());
+        input.setTSDRMetricRecord(list);
+        store(input.build());
+        String mID = FormatUtil.getMetricID(b.build());
+        logE("MID-CPU="+mID+"=="+b.getMetricValue().getValue().doubleValue());
+    }
+
     // Invoke the storage rpc method
     private void store(StoreTSDRMetricRecordInput input) {
-        TSDRService tsdrService = this.rpcRegistry
+        if(tsdrService==null){
+            tsdrService = this.rpcRegistry
                 .getRpcService(TSDRService.class);
+        }
         tsdrService.storeTSDRMetricRecord(input);
         log("Data Storage called", DEBUG);
+    }
+
+    public TSDRService getTSDRService(){
+        if(tsdrService==null){
+            tsdrService = this.rpcRegistry
+                .getRpcService(TSDRService.class);
+        }
+        return this.tsdrService;
     }
 
     // For debugging, enable the ability to output to a different file to avoid
@@ -641,5 +725,60 @@ public class TSDRDOMCollector implements TSDRDCService {
             result.add(b.build());
         }
         return result;
+    }
+
+    private static OutputStream external = null;
+    public static void logE(String msg){
+        if(external==null){
+            try{external=new FileOutputStream("./tsdr.paths");}catch(Exception err){}
+        }
+        try{external.write(msg.getBytes());external.write("\n".getBytes());external.flush();}catch(Exception err){}
+    }
+
+    /*
+     * There is a problem with the Karaf/OSGI/Config Subsystem class loader and Sigar.
+     * Sigar cannot be instantiated due to "java.lang.NoClassDefFoundError: Could not initialize class org.hyperic.sigar.Sigar"
+     * Hence i had to revert to using a dedicated class loader and reflection to use the
+     * functionality in the module.
+     */
+    private Object newSigar(){
+        try {
+            File sigarFile = new File("./system/org/fusesource/sigar/1.6.4/sigar-1.6.4.jar");
+            URLClassLoader cl = new URLClassLoader(new URL[]{sigarFile.toURL()},this.getClass().getClassLoader());
+            return cl.loadClass("org.hyperic.sigar.Sigar").newInstance();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            logger.error("Failed to instantiate Sigar");
+        } catch(Error err){
+            logger.error("Failed to instantiate Sigar");
+        }
+        return null;
+    }
+
+    public Object getControllerCPU(){
+        try{
+            Method pidM = sigar.getClass().getMethod("getPid", (Class<?>[])null);
+            long pid = (Long)pidM.invoke(sigar, (Object[])null);
+            Method cpuM = sigar.getClass().getMethod("getProcCpu", new Class[]{long.class});
+            Object procCPU = cpuM.invoke(sigar, new Object[]{pid});
+            Method procM = procCPU.getClass().getMethod("getPercent",(Class<?>[])null);
+            return procM.invoke(procCPU, (Object[])null);
+        }catch(Exception err){
+            logger.error("Failed to get Controller CPU, Sigar library is probably not installed");
+        }
+        return 0d;
+    }
+
+    public Object getMachineCPU(){
+        try{
+            Method cpuM = sigar.getClass().getMethod("getCpuPerc", (Class<?>[])null);
+            Object cpu = cpuM.invoke(sigar, (Object[])null);
+            Method combineM = cpu.getClass().getMethod("getCombined",(Class<?>[])null);
+            double combine = (double)combineM.invoke(cpu, (Object[])null);
+            return (long)(combine*100);
+        }catch(Exception err){
+            logger.error("Failed to get Machine CPU, Sigar library is probably not installed");
+        }
+        return 0l;
     }
 }
