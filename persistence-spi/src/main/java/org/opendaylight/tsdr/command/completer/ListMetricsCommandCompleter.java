@@ -1,4 +1,3 @@
-package org.opendaylight.tsdr.command.completer;
 /*
  * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
  *
@@ -7,6 +6,7 @@ package org.opendaylight.tsdr.command.completer;
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
+package org.opendaylight.tsdr.command.completer;
 
 import org.apache.karaf.shell.console.Completer;
 import org.apache.karaf.shell.console.completer.StringsCompleter;
