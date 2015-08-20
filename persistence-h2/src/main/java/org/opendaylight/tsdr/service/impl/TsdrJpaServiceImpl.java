@@ -10,9 +10,9 @@ package org.opendaylight.tsdr.service.impl;
 
 import com.google.common.base.Preconditions;
 import org.opendaylight.tsdr.entity.Metric;
-import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.service.TsdrJpaService;
-import org.opendaylight.tsdr.util.FormatUtil;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

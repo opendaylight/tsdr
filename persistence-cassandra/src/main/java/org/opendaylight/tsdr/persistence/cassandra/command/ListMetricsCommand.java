@@ -11,8 +11,8 @@ package org.opendaylight.tsdr.persistence.cassandra.command;
 import java.util.List;
 
 import org.apache.karaf.shell.commands.Command;
-import org.opendaylight.tsdr.command.AbstractListMetricsCommand;
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
+import org.opendaylight.tsdr.spi.command.AbstractListMetricsCommand;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

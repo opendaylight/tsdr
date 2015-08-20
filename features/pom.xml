@@ -79,10 +79,21 @@
           <artifactId>tsdr-datacollection</artifactId>
           <version>${tsdr.project.version}</version>
       </dependency>
-
      <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datacollection</artifactId>
+          <version>${tsdr.project.version}</version>
+          <type>xml</type>
+          <classifier>config</classifier>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-collector-spi</artifactId>
+          <version>${tsdr.project.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-collector-spi</artifactId>
           <version>${tsdr.project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
@@ -199,7 +210,11 @@
           <version>${karaf.distro.empty.version}</version>
           <type>zip</type>
       </dependency>
-
+      <dependency>
+          <groupId>org.opendaylight.openflowplugin.model</groupId>
+          <artifactId>model-flow-statistics</artifactId>
+          <version>${model.flow.statistics}</version>
+      </dependency>
   </dependencies>
 
   <build>

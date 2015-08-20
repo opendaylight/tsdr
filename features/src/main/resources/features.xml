@@ -18,6 +18,11 @@
 
         Author: YuLing Chen <yuling_c@dell.com>
 
+        Modified: Aug 21, 2015
+
+        Refactor features
+
+        Author: Sharon Aicler <saichler@gmail.com>
 -->
 
 <features name="odl-tsdr-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
@@ -28,38 +33,52 @@
     <repository>mvn:org.opendaylight.l2switch/features-l2switch/${l2switch.version}/xml/features</repository>
     <repository>mvn:org.ops4j.pax.jdbc/pax-jdbc-features/0.5.0/xml/features</repository>
 
-    <feature name='odl-tsdr-all' version='${project.version}' description='OpenDaylight :: TSDR :: ALL (default to H2 Data Store)'>
-
+    <feature name='odl-tsdr-h2' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence (Out Of The Box Working)'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <feature version='${project.version}'>odl-tsdr-H2-persistence</feature>
-
     </feature>
 
-    <feature name='odl-tsdr-cassandra' version='${project.version}' description='OpenDaylight :: TSDR :: Cassandra (default to Cassandra Data Store)'>
-
+    <feature name='odl-tsdr-cassandra' version='${project.version}' description='OpenDaylight :: TSDR :: Cassandra (Req Cassandra)'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <feature version='${project.version}'>odl-tsdr-cassandra-persistence</feature>
-
     </feature>
 
-    <feature name='odl-tsdr-hbase' version='${project.version}' description='OpenDaylight :: TSDR :: HBase Data Store'>
+    <feature name='odl-tsdr-hbase' version='${project.version}' description='OpenDaylight :: TSDR :: HBase Data Store (Req HBase)'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <feature version='${project.version}'>odl-tsdr-hbase-persistence</feature>
+    </feature>
+
+    <feature name='odl-tsdr-openflow-statistics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Openflow Statistics Collector'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <feature version="0.3.0-SNAPSHOT">odl-l2switch-switch</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-openflow-statistics-collector/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/151-tsdr-openflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-openflow-statistics-collector/${project.version}/xml/config</configfile>
+    </feature>
+
+    <feature name='odl-tsdr-controller-metrics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Controller Metrics Collector'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-controller-metrics-collector/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/154-tsdr-controller-metrics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-controller-metrics-collector/${project.version}/xml/config</configfile>
     </feature>
 
     <feature name='odl-tsdr-core' version='${project.version}' description='OpenDaylight :: TSDR :: Core'>
         <feature version='${yangtools.version}'>odl-yangtools-common</feature>
         <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
-        <feature version='${restconf.version}'>odl-restconf</feature>
-        <feature version="0.3.0-SNAPSHOT">odl-l2switch-switch</feature>
-        <bundle>wrap:mvn:org.fusesource/sigar/${sigar.version}</bundle>
+        <feature version='${mdsal.version}'>odl-restconf</feature>
+        <feature version='${model.flow.statistics}'>odl-openflowplugin-nsf-model</feature>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/150-TSDR-datastorage-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}/xml/config</configfile>
-        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}</bundle>
-        <configfile finalname="${config.configfile.directory}/151-TSDR-datacollection-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}/xml/config</configfile>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datapurge/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/152-TSDR-datapurge-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datapurge/${project.version}/xml/config</configfile>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/145-TSDR-collector-spi-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}/xml/config</configfile>        
+    </feature>
+
+    <feature name='odl-tsdr-nbi' version='${project.version}' description='OpenDaylight :: TSDR :: NBI+RESTfull Adapter'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-northbound-api/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/152-TSDR-northbound-api-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-northbound-api/${project.version}/xml/config</configfile>
     </feature>
 
     <feature name="odl-hbaseclient" version="0.94.15" resolver="(obr)" start-level="50" description='OpenDaylight :: TSDR :: HBase Client'>
@@ -89,8 +108,6 @@
        <bundle>wrap:mvn:org.apache.hadoop/hadoop-core/1.2.0</bundle>
        <bundle>wrap:mvn:org.apache.hbase/hbase/0.94.15</bundle>
     </feature>
-
-
     <feature name='odl-tsdr-hbase-persistence' version='${project.version}' description="OpenDaylight :: TSDR :: HBase Persistence">
        <feature version='"0.94.15"'>odl-hbaseclient</feature>
        <feature version='${yangtools.version}'>odl-yangtools-common</feature>
@@ -120,10 +137,8 @@
        <bundle>wrap:mvn:io.netty/netty/3.9.0.Final</bundle>
        <bundle>wrap:mvn:com.google.guava/guava/${guava.old.version}</bundle>
        <bundle>wrap:mvn:com.datastax.cassandra/cassandra-driver-core/2.1.2</bundle>
-       <feature version='${yangtools.version}'>odl-yangtools-common</feature>
-       <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
-       <feature version="0.3.0-SNAPSHOT">odl-l2switch-switch</feature>
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
+       <feature version='${project.version}'>odl-tsdr-core</feature>
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-cassandra/${project.version}</bundle>
        <configfile finalname="etc/tsdr-persistence-cassandra.properties">mvn:org.opendaylight.tsdr/${artifactName}-persistence-cassandra/${project.version}/xml/config</configfile>
     </feature>

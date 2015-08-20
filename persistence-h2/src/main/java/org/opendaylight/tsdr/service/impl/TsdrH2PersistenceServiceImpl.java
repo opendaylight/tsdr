@@ -12,9 +12,9 @@ import java.util.Date;
 import java.util.List;
 
 import org.opendaylight.tsdr.entity.Metric;
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
-import org.opendaylight.tsdr.util.FormatUtil;
-import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
+import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;

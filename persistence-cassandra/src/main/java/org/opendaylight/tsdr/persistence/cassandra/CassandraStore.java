@@ -18,7 +18,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.opendaylight.tsdr.util.FormatUtil;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;
@@ -37,6 +37,7 @@ public class CassandraStore {
     private Session session = null;
     private boolean isMaster = true;
     private String host = null;
+    private int replication_factor = 1;
     private Logger log = LoggerFactory.getLogger(CassandraStore.class);
     private Map<String,MetricPathCacheEntry> pathCache = new HashMap<String,MetricPathCacheEntry>();
 
@@ -72,7 +73,8 @@ public class CassandraStore {
                 Map<String,String> config = loadConfig();
                 this.host = config.get("host");
                 this.isMaster = Boolean.parseBoolean(config.get("master"));
-                log.info("Trying to work with " + this.host+ "Which master is set to=" + this.isMaster);
+                this.replication_factor = Integer.parseInt(config.get("replication_factor"));
+                log.info("Trying to work with " + this.host+ ", Which cassandra master is set to=" + this.isMaster);
                 Cluster cluster = Cluster.builder().addContactPoint(host).build();
 
                 // Try 5 times to connect to cassandra with a 5 seconds delay
@@ -88,7 +90,7 @@ public class CassandraStore {
                                 log.info("This is the main node, trying to create keyspace and tables...");
                                 session = cluster.connect();
                                 session.execute("CREATE KEYSPACE tsdr WITH replication "
-                                + "= {'class':'SimpleStrategy', 'replication_factor':3};");
+                                + "= {'class':'SimpleStrategy', 'replication_factor':"+replication_factor+"};");
                                 session = cluster.connect("tsdr");
                                 createTSDRTables();
                                 return session;

@@ -66,25 +66,4 @@ module TSDRDC {
             }
         }
     }
-    rpc addMetric {
-        description
-          "Add a metric record to a specific metric";
-        input {
-            leaf name {
-                type string;
-            }
-            leaf value {
-                type string;
-            }
-            leaf nodeID {
-              type string;
-            }
-            leaf path {
-              type string;
-            }
-            leaf category{
-              type int32;
-            }
-        }
-    }
 }

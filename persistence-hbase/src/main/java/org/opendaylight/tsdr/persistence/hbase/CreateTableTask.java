@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 
-import org.opendaylight.tsdr.scheduler.Task;
+import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**

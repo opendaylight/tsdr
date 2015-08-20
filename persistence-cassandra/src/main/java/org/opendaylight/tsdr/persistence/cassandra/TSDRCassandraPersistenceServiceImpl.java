@@ -10,8 +10,8 @@ package org.opendaylight.tsdr.persistence.cassandra;
 import java.util.Date;
 import java.util.List;
 
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
-import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
+import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 /**
  * @author Sharon Aicler(saichler@gmail.com)

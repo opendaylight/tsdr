@@ -22,7 +22,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>org.opendaylight.controller.config.yang.config.TSDR_datastorage.impl</Export-Package>
+                        <Export-Package>org.opendaylight.tsdr.datastorage.*,org.opendaylight.controller.config.yang.config.TSDR_datastorage.impl.*</Export-Package>
                         <Import-Package>*</Import-Package>
                     </instructions>
                 </configuration>

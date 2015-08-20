@@ -57,6 +57,7 @@
         <io.netty.version>3.9.0.Final</io.netty.version>
         <com.datastax.cassandra.version>2.1.2</com.datastax.cassandra.version>
         <sigar.version>1.6.4</sigar.version>
+        <yang-jmx-generator.version>0.4.0-SNAPSHOT</yang-jmx-generator.version>
     </properties>
 
   <scm>
@@ -156,7 +157,6 @@
             </filesets>
           </configuration>
         </plugin>
-
         <!-- Ignore/Execute plugin execution -->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
@@ -309,7 +309,8 @@
     <module>persistence-cassandra</module>
     <module>datastorage</module>
     <module>datapurge</module>
-    <module>datacollection</module>
+    <module>collectors</module>
+    <module>northbound-api</module>
     <module>features</module>
   </modules>
 </project>

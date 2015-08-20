@@ -30,7 +30,7 @@
             </completers>
       </command>
     </command-bundle>
-    <bean id="listMetricsCommandCompleter" class="org.opendaylight.tsdr.command.completer.ListMetricsCommandCompleter"/>
+    <bean id="listMetricsCommandCompleter" class="org.opendaylight.tsdr.spi.command.completer.ListMetricsCommandCompleter"/>
 </blueprint>
 
 

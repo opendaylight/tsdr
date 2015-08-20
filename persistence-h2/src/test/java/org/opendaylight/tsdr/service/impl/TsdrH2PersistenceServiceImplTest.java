@@ -12,7 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opendaylight.tsdr.command.ListMetricsCommand;
 import org.opendaylight.tsdr.entity.Metric;
-import org.opendaylight.tsdr.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;

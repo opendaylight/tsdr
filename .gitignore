@@ -4,3 +4,8 @@ target/
 # OpenDaylight
 yang-gen-sal/
 yang-gen-config/
+
+#Eclipse
+.project
+.classpath
+.settings

@@ -9,9 +9,9 @@
 package org.opendaylight.tsdr.datastorage.persistence;
 
 
-import org.opendaylight.tsdr.model.TSDRConstants;
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
-import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
+import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

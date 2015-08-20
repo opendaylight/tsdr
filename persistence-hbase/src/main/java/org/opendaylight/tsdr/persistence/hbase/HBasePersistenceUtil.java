@@ -14,8 +14,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import org.opendaylight.tsdr.model.TSDRConstants;
-import org.opendaylight.tsdr.util.FormatUtil;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;

@@ -10,9 +10,9 @@ package org.opendaylight.tsdr.command;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.console.OsgiCommandSupport;
 import org.opendaylight.tsdr.entity.Metric;
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
 import org.opendaylight.tsdr.service.TsdrJpaService;
 import org.opendaylight.tsdr.service.impl.TsdrH2PersistenceServiceImpl;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

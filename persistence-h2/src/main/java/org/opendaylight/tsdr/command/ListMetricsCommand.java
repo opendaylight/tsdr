@@ -10,9 +10,10 @@ package org.opendaylight.tsdr.command;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.console.OsgiCommandSupport;
 import org.opendaylight.tsdr.entity.Metric;
-import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.service.TsdrJpaService;
-import org.opendaylight.tsdr.util.FormatUtil;
+import org.opendaylight.tsdr.spi.command.AbstractListMetricsCommand;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

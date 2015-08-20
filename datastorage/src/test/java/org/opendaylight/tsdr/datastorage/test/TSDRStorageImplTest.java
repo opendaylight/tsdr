@@ -24,10 +24,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import org.opendaylight.tsdr.datastorage.TSDRStorageServiceImpl;
-import org.opendaylight.tsdr.model.TSDRConstants;
-import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
-
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
+import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreOFStatsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.openflowstats.ObjectKeys;

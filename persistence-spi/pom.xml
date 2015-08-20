@@ -17,8 +17,8 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-Name>org.opendaylight.tsdr.persistence</Bundle-Name>
-
+                        <Bundle-Name>org.opendaylight.tsdr.spi</Bundle-Name>
+                        <Export-Package>org.opendaylight.tsdr.spi.*,org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.*</Export-Package>
                     </instructions>
                 </configuration>
             </plugin>

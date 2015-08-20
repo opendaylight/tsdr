@@ -20,10 +20,10 @@ import java.util.concurrent.ScheduledFuture;
 
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HTableInterface;
-import org.opendaylight.tsdr.model.TSDRConstants;
-import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
-import org.opendaylight.tsdr.scheduler.SchedulerService;
-import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
+import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
+import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;

@@ -40,6 +40,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-Name>org.opendaylight.tsdr.cassandra</Bundle-Name>
+                        <Import-Package>*</Import-Package>
                     </instructions>
                 </configuration>
             </plugin>

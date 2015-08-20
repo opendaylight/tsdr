@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import org.opendaylight.tsdr.datastorage.persistence.TSDRPersistenceServiceFactory;
-import org.opendaylight.tsdr.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutput;
@@ -153,12 +153,16 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
         GetMetricOutputBuilder output = new GetMetricOutputBuilder();
         List<Metrics> metrics = new LinkedList<Metrics>();
         Method mColumns = null;
-        List columns = null;
+        List<?> columns = null;
         Method mTime = null;
         Method mValue = null;
+        boolean isCassandra = false;
+        boolean isH2 = false;
+        boolean isHBase = false;
         for(Object o:result){
             if(mTime==null){
-                if(o.getClass().getName().indexOf("Cassandra")!=-1){
+                if(isCassandra || o.getClass().getName().indexOf("Cassandra")!=-1){
+                    isCassandra = true;
                     try {
                         mTime = o.getClass().getMethod("getTime",(Class<?>[]) null);
                         mValue = o.getClass().getMethod("getValue", (Class<?>[]) null);
@@ -166,7 +170,8 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
                         log.error("Can't find time method",e);
                     }
                 }else
-                if(o.getClass().getName().equals("org.opendaylight.tsdr.entity.Metric")){
+                if(isH2 || o.getClass().getName().equals("org.opendaylight.tsdr.entity.Metric")){
+                    isH2 = true;
                     try {
                         mTime = o.getClass().getMethod("getMetricTimeStamp",(Class<?>[]) null);
                         mValue = o.getClass().getMethod("getMetricValue", (Class<?>[]) null);
@@ -174,10 +179,11 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
                         log.error("Can't find time method",e);
                     }
                 }else
-                if(o.getClass().getName().equals("org.opendaylight.tsdr.persistence.hbase.HBaseEntity")){
+                if(isHBase || o.getClass().getName().equals("org.opendaylight.tsdr.persistence.hbase.HBaseEntity")){
+                    isHBase = true;
                     try {
                         mColumns = o.getClass().getMethod("getColumns",(Class<?>[]) null);
-                        columns = (List)mColumns.invoke(o, (Object[])null);
+                        columns = (List<?>)mColumns.invoke(o, (Object[])null);
                         mTime = columns.get(0).getClass().getMethod("getTimeStamp",(Class<?>[]) null);
                         mValue = columns.get(0).getClass().getMethod("getValue",(Class<?>[]) null);
                     } catch (NoSuchMethodException | SecurityException | IllegalAccessException
