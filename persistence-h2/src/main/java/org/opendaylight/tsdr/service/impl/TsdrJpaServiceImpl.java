@@ -90,25 +90,43 @@ public class TsdrJpaServiceImpl implements TsdrJpaService {
         if((startDateTime == null )||(endDateTime == null)){
             return getMetricsFilteredByCategory(category,TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
         }else{
-            StringBuffer sb = new StringBuffer();
-            sb.append("select * from Metric where metrictimestamp ")
-              .append("between '")
-              .append(FormatUtil.getFormattedTimeStamp(startDateTime.getTime(),
-                      FormatUtil.QUERY_TIMESTAMP))
-              .append("' and '")
-              .append(FormatUtil.getFormattedTimeStamp(endDateTime.getTime(),
-                            FormatUtil.QUERY_TIMESTAMP))
-              .append("' and metriccategory = '")
-              .append(category.toUpperCase())
-              .append("'")
-              .append(" order by metrictimestamp desc");
-            log.info("getMetricsFilteredByCategory with start date and end date: query being sent is "+ sb.toString());
-            Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
-            return nativeQuery.getResultList();
+            if(category.indexOf("%3A")!=-1){
+                category = category.replaceAll("%3A", ":");
+                StringBuffer sb = new StringBuffer();
+                sb.append("select * from Metric where metrictimestamp ")
+                  .append("between '")
+                  .append(FormatUtil.getFormattedTimeStamp(startDateTime.getTime(),
+                          FormatUtil.QUERY_TIMESTAMP))
+                  .append("' and '")
+                  .append(FormatUtil.getFormattedTimeStamp(endDateTime.getTime(),
+                                FormatUtil.QUERY_TIMESTAMP))
+                  .append("' and metricdetails = '")
+                  .append(category)
+                  .append("'")
+                  .append(" order by metrictimestamp");
+                log.info("getMetricsFilteredByCategory with start date and end date: query being sent is "+ sb.toString());
+                Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
+                return nativeQuery.getResultList();
+            }else{
+                StringBuffer sb = new StringBuffer();
+                sb.append("select * from Metric where metrictimestamp ")
+                  .append("between '")
+                  .append(FormatUtil.getFormattedTimeStamp(startDateTime.getTime(),
+                          FormatUtil.QUERY_TIMESTAMP))
+                  .append("' and '")
+                  .append(FormatUtil.getFormattedTimeStamp(endDateTime.getTime(),
+                                FormatUtil.QUERY_TIMESTAMP))
+                  .append("' and metriccategory = '")
+                  .append(category.toUpperCase())
+                  .append("'")
+                  .append(" order by metrictimestamp desc");
+                log.info("getMetricsFilteredByCategory with start date and end date: query being sent is "+ sb.toString());
+                Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
+                return nativeQuery.getResultList();
+            }
         }
 
     }
-
 
     @Override public void close() {
         try{

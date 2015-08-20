@@ -29,7 +29,8 @@ public class TSDRConstants {
     public static final String GROUP_KEY_NAME = "GroupID";
     public static final String METER_KEY_NAME = "MeterID";
     public static final String BUCKET_KEY_NAME = "BucketID";
-
+    public static final String ID_SPLIT = ".";
+    public static final String ID_SPLIT_ARG = "_";
 
     /**
      * Default timeout for persistence service start and stop

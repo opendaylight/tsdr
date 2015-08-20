@@ -7,25 +7,20 @@
  */
 package org.opendaylight.tsdr.service.impl;
 
-import com.google.common.base.Preconditions;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import org.opendaylight.tsdr.entity.Metric;
-import org.opendaylight.tsdr.model.TSDRConstants;
 import org.opendaylight.tsdr.persistence.spi.TsdrPersistenceService;
 import org.opendaylight.tsdr.util.FormatUtil;
 import org.opendaylight.tsdr.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import com.google.common.base.Preconditions;
 
 /**
  * Implementation of the TSDR Persistence SPI utilizing JPA based store
@@ -128,7 +123,8 @@ public class TsdrH2PersistenceServiceImpl implements
         metric.setMetricCategory(data.getTSDRDataCategory().name());
         Date timeStamp = new Date(data.getTimeStamp().longValue());
         metric.setMetricTimeStamp(timeStamp);
-        String detail = FormatUtil.convertToMetricDetailsJSON(FormatUtil.getMetricsDetails(data), data.getTSDRDataCategory().name());
+        //String detail = FormatUtil.convertToMetricDetailsJSON(FormatUtil.getMetricsDetails(data), data.getTSDRDataCategory().name());
+        String detail = FormatUtil.getMetricID(data);
         if(null != detail && !detail.isEmpty()) {
             metric.setMetricDetails(detail);
         }

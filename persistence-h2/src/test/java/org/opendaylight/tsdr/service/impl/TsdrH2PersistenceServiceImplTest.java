@@ -89,7 +89,7 @@ public class TsdrH2PersistenceServiceImplTest {
         Assert.assertEquals("METRIC_NAME", metricList.get(0).getMetricName());
         Assert.assertEquals(64.0,metricList.get(0).getMetricValue(),0.02);
         Assert.assertEquals("openflow:dummy",metricList.get(0).getNodeId());
-        Assert.assertEquals("{ 'Node':'node','Table':'table','Flow':'flow'}",metricList.get(0).getMetricDetails());;
+        Assert.assertEquals("FLOWSTATS.METRIC_NAME.openflow:dummy.recordKeyName_node_table_flow",metricList.get(0).getMetricDetails());;
         Assert.assertEquals(new Date(new BigInteger(timeStamp).longValue()).toString(), metricList.get(0).getMetricTimeStamp().toString());
         Assert.assertEquals(DataCategory.FLOWSTATS.toString(), metricList.get(0).getMetricCategory());
 
@@ -151,7 +151,6 @@ public class TsdrH2PersistenceServiceImplTest {
         Assert.assertEquals(metricValue,metricList.get(0).getMetricValue(),0.02);
         Assert.assertEquals(nodeId, metricList.get(0).getNodeId());
         Assert.assertEquals(metricDetails, metricList.get(0).getMetricDetails());
-
         Assert.assertEquals(new Date(new BigInteger(timeStamp).longValue()).toString(), metricList.get(0).getMetricTimeStamp().toString());
         Assert.assertEquals(dc.toString(), metricList.get(0).getMetricCategory());
 
@@ -166,7 +165,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "openflow:dummy", DataCategory.FLOWSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWSTATS, "METRIC_NAME", 64.0, "openflow:dummy", "{ 'Node':'node','Table':'table','Flow':'flow'}", timeStamp);
+        validateResults(DataCategory.FLOWSTATS, "METRIC_NAME", 64.0, "openflow:dummy", "FLOWSTATS.METRIC_NAME.openflow:dummy.recordKeyName_node_table_flow", timeStamp);
 
     }
 
@@ -183,7 +182,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWTABLESTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWTABLESTATS, "PacketsMatched", 20000000.0, "node1", "{ 'Node':'node1','Table':'table1'}", timeStamp);
+        validateResults(DataCategory.FLOWTABLESTATS, "PacketsMatched", 20000000.0, "node1", "FLOWTABLESTATS.PacketsMatched.node1.Node_node1.Table_table1.TableID_table1", timeStamp);
 
     }
 
@@ -201,7 +200,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWTABLESTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWTABLESTATS, "ActiveFlows", 20000000.0, "node1", "{ 'Node':'node1','Table':'table1'}", timeStamp);
+        validateResults(DataCategory.FLOWTABLESTATS, "ActiveFlows", 20000000.0, "node1", "FLOWTABLESTATS.ActiveFlows.node1.Node_node1.Table_table1.TableID_table1", timeStamp);
 
     }
 
@@ -217,7 +216,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWTABLESTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWTABLESTATS, "PacketsLookedup", 20000000.0, "node1", "{ 'Node':'node1','Table':'table1'}", timeStamp);
+        validateResults(DataCategory.FLOWTABLESTATS, "PacketsLookedup", 20000000.0, "node1", "FLOWTABLESTATS.PacketsLookedup.node1.Node_node1.Table_table1.TableID_table1", timeStamp);
 
     }
 
@@ -233,7 +232,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "CollisionCount", 2000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "CollisionCount", 2000.0, "node1","PORTSTATS.CollisionCount.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
 
     }
 
@@ -249,7 +248,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "ReceiveCRCError", 2000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceiveCRCError", 2000.0, "node1","PORTSTATS.ReceiveCRCError.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
 
     }
 
@@ -265,7 +264,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "ReceivedDrops", 2000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceivedDrops", 2000.0, "node1","PORTSTATS.ReceivedDrops.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -282,7 +281,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "ReceivedErrors", 2000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceivedErrors", 2000.0, "node1","PORTSTATS.ReceivedErrors.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -298,7 +297,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "ReceiveFrameErrors", 2000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceiveFrameErrors", 2000.0, "node1","PORTSTATS.ReceiveFrameErrors.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -314,7 +313,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "ReceiveOverRunError", 2000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceiveOverRunError", 2000.0, "node1","PORTSTATS.ReceiveOverRunError.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -330,7 +329,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1",DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "TransmitDrops", 2000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "TransmitDrops", 2000.0, "node1","PORTSTATS.TransmitDrops.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
     @Test
@@ -345,7 +344,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "TransmitErrors", 2000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "TransmitErrors", 2000.0, "node1","PORTSTATS.TransmitErrors.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -361,7 +360,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "ReceivedPackets", 4000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceivedPackets", 4000.0, "node1","PORTSTATS.ReceivedPackets.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -377,7 +376,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "TransmittedPackets", 4000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "TransmittedPackets", 4000.0, "node1","PORTSTATS.TransmittedPackets.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -393,7 +392,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "ReceivedBytes", 20000000.0, "node1", "{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceivedBytes", 20000000.0, "node1", "PORTSTATS.ReceivedBytes.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -410,7 +409,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "TransmittedBytes", 20000000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "TransmittedBytes", 20000000.0, "node1","PORTSTATS.TransmittedBytes.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -427,7 +426,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "DurationInSeconds", 20.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "DurationInSeconds", 20.0, "node1","PORTSTATS.DurationInSeconds.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -443,7 +442,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-        validateResults(DataCategory.PORTSTATS, "DurationInNanoSeconds", 2000000.0, "node1","{ 'Node':'port1','InterfaceName':'node1'}", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "DurationInNanoSeconds", 2000000.0, "node1","PORTSTATS.DurationInNanoSeconds.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
     }
 
 
@@ -460,7 +459,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.QUEUESTATS, timeStamp);
 
-        validateResults(DataCategory.QUEUESTATS, "TransmissionErrors", 3000.0, "node1", "{ 'Node':'port1','InterfaceName':'node1','QueueName':'queue1'}", timeStamp);
+        validateResults(DataCategory.QUEUESTATS, "TransmissionErrors", 3000.0, "node1", "QUEUESTATS.TransmissionErrors.node1.PortID_port1.Node_node1.QueueID_queue1.Table_table1", timeStamp);
     }
 
 
@@ -477,7 +476,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.QUEUESTATS, timeStamp);
 
-        validateResults(DataCategory.QUEUESTATS, "TransmissionBytes", 3000.0, "node1", "{ 'Node':'port1','InterfaceName':'node1','QueueName':'queue1'}", timeStamp);
+        validateResults(DataCategory.QUEUESTATS, "TransmissionBytes", 3000.0, "node1", "QUEUESTATS.TransmissionBytes.node1.PortID_port1.Node_node1.QueueID_queue1.Table_table1", timeStamp);
     }
 
     @Test
@@ -493,7 +492,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.QUEUESTATS, timeStamp);
 
-        validateResults(DataCategory.QUEUESTATS, "TransmissionBytes", 3000.0, "node1", "{ 'Node':'port1','InterfaceName':'node1','QueueName':'queue1'}", timeStamp);
+        validateResults(DataCategory.QUEUESTATS, "TransmissionBytes", 3000.0, "node1", "QUEUESTATS.TransmissionBytes.node1.PortID_port1.Node_node1.QueueID_queue1.Table_table1", timeStamp);
     }
 
     @Test
@@ -509,7 +508,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWMETERSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWMETERSTATS, "PacketCount", 40.0, "node1", "{ 'Node':'node1','GroupName':'meter1','MeterName':'table1'}", timeStamp);
+        validateResults(DataCategory.FLOWMETERSTATS, "PacketCount", 40.0, "node1", "FLOWMETERSTATS.PacketCount.node1.Node_node1.MeterID_meter1.Table_table1.GroupID_group1", timeStamp);
     }
 
     @Test
@@ -525,7 +524,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWMETERSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWMETERSTATS, "ByteCount", 40.0, "node1", "{ 'Node':'node1','GroupName':'meter1','MeterName':'table1'}", timeStamp);
+        validateResults(DataCategory.FLOWMETERSTATS, "ByteCount", 40.0, "node1", "FLOWMETERSTATS.ByteCount.node1.Node_node1.MeterID_meter1.Table_table1.GroupID_group1", timeStamp);
     }
 
     @Test
@@ -541,7 +540,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWMETERSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWMETERSTATS, "RefCount", 40.0, "node1", "{ 'Node':'node1','GroupName':'meter1','MeterName':'table1'}", timeStamp);
+        validateResults(DataCategory.FLOWMETERSTATS, "RefCount", 40.0, "node1", "FLOWMETERSTATS.RefCount.node1.Node_node1.MeterID_meter1.Table_table1.GroupID_group1", timeStamp);
     }
 
     @Test
@@ -557,7 +556,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWGROUPSTATS, "PacketCount", 40.0, "node1", "{ 'Node':'node1','GroupName':'table1','BucketID':'group1'}", timeStamp);
+        validateResults(DataCategory.FLOWGROUPSTATS, "PacketCount", 40.0, "node1", "FLOWGROUPSTATS.PacketCount.node1.Node_node1.Table_table1.GroupID_group1.BucketID_bucket1", timeStamp);
 
     }
 
@@ -575,7 +574,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWGROUPSTATS, "ByteCount", 40.0, "node1","{ 'Node':'node1','GroupName':'table1','BucketID':'group1'}", timeStamp);
+        validateResults(DataCategory.FLOWGROUPSTATS, "ByteCount", 40.0, "node1","FLOWGROUPSTATS.ByteCount.node1.Node_node1.Table_table1.GroupID_group1.BucketID_bucket1", timeStamp);
 
     }
 
@@ -592,9 +591,10 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWGROUPSTATS, "RefCount", 40.0, "node1", "{ 'Node':'node1','GroupName':'table1','BucketID':'group1'}", timeStamp);
+        validateResults(DataCategory.FLOWGROUPSTATS, "RefCount", 40.0, "node1", "FLOWGROUPSTATS.RefCount.node1.Node_node1.Table_table1.GroupID_group1.BucketID_bucket1", timeStamp);
 
     }
 
 
 }
+

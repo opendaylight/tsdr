@@ -92,6 +92,11 @@
 
     <dependencies>
         <dependency>
+               <groupId>org.fusesource</groupId>
+               <artifactId>sigar</artifactId>
+               <version>${sigar.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
             <artifactId>tsdr-datastorage</artifactId>
             <version>${project.version}</version>

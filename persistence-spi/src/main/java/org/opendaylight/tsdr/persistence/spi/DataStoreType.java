@@ -23,7 +23,8 @@ public enum DataStoreType {
     MySQL(2),
     SQLite(3),
     ApacheDerby(4),
-    HSQLDB(5);
+    HSQLDB(5),
+    CASSANDRA(6);
 
 
     int value;

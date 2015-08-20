@@ -243,4 +243,30 @@ module TSDR {
             }
         }
     }
+
+    rpc getMetric{
+        input {
+            leaf name{
+               type string;
+            }
+            leaf from{
+               type int64;
+            }
+            leaf until{
+               type int64;
+            }
+        }
+        output {
+            list metrics {
+               leaf time {
+                  type int64;
+               }
+               leaf value {
+                  type decimal64{
+                       fraction-digits 6;
+                  }
+               }
+            }
+         }
+    }
 }
