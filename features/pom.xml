@@ -159,6 +159,13 @@
           <version>${mdsal.version}</version>
           <type>xml</type>
        </dependency>
+      <dependency>
+          <groupId>org.opendaylight.netconf</groupId>
+          <artifactId>features-restconf</artifactId>
+          <classifier>features</classifier>
+          <version>${restconf.version}</version>
+          <type>xml</type>
+      </dependency>
        <dependency>
           <groupId>org.opendaylight.l2switch</groupId>
           <artifactId>features-l2switch</artifactId>
