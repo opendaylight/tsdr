@@ -58,6 +58,8 @@
         <configfile finalname="${config.configfile.directory}/150-TSDR-datastorage-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}/xml/config</configfile>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/151-TSDR-datacollection-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datacollection/${project.version}/xml/config</configfile>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datapurge/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/152-TSDR-datapurge-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datapurge/${project.version}/xml/config</configfile>
     </feature>
 
     <feature name="odl-hbaseclient" version="0.94.15" resolver="(obr)" start-level="50" description='OpenDaylight :: TSDR :: HBase Client'>

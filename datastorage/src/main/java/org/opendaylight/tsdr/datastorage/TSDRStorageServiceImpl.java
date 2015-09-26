@@ -22,6 +22,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreOFStatsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
@@ -78,6 +79,15 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
         log.debug("Exiting TSDRStorageService.storeTSDRMetrics()");
         return Futures.immediateFuture(RpcResultBuilder.<Void> success()
             .build());
+    }
+
+    /**
+     * purges TSDRMetricRecord.
+     *
+     */
+    @Override
+    public Future<RpcResult<java.lang.Void>> purgeTSDRMetricRecord(PurgeTSDRMetricRecordInput input){
+        return null;
     }
 
     /**

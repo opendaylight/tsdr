@@ -233,6 +233,22 @@ module TSDR {
                  }
              }
     }
+    
+     rpc purgeTSDRMetricRecord {
+        description
+            "The API to purge a list of TSDRMetricRecord with specified start time and end time.";
+            input {
+            leaf category_name{
+                type string;
+            }
+            leaf start_time{
+                type int64;
+            }
+            leaf end_time{
+                type int64;
+            }
+        }
+    }
 
     rpc storeOFStats{
         description
