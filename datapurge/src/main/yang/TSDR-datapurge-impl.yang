@@ -27,7 +27,7 @@ module TSDR-datapurge-impl {
     // This is the definition of the service implementation as a module identity.
     identity TSDR-datapurge-impl {
             base config:module-type;
-            config:java-name-prefix TSDRDatastorage;
+            config:java-name-prefix TSDRDatapurge;
     }
 
     // Augments the 'configuration' choice node under modules/module.
