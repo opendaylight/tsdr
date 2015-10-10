@@ -99,6 +99,16 @@ public class TsdrH2PersistenceServiceImpl implements
         }
     }
 
+    @Override
+    public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
+     return null;
+    }
+
+    @Override
+    public void purgeTSDRRecords(DataCategory category, Long retention_time){
+        return;
+    }
+
     /**
      * Get persistence entry from TSDRMetric object.
      *

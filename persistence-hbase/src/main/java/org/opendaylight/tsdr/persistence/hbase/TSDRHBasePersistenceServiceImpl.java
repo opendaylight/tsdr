@@ -8,10 +8,10 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +19,13 @@ import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.apache.hadoop.hbase.client.HTableInterface;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +80,10 @@ public class TSDRHBasePersistenceServiceImpl  implements
         //convert TSDRRecord to HBaseEntities
         try{
             HBaseEntity entity = convertToHBaseEntity(metrics);
+            if ( entity == null){
+                log.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
+            return;
+            }
             HBaseDataStoreFactory.getHBaseDataStore().create(entity);
             flushCommit(entity.getTableName());
         } catch(TableNotFoundException e){
@@ -108,6 +112,10 @@ public class TSDRHBasePersistenceServiceImpl  implements
             try{
                 for(TSDRMetricRecord metrics: metricList){
                     HBaseEntity entity = convertToHBaseEntity(metrics);
+                    if ( entity == null){
+                        log.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
+                        return;
+                    }
                     String tableName = entity.getTableName();
                     if ( entityListMap.get(tableName) == null){
                         entityListMap.put(tableName, new ArrayList<HBaseEntity>());
@@ -201,6 +209,38 @@ public class TSDRHBasePersistenceServiceImpl  implements
         return resultRecords;
     }
 
+
+    @Override
+    /**
+     * Retrieve a list of TSDRMetricRecords from HBase data store based on the
+     * specified data category, startTime, and endTime.
+     */
+    public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
+        if ( category == null ){
+            log.error("The data category is not supported");
+            return null;
+        }
+        List<HBaseEntity> resultEntities = null;
+        String tableName = HBasePersistenceUtil.getTableNameFrom(category);
+        if ( tableName == null || tableName.length() == 0){
+            return null;
+        }
+        resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
+                (tableName,startTime, endTime);
+        List<TSDRMetricRecordList> resultRecords = HBasePersistenceUtil.convertToTSDRMetrics( category,resultEntities);
+        return resultRecords;
+    }
+
+    @Override
+    public void purgeTSDRRecords(DataCategory category, Long retention_time){
+         String tableName = HBasePersistenceUtil.getTableNameFrom(category);
+         try{
+             HBaseDataStoreFactory.getHBaseDataStore().deleteByTimestamp(tableName, retention_time);
+         }catch ( IOException ioe){
+             log.error("Error purging TSDR records in HBase data store {}", ioe);
+         }
+         return;
+    }
     /**
      * convert TSDRMetricRecord to HBaseEntity.
      * @param metrics

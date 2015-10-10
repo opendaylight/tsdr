@@ -9,10 +9,11 @@
 package org.opendaylight.tsdr.spi.persistence;
 
 
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-
 import java.util.Date;
 import java.util.List;
+
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 
 /**
  * This interface provides a list of APIs for accessing TSDR persistence data store.
@@ -68,4 +69,19 @@ public interface TsdrPersistenceService {
      * @return List of persistence store dependents records
      */
     List<?> getMetrics(String metricsCategory,Date startDateTime, Date endDateTime);
+
+    /**
+     * Returns the TSDRRecords based on category, startTime, and endTime
+     * @param category
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime);
+    /**
+     * Purges the data from TSDR data store.
+     * @param category -- the category of the data.
+     * @param timestamp -- the retention time.
+     */
+    void purgeTSDRRecords(DataCategory category, Long timestamp);
 }

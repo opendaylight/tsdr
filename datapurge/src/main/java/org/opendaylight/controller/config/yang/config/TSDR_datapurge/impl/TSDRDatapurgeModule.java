@@ -1,5 +1,9 @@
 package org.opendaylight.controller.config.yang.config.TSDR_datapurge.impl;
 
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRRecordInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +26,16 @@ public TSDRDatapurgeModule(org.opendaylight.controller.config.api.ModuleIdentifi
 
     @Override
     public java.lang.AutoCloseable createInstance() {
-        // TODO:implement
 
+        TSDRService storageService = getRpcRegistryDependency().getRpcService(TSDRService.class);
+        //Please take reference of the following code to create a 'cron job' for automatic purging
+        //of TSDR data
+        /*PurgeTSDRRecordInputBuilder inputBuilder = new PurgeTSDRRecordInputBuilder();
+        inputBuilder.setRetentionTime(System.currentTimeMillis());
+        inputBuilder.setTSDRDataCategory(DataCategory.FLOWTABLESTATS);
+        PurgeTSDRRecordInput input = inputBuilder.build();
+        storageService.purgeTSDRRecord(input);
+        log.info("YuLing===Flow Table Stats purged successfully");*/
         final class CloseResources implements AutoCloseable {
 
             @Override

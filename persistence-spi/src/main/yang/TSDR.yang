@@ -233,18 +233,19 @@ module TSDR {
                  }
              }
     }
-    
-     rpc purgeTSDRMetricRecord {
+
+     rpc purgeTSDRRecord {
         description
-            "The API to purge a list of TSDRMetricRecord with specified start time and end time.";
+            "The API to purge a list of TSDRRecord with specified start time and end time.";
             input {
-            leaf category_name{
-                type string;
+            leaf TSDRDataCategory {
+                description
+                    "The category of the TSDR data.";
+                type DataCategory;
             }
-            leaf start_time{
-                type int64;
-            }
-            leaf end_time{
+            leaf retention_time{
+                description
+                    "The retention time of the TSDR data.";
                 type int64;
             }
         }
@@ -283,6 +284,35 @@ module TSDR {
                   }
                }
             }
+         }
+    }
+    
+    rpc getTSDRMetrics{
+       description
+            "The API to retrieve a list of TSDRRecord with specified category, start time, and end time.";
+        input {
+            leaf TSDRDataCategory {
+                description
+                    "The category of the TSDR data.";
+                type DataCategory;
+            }
+            leaf start_time{
+                description
+                    "The start time of the TSDR data.";
+               type int64;
+            }
+            leaf end_time{
+                description
+                    "The end time of the TSDR data.";
+               type int64;
+            }
+        }
+        output { 
+             list TSDRMetricRecordList{
+                 description
+                    "A list of TSDRMetric";
+                uses TSDRMetric;
+             }
          }
     }
 }

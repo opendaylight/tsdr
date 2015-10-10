@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,7 +19,12 @@ import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordListBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
+import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -55,13 +61,21 @@ public class HBasePersistenceUtil {
 
         HBaseEntity entity = new HBaseEntity();
         String metricName = metricData.getMetricName();
+        if ( metricName == null || metricName.trim().length() == 0){
+            return null;
+        }
         String metricValue = new Long(metricData.getMetricValue().getValue()
             .longValue()).toString();
         Long timeStamp = new Long(metricData.getTimeStamp().longValue());
         String tableName = getTableNameFrom(dataCategory);
+        if ( tableName == null || tableName.trim().length() == 0){
+            return null;
+        }
         String keyString = getKeyStringFrom(metricData);
-
-        StringBuffer rowKey = new StringBuffer();
+        if ( keyString == null || keyString.trim().length() == 0){
+            return null;
+        }
+       StringBuffer rowKey = new StringBuffer();
         rowKey.append(metricName).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
             .append(keyString).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
             .append(timeStamp);
@@ -86,7 +100,7 @@ public class HBasePersistenceUtil {
      * @param datacategory
      * @return
      */
-    private static String getTableNameFrom(DataCategory datacategory){
+    public static String getTableNameFrom(DataCategory datacategory){
         if ( datacategory == DataCategory.FLOWSTATS){
             return TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME;
         }else if ( datacategory == DataCategory.FLOWTABLESTATS){
@@ -99,16 +113,20 @@ public class HBasePersistenceUtil {
             return TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME;
         }else if (datacategory == DataCategory.FLOWMETERSTATS){
             return TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME;
+        }else{
+            log.error("The category is not supported:{}" , datacategory.toString());
+            return "";
         }
 
-        return "";
     }
+
+
     /**
      * Return Data Category Name from HBase Table name.
      * @param datacategory
      * @return
      */
-    private static String getCategoryNameFrom(String tableName){
+    public static String getCategoryNameFrom(String tableName){
         if ( tableName.equalsIgnoreCase(
             TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME)){
             return TSDRConstants.FLOW_STATS_CATEGORY_NAME;
@@ -198,6 +216,28 @@ public class HBasePersistenceUtil {
             }
             return result;
         }
+        /**
+         * Convert the HBaseEntity list to TSDRMetricRecord
+         * @param entities
+         * @return
+         */
+        public static List<TSDRMetricRecordList> convertToTSDRMetrics(DataCategory category,List<HBaseEntity> entities){
+            List<TSDRMetricRecordList> result = new ArrayList<TSDRMetricRecordList>();
+            for ( HBaseEntity entity : entities ){
+                 String rowKey = entity.getRowKey();
+                 String metricID = getMetricIDFromRowKey(rowKey);
+                 String nodeID = getNodeIDFromRowKey(rowKey);
+                 String cellValue = entity.getColumns().get(0).getValue();
+                 TSDRMetricRecordListBuilder mb = new TSDRMetricRecordListBuilder();
+                 mb.setMetricName(metricID);
+                 mb.setMetricValue(new Counter64(new BigInteger(cellValue)));
+                 mb.setNodeID(nodeID);
+                 mb.setRecordKeys(getRecordKeyListFromRowKey(category,rowKey));
+                 TSDRMetricRecordList record = mb.build();
+                 result.add(record);
+            }
+            return result;
+        }
 
         /**
          * Get metricsID, which is at the leading position of rowKey, from the rowKey
@@ -212,6 +252,16 @@ public class HBasePersistenceUtil {
             }
             return null;
         }
+
+        public static String getNodeIDFromRowKey(String rowKey){
+            String[] sections = rowKey.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+            if (sections != null && sections.length > 0){
+                //the second section of the rowkey is the NodeID
+                return sections[1];
+            }
+            return null;
+        }
+
 
         public static String getFormattedTimeStampFromRowKey(String rowKey){
             String[] sections = rowKey.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
@@ -246,6 +296,102 @@ public class HBasePersistenceUtil {
            return null;
         }
 
+        /**
+         * Get the record keys string from the rowkey.
+         * The reocord keys starts from the third position to the second last position of the rowkey.
+         * @param rowKey
+         * @return
+         */
+        public static String getRecordKeysFromRowKey(String rowKey){
+            String[] sections = rowKey.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+            if (sections != null && sections.length >3 ){
+                //object keys starts from section[2]
+                StringBuffer buffer = new StringBuffer();
+                for (int i = 2; i < sections.length - 1; i++){
+                    buffer.append(sections[i]);
+                    if ( i != sections.length - 2){
+                        buffer.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+                    }
+                }
+                 return buffer.toString();
+
+                }
+            return null;
+         }
+
+        /**
+         * Get RecordKeyList from the RowKey.
+         * @param category
+         * @param rowKey
+         * @return
+         */
+        public static List<RecordKeys> getRecordKeyListFromRowKey(DataCategory category,String rowKey){
+            List<RecordKeys> recordKeyList = new ArrayList<RecordKeys>();
+            RecordKeysBuilder keybuilder = new RecordKeysBuilder();
+            /*Get the RecordKeys string from the rowKey*/
+            String keystring = getRecordKeysFromRowKey(rowKey);
+            String[] keys = keystring.split(TSDRConstants.ROWKEY_SPLIT);
+            if (category == DataCategory.FLOWSTATS) {
+                if (keys == null || keys.length < 2){
+                    return null;
+                }
+                keybuilder.setKeyName("TableID");
+                keybuilder.setKeyValue(keys[0]);
+                recordKeyList.add(keybuilder.build());
+                keybuilder.setKeyName("FlowID");
+                keybuilder.setKeyValue(keys[1]);
+                recordKeyList.add(keybuilder.build());
+            }else if(category == DataCategory.FLOWTABLESTATS){
+               if (keys == null || keys.length < 1){
+                       return null;
+                   }
+               keybuilder.setKeyName("TableID");
+               keybuilder.setKeyValue(keys[0]);
+               recordKeyList.add(keybuilder.build());
+            }else if(category == DataCategory.PORTSTATS){
+               if (keys == null || keys.length < 1){
+                    return null;
+                }
+                keybuilder.setKeyName("InterfaceName");
+                keybuilder.setKeyValue(keys[0]);
+                recordKeyList.add(keybuilder.build());
+            }else if(category == DataCategory.QUEUESTATS){
+                if (keys == null || keys.length < 2){
+                    return null;
+                }
+                keybuilder.setKeyName("InterfaceName");
+                keybuilder.setKeyValue(keys[0]);
+                recordKeyList.add(keybuilder.build());
+                keybuilder.setKeyName("QueueName");
+                keybuilder.setKeyValue(keys[1]);
+                recordKeyList.add(keybuilder.build());
+            }else if(category == DataCategory.FLOWGROUPSTATS){
+                if (keys == null || keys.length < 2){
+                    return null;
+                }
+                keybuilder.setKeyName("GroupName");
+                keybuilder.setKeyValue(keys[0]);
+                recordKeyList.add(keybuilder.build());
+                keybuilder.setKeyName("BucketID");
+                keybuilder.setKeyValue(keys[1]);
+                recordKeyList.add(keybuilder.build());
+            }else if(category == DataCategory.FLOWMETERSTATS){
+                if (keys == null || keys.length < 2){
+                    return null;
+                }
+                keybuilder.setKeyName("GroupName");
+                keybuilder.setKeyValue(keys[0]);
+                recordKeyList.add(keybuilder.build());
+                keybuilder.setKeyName("MeterName");
+                keybuilder.setKeyValue(keys[1]);
+                recordKeyList.add(keybuilder.build());
+            }else {
+                log.warn("The category is not supported:{}", category);
+                return null;
+            }
+
+            return recordKeyList;
+         }
         /**
          * remove the leading split from the object key string
          * @param keyString

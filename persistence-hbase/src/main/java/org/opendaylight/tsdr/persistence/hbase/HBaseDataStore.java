@@ -9,6 +9,7 @@ package org.opendaylight.tsdr.persistence.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnectionManager;
 import org.apache.hadoop.hbase.client.HTable;
@@ -29,8 +32,13 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.PageFilter;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
+import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -495,6 +503,63 @@ public class HBaseDataStore  {
 
      }
 
+     /**
+      * Delete records from hbase data store based on tableName and timestamp.
+      * @param tableName
+      * @param timestamp
+      * @throws IOException
+      */
+     public void deleteByTimestamp(String tableName, long timestamp)
+        throws IOException
+        {
+           log.info("YuLing == entering deleteByTimestamp ");
+           int batchSize = 500;
+           List <Delete> deleteList=new ArrayList <Delete> ();
+           Scan scan = new Scan();
+           scan.setTimeRange(Long.MIN_VALUE, timestamp);
+           HTableInterface htable = null;
+           try {
+               htable = getConnection(tableName);
+               ResultScanner rs = htable.getScanner(scan);
+               int count = 0;
+               for ( Result rr: rs){
+                  deleteList.add(new Delete(rr.getRow()));
+                  count++;
+                  if ( count >= batchSize){
+                     htable.delete(deleteList);
+                     count = 0;
+                     deleteList.clear();
+                  }
+               }
+               if ( count > 0 && deleteList != null
+                   && deleteList.size() != 0){
+                   htable.delete(deleteList);
+               }
+           }catch (TableNotFoundException nfe) {
+               throw nfe;
+           } catch ( IOException ioe){
+               log.error("Deletion from HBase Data Store failed!", ioe.getMessage());
+               closeConnection(tableName);
+               HConnectionManager.deleteAllConnections();
+           } catch (Exception exception) {
+               log.error("Deletion from HBase Data Store failed!", exception.getMessage());
+               closeConnection(tableName);
+               HConnectionManager.deleteAllConnections();
+           } catch (Throwable t){
+               log.error("Deletion from HBase Data Store failed!", t.getMessage());
+               log.trace("Deletion from HBase Data Store failed!", t);
+           } finally{
+              try{
+                     htablePool.putTable(htable);
+                     htable.close();
+                     log.info("returned connection back to pool" + htable.getTableName());
+                  }catch ( IOException ioe){
+                      log.error("IOException caught");
+                  }
+
+           }
+           log.debug("Exiting deleteByTimeStamp()");
+   }
 
      /**
       * Convert the result from HBase query API to HBaseEntity.

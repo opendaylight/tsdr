@@ -22,13 +22,17 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRMetricRecordInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreOFStatsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.Metrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.MetricsBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storeofstats.input.TSDROFStats;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yangtools.yang.common.RpcResult;
@@ -86,8 +90,29 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
      *
      */
     @Override
-    public Future<RpcResult<java.lang.Void>> purgeTSDRMetricRecord(PurgeTSDRMetricRecordInput input){
-        return null;
+    public Future<RpcResult<java.lang.Void>> purgeTSDRRecord(PurgeTSDRRecordInput input){
+         log.info("Entering TSDRStorageService.purgeTSDRMetricRecord()");
+         if ( input == null || input.getRetentionTime() == null || input.getRetentionTime() == 0){
+             /*
+              * The end_time of this API cannot be null.
+              * When the category is null, we purge all types of data in the data store.
+              * When the start time is null, we purge all the data that is earlier than the end time.
+              *
+              */
+             log.error("Input of purgeTSDRMetricRecord is invalid");
+             return null;
+         }
+         DataCategory category = input.getTSDRDataCategory();
+         Long timestamp = input.getRetentionTime();
+
+         if(TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore() != null) {
+             TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().purgeTSDRRecords(category, timestamp);
+         }else{
+             log.warn("purgeTSDRMetric -- persistence service is found to be null");
+         }
+         log.info("Exiting TSDRStorageService.purgeTSDRMetricRecord()");
+         return Futures.immediateFuture(RpcResultBuilder.<Void> success()
+             .build());
     }
 
     /**
@@ -217,6 +242,26 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
         }
         output.setMetrics(metrics);
         RpcResultBuilder<GetMetricOutput> builder = RpcResultBuilder.success(output);
+        return builder.buildFuture();
+    }
+
+    @Override
+    /**
+     * Retrieve TSDRMetricRecords
+     */
+    public Future<RpcResult<GetTSDRMetricsOutput>> getTSDRMetrics(GetTSDRMetricsInput input){
+        List<?> result = TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore()
+            .getTSDRMetrics(input.getTSDRDataCategory(), input.getStartTime(), input.getEndTime());
+        GetTSDRMetricsOutputBuilder output = new GetTSDRMetricsOutputBuilder();
+        List< TSDRMetricRecordList> metricRecords = new ArrayList<TSDRMetricRecordList>();
+        for(Object obj:result){
+                TSDRMetricRecordList mr = (TSDRMetricRecordList) obj;
+                metricRecords.add(mr);
+
+
+        }
+        output.setTSDRMetricRecordList(metricRecords);
+        RpcResultBuilder<GetTSDRMetricsOutput> builder = RpcResultBuilder.success(output);
         return builder.buildFuture();
     }
 }

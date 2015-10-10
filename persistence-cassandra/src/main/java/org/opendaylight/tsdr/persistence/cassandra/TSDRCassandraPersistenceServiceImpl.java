@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
@@ -50,5 +51,15 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
     @Override
     public List<?> getMetrics(String metricsCategory, Date startDateTime,Date endDateTime) {
         return store.getMetrics(metricsCategory, startDateTime, endDateTime);
+    }
+
+    @Override
+    public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
+        return null;
+       }
+
+    @Override
+    public void purgeTSDRRecords(DataCategory category, Long retention_time){
+        return;
     }
 }
