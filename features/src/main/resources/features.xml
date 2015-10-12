@@ -32,6 +32,24 @@
     <repository>mvn:org.opendaylight.netconf/features-restconf/${restconf.version}/xml/features</repository>
     <repository>mvn:org.opendaylight.l2switch/features-l2switch/${l2switch.version}/xml/features</repository>
     <repository>mvn:org.ops4j.pax.jdbc/pax-jdbc-features/0.5.0/xml/features</repository>
+     <feature name='odl-tsdr-h2-all' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence and all TSDR data collectors'>
+             <feature version='${project.version}'>odl-tsdr-h2</feature>
+             <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
+             <feature version='${project.version}'>odl-tsdr-netflow-statistics-collector</feature>
+     </feature>
+
+    <feature name='odl-tsdr-hbase-all' version='${project.version}' description='OpenDaylight :: TSDR :: With hbase Persistence and all TSDR data collectors'>
+             <feature version='${project.version}'>odl-tsdr-hbase</feature>
+             <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
+             <feature version='${project.version}'>odl-tsdr-netflow-statistics-collector</feature>
+    </feature>
+
+    <feature name='odl-tsdr-cassandra-all' version='${project.version}' description='OpenDaylight :: TSDR :: With cassandra Persistence and all TSDR data collectors'>
+            <feature version='${project.version}'>odl-tsdr-cassandra</feature>
+            <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
+            <feature version='${project.version}'>odl-tsdr-netflow-statistics-collector</feature>
+    </feature>
+
 
     <feature name='odl-tsdr-h2-all' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence and all TSDR data collectors'>
         <feature version='${project.version}'>odl-tsdr-h2</feature>
@@ -70,6 +88,12 @@
         <configfile finalname="${config.configfile.directory}/151-tsdr-openflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-openflow-statistics-collector/${project.version}/xml/config</configfile>
     </feature>
 
+    <feature name='odl-tsdr-netflow-statistics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Netflow Statistics Collector'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <feature version="0.3.0-SNAPSHOT">odl-l2switch-switch</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-netflow-statistics-collector/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/156-tsdr-netflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-netflow-statistics-collector/${project.version}/xml/config</configfile>
+    </feature>
     <feature name='odl-tsdr-controller-metrics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Controller Metrics Collector'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-controller-metrics-collector/${project.version}</bundle>
