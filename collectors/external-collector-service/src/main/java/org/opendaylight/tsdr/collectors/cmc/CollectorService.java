@@ -88,7 +88,6 @@ public class CollectorService implements ICollectorService, Runnable{
     }
 
     private void sendBytes(byte[] metricData){
-
     }
 
     public void initMDSALSerialization(){
@@ -204,7 +203,7 @@ public class CollectorService implements ICollectorService, Runnable{
 
     /**
      * A method to be used once to generate the serializers
-     * Look @ the commeted code in the main method
+     * Look @ the commeted code in the main method 
      **
     private void generate(){
         typeDescriptorContainer.getTypeDescriptorByClass(TSDRMetricRecord.class);

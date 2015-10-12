@@ -26,7 +26,9 @@ import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +74,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
     }
 
     /**
-     * Store TSDRMetricRecord.
+     * Store TSDRMetricRecord.        // TODO Auto-generated method stub
      */
     @Override
     public void store(TSDRMetricRecord metrics){
@@ -103,15 +105,15 @@ public class TSDRHBasePersistenceServiceImpl  implements
      * Store a list of TSDRMetricRecord.
     */
     @Override
-    public void store(List<TSDRMetricRecord> metricList){
+    public void store(List<TSDRRecord> metricList){
         log.debug("Entering store(List<TSDRMetricRecord>)");
         //tableName, entityList Map
         Map<String, List<HBaseEntity>> entityListMap = new HashMap<String, List<HBaseEntity>>();
         List<HBaseEntity> entityList = new ArrayList<HBaseEntity>();
         if ( metricList != null && metricList.size() != 0){
             try{
-                for(TSDRMetricRecord metrics: metricList){
-                    HBaseEntity entity = convertToHBaseEntity(metrics);
+                for(TSDRRecord metrics: metricList){
+                    HBaseEntity entity = convertToHBaseEntity((TSDRMetricRecord)metrics);
                     if ( entity == null){
                         log.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
                         return;
@@ -298,5 +300,11 @@ public class TSDRHBasePersistenceServiceImpl  implements
             flushCommit(tableName);
         }
         log.debug("Exiting flushing commits");
+    }
+
+
+    @Override
+    public void store(TSDRLogRecord logRecord) {
+        throw new UnsupportedOperationException("Log records are not yet supported by HBase");
     }
 }

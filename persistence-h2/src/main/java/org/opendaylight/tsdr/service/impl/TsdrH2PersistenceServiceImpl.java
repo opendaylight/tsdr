@@ -16,6 +16,8 @@ import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,11 +69,11 @@ public class TsdrH2PersistenceServiceImpl implements
      * Store a list of TSDRMetrics.
     */
     @Override
-    public void store(List<TSDRMetricRecord> metricList){
+    public void store(List<TSDRRecord> metricList){
         Preconditions.checkArgument(metricList != null);
         if ( metricList != null && metricList.size() != 0){
-            for(TSDRMetricRecord metric: metricList){
-                store(metric);
+            for(TSDRRecord metric: metricList){
+                store((TSDRMetricRecord)metric);
             }
         }
     }
@@ -152,6 +154,11 @@ public class TsdrH2PersistenceServiceImpl implements
 
     public  void setJpaService(TsdrJpaServiceImpl jpaService) {
         this.jpaService = jpaService;
+    }
+
+    @Override
+    public void store(TSDRLogRecord logRecord) {
+        throw new UnsupportedOperationException("log records are not yet supported in h2 data store");
     }
 
 }

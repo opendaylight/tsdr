@@ -14,6 +14,9 @@ import java.util.List;
 
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 
 /**
  * This interface provides a list of APIs for accessing TSDR persistence data store.
@@ -26,6 +29,10 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricr
  *
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
  *
+ * Modified: Oct 7, 2015
+ *
+ * @author <a href="mailto:saichler@cisco.com">Sharon Aicler</a>
+ *
  */
 public interface TsdrPersistenceService {
 
@@ -36,11 +43,16 @@ public interface TsdrPersistenceService {
     void store(TSDRMetricRecord metricRecord);
 
     /**
-     * Store a list of TSDRMetricRecord.
-     * @param metricRecordList
+     * Store TSDRMetricRecord.
+     * @param metricRecord
      */
-    void store(List<TSDRMetricRecord> metricRecordList);
+    void store(TSDRLogRecord logRecord);
 
+    /**
+     * Store a list of TSDRRecord.
+     * @param RecordList
+     */
+    void store(List<TSDRRecord> recordList);
 
     /**
      * Starts the persistence service

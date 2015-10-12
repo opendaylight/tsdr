@@ -59,5 +59,16 @@ module tsdr-collector-spi {
                  }
              }
     }
-
+    rpc insertTSDRLogRecord {
+        description
+            "The API to store a list of TSDRLogRecord.";
+             input {
+                 leaf collector-code-name {
+                      type string;
+                 }
+                 list TSDRLogRecord{
+                     uses TSDR:TSDRLog;
+                 }
+             }
+    }
 }

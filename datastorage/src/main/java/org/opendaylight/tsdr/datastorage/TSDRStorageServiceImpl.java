@@ -27,8 +27,10 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOu
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreOFStatsInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.Metrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.MetricsBuilder;
@@ -66,23 +68,21 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
      *
      */
     @Override
-    public Future<RpcResult<java.lang.Void>> storeTSDRMetricRecord(
-        StoreTSDRMetricRecordInput input) {
+    public Future<RpcResult<java.lang.Void>> storeTSDRMetricRecord(StoreTSDRMetricRecordInput input) {
         log.debug("Entering TSDRStorageService.storeTSDRMetrics()");
         if ( input == null || input.getTSDRMetricRecord() == null){
             log.error("Input of storeTSDRMetrics is null");
             return null;
-        }
-        List<TSDRMetricRecord> tsdrMetricRecordList = input.getTSDRMetricRecord();
+        }        
+        List<TSDRRecord> tsdrMetricRecordList = new ArrayList<TSDRRecord>(input.getTSDRMetricRecord().size());
+        tsdrMetricRecordList.addAll(input.getTSDRMetricRecord());
         if(TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore() != null) {
-            TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().store(
-                tsdrMetricRecordList);
+            TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().store(tsdrMetricRecordList);
         }else{
             log.warn("storeTSDRMetricRecord: cannot store the metric -- persistence service is found to be null");
         }
         log.debug("Exiting TSDRStorageService.storeTSDRMetrics()");
-        return Futures.immediateFuture(RpcResultBuilder.<Void> success()
-            .build());
+        return Futures.immediateFuture(RpcResultBuilder.<Void> success().build());
     }
 
     /**
@@ -263,5 +263,22 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
         output.setTSDRMetricRecordList(metricRecords);
         RpcResultBuilder<GetTSDRMetricsOutput> builder = RpcResultBuilder.success(output);
         return builder.buildFuture();
+    }
+
+    public Future<RpcResult<Void>> storeTSDRLogRecord(StoreTSDRLogRecordInput input) {
+        log.debug("Entering TSDRStorageService.storeTSDRLog()");
+        if ( input == null || input.getTSDRLogRecord() == null){
+            log.error("Input of storeTSDRLog is null");
+            return null;
+        }
+        List<TSDRRecord> tsdrMetricRecordList = new ArrayList<TSDRRecord>(input.getTSDRLogRecord().size());
+        tsdrMetricRecordList.addAll(input.getTSDRLogRecord());
+        if(TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore() != null) {
+            TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().store(tsdrMetricRecordList);
+        }else{
+            log.warn("storeTSDRMetricRecord: cannot store the metric -- persistence service is found to be null");
+        }
+        log.debug("Exiting TSDRStorageService.storeTSDRMetrics()");
+        return Futures.immediateFuture(RpcResultBuilder.<Void> success().build());
     }
 }

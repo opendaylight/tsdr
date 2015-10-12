@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,6 +129,14 @@ public class CassandraStore {
                   "value double,"+
                   "PRIMARY KEY (KeyA,KeyB,Time))";
         this.session.execute(cql);
+        cql = "CREATE TABLE MetricLog ("+
+                "KeyA bigint, "+
+                "KeyB bigint, "+
+                "Time bigint, "+
+                "xIndex int,"+
+                "value text,"+
+                "PRIMARY KEY (KeyA,KeyB,Time,xIndex))";
+        this.session.execute(cql);
     }
 
     public void store(TSDRMetricRecord mr){
@@ -160,6 +169,39 @@ public class CassandraStore {
         cql.append(ID.getB()).append(",");
         cql.append(mr.getTimeStamp()).append(",");
         cql.append(mr.getMetricValue().getValue()).append(")");
+        session.execute(cql.toString());
+    }
+
+    public void store(TSDRLogRecord lr){
+        //create log key
+        String logID = FormatUtil.getLogID(lr);
+        MD5Identifier ID = null;
+        MetricPathCacheEntry entry = pathCache.get(logID);
+
+        //if it does not exist, create it
+        if(entry==null){
+            ID = new MD5Identifier(logID.getBytes());
+            StringBuilder cql = new StringBuilder();
+            cql.append("insert into MetricPath (TSDRDataCategory,NodeID,KeyPath,KeyA,KeyB) values(");
+            cql.append("'").append(lr.getTSDRDataCategory().toString()).append("',");
+            cql.append("'").append(lr.getNodeID()).append("',");
+            cql.append("'").append(logID).append("',");
+            cql.append(ID.getA()).append(",");
+            cql.append(ID.getB());
+            cql.append(")");
+            session.execute(cql.toString());
+            this.pathCache.put(logID, new MetricPathCacheEntry(ID.getA(),ID.getB(), lr.getTSDRDataCategory(), lr.getNodeID(), null));
+        }else{
+            ID = new MD5Identifier(entry.keyA,entry.keyB);
+        }
+
+        StringBuilder cql = new StringBuilder();
+        cql.append("insert into MetricLog (KeyA,KeyB,Time,xIndex,value) values(");
+        cql.append(ID.getA()).append(",");
+        cql.append(ID.getB()).append(",");
+        cql.append(lr.getTimeStamp()).append(",");
+        cql.append(lr.getIndex()).append(",'");
+        cql.append(lr.getRecordFullText()).append("')");
         session.execute(cql.toString());
     }
 

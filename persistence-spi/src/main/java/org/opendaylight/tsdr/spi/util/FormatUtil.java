@@ -9,6 +9,7 @@
 package org.opendaylight.tsdr.spi.util;
 
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
@@ -124,6 +125,14 @@ public class FormatUtil {
             keyString = keyString.substring(1);
         }
         return keyString;
+    }
+
+    public static String getLogID(TSDRLog m){
+        StringBuilder sb = new StringBuilder();
+        sb.append(m.getTSDRDataCategory());
+        sb.append(TSDRConstants.ID_SPLIT);
+        sb.append(m.getNodeID());
+        return sb.toString();
     }
 
     public static String getMetricID(TSDRMetric m){

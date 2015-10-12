@@ -51,6 +51,7 @@ module TSDR {
             enum FLOW_METER_STATS;
             enum LOG_RECORDS;
             enum EXTERNAL;
+            enum SYSLOG;
         }
     }
 
@@ -151,6 +152,29 @@ module TSDR {
             type int64;
         }
     }
+    grouping TSDRLog {
+        uses TSDRRecord;
+        list RecordAttributes {
+            description
+                "Attributes extracted from the logs for data analysis purpose.";
+            uses Attribute;
+        }
+        leaf RecordFullText {
+            description
+                "Full text of the log records collected from the data source.";
+            type string;
+        }
+        leaf TimeStamp{
+            description
+                "Time stamp of the log record when it was collected.";
+            type int64;
+        }
+        leaf Index {
+            description
+                "a running index for the collector as we can get some syslogs in the same mili";
+            type int32;
+        }
+    }
     list TSDRAggregationMetric{
         uses TSDRMetric;
         description
@@ -207,22 +231,7 @@ module TSDR {
     list TSDRLogRecord {
         description
             "This data structure is designed for log type of data, such as syslog data.";
-        uses TSDRRecord;
-        list RecordAttributes {
-            description
-                "Attributes extracted from the logs for data analysis purpose.";
-            uses Attribute;
-        }
-        leaf RecordFullText {
-            description
-                "Full text of the log records collected from the data source.";
-            type string;
-        }
-        leaf TimeStamp{
-            description
-                "Time stamp of the log record when it was collected.";
-            type int64;
-        }
+        uses TSDRLog;
     }
     rpc storeTSDRMetricRecord {
         description
@@ -234,7 +243,17 @@ module TSDR {
              }
     }
 
-     rpc purgeTSDRRecord {
+    rpc storeTSDRLogRecord {
+        description
+            "The API to store a list of TSDRLogRecord.";
+             input {
+                 list TSDRLogRecord{
+                     uses TSDRLog;
+                 }
+             }
+    }
+
+    rpc purgeTSDRRecord {
         description
             "The API to purge a list of TSDRRecord with specified start time and end time.";
             input {

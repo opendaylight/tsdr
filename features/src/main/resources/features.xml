@@ -100,6 +100,12 @@
         <configfile finalname="${config.configfile.directory}/154-tsdr-controller-metrics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-controller-metrics-collector/${project.version}/xml/config</configfile>
     </feature>
 
+    <feature name='odl-tsdr-syslog-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Syslog Collector'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-syslog-collector/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/154-tsdr-syslog-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-syslog-collector/${project.version}/xml/config</configfile>
+    </feature>
+
     <feature name='odl-tsdr-core' version='${project.version}' description='OpenDaylight :: TSDR :: Core'>
         <feature version='${yangtools.version}'>odl-yangtools-common</feature>
         <feature version='${mdsal.version}'>odl-mdsal-broker</feature>

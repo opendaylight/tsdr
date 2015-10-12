@@ -6,6 +6,10 @@
      <artifactId>tsdr</artifactId>
      <version>1.1.0-SNAPSHOT</version>
    </parent>
+    <properties>
+        <sigar.version>1.6.4</sigar.version>
+        <yang-jmx-generator.version>0.4.0-SNAPSHOT</yang-jmx-generator.version>
+    </properties>
   <packaging>pom</packaging>
   <groupId>org.opendaylight.tsdr</groupId>
   <artifactId>tsdr-collectors</artifactId>
@@ -21,5 +25,6 @@
     <module>netflow-statistics-collector</module>
     <module>controller-metrics-collector</module>
     <module>collector-spi</module>
+    <module>syslog-collector</module>
   </modules>
 </project>

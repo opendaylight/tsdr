@@ -13,7 +13,9 @@ import java.util.List;
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
@@ -32,9 +34,19 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
     }
 
     @Override
-    public void store(List<TSDRMetricRecord> metricRecordList) {
-       for(TSDRMetricRecord record:metricRecordList){
-           store(record);
+    public void store(TSDRLogRecord logRecord) {
+        store.store(logRecord);
+    }
+
+    @Override
+    public void store(List<TSDRRecord> metricRecordList) {
+       for(TSDRRecord record:metricRecordList){
+           if(record instanceof TSDRMetricRecord){
+               store((TSDRMetricRecord)record);
+           }else
+           if(record instanceof TSDRLogRecord){
+               store((TSDRLogRecord)record);
+           }
        }
     }
 
