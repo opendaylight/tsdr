@@ -42,7 +42,6 @@ public class TSDRNBIServiceImpl implements TsdrNorthboundApiService{
         this.tsdrService = _tsdrService;
         this.rpcRegistry = _rpcRegistry;
     }
-
     @Override
     public Future<RpcResult<Void>> addMetric(AddMetricInput input) {
         TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();

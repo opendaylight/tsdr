@@ -108,12 +108,14 @@
         <configfile finalname="${config.configfile.directory}/152-TSDR-datapurge-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datapurge/${project.version}/xml/config</configfile>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-dataquery/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/155-TSDR-dataquery-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-dataquery/${project.version}/xml/config</configfile>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/145-TSDR-collector-spi-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}/xml/config</configfile>
     </feature>
 
     <feature name='odl-tsdr-nbi' version='${project.version}' description='OpenDaylight :: TSDR :: NBI+RESTfull Adapter'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-northbound-api/${project.version}</bundle>
-        <configfile finalname="${config.configfile.directory}/152-TSDR-northbound-api-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-northbound-api/${project.version}/xml/config</configfile>
+        <configfile finalname="${config.configfile.directory}/152-TSDR-northbound-api-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-northbound-api/${project.version}/xml/config</configfile>        
     </feature>
 
     <feature name="odl-hbaseclient" version="0.94.15" resolver="(obr)" start-level="50" description='OpenDaylight :: TSDR :: HBase Client'>

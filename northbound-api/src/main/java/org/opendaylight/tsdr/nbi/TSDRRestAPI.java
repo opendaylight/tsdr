@@ -5,13 +5,21 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.nbi.rest;
+package org.opendaylight.tsdr.nbi;
 
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.opendaylight.controller.config.yang.config.tsdr.northbound.api.TSDRNBIModule;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInputBuilder;
@@ -23,51 +31,36 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-public class TSDRRestAdapter implements Runnable {
-    // Server socket for the rest requests/response
-    private ServerSocket restSocket = null;
-    private static Logger logger = LoggerFactory.getLogger(TSDRRestAdapter.class);
-    private TSDRNBIModule module = null;
-
-    public TSDRRestAdapter(TSDRNBIModule _module) {
-        this.module = _module;
-        try {
-            restSocket = new ServerSocket(8098);
-            new Thread(this, "TSDR REST Adapter").start();
-        } catch (Exception err) {
-            logger.error("Failed to initialize TSDR Rest Adapter", err);
-        }
+@Path("/query")
+public class TSDRRestAPI {
+    private static final Logger logger = LoggerFactory.getLogger(TSDRRestAPI.class);
+    @GET
+    @Path("/{render}")
+    @Produces("application/json")
+    public Response get(@PathParam("render") String render,
+            @QueryParam("target") String target,
+            @QueryParam("from") String from,
+            @QueryParam("until") String until,
+            @QueryParam("format") String format,
+            @QueryParam("maxDataPoints") String maxDataPoints) {
+        //Example query from Grafana
+        //Get render?target=EXTERNAL.Heap:Memory:Usage.Controller&from=-5min&until=now&format=json&maxDataPoints=1582
+        TSDRRequest request = new TSDRRequest();
+        request.setFormat(format);
+        request.setFrom(from);
+        request.setMaxDataPoints(maxDataPoints);
+        request.setTarget(target);
+        request.setUntil(until);
+        return post(null,request);
     }
 
-    public void shutdown() {
-        try {
-            this.restSocket.close();
-        } catch (Exception err) {
-        }
-    }
-
-    public void run() {
-        while (this.module.isRunning()) {
-            try {
-                Socket s = restSocket.accept();
-                TSDRRestRequest request = new TSDRRestRequest(
-                        s.getInputStream());
-                TSDRRestReply reply = new TSDRRestReply(s.getOutputStream());
-                ITSDRRequest tsdrRequest = (ITSDRRequest) request
-                        .getRequest(ITSDRRequest.class);
-                reply.reply(executeRequest(tsdrRequest), 200);
-                s.getOutputStream().close();
-                s.close();
-            } catch (Exception err) {
-                err.printStackTrace();
-            }
-        }
-    }
-
-    public String executeRequest(ITSDRRequest request) {
+    @POST
+    @Produces("application/json")
+    public Response post(@Context UriInfo info, TSDRRequest request) {
+        TSDRReply reply = new TSDRReply();
+        reply.setTarget(request.getTarget());
         GetMetricInputBuilder input = new GetMetricInputBuilder();
         input.setName(request.getTarget());
-
         input.setFrom(getTimeFromString(request.getFrom()));
         input.setUntil(getTimeFromString(request.getUntil()));
         long maxDataPoints = 0;
@@ -75,45 +68,35 @@ public class TSDRRestAdapter implements Runnable {
             maxDataPoints = Long.parseLong(request.getMaxDataPoints());
         } catch (Exception err) {
         }
-        if (maxDataPoints == 0)
-            return "[]";
-        Future<RpcResult<GetMetricOutput>> metric = module.getTSDRService()
-                .getMetric(input.build());
+        if (maxDataPoints == 0){
+            return Response.status(201).entity(reply).build();
+        }
+        Future<RpcResult<GetMetricOutput>> metric = TSDRNBIModule.tsdrService.getMetric(input.build());
         try {
             List<Metrics> metrics = metric.get().getResult().getMetrics();
             if (metrics == null || metrics.size() == 0) {
-                return "[]";
+                return Response.status(201).entity(reply).build();
             }
             int skip = 1;
             if (metrics.size() > maxDataPoints) {
                 skip = (int) (metrics.size() / maxDataPoints);
             }
-            StringBuilder sb = new StringBuilder();
-            sb.append("[{\"target\": \"" + request.getTarget()
-                    + "\", \"datapoints\": [[");
+            reply.setTarget(request.getTarget());
             int count = 0;
             for (Metrics m : metrics) {
                 if (count % skip == 0) {
-                    sb.append(m.getValue());
-                    sb.append(", ");
-                    String time = "" + m.getTime();
-                    sb.append(time.substring(0, 10));
+                    reply.addDataPoint(m.getTime(), m.getValue().doubleValue());
                 }
                 count++;
-                if ((count - 1) % skip == 0) {
-                    if (count < metrics.size() || count < maxDataPoints)
-                        sb.append("],[");
-                }
             }
-            sb.append("]]}]");
-            return sb.toString();
         } catch (InterruptedException | ExecutionException e) {
             logger.error("Failed to execute request",e);
         }
-        return "[]";
+
+        return Response.status(201).entity(new TSDRReply[]{reply}).build();
     }
 
-    public long getTimeFromString(String t) {
+    public static long getTimeFromString(String t) {
         if (t == null)
             return System.currentTimeMillis();
         int index1 = t.indexOf("-");

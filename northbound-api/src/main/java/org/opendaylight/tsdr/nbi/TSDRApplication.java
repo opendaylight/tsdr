@@ -5,14 +5,19 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.nbi.rest;
+package org.opendaylight.tsdr.nbi;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.sun.jersey.api.core.DefaultResourceConfig;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-public interface ITSDRRequest extends IRequest{
-    public String getFrom();
-    public String getUntil();
-    public String getTarget();
-    public String getMaxDataPoints();
-    public String getFormat();
+public class TSDRApplication extends DefaultResourceConfig {
+    @Override
+    public Set<Class<?>> getClasses() {
+        return new HashSet<Class<?>>(Arrays.asList(TSDRRestAPI.class));
+    }
 }

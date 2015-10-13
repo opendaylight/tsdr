@@ -17,8 +17,8 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>org.opendaylight.controller.config.yang.config.TSDR_northbound_api.impl</Export-Package>
-                        <Import-Package>*</Import-Package>
+                        <Import-Package>*,com.sun.jersey.spi.container.servlet, org.eclipse.jetty.servlets</Import-Package>
+                        <Web-ContextPath>/tsdr</Web-ContextPath>
                     </instructions>
                 </configuration>
             </plugin>
@@ -60,7 +60,7 @@
                     <dependency>
                         <groupId>org.opendaylight.controller</groupId>
                         <artifactId>yang-jmx-generator-plugin</artifactId>
-                        <version>0.4.0-SNAPSHOT</version>
+                        <version>${yang-jmx-generator.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -91,7 +91,7 @@
     <dependencies>
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-datastorage</artifactId>
+            <artifactId>tsdr-persistence-spi</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -132,6 +132,47 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-json-org</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-json-provider</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jaxb-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlets</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.5</version>
         </dependency>
     </dependencies>
 </project>
