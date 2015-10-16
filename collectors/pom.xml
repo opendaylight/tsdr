@@ -25,6 +25,7 @@
     <module>netflow-statistics-collector</module>
     <module>controller-metrics-collector</module>
     <module>collector-spi</module>
+    <module>snmp-data-collector</module>
     <module>syslog-collector</module>
   </modules>
 </project>

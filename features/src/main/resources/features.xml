@@ -83,7 +83,11 @@
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-controller-metrics-collector/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/154-tsdr-controller-metrics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-controller-metrics-collector/${project.version}/xml/config</configfile>
     </feature>
-
+    <feature name='odl-tsdr-snmp-data-collector' version='${project.version}' description='OpenDaylight :: TSDR :: SNMP Data Collector'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-snmp-data-collector/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/155-tsdr-snmp-data-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-snmp-data-collector/${project.version}/xml/config</configfile>
+    </feature>
     <feature name='odl-tsdr-syslog-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Syslog Collector'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-syslog-collector/${project.version}</bundle>
