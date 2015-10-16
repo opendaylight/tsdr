@@ -60,7 +60,18 @@
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
-
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-dataquery</artifactId>
+          <version>${tsdr.project.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-dataquery</artifactId>
+          <version>${tsdr.project.version}</version>
+          <type>xml</type>
+          <classifier>config</classifier>
+      </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datapurge</artifactId>

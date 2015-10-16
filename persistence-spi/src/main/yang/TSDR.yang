@@ -269,7 +269,6 @@ module TSDR {
             }
         }
     }
-
     rpc storeOFStats{
         description
             "The API to store a list of OpenFlow statistics data.";
@@ -279,7 +278,6 @@ module TSDR {
             }
         }
     }
-
     rpc getMetric{
         input {
             leaf name{

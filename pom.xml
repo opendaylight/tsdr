@@ -300,6 +300,7 @@
           </execution>
         </executions>
       </plugin>
+
     </plugins>
   </build>
   <modules>
@@ -308,6 +309,7 @@
     <module>persistence-h2</module>
     <module>persistence-cassandra</module>
     <module>datastorage</module>
+    <module>dataquery</module>
     <module>datapurge</module>
     <module>collectors</module>
     <module>northbound-api</module>
