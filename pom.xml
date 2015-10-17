@@ -311,7 +311,12 @@
     <module>datastorage</module>
     <module>dataquery</module>
     <module>datapurge</module>
-    <module>collectors</module>
+    <module>collectors/openflow-statistics-collector</module>
+    <module>collectors/netflow-statistics-collector</module>
+    <module>collectors/controller-metrics-collector</module>
+    <module>collectors/collector-spi</module>
+    <module>collectors/snmp-data-collector</module>
+    <module>collectors/syslog-collector</module>
     <module>northbound-api</module>
     <module>features</module>
   </modules>
