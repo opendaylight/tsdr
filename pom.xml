@@ -300,7 +300,6 @@
           </execution>
         </executions>
       </plugin>
-
     </plugins>
   </build>
   <modules>
