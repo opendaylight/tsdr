@@ -17,7 +17,8 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Export-Package>org.opendaylight.controller.config.yang.config.TSDR_datacollection.impl</Export-Package>
+                        <Export-Package>org.opendaylight.controller.config.yang.config.TSDR_datacollection.impl
+                        ,org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdrdc.rev140523</Export-Package>
                         <Import-Package>*</Import-Package>
                     </instructions>
                 </configuration>
