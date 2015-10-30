@@ -96,4 +96,9 @@ public interface TsdrPersistenceService {
      * @param timestamp -- the retention time.
      */
     void purgeTSDRRecords(DataCategory category, Long timestamp);
+    /**
+     * Purges all the data from TSDR data store.
+     * @param timestamp
+     */
+    void purgeAllTSDRRecords(Long timestamp);
 }

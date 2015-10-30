@@ -103,14 +103,17 @@ public class TsdrH2PersistenceServiceImpl implements
 
     @Override
     public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
-     return null;
+        throw new UnsupportedOperationException("getTSDRMetrics not yet supported by H2");
     }
 
     @Override
     public void purgeTSDRRecords(DataCategory category, Long retention_time){
-        return;
+        throw new UnsupportedOperationException("purgeTSDRRecords not yet supported by H2");
     }
-
+    @Override
+    public void purgeAllTSDRRecords(Long retention_time){
+        throw new UnsupportedOperationException("purgeAllTSDRRecords not yet supported by H2");
+    }
     /**
      * Get persistence entry from TSDRMetric object.
      *

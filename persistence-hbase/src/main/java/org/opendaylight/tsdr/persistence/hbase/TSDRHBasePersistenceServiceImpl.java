@@ -243,6 +243,15 @@ public class TSDRHBasePersistenceServiceImpl  implements
          }
          return;
     }
+    @Override
+    public void purgeAllTSDRRecords(Long retention_time){
+         DataCategory[] categories = DataCategory.values();
+         for ( int i = 0; i < categories.length; i++ ){
+            DataCategory category = categories[i];
+            purgeTSDRRecords(category, retention_time);
+         }
+         return;
+    }
     /**
      * convert TSDRMetricRecord to HBaseEntity.
      * @param metrics

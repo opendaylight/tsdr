@@ -255,13 +255,24 @@ module TSDR {
 
     rpc purgeTSDRRecord {
         description
-            "The API to purge a list of TSDRRecord with specified start time and end time.";
+            "The API to purge a list of TSDRRecord with specified retention time.";
             input {
             leaf TSDRDataCategory {
                 description
                     "The category of the TSDR data.";
                 type DataCategory;
             }
+            leaf retention_time{
+                description
+                    "The retention time of the TSDR data.";
+                type int64;
+            }
+        }
+    }
+    rpc purgeAllTSDRRecord {
+        description
+            "The API to purge all TSDRRecord.";
+            input {
             leaf retention_time{
                 description
                     "The retention time of the TSDR data.";

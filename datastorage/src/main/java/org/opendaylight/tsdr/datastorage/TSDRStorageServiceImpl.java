@@ -25,6 +25,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutputB
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreOFStatsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogRecordInput;
@@ -91,15 +92,15 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
      */
     @Override
     public Future<RpcResult<java.lang.Void>> purgeTSDRRecord(PurgeTSDRRecordInput input){
-         log.info("Entering TSDRStorageService.purgeTSDRMetricRecord()");
-         if ( input == null || input.getRetentionTime() == null || input.getRetentionTime() == 0){
+         log.info("Entering TSDRStorageService.purgeTSDRRecord()");
+         if ( input == null || input.getRetentionTime() == null
+             || input.getRetentionTime() == 0
+             || input.getTSDRDataCategory() == null){
              /*
-              * The end_time of this API cannot be null.
-              * When the category is null, we purge all types of data in the data store.
-              * When the start time is null, we purge all the data that is earlier than the end time.
+              * The data category and retention_time of this API cannot be null.
               *
               */
-             log.error("Input of purgeTSDRMetricRecord is invalid");
+             log.error("Input of  purgeTSDRRecord invalid");
              return null;
          }
          DataCategory category = input.getTSDRDataCategory();
@@ -108,13 +109,39 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
          if(TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore() != null) {
              TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().purgeTSDRRecords(category, timestamp);
          }else{
-             log.warn("purgeTSDRMetric -- persistence service is found to be null");
+             log.warn("purgeTSDRRecord -- persistence service is found to be null");
          }
-         log.info("Exiting TSDRStorageService.purgeTSDRMetricRecord()");
+         log.info("Exiting TSDRStorageService.purgeTSDRRecord()");
          return Futures.immediateFuture(RpcResultBuilder.<Void> success()
              .build());
     }
+    /**
+     * purges TSDRMetricRecord.
+     *
+     */
+    @Override
+    public Future<RpcResult<java.lang.Void>> purgeAllTSDRRecord(PurgeAllTSDRRecordInput input){
+         log.info("Entering TSDRStorageService.purgeAllTSDRRecord()");
+         if ( input == null || input.getRetentionTime() == null || input.getRetentionTime() == 0){
+             /*
+              * The retention time cannot be null.
+              *
+              */
+             log.error("Input of purgeAllTSDRRecord is invalid");
+             return null;
+         }
+          
+         Long timestamp = input.getRetentionTime();
 
+         if(TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore() != null) {
+             TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().purgeAllTSDRRecords(timestamp);
+         }else{
+             log.warn("purgeAllTSDRRecord -- persistence service is found to be null");
+         }
+         log.info("Exiting TSDRStorageService.purgeAllTSDRRecord()");
+         return Futures.immediateFuture(RpcResultBuilder.<Void> success()
+             .build());
+    }
     /**
      * The API to store a list of TSDROFStats.
      *

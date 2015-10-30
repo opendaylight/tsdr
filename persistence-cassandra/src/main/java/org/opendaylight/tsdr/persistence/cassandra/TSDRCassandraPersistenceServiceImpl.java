@@ -72,6 +72,10 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
 
     @Override
     public void purgeTSDRRecords(DataCategory category, Long retention_time){
-        return;
+        throw new UnsupportedOperationException("purgeTSDRRecords not yet supported by Cassandra");
+    }
+    @Override
+    public void purgeAllTSDRRecords(Long retention_time){
+        throw new UnsupportedOperationException("purgeAllTSDRRecords not yet supported by Cassandra");
     }
 }
