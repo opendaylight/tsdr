@@ -123,7 +123,7 @@ public class HBasePersistenceUtil {
 
     /**
      * Return Data Category Name from HBase Table name.
-     * @param datacategory
+     * @param tableName
      * @return
      */
     public static String getCategoryNameFrom(String tableName){

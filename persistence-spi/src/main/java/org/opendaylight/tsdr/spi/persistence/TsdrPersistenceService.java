@@ -44,13 +44,13 @@ public interface TsdrPersistenceService {
 
     /**
      * Store TSDRMetricRecord.
-     * @param metricRecord
+     * @param logRecord
      */
     void store(TSDRLogRecord logRecord);
 
     /**
      * Store a list of TSDRRecord.
-     * @param RecordList
+     * @param recordList
      */
     void store(List<TSDRRecord> recordList);
 
