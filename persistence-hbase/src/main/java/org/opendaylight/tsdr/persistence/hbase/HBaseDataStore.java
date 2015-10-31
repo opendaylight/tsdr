@@ -267,7 +267,7 @@ public class HBaseDataStore  {
       * Create a list of rows in HTable.
       * The assumption is that all the entities belong to the same htable.
       *
-      * @param entity - an object of HBaseEntity.
+      * @param entityList - a list of objects of HBaseEntity.
       * @return HBaseEntity - the object being created in HTable.
       */
      public List<HBaseEntity> create(List<HBaseEntity> entityList) throws TableNotFoundException{

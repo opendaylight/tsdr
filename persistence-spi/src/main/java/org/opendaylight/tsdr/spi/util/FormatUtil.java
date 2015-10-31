@@ -25,7 +25,7 @@ import java.util.Locale;
  * This class provides formatting related utilities
  *
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
- *         <p/>
+ *         <p>
  *         Created: May 13, 2015
  */
 public class FormatUtil {
