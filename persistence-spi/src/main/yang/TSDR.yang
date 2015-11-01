@@ -52,6 +52,7 @@ module TSDR {
             enum LOG_RECORDS;
             enum EXTERNAL;
             enum SYSLOG;
+            enum NETFLOW;
         }
     }
 
@@ -67,22 +68,6 @@ module TSDR {
             enum MONTHLY;
             enum YEARLY;
         }
-    }
-    grouping OpenFlowStats{
-        description
-            "OpenFlow statistics data from data collection module
-                 that needs to be converted to TSDR data model.";
-        list object-keys {
-            uses RecordKey;
-        }
-        leaf stats-type{
-            type DataCategory;
-        }
-        uses flow-stats:flow-statistics;
-        uses flow-table-stats:flow-table-statistics;
-        uses group-stats:group-statistics;
-        uses queue-stats:flow-capable-node-connector-queue-statistics;
-        uses port-stats:flow-capable-node-connector-statistics;
     }
     grouping Attribute{
         description
@@ -280,15 +265,7 @@ module TSDR {
             }
         }
     }
-    rpc storeOFStats{
-        description
-            "The API to store a list of OpenFlow statistics data.";
-        input {
-            list TSDROFStats{
-                uses OpenFlowStats;
-            }
-        }
-    }
+     
     rpc getMetric{
         input {
             leaf name{

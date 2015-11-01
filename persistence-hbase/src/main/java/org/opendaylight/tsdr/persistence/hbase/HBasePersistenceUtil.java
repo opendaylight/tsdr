@@ -21,7 +21,8 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordListBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
@@ -37,14 +38,14 @@ public class HBasePersistenceUtil {
     private static final Logger log = LoggerFactory.getLogger(HBasePersistenceUtil.class);
 
     /**
-     * Get HBaseEntity from OpenFlow FlowStats object.
+     * Get HBaseEntity from TSDRMetric data structure.
      *
      * @param metricData
      * @return
      */
     public static HBaseEntity getEntityFromMetricStats(TSDRMetric metricData
         , DataCategory dataCategory){
-        log.debug("Entering getEntityFromFlowStats(TSDRMetric)");
+        log.debug("Entering getEntityFromMetricStats(TSDRMetric)");
         if ( metricData == null){
             log.error("metricData is null");
             return null;
@@ -89,11 +90,72 @@ public class HBasePersistenceUtil {
         column.setValue(metricValue);
         columnList.add(column);
         entity.setColumns(columnList);
-        log.debug("Exiting getEntityFromFlowStats(TSDRMetric)");
+        log.debug("Exiting getEntityFromMetricStats(TSDRMetric)");
         return entity;
     }
 
+    /**
+     * Get HBaseEntity from TSDRLogRecord data structure.
+     *
+     * @param logRecord
+     * @return
+     */
+    public static HBaseEntity getEntityFromLogRecord(TSDRLogRecord logRecord
+        , DataCategory dataCategory){
+        log.debug("Entering getEntityFromLogRecord(TSDRLogRecord)");
+        if ( logRecord == null){
+            log.error("logRecord is null");
+            return null;
+        }else if ( logRecord.getNodeID() == null){
+            log.error("NodeID in metric Data is null");
+            return null;
+        } 
 
+        HBaseEntity entity = new HBaseEntity();
+        String nodeID = logRecord.getNodeID();
+        if ( nodeID == null || nodeID.trim().length() == 0){
+            return null;
+        }
+         
+        Long timeStamp = new Long(logRecord.getTimeStamp().longValue());
+        String tableName = getTableNameFrom(dataCategory);
+        if ( tableName == null || tableName.trim().length() == 0){
+            return null;
+        }
+        String keyString = getKeyStringFrom(logRecord);
+        if ( keyString == null || keyString.trim().length() == 0){
+            return null;
+        }
+        StringBuffer rowKey = new StringBuffer();
+        rowKey.append(keyString).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+            .append(timeStamp);
+        entity.setTableName(tableName);
+        entity.setRowKey(rowKey.toString());
+        List<HBaseColumn> columnList = new ArrayList<HBaseColumn>();
+        
+        //add attribute names as columns
+        List<RecordAttributes> attributes = logRecord.getRecordAttributes();
+        for ( RecordAttributes attribute: attributes){
+            HBaseColumn column = new HBaseColumn();
+            column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);         
+            column.setTimeStamp(timeStamp);
+            column.setColumnQualifier(attribute.getName());
+            column.setValue(attribute.getValue());
+            columnList.add(column);
+        }
+        //add FullLengthText as the last column      
+        HBaseColumn column = new HBaseColumn();
+        column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);         
+        column.setTimeStamp(timeStamp);
+        column.setColumnQualifier(TSDRHBaseDataStoreConstants.LOGRECORD_FULL_TEXT);
+        column.setValue(logRecord.getRecordFullText());
+        columnList.add(column);
+        
+       
+        entity.setColumns(columnList);
+        log.debug("Exiting getEntityFromLogRecord(TSDRLogRecord)");
+        return entity;
+    }
 
     /**
      * Return table name based on the data category.
@@ -113,7 +175,11 @@ public class HBasePersistenceUtil {
             return TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME;
         }else if (datacategory == DataCategory.FLOWMETERSTATS){
             return TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME;
-        }else{
+        }else if (datacategory == DataCategory.SYSLOG){
+            return TSDRHBaseDataStoreConstants.SYSLOG_TABLE_NAME;
+        } else if (datacategory == DataCategory.NETFLOW){
+            return TSDRHBaseDataStoreConstants.NETFLOW_TABLE_NAME;
+        } else{
             log.error("The category is not supported:{}" , datacategory.toString());
             return "";
         }
@@ -145,6 +211,12 @@ public class HBasePersistenceUtil {
         }if ( tableName.equalsIgnoreCase(
                 TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME)){
                 return TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME;
+        }if ( tableName.equalsIgnoreCase(
+                TSDRHBaseDataStoreConstants.SYSLOG_TABLE_NAME)){
+                return TSDRConstants.SYSLOG_CATEGORY_NAME;
+        }if ( tableName.equalsIgnoreCase(
+                TSDRHBaseDataStoreConstants.NETFLOW_TABLE_NAME)){
+                return TSDRConstants.NETFLOW_CATEGORY_NAME;
         }else{
             log.warn("The table name is not supported: {}", tableName);
             return null;
@@ -171,6 +243,27 @@ public class HBasePersistenceUtil {
     }
 
     /**
+     * Get KeyString from TSDRLogRecord data.
+     * @param logRecord
+     * @return
+     */
+    private static String getKeyStringFrom(TSDRLogRecord logRecord){
+        StringBuffer keyString = new StringBuffer();
+        keyString.append(logRecord.getNodeID());
+      //  keyString = keyString.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+        List<RecordKeys> recordKeys = logRecord.getRecordKeys();
+        if ( recordKeys != null && recordKeys.size() != 0){
+            for(RecordKeys key: recordKeys){
+                if (key.getKeyValue() != null && key.getKeyValue().length() != 0){
+                    keyString = keyString.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+                            .append(key.getKeyValue());
+                }
+
+           }
+        }
+        return removeLeadingSplit(keyString.toString());
+    }
+    /**
      * Obtain TSDR HBase Tables name list.
      * @return
      */
@@ -182,6 +275,8 @@ public class HBasePersistenceUtil {
         hbaseTables.add(TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME);
         hbaseTables.add(TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME);
         hbaseTables.add(TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME);
+        hbaseTables.add(TSDRHBaseDataStoreConstants.NETFLOW_TABLE_NAME);
+        hbaseTables.add(TSDRHBaseDataStoreConstants.SYSLOG_TABLE_NAME);
         return hbaseTables;
     }
     /**
@@ -402,6 +497,8 @@ public class HBasePersistenceUtil {
             if (keyString != null && keyString.length() != 0 &&
                 keyString.startsWith(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)){
                 result = keyString.substring(1);
+            }else{
+                result = keyString;
             }
             return result;
         }

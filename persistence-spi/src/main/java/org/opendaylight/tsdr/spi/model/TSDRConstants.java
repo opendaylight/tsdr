@@ -54,6 +54,8 @@ public class TSDRConstants {
     public static final String QUEUE_STATS_CATEGORY_NAME = "QueueStats";
     public static final String FLOW_GROUP_STATS_CATEGORY_NAME = "FlowGroupStats";
     public static final String FLOW_METER_STATS_CATEGORY_NAME = "FlowMeterStats";
+    public static final String SYSLOG_CATEGORY_NAME = "SysLog";
+    public static final String NETFLOW_CATEGORY_NAME = "NetFlow";
 
     public static final String ROWKEY_SPLIT = "_";
 }

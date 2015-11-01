@@ -25,10 +25,10 @@ import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +74,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
     }
 
     /**
-     * Store TSDRMetricRecord.        // TODO Auto-generated method stub
+     * Store TSDRMetricRecord.         
      */
     @Override
     public void store(TSDRMetricRecord metrics){
@@ -105,15 +105,23 @@ public class TSDRHBasePersistenceServiceImpl  implements
      * Store a list of TSDRMetricRecord.
     */
     @Override
-    public void store(List<TSDRRecord> metricList){
-        log.debug("Entering store(List<TSDRMetricRecord>)");
+    public void store(List<TSDRRecord> recordList){
+        log.debug("Entering store(List<TSDRRecord>)");
+        
         //tableName, entityList Map
         Map<String, List<HBaseEntity>> entityListMap = new HashMap<String, List<HBaseEntity>>();
+
+
         List<HBaseEntity> entityList = new ArrayList<HBaseEntity>();
-        if ( metricList != null && metricList.size() != 0){
+        if ( recordList != null && recordList.size() != 0){
             try{
-                for(TSDRRecord metrics: metricList){
-                    HBaseEntity entity = convertToHBaseEntity((TSDRMetricRecord)metrics);
+                for(TSDRRecord record: recordList){
+                    HBaseEntity entity = null;
+                    if ( record instanceof TSDRMetricRecord){
+                        entity = convertToHBaseEntity((TSDRMetricRecord)record);
+                    }else if ( record instanceof TSDRLogRecord){
+                        entity = convertToHBaseEntity((TSDRLogRecord)record);
+                    }
                     if ( entity == null){
                         log.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
                         return;
@@ -144,7 +152,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
                 }
             }
         }
-        log.debug("Exiting store(List<TSDRMetricRecord>)");
+        log.debug("Exiting store(List<TSDRRecord>)");
     }
 
     /**
@@ -272,6 +280,26 @@ public class TSDRHBasePersistenceServiceImpl  implements
         log.debug("Exiting convertToHBaseEntity(TSDRMetricRecord)");
         return entity;
      }
+    /**
+     * convert TSDRMetricRecord to HBaseEntity.
+     * @param metrics
+     * @return
+    */
+    private HBaseEntity convertToHBaseEntity(TSDRLogRecord logRecord){
+        log.debug("Entering convertToHBaseEntity(TSDRLogRecord)");
+        HBaseEntity entity = new HBaseEntity();
+
+        TSDRLogRecord logData = logRecord;
+
+        if ( logData != null){
+             DataCategory dataCategory = logData.getTSDRDataCategory();
+             if (dataCategory != null){
+                 entity = HBasePersistenceUtil.getEntityFromLogRecord(logData, dataCategory);
+             }
+        }
+        log.debug("Exiting convertToHBaseEntity(TSDRLogRecord)");
+        return entity;
+     }
 
     /**
      * Close connections to the data store.
@@ -314,6 +342,25 @@ public class TSDRHBasePersistenceServiceImpl  implements
 
     @Override
     public void store(TSDRLogRecord logRecord) {
-        throw new UnsupportedOperationException("Log records are not yet supported by HBase");
+        //convert TSDRLogRecord to HBaseEntities
+        try{
+            HBaseEntity entity = convertToHBaseEntity(logRecord);
+            if ( entity == null){
+                log.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
+            return;
+            }
+            HBaseDataStoreFactory.getHBaseDataStore().create(entity);
+            flushCommit(entity.getTableName());
+        } catch(TableNotFoundException e){
+            synchronized(future){
+                if(future.isDone() || future.isCancelled()){
+                    log.info("Triggering CreateTableTask");
+                    CreateTableTask createTableTask = new CreateTableTask();
+                    Long interval = HBaseDataStoreContext.getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
+                    future = SchedulerService.getInstance().scheduleTaskAtFixedRate(createTableTask, 0L, interval);
+                }
+            }
+        }
+         log.debug("Exiting store(TSDRMetricRecord)");
     }
 }
