@@ -10,7 +10,13 @@ module tsdr-snmp-data-collector {
     yang-version 1;
     namespace "urn:opendaylight:params:xml:ns:yang:controller:config:tsdr:snmp:data:collector";
     prefix "tsdr-snmp-data-collector";
-
+    import ietf-inet-types {
+        prefix inet;
+        revision-date 2010-09-24;
+    }
+    import IF-MIB {
+        prefix if-mib;
+    }
     import config { prefix config; revision-date 2013-04-05; }
     import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
     contact
@@ -33,6 +39,13 @@ module tsdr-snmp-data-collector {
        leaf polling-interval{
           type int64;
        }
+       leaf ip-address{
+          type inet:ipv4-address;
+       }
+       leaf community{
+          type string;
+       }
+       uses if-mib:interfaces-group;
     }
     augment "/config:modules/config:module/config:configuration" {
                 case tsdr-snmp-data-collector {

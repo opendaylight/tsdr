@@ -53,6 +53,7 @@ module TSDR {
             enum EXTERNAL;
             enum SYSLOG;
             enum NETFLOW;
+            enum SNMP_INTERFACES;
         }
     }
 

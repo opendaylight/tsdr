@@ -1,14 +1,17 @@
 package org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector;
 
+
 import org.opendaylight.tsdr.sdc.SNMPDataCollector;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TsdrSnmpDataCollectorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TSDRSDCModule extends org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.AbstractTSDRSDCModule implements AutoCloseable{
+public class TSDRSDCModule extends org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.AbstractTSDRSDCModule{
+    
     private static final Logger logger = LoggerFactory.getLogger(TSDRSDCModule.class);
-    private TsdrCollectorSpiService collectorSPIService = null;
+
     boolean running = true;
+    private SNMPDataCollector snmpCollector = null;
 
     public TSDRSDCModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver) {
         super(identifier, dependencyResolver);
@@ -25,27 +28,17 @@ public class TSDRSDCModule extends org.opendaylight.controller.config.yang.confi
 
     @Override
     public java.lang.AutoCloseable createInstance() {
-        // TODO:implement
-        new SNMPDataCollector(this, getRpcRegistryDependency());
-        logger.info("TSDR SNMP Data Collector initialized!");
-        return this;
-    }
-
-    @Override
-    public void close() throws Exception {
-        running = false;
-        logger.info("TSDR SNMP Data Collector Stopped!");
-    }
-
-    public TsdrCollectorSpiService getTSDRCollectorSPIService(){
-        if(collectorSPIService==null){
-            collectorSPIService = getRpcRegistryDependency().getRpcService(TsdrCollectorSpiService.class);
-        }
-        return this.collectorSPIService;
-    }
-
-    public boolean isRunning() {
-        return running;
+        logger.info("SNMP Data Collector started!");
+        snmpCollector = new SNMPDataCollector(getDataBrokerDependency(),getRpcRegistryDependency());
+        getRpcRegistryDependency().addRpcImplementation(TsdrSnmpDataCollectorService.class, snmpCollector);
+        return new AutoCloseable() {
+            @Override
+            public void close() throws Exception {
+            snmpCollector.shutdown();
+                running = false;
+                logger.info("SNMP Data Collector stopped!");
+            }
+        };
     }
 
 }

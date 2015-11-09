@@ -32,7 +32,9 @@
     <repository>mvn:org.opendaylight.netconf/features-restconf/${restconf.version}/xml/features</repository>
     <repository>mvn:org.opendaylight.l2switch/features-l2switch/${l2switch.version}/xml/features</repository>
     <repository>mvn:org.ops4j.pax.jdbc/pax-jdbc-features/0.5.0/xml/features</repository>
-     <feature name='odl-tsdr-h2-all' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence and all TSDR data collectors'>
+    <repository>mvn:org.opendaylight.snmp/features-snmp/1.1.0-SNAPSHOT/xml/features</repository>
+    
+    <feature name='odl-tsdr-h2-all' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence and all TSDR data collectors'>
              <feature version='${project.version}'>odl-tsdr-h2</feature>
              <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
              <feature version='${project.version}'>odl-tsdr-netflow-statistics-collector</feature>
@@ -85,6 +87,8 @@
     </feature>
     <feature name='odl-tsdr-snmp-data-collector' version='${project.version}' description='OpenDaylight :: TSDR :: SNMP Data Collector'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
+        <feature version="1.1.0-SNAPSHOT">odl-snmp-plugin</feature>
+        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.snmp4j/2.3.4_1</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-snmp-data-collector/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/155-tsdr-snmp-data-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-snmp-data-collector/${project.version}/xml/config</configfile>
     </feature>
