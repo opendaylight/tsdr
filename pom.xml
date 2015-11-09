@@ -315,7 +315,6 @@
     <module>collectors/collector-spi</module>
     <module>collectors/snmp-data-collector</module>
     <module>collectors/syslog-collector</module>
-    <module>northbound-api</module>
     <module>features</module>
   </modules>
 </project>

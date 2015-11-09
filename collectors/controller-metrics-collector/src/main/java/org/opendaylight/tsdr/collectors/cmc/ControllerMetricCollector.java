@@ -82,7 +82,7 @@ public class ControllerMetricCollector extends Thread{
             Method procM = procCPU.getClass().getMethod("getPercent",(Class<?>[])null);
             return procM.invoke(procCPU, (Object[])null);
         }catch(Exception err){
-            logger.error("Failed to get Controller CPU, Sigar library is probably not installed",err);
+            logger.error("Failed to get Controller CPU, Sigar library is probably not installed...");
         }
         return 0d;
     }
@@ -95,7 +95,7 @@ public class ControllerMetricCollector extends Thread{
             double combine = (double)combineM.invoke(cpu, (Object[])null);
             return (long)(combine*100);
         }catch(Exception err){
-            logger.error("Failed to get Machine CPU, Sigar library is probably not installed",err);
+            logger.error("Failed to get Machine CPU, Sigar library is probably not installed...");
         }
         return 0l;
     }

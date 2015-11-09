@@ -5,14 +5,16 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.nbi;
+package org.opendaylight.tsdr.dataquery.rest;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.LinkedList;
 import java.util.List;
+
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-import javax.xml.bind.annotation.XmlRootElement;
+
 @XmlRootElement(name = "TSDRReply")
 public class TSDRReply {
     private String target = null;

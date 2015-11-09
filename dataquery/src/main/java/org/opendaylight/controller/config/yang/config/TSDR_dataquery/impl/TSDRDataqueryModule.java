@@ -8,8 +8,12 @@
 
 package org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl;
 
+import org.opendaylight.controller.sal.binding.api.BindingAwareBroker.RpcRegistration;
+import org.opendaylight.tsdr.dataquery.TSDRNBIServiceImpl;
 import org.opendaylight.tsdr.dataquery.TSDRQueryServiceImpl;
 
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.TSDRDataqueryImplService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +21,7 @@ public class TSDRDataqueryModule
         extends org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.AbstractTSDRDataqueryModule {
 
     private static final Logger log = LoggerFactory.getLogger(TSDRDataqueryModule.class);
-
+    public static TSDRService tsdrService = null;
     /**
      * Constructor.
      *
@@ -58,7 +62,14 @@ public class TSDRDataqueryModule
         /*
          * The implementation of TSDRQueryService.
          */
-        final TSDRQueryServiceImpl tsdrQueryServiceImpl = new TSDRQueryServiceImpl();
+        new TSDRQueryServiceImpl();
+        /*
+         * Get the tsdrService from the Registry so the API can query
+         * the TSDR persistence layer.
+         */
+        tsdrService = this.getRpcRegistryDependency().getRpcService(TSDRService.class);
+        final TSDRNBIServiceImpl nbiService = new TSDRNBIServiceImpl(tsdrService,getRpcRegistryDependency());
+        final RpcRegistration<TSDRDataqueryImplService> serviceRegistation = getRpcRegistryDependency().addRpcImplementation(TSDRDataqueryImplService.class, nbiService);
         /*
          * Register the implementation class of TSDRDataquery service in the RPC
          * registry.
@@ -72,6 +83,7 @@ public class TSDRDataqueryModule
             @Override
             public void close() throws Exception {
                 log.info("TSDRQueryService (instance {}) torn down.", this);
+                serviceRegistation.close();
                 // Call close() on data query service to clean up the data
                 // store.
                 // tsdrQueryServiceImpl.close();

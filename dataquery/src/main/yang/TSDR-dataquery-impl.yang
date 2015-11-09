@@ -64,4 +64,33 @@ module TSDR-dataquery-impl {
             }
         }
     }
+    rpc addMetric {
+        description
+          "Add a metric record to a specific metric";
+        input {
+            leaf metric-name {
+                type string;
+            }
+            leaf metric-value {
+                type string;
+            }
+            leaf timestamp {
+                type string;
+            }
+            leaf nodeID {
+              type string;
+            }
+            list record-keys{
+              leaf key {
+                type string;
+              }
+              leaf value {
+                type string;
+              }
+            }
+            leaf category{
+              type int32;
+            }
+        }
+    }
 }

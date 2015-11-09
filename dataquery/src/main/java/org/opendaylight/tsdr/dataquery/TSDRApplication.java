@@ -15,6 +15,7 @@ import java.util.Set;
 import com.sun.jersey.api.core.DefaultResourceConfig;
 import org.opendaylight.tsdr.dataquery.rest.TSDRGetMetricsAPI;
 import org.opendaylight.tsdr.dataquery.rest.TSDRGetLogRecordsAPI;
+import org.opendaylight.tsdr.dataquery.rest.TSDRNBIRestAPI;
 
 /**
  * @author <a href="mailto:smelton2@uccs.edu">Scott Melton</a>
@@ -22,6 +23,6 @@ import org.opendaylight.tsdr.dataquery.rest.TSDRGetLogRecordsAPI;
 public class TSDRApplication extends DefaultResourceConfig {
     @Override
     public Set<Class<?>> getClasses() {
-        return new HashSet<Class<?>>(Arrays.asList(TSDRGetMetricsAPI.class));
+        return new HashSet<Class<?>>(Arrays.asList(TSDRGetMetricsAPI.class,TSDRNBIRestAPI.class));
     }
 }

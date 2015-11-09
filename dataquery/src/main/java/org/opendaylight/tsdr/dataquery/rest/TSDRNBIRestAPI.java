@@ -5,11 +5,15 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.nbi;
+package org.opendaylight.tsdr.dataquery.rest;
 
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.Metrics;
+import org.opendaylight.yangtools.yang.common.RpcResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -20,20 +24,16 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
-import org.opendaylight.controller.config.yang.config.tsdr.northbound.api.TSDRNBIModule;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutput;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.Metrics;
-import org.opendaylight.yangtools.yang.common.RpcResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-@Path("/query")
-public class TSDRRestAPI {
-    private static final Logger logger = LoggerFactory.getLogger(TSDRRestAPI.class);
+@Path("/nbi")
+public class TSDRNBIRestAPI {
+    private static final Logger logger = LoggerFactory.getLogger(TSDRNBIRestAPI.class);
     @GET
     @Path("/{render}")
     @Produces("application/json")
@@ -71,7 +71,7 @@ public class TSDRRestAPI {
         if (maxDataPoints == 0){
             return Response.status(201).entity(reply).build();
         }
-        Future<RpcResult<GetMetricOutput>> metric = TSDRNBIModule.tsdrService.getMetric(input.build());
+        Future<RpcResult<GetMetricOutput>> metric = TSDRDataqueryModule.tsdrService.getMetric(input.build());
         try {
             List<Metrics> metrics = metric.get().getResult().getMetrics();
             if (metrics == null || metrics.size() == 0) {
