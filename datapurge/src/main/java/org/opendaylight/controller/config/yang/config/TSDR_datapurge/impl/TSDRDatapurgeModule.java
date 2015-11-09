@@ -50,7 +50,7 @@ public TSDRDatapurgeModule(org.opendaylight.controller.config.api.ModuleIdentifi
             }
         }
         AutoCloseable ret = new CloseResources();
-        log.info("TSDRDataStorage (instance {}) initialized.", ret);
+        log.info("TSDRDataPurge (instance {}) initialized.", ret);
         return ret;
     }
 }
