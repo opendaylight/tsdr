@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.opendaylight.tsdr.command.ListMetricsCommand;
 import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
@@ -51,7 +52,7 @@ public class TsdrH2PersistenceServiceImplTest {
         tsdrH2PersistenceService = new TsdrH2PersistenceServiceImpl();
         //we need to create the EntityManager ourselves and pass it to the service
         emf = Persistence
-                .createEntityManagerFactory("metric");
+            .createEntityManagerFactory("metric");
         em = emf.createEntityManager();
         tsdrJpaService.setEntityManager(em);
         tsdrH2PersistenceService.setJpaService(tsdrJpaService);
@@ -121,8 +122,8 @@ public class TsdrH2PersistenceServiceImplTest {
         List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
         for(String key: recordKeyValues.keySet()){
             RecordKeys recordKey = new RecordKeysBuilder()
-                    .setKeyName(key)
-                    .setKeyValue(recordKeyValues.get(key)).build();
+                .setKeyName(key)
+                .setKeyValue(recordKeyValues.get(key)).build();
             recordKeys.add(recordKey);
         }
 
@@ -131,18 +132,18 @@ public class TsdrH2PersistenceServiceImplTest {
             TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
 
             TSDRMetric tsdrMetric = builder.setMetricName(metricName)
-                    .setMetricValue(new Counter64(new BigInteger(new Long(metricNameValues.get(metricName)).toString())))
-                    .setNodeID(node)
-                    .setRecordKeys(recordKeys)
-                    .setTSDRDataCategory(dataCategory)
-                    .setTimeStamp(new Long(timestamp)).build();
+                .setMetricValue(new Counter64(new BigInteger(new Long(metricNameValues.get(metricName)).toString())))
+                .setNodeID(node)
+                .setRecordKeys(recordKeys)
+                .setTSDRDataCategory(dataCategory)
+                .setTimeStamp(new Long(timestamp)).build();
             tsdrH2PersistenceService.store((TSDRMetricRecord)
-                    tsdrMetric);
+                tsdrMetric);
             em.getTransaction().commit();
         }
 
     }
-    private void validateResults (DataCategory dc, String metricName,Double metricValue,String nodeId,String metricDetails,String timeStamp){
+    private void validateResults (DataCategory dc, String metricName,Double metricValue,String nodeId,Map<String,String> metricDetailsExpected,String timeStamp){
 
         //now let us try to get the saved metric
         List<Metric>metricList = tsdrJpaService.getMetricsFilteredByCategory(dc.name(),null,null);
@@ -150,7 +151,17 @@ public class TsdrH2PersistenceServiceImplTest {
         Assert.assertEquals(metricName, metricList.get(0).getMetricName());
         Assert.assertEquals(metricValue,metricList.get(0).getMetricValue(),0.02);
         Assert.assertEquals(nodeId, metricList.get(0).getNodeId());
-        Assert.assertEquals(metricDetails, metricList.get(0).getMetricDetails());
+
+        String metricDetails = metricList.get(0).getMetricDetails();
+
+        if(metricDetails!=null){
+            for(String key:metricDetailsExpected.keySet()){
+                Assert.assertTrue(metricDetails.contains(key));
+                Assert.assertTrue(metricDetails.contains(metricDetailsExpected.get(key)));
+                Assert.assertFalse(metricDetails.contains("table2"));
+
+            }
+        }
         Assert.assertEquals(new Date(new BigInteger(timeStamp).longValue()).toString(), metricList.get(0).getMetricTimeStamp().toString());
         Assert.assertEquals(dc.toString(), metricList.get(0).getMetricCategory());
 
@@ -158,14 +169,14 @@ public class TsdrH2PersistenceServiceImplTest {
     @Test
     public void testFlowStatistics() {
         final Map mapRecord = new HashMap<String,String>();
-                mapRecord.put("recordKeyName", "node_table_flow");
+        mapRecord.put("recordKeyName", "node_table_flow");
         final Map metricNameValues = new HashMap<String,String>();
-                metricNameValues.put("METRIC_NAME", "64");
+        metricNameValues.put("METRIC_NAME", "64");
         String timeStamp = (new Long((new Date()).getTime())).toString();
 
         storeTSDRMetric(mapRecord, metricNameValues, "openflow:dummy", DataCategory.FLOWSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWSTATS, "METRIC_NAME", 64.0, "openflow:dummy", "FLOWSTATS.METRIC_NAME.openflow:dummy.recordKeyName_node_table_flow", timeStamp);
+        validateResults(DataCategory.FLOWSTATS, "METRIC_NAME", 64.0, "openflow:dummy",mapRecord, timeStamp);
 
     }
 
@@ -182,9 +193,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWTABLESTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWTABLESTATS, "PacketsMatched", 20000000.0, "node1", "FLOWTABLESTATS.PacketsMatched.node1.Node_node1.Table_table1.TableID_table1", timeStamp);
-
+        validateResults(DataCategory.FLOWTABLESTATS, "PacketsMatched", 20000000.0, "node1", mapRecord, timeStamp);
     }
 
 
@@ -201,8 +210,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWTABLESTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWTABLESTATS, "ActiveFlows", 20000000.0, "node1", "FLOWTABLESTATS.ActiveFlows.node1.Node_node1.Table_table1.TableID_table1", timeStamp);
+        validateResults(DataCategory.FLOWTABLESTATS, "ActiveFlows", 20000000.0, "node1", mapRecord, timeStamp);
 
     }
 
@@ -218,8 +226,8 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWTABLESTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWTABLESTATS, "PacketsLookedup", 20000000.0, "node1", "FLOWTABLESTATS.PacketsLookedup.node1.Node_node1.Table_table1.TableID_table1", timeStamp);
+
+        validateResults(DataCategory.FLOWTABLESTATS, "PacketsLookedup", 20000000.0, "node1",mapRecord, timeStamp);
 
     }
 
@@ -235,8 +243,8 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "CollisionCount", 2000.0, "node1","PORTSTATS.CollisionCount.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+
+        validateResults(DataCategory.PORTSTATS, "CollisionCount", 2000.0, "node1",mapRecord, timeStamp);
 
     }
 
@@ -252,8 +260,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "ReceiveCRCError", 2000.0, "node1","PORTSTATS.ReceiveCRCError.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceiveCRCError", 2000.0, "node1",mapRecord, timeStamp);
 
     }
 
@@ -269,8 +276,8 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "ReceivedDrops", 2000.0, "node1","PORTSTATS.ReceivedDrops.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+
+        validateResults(DataCategory.PORTSTATS, "ReceivedDrops", 2000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -287,8 +294,8 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "ReceivedErrors", 2000.0, "node1","PORTSTATS.ReceivedErrors.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+
+        validateResults(DataCategory.PORTSTATS, "ReceivedErrors", 2000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -304,8 +311,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "ReceiveFrameErrors", 2000.0, "node1","PORTSTATS.ReceiveFrameErrors.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceiveFrameErrors", 2000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -320,9 +326,7 @@ public class TsdrH2PersistenceServiceImplTest {
         String timeStamp = (new Long((new Date()).getTime())).toString();
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
-
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "ReceiveOverRunError", 2000.0, "node1","PORTSTATS.ReceiveOverRunError.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceiveOverRunError", 2000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -338,8 +342,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1",DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "TransmitDrops", 2000.0, "node1","PORTSTATS.TransmitDrops.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "TransmitDrops", 2000.0, "node1",mapRecord, timeStamp);
     }
 
     @Test
@@ -354,8 +357,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "TransmitErrors", 2000.0, "node1","PORTSTATS.TransmitErrors.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "TransmitErrors", 2000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -371,8 +373,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "ReceivedPackets", 4000.0, "node1","PORTSTATS.ReceivedPackets.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceivedPackets", 4000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -388,8 +389,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "TransmittedPackets", 4000.0, "node1","PORTSTATS.TransmittedPackets.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "TransmittedPackets", 4000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -405,8 +405,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "ReceivedBytes", 20000000.0, "node1", "PORTSTATS.ReceivedBytes.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "ReceivedBytes", 20000000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -423,8 +422,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "TransmittedBytes", 20000000.0, "node1","PORTSTATS.TransmittedBytes.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "TransmittedBytes", 20000000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -441,8 +439,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "DurationInSeconds", 20.0, "node1","PORTSTATS.DurationInSeconds.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "DurationInSeconds", 20.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -458,8 +455,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.PORTSTATS, "DurationInNanoSeconds", 2000000.0, "node1","PORTSTATS.DurationInNanoSeconds.node1.PortID_port1.Node_node1.Table_table1", timeStamp);
+        validateResults(DataCategory.PORTSTATS, "DurationInNanoSeconds", 2000000.0, "node1",mapRecord, timeStamp);
     }
 
 
@@ -476,8 +472,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.QUEUESTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.QUEUESTATS, "TransmissionErrors", 3000.0, "node1", "QUEUESTATS.TransmissionErrors.node1.PortID_port1.Node_node1.QueueID_queue1.Table_table1", timeStamp);
+        validateResults(DataCategory.QUEUESTATS, "TransmissionErrors", 3000.0, "node1", mapRecord, timeStamp);
     }
 
 
@@ -494,8 +489,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.QUEUESTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.QUEUESTATS, "TransmissionBytes", 3000.0, "node1", "QUEUESTATS.TransmissionBytes.node1.PortID_port1.Node_node1.QueueID_queue1.Table_table1", timeStamp);
+        validateResults(DataCategory.QUEUESTATS, "TransmissionBytes", 3000.0, "node1", mapRecord, timeStamp);
     }
 
     @Test
@@ -511,8 +505,8 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.QUEUESTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.QUEUESTATS, "TransmissionBytes", 3000.0, "node1", "QUEUESTATS.TransmissionBytes.node1.PortID_port1.Node_node1.QueueID_queue1.Table_table1", timeStamp);
+
+        validateResults(DataCategory.QUEUESTATS, "TransmissionBytes", 3000.0, "node1", mapRecord, timeStamp);
     }
 
     @Test
@@ -528,8 +522,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWMETERSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWMETERSTATS, "PacketCount", 40.0, "node1", "FLOWMETERSTATS.PacketCount.node1.Node_node1.MeterID_meter1.Table_table1.GroupID_group1", timeStamp);
+        validateResults(DataCategory.FLOWMETERSTATS, "PacketCount", 40.0, "node1", mapRecord, timeStamp);
     }
 
     @Test
@@ -545,8 +538,8 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWMETERSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWMETERSTATS, "ByteCount", 40.0, "node1", "FLOWMETERSTATS.ByteCount.node1.Node_node1.MeterID_meter1.Table_table1.GroupID_group1", timeStamp);
+
+        validateResults(DataCategory.FLOWMETERSTATS, "ByteCount", 40.0, "node1", mapRecord, timeStamp);
     }
 
     @Test
@@ -562,8 +555,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWMETERSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWMETERSTATS, "RefCount", 40.0, "node1", "FLOWMETERSTATS.RefCount.node1.Node_node1.MeterID_meter1.Table_table1.GroupID_group1", timeStamp);
+        validateResults(DataCategory.FLOWMETERSTATS, "RefCount", 40.0, "node1", mapRecord, timeStamp);
     }
 
     @Test
@@ -579,8 +571,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWGROUPSTATS, "PacketCount", 40.0, "node1", "FLOWGROUPSTATS.PacketCount.node1.Node_node1.Table_table1.GroupID_group1.BucketID_bucket1", timeStamp);
+        validateResults(DataCategory.FLOWGROUPSTATS, "PacketCount", 40.0, "node1",mapRecord, timeStamp);
 
     }
 
@@ -597,9 +588,7 @@ public class TsdrH2PersistenceServiceImplTest {
         String timeStamp = (new Long((new Date()).getTime())).toString();
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, timeStamp);
-
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWGROUPSTATS, "ByteCount", 40.0, "node1","FLOWGROUPSTATS.ByteCount.node1.Node_node1.Table_table1.GroupID_group1.BucketID_bucket1", timeStamp);
+        validateResults(DataCategory.FLOWGROUPSTATS, "ByteCount", 40.0, "node1",mapRecord, timeStamp);
 
     }
 
@@ -616,8 +605,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, timeStamp);
 
-	// FIXME: assumes HashMap ordering, which changed in JDK8
-        // validateResults(DataCategory.FLOWGROUPSTATS, "RefCount", 40.0, "node1", "FLOWGROUPSTATS.RefCount.node1.Node_node1.Table_table1.GroupID_group1.BucketID_bucket1", timeStamp);
+        validateResults(DataCategory.FLOWGROUPSTATS, "RefCount", 40.0, "node1", mapRecord, timeStamp);
 
     }
 
