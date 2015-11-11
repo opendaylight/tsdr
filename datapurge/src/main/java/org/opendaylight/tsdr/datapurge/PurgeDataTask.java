@@ -12,7 +12,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.slf4j.Logger;
@@ -44,14 +44,13 @@ public class PurgeDataTask extends Task{
     }
 
     public void purgeData(){
-        PurgeTSDRRecordInputBuilder input = new PurgeTSDRRecordInputBuilder();
+        PurgeAllTSDRRecordInputBuilder input = new PurgeAllTSDRRecordInputBuilder();
         log.debug("Entering PurgeData");
         if(storageService == null){
             storageService = this.rpcRegistry.getRpcService(TSDRService.class);
         }
         input.setRetentionTime(System.currentTimeMillis());
-        input.setTSDRDataCategory(DataCategory.FLOWTABLESTATS);
-        storageService.purgeTSDRRecord(input.build());
+        storageService.purgeAllTSDRRecord(input.build());
         log.debug("Exiting PurgeData");
     }
 
