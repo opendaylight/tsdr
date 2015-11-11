@@ -27,6 +27,8 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.junit.Assert.assertTrue;
@@ -150,7 +152,7 @@ public class TsdrH2PersistenceServiceImplTest {
         List<Metric>metricList = tsdrJpaService.getMetricsFilteredByCategory(dc.name(),null,null);
         Assert.assertEquals(1, metricList.size());
         Assert.assertEquals(metricName, metricList.get(0).getMetricName());
-        Assert.assertEquals(metricValue,metricList.get(0).getMetricValue(),0.02);
+        Assert.assertEquals(metricValue, metricList.get(0).getMetricValue(), 0.02);
         Assert.assertEquals(nodeId, metricList.get(0).getNodeId());
 
         String metricDetails = metricList.get(0).getMetricDetails();
@@ -163,7 +165,8 @@ public class TsdrH2PersistenceServiceImplTest {
 
             }
         }
-        Assert.assertEquals(new Date(new BigInteger(timeStamp).longValue()).toString(), metricList.get(0).getMetricTimeStamp().toString());
+        Assert.assertEquals(new Date(new BigInteger(timeStamp).longValue()).toString(),
+            metricList.get(0).getMetricTimeStamp().toString());
         Assert.assertEquals(dc.toString(), metricList.get(0).getMetricCategory());
 
     }
@@ -177,7 +180,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         storeTSDRMetric(mapRecord, metricNameValues, "openflow:dummy", DataCategory.FLOWSTATS, timeStamp);
 
-        validateResults(DataCategory.FLOWSTATS, "METRIC_NAME", 64.0, "openflow:dummy",mapRecord, timeStamp);
+        validateResults(DataCategory.FLOWSTATS, "METRIC_NAME", 64.0, "openflow:dummy", mapRecord, timeStamp);
 
     }
 
@@ -245,7 +248,7 @@ public class TsdrH2PersistenceServiceImplTest {
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.PORTSTATS, timeStamp);
 
 
-        validateResults(DataCategory.PORTSTATS, "CollisionCount", 2000.0, "node1",mapRecord, timeStamp);
+        validateResults(DataCategory.PORTSTATS, "CollisionCount", 2000.0, "node1", mapRecord, timeStamp);
 
     }
 
@@ -589,7 +592,7 @@ public class TsdrH2PersistenceServiceImplTest {
         String timeStamp = (new Long((new Date()).getTime())).toString();
 
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, timeStamp);
-        validateResults(DataCategory.FLOWGROUPSTATS, "ByteCount", 40.0, "node1",mapRecord, timeStamp);
+	      validateResults(DataCategory.FLOWGROUPSTATS, "ByteCount", 40.0, "node1",mapRecord, timeStamp);
 
     }
 
@@ -607,6 +610,142 @@ public class TsdrH2PersistenceServiceImplTest {
         storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, timeStamp);
 
         validateResults(DataCategory.FLOWGROUPSTATS, "RefCount", 40.0, "node1", mapRecord, timeStamp);
+
+    }
+
+    private Date getOldDate (int howManyDaysOld){
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+        Date myDate = new Date(System.currentTimeMillis());
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(myDate);
+        cal.add(Calendar.DATE, -1 * howManyDaysOld);
+        return cal.getTime();
+    }
+
+    @Test
+    public void testPurgeBasedOnRetentionDate() {
+        Map mapRecord = new HashMap<String, String>();
+        mapRecord.put(TSDRConstants.GROUP_KEY_NAME,"group1");
+        mapRecord.put(TSDRConstants.BUCKET_KEY_NAME, "bucket1");
+        mapRecord.put("Node", "node1");
+        mapRecord.put("Table", "table1");
+        Map metricNameValues = new HashMap<String, String>();
+        metricNameValues.put("RefCount", "40");
+        //get old 10 days old
+        Long tenDaysBack = new Long(getOldDate(10).getTime());
+        Long twentyDaysBack = new Long(getOldDate(20).getTime());
+
+        //here we are creating FLOWGROUPSTATS records
+        //here we are creating record that has 10 days old time stamp
+        storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, tenDaysBack.toString());
+
+        //here we are creating record that has 20 days old time stamp
+        storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, twentyDaysBack.toString());
+
+
+        //here we are creating FLOWMETERSTATS records
+        mapRecord = new HashMap<String, String>();
+        mapRecord.put(TSDRConstants.METER_KEY_NAME,"meter1");
+        mapRecord.put(TSDRConstants.GROUP_KEY_NAME, "group1");
+        mapRecord.put("Node", "node1");
+        mapRecord.put("Table", "table1");
+        metricNameValues = new HashMap<String, String>();
+        metricNameValues.put("RefCount", "40");
+        String timeStamp = (new Long((new Date()).getTime())).toString();
+
+        storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWMETERSTATS, timeStamp);
+
+        //we are purging oldest FLOWGROUPSTATS
+        purgeTSDRMetric(DataCategory.FLOWGROUPSTATS, getOldDate(19));
+
+
+        validateDeleteResults(new DataCategory[]{DataCategory.FLOWGROUPSTATS, DataCategory.FLOWMETERSTATS},
+            DataCategory.FLOWGROUPSTATS,
+            new String[]{tenDaysBack.toString(),timeStamp.toString()},
+            "RefCount",40.0, new int[]{1,1});
+
+
+    }
+
+    private void validateDeleteResults(DataCategory[] allCategories,DataCategory purgeCategory,
+                                       String[] nonPurgeTime,String metricName,Double metricValue,int expectedRowsForEachCategory[]) {
+        //now let us try to get the saved metric
+
+        //After calling purge there should be just one record
+        List<Metric>metricList = tsdrJpaService.getMetricsFilteredByCategory(purgeCategory.name(),null,null);
+        Assert.assertEquals(expectedRowsForEachCategory[0], metricList.size());
+        if(expectedRowsForEachCategory[0] != 0) {
+            Assert.assertEquals(metricName, metricList.get(0).getMetricName());
+            Assert.assertEquals(metricValue, metricList.get(0).getMetricValue(), 0.02);
+            Assert.assertEquals(nonPurgeTime[0], String.valueOf(metricList.get(0).getMetricTimeStamp().getTime()));
+        }
+        //There shouldn't be any impact to other DataCategory
+
+        metricList = tsdrJpaService.getMetricsFilteredByCategory(allCategories[1].name(),null,null);
+        Assert.assertEquals(expectedRowsForEachCategory[1], metricList.size());
+        Assert.assertEquals(metricName, metricList.get(0).getMetricName());
+        Assert.assertEquals(metricValue, metricList.get(0).getMetricValue(), 0.02);
+        Assert.assertEquals(nonPurgeTime[1], String.valueOf(metricList.get(0).getMetricTimeStamp().getTime()));
+
+    }
+
+    private void purgeTSDRMetric(DataCategory dc, Date twentyDaysBack) {
+        em.getTransaction().begin();
+        tsdrH2PersistenceService.purgeTSDRRecords(dc, twentyDaysBack.getTime());
+        em.getTransaction().commit();
+
+    }
+
+    private void purgeAllTSDRMetric(Date twentyDaysBack) {
+        em.getTransaction().begin();
+        tsdrH2PersistenceService.purgeAllTSDRRecords(twentyDaysBack.getTime());
+        em.getTransaction().commit();
+
+    }
+
+    @Test
+    public void testPurgeAllBasedOnRetentionDate() {
+        Map mapRecord = new HashMap<String, String>();
+        mapRecord.put(TSDRConstants.GROUP_KEY_NAME,"group1");
+        mapRecord.put(TSDRConstants.BUCKET_KEY_NAME, "bucket1");
+        mapRecord.put("Node", "node1");
+        mapRecord.put("Table", "table1");
+        Map metricNameValues = new HashMap<String, String>();
+        metricNameValues.put("RefCount", "40");
+        //get old 10 days old
+        Long tenDaysBack = new Long(getOldDate(10).getTime());
+        Long twentyDaysBack = new Long(getOldDate(20).getTime());
+
+        //here we are creating FLOWGROUPSTATS records
+        //here we are creating record that has 10 days old time stamp
+        storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, tenDaysBack.toString());
+
+        //here we are creating record that has 20 days old time stamp
+        storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWGROUPSTATS, twentyDaysBack.toString());
+
+
+        //here we are creating FLOWMETERSTATS records
+        mapRecord = new HashMap<String, String>();
+        mapRecord.put(TSDRConstants.METER_KEY_NAME,"meter1");
+        mapRecord.put(TSDRConstants.GROUP_KEY_NAME, "group1");
+        mapRecord.put("Node", "node1");
+        mapRecord.put("Table", "table1");
+        metricNameValues = new HashMap<String, String>();
+        metricNameValues.put("RefCount", "40");
+        String timeStamp = (new Long((new Date()).getTime())).toString();
+
+        storeTSDRMetric(mapRecord, metricNameValues, "node1", DataCategory.FLOWMETERSTATS,timeStamp);
+
+        //we are purging oldest FLOWGROUPSTATS -- older than 5 days everything should be purged from
+        //FLOWGROUPSTATS category but there should be one row for FLOWMETERSTATS
+        purgeAllTSDRMetric(getOldDate(5));
+
+
+        validateDeleteResults(new DataCategory[]{DataCategory.FLOWGROUPSTATS, DataCategory.FLOWMETERSTATS},
+            DataCategory.FLOWGROUPSTATS,
+            new String[]{tenDaysBack.toString(),timeStamp.toString()},
+            "RefCount",40.0,new int[]{0,1});
+
 
     }
 

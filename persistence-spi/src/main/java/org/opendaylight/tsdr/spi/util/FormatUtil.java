@@ -175,4 +175,5 @@ public class FormatUtil {
             return new BigDecimal(bigInteger);
         return BigDecimal.ZERO;
     }
+
 }

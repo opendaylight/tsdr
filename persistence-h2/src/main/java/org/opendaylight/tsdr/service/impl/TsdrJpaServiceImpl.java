@@ -13,6 +13,7 @@ import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.tsdr.service.TsdrJpaService;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,6 +136,48 @@ public class TsdrJpaServiceImpl implements TsdrJpaService {
         }catch(Exception e){
             log.warn("Exception occurred when closing the persistence store",e);
         }
+    }
+
+    @Override public void purge(DataCategory category, long retentionTime) {
+        Preconditions.checkArgument(em != null, "EntityManager found to be null");
+        try {
+            StringBuffer query = new StringBuffer();
+            query.append("delete from Metric where metrictimestamp")
+                 .append(" <= '")
+                 .append(FormatUtil.getFormattedTimeStamp(new Date(retentionTime).getTime(),
+                     FormatUtil.QUERY_TIMESTAMP))
+                 .append("' and metriccategory = '")
+                 .append(category.toString())
+                 .append("'");
+
+
+
+            em.createQuery(query.toString()).executeUpdate();
+            em.flush();
+
+        }catch(Exception e){
+            log.error("TsdrJpaServiceImpl:purge", e);
+        }
+
+    }
+
+    @Override public void purgeAll(long retentionTime) {
+        try {
+            StringBuffer query = new StringBuffer();
+            query.append("delete from Metric where metrictimestamp")
+                .append(" <= '")
+                .append(FormatUtil.getFormattedTimeStamp(new Date(retentionTime).getTime(),
+                    FormatUtil.QUERY_TIMESTAMP))
+                .append("'");
+
+            em.createQuery(query.toString()).executeUpdate();
+            em.flush();
+
+        }catch(Exception e){
+            log.error("TsdrJpaServiceImpl:purgeAll", e);
+        }
+
+
     }
 
     public void setEntityManager(EntityManager em) {

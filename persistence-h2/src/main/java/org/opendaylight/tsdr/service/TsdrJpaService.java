@@ -9,6 +9,7 @@
 package org.opendaylight.tsdr.service;
 
 import org.opendaylight.tsdr.entity.Metric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 
 import java.util.Date;
 import java.util.List;
@@ -60,4 +61,17 @@ public interface TsdrJpaService {
 
     void close();
 
+    /**
+     * Purge the metrics older than the retentions time
+     * of a particular category from store
+     * @param category -- which category to purge
+     * @param retentionTime - epoch time indicating older than this time records should be purged
+     */
+    void purge(DataCategory category, long retentionTime);
+
+    /**
+     * Purge the metrics older than the retentions time under all categories
+     * @param retentionTime - epoch time indicating older than this time records should be purged
+     */
+    void purgeAll(long retentionTime);
 }

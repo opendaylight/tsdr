@@ -19,6 +19,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,16 +104,23 @@ public class TsdrH2PersistenceServiceImpl implements
 
     @Override
     public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
-        throw new UnsupportedOperationException("getTSDRMetrics not yet supported by H2");
+        return getMetrics(category.name(), new Date(startTime * 1000), new Date(endTime * 1000));
+
     }
 
     @Override
     public void purgeTSDRRecords(DataCategory category, Long retention_time){
-        throw new UnsupportedOperationException("purgeTSDRRecords not yet supported by H2");
+        if(jpaService != null){
+            jpaService.purge(category,retention_time);
+        }else{
+            log.warn("JPA store service is found to be null in purge");
+        }
     }
     @Override
-    public void purgeAllTSDRRecords(Long retention_time){
-        throw new UnsupportedOperationException("purgeAllTSDRRecords not yet supported by H2");
+    public void purgeAllTSDRRecords(Long retentionTime){
+        if(jpaService != null){
+            jpaService.purgeAll(retentionTime);
+        }
     }
     /**
      * Get persistence entry from TSDRMetric object.
@@ -147,8 +155,48 @@ public class TsdrH2PersistenceServiceImpl implements
     }
 
 
+    /**
+     * Get persistence entry from TSDRMetric object.
+     *
+     * @param data
+     * @return <code>Metric</code> persitence entity populated
+     * @throws IllegalArgumentException if any of preconditions fails
+     */
+    public Metric getEntityFromModel(TSDRLogRecord data){
+        Preconditions.checkArgument(data != null, "getEntityFromModel found metric data = null");
+        Preconditions.checkArgument(data.getNodeID() != null, "getEntityFromModel found metric data nodeId = null");
+        Preconditions.checkArgument(data.getTSDRDataCategory() != null,
+            "getEntityFromModel found timestamp of metric = null");
+
+        Metric metric = new Metric();
 
 
+        metric.setNodeId(data.getNodeID());
+        StringBuffer metricName = new StringBuffer();
+        for(RecordAttributes recordAttributes:data.getRecordAttributes()){
+            metricName.append(recordAttributes.getName())
+                .append("_")
+                .append(recordAttributes.getValue());
+        }
+
+        if(!metricName.toString().isEmpty()){
+            metric.setMetricName(metricName.toString());
+        }else{
+            metric.setMetricName(data.getTSDRDataCategory().name());
+        }
+
+        metric.setMetricValue(0.0);//TODO WHAT SHOULD BE VALUE.
+        metric.setMetricCategory(data.getTSDRDataCategory().name());
+        Date timeStamp = new Date(data.getTimeStamp().longValue());
+        metric.setMetricTimeStamp(timeStamp);
+        //String detail = FormatUtil.convertToMetricDetailsJSON(FormatUtil.getMetricsDetails(data), data.getTSDRDataCategory().name());
+        String detail = data.getRecordFullText();
+        if(null != detail && !detail.isEmpty()) {
+            metric.setMetricDetails(detail);
+        }
+
+        return metric;
+    }
 
     public  TsdrJpaServiceImpl getJpaService() {
         return jpaService;
@@ -160,7 +208,7 @@ public class TsdrH2PersistenceServiceImpl implements
 
     @Override
     public void store(TSDRLogRecord logRecord) {
-        throw new UnsupportedOperationException("log records are not yet supported in h2 data store");
+       throw new UnsupportedOperationException("TSDRLogRecord needs to be implmented");
     }
 
 }

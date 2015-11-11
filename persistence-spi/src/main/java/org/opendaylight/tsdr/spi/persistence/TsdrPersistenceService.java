@@ -89,16 +89,23 @@ public interface TsdrPersistenceService {
      * @param endTime
      * @return
      */
+    //TODO: change from Long to long if there is no sepecific reason for using Long.
+    //TODO: change name to getMetrics.
     List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime);
     /**
      * Purges the data from TSDR data store.
      * @param category -- the category of the data.
      * @param timestamp -- the retention time.
      */
+    //TODO: change from Long to long if there is no specific reason for using Long.
+    //TODO:change name of method to purge
     void purgeTSDRRecords(DataCategory category, Long timestamp);
+
     /**
-     * Purges all the data from TSDR data store.
+     * Purges all the data from TSDR data store older than the
+     * retention timestamp
      * @param timestamp
      */
+    //TODO:change name to purgeAll and Long to long
     void purgeAllTSDRRecords(Long timestamp);
 }
