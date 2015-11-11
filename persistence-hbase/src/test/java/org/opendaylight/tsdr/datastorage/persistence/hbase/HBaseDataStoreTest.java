@@ -196,10 +196,38 @@ public class HBaseDataStoreTest {
             }
        }).when(hbaseDataStore).getDataByTimeRange(any(String.class), any(Long.class), any(Long.class));
 
+        try{
+        doAnswer(new Answer() {
+        @Override
+        public Object answer(InvocationOnMock invocation) throws Throwable {
+        Object[] args = invocation.getArguments();
+        List<HBaseEntity> Deletelist = new ArrayList<HBaseEntity>();
+        if (args != null && args.length > 0 && args[0] != null ) {
+                String tableName = (String) args[0];
+                Long retentionTime = (Long) args[1];
+                Map<String, List<HBaseEntity>> entityMap = tableEntityMap.get(tableName);
+                for(List<HBaseEntity> entityValues: entityMap.values()){
+                        for(HBaseEntity entity: entityValues){
+                                for (HBaseColumn currentColumn : entity.getColumns()) {
+                                        if(currentColumn.getTimeStamp() <= retentionTime){
+                                                Deletelist.add(entity);
+                                                }
+                                        }
+                                }
+                        }
+                for (HBaseEntity entity: Deletelist){
+                        entityMap.remove(entity.getRowKey());
+                }
+                System.out.println(" Purging entries:"+ Deletelist + " from table:" + tableName + " till time:"+retentionTime);
+        }
+        return null;
+        }}).when(hbaseDataStore).deleteByTimestamp(any(String.class), any(Long.class));
+        } catch(Exception e){}
+
+
        try{
            Mockito.doNothing().when(hbaseDataStore).createTable(any(String.class));//.thenReturn(true);
-       } catch(Exception e){
-       }
+       } catch(Exception e){}
        Mockito.doNothing().when(hbaseDataStore).closeConnection(any(String.class));//.thenReturn(true);
     }
 
@@ -643,6 +671,93 @@ public class HBaseDataStoreTest {
             result = false;
             ee.printStackTrace();
         }
+        assertTrue(result);
+    }
+
+    @Test
+    public void testPurgeStatistics(){
+        String timeStamp = (new Long((new Date()).getTime())).toString();
+        Long LatestStamp = new Long(timeStamp)+500;
+        List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
+        RecordKeys recordKey1 = new RecordKeysBuilder()
+            .setKeyName(TSDRConstants.GROUP_KEY_NAME)
+            .setKeyValue("group1").build();
+        RecordKeys recordKey2 = new RecordKeysBuilder()
+            .setKeyName(TSDRConstants.BUCKET_KEY_NAME)
+            .setKeyValue("bucket1").build();
+        recordKeys.add(recordKey1);
+        recordKeys.add(recordKey2);
+
+        TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
+
+        TSDRMetric tsdrMetric1 =   builder1.setMetricName("PacketCount")
+            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setNodeID("node1")
+            .setRecordKeys(recordKeys)
+            .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
+            .setTimeStamp(new Long(timeStamp)).build();
+
+       TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
+
+       TSDRMetric tsdrMetric2 =   builder2.setMetricName("ByteCount")
+            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setNodeID("node1")
+            .setRecordKeys(recordKeys)
+            .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
+            .setTimeStamp(new Long(timeStamp)).build();
+
+       TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
+
+       TSDRMetric tsdrMetric3 =   builder3.setMetricName("RefCount")
+            .setMetricValue(new Counter64(new BigInteger("4000")))
+            .setNodeID("node1")
+            .setRecordKeys(recordKeys)
+            .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
+            .setTimeStamp(new Long(timeStamp)).build();
+
+        TSDRMetricRecordBuilder builder4 = new TSDRMetricRecordBuilder();
+
+        TSDRMetric tsdrMetric4 =   builder4.setMetricName("PacketCount")
+            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setNodeID("node1")
+            .setRecordKeys(recordKeys)
+            .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
+            .setTimeStamp(LatestStamp).build();
+
+       TSDRMetricRecordBuilder builder5 = new TSDRMetricRecordBuilder();
+
+       TSDRMetric tsdrMetric5 =   builder5.setMetricName("ByteCount")
+            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setNodeID("node1")
+            .setRecordKeys(recordKeys)
+            .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
+            .setTimeStamp(LatestStamp).build();
+
+       TSDRMetricRecordBuilder builder6 = new TSDRMetricRecordBuilder();
+
+       TSDRMetric tsdrMetric6 =   builder6.setMetricName("RefCount")
+            .setMetricValue(new Counter64(new BigInteger("4000")))
+            .setNodeID("node1")
+            .setRecordKeys(recordKeys)
+            .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
+            .setTimeStamp(LatestStamp).build();
+        boolean result = true;
+        try{
+            storageService.store((TSDRMetricRecord)tsdrMetric1);
+            storageService.store((TSDRMetricRecord)tsdrMetric2);
+            storageService.store((TSDRMetricRecord)tsdrMetric3);
+            storageService.store((TSDRMetricRecord)tsdrMetric4);
+            storageService.store((TSDRMetricRecord)tsdrMetric5);
+            storageService.store((TSDRMetricRecord)tsdrMetric6);
+            result = ((storageService.getMetrics(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME,new Date(0L),new Date(LatestStamp))).size() == 6);
+            storageService.purgeTSDRRecords(DataCategory.FLOWGROUPSTATS,Long.parseLong(timeStamp));
+            result = ((storageService.getMetrics(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME,new Date(0L),new Date(LatestStamp))).size() == 3);
+        }catch(Exception ee){
+            System.out.println("Error purging stats with specified time.");
+            result = false;
+            ee.printStackTrace();
+        }
+
         assertTrue(result);
     }
 
