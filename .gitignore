@@ -9,3 +9,6 @@ yang-gen-config/
 .project
 .classpath
 .settings
+#Intellij
+.idea
+*.iml
