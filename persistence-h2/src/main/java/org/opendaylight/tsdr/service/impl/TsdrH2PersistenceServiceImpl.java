@@ -133,8 +133,7 @@ public class TsdrH2PersistenceServiceImpl implements
 
         metric.setNodeId(data.getNodeID());
         metric.setMetricName(data.getMetricName());
-        metric.setMetricValue(data.getMetricValue().getValue()
-            .doubleValue());
+        metric.setMetricValue(data.getMetricValue().doubleValue());
         metric.setMetricCategory(data.getTSDRDataCategory().name());
         Date timeStamp = new Date(data.getTimeStamp().longValue());
         metric.setMetricTimeStamp(timeStamp);

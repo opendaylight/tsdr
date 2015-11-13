@@ -13,6 +13,7 @@ import java.util.List;
 import org.opendaylight.tsdr.osc.TSDRBaseDataHandler;
 import org.opendaylight.tsdr.osc.TSDRDOMCollector;
 import org.opendaylight.tsdr.osc.TSDRMetricRecordBuilderContainer;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
@@ -47,25 +48,22 @@ public class NodeTableStatisticsChangeHandler extends TSDRBaseDataHandler {
         if (bc != null) {
             TSDRMetricRecordBuilder builder[] = bc.getBuilders();
             long timeStamp = getTimeStamp();
-            builder[0].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getActiveFlows().getValue())));
+            builder[0].setMetricValue(FormatUtil.toMetricValue(fs.getActiveFlows()));
             builder[0].setTimeStamp(timeStamp);
-            builder[1].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getPacketsMatched().getValue())));
+            builder[1].setMetricValue(FormatUtil.toMetricValue(fs.getPacketsMatched()));
             builder[1].setTimeStamp(timeStamp);
-            builder[2].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getPacketsLookedUp().getValue())));
+            builder[2].setMetricValue(FormatUtil.toMetricValue(fs.getPacketsLookedUp()));
             builder[2].setTimeStamp(timeStamp);
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ActiveFlows", "" + fs.getActiveFlows().getValue(),
+                    "ActiveFlows", FormatUtil.toMetricValue(fs.getActiveFlows()),
                     DataCategory.FLOWTABLESTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "PacketMatch", "" + fs.getPacketsMatched().getValue(),
+                    "PacketMatch", FormatUtil.toMetricValue(fs.getPacketsMatched()),
                     DataCategory.FLOWTABLESTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "PacketLookup", "" + fs.getPacketsLookedUp().getValue(),
+                    "PacketLookup", FormatUtil.toMetricValue(fs.getPacketsLookedUp()),
                     DataCategory.FLOWTABLESTATS);
         }
     }

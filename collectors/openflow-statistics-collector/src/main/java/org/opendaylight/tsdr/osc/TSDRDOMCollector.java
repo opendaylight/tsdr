@@ -9,6 +9,7 @@ package org.opendaylight.tsdr.osc;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -264,20 +265,13 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
     // according to the instanceIdentifier
     public void createTSDRMetricRecordBuilder(InstanceIdentifier<Node> nodeID,
             InstanceIdentifier<?> id, List<RecordKeys> recKeys,
-            String metricName, String value, DataCategory category) {
+            String metricName, BigDecimal value, DataCategory category) {
         TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
         builder.setRecordKeys(recKeys);
         builder.setNodeID(getNodeIDFrom(recKeys));
         builder.setMetricName(metricName);
         builder.setTSDRDataCategory(category);
-        Counter64 _value = null;
-        try {
-            _value = new Counter64(new BigInteger(value));
-        } catch (Exception err) {
-            log("Failed to set the counter value metric=" + metricName + " - "
-                    + value, ERROR);
-        }
-        builder.setMetricValue(_value);
+        builder.setMetricValue(value);
         builder.setTimeStamp(System.currentTimeMillis());
         addBuilderToContainer(nodeID, id, builder);
     }

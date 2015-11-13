@@ -24,6 +24,7 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService{
     public Future<RpcResult<Void>> addMetric(AddMetricInput input) {
         TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
         b.setMetricName(input.getMetricName());
-        b.setMetricValue(new Counter64(new BigInteger(input.getMetricValue())));
+        b.setMetricValue(new BigDecimal(Double.parseDouble(input.getMetricValue())));
         b.setNodeID(input.getNodeID());
         b.setTimeStamp(Long.parseLong(input.getTimestamp()));
         b.setTSDRDataCategory(DataCategory.forValue(input.getCategory()));

@@ -9,6 +9,7 @@ package org.opendaylight.tsdr.collectors.cmc;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -106,7 +107,7 @@ public class ControllerMetricCollector extends Thread{
         b.setNodeID("Controller");
         b.setRecordKeys(new ArrayList<RecordKeys>());
         b.setTimeStamp(System.currentTimeMillis());
-        b.setMetricValue(new Counter64(new BigInteger(""+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()))));
+        b.setMetricValue(new BigDecimal((Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory())));
         InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> list = new LinkedList<>();
         list.add(b.build());
@@ -123,7 +124,7 @@ public class ControllerMetricCollector extends Thread{
         b.setRecordKeys(new ArrayList<RecordKeys>());
         b.setTimeStamp(System.currentTimeMillis());
         double cpuValue = (double)getControllerCPU();
-        b.setMetricValue(new Counter64(new BigInteger(""+((int)cpuValue))));
+        b.setMetricValue(new BigDecimal(cpuValue));
         InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> list = new LinkedList<>();
         list.add(b.build());
@@ -140,7 +141,7 @@ public class ControllerMetricCollector extends Thread{
         b.setRecordKeys(new ArrayList<RecordKeys>());
         b.setTimeStamp(System.currentTimeMillis());
         long cpuValue = (long)getMachineCPU();
-        b.setMetricValue(new Counter64(new BigInteger(""+((int)cpuValue))));
+        b.setMetricValue(new BigDecimal(cpuValue));
         InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> list = new LinkedList<>();
         list.add(b.build());

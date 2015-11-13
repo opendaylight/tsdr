@@ -168,7 +168,7 @@ public class CassandraStore {
         cql.append(ID.getA()).append(",");
         cql.append(ID.getB()).append(",");
         cql.append(mr.getTimeStamp()).append(",");
-        cql.append(mr.getMetricValue().getValue()).append(")");
+        cql.append(mr.getMetricValue()).append(")");
         session.execute(cql.toString());
     }
 

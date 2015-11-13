@@ -12,9 +12,13 @@ import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
+import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter32;
+import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -152,5 +156,23 @@ public class FormatUtil {
             }
         }
         return sb.toString();
+    }
+
+    public static final BigDecimal toMetricValue(Counter32 counter32){
+        if(counter32!=null)
+            return new BigDecimal(counter32.getValue());
+        return BigDecimal.ZERO;
+    }
+
+    public static final BigDecimal toMetricValue(Counter64 counter64){
+        if(counter64!=null)
+            return new BigDecimal(counter64.getValue());
+        return BigDecimal.ZERO;
+    }
+
+    public static final BigDecimal toMetricValue(BigInteger bigInteger){
+        if(bigInteger!=null)
+            return new BigDecimal(bigInteger);
+        return BigDecimal.ZERO;
     }
 }

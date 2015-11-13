@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -65,8 +66,7 @@ public class HBasePersistenceUtil {
         if ( metricName == null || metricName.trim().length() == 0){
             return null;
         }
-        String metricValue = new Long(metricData.getMetricValue().getValue()
-            .longValue()).toString();
+        String metricValue = metricData.getMetricValue().toString();
         Long timeStamp = new Long(metricData.getTimeStamp().longValue());
         String tableName = getTableNameFrom(dataCategory);
         if ( tableName == null || tableName.trim().length() == 0){
@@ -325,7 +325,7 @@ public class HBasePersistenceUtil {
                  String cellValue = entity.getColumns().get(0).getValue();
                  TSDRMetricRecordListBuilder mb = new TSDRMetricRecordListBuilder();
                  mb.setMetricName(metricID);
-                 mb.setMetricValue(new Counter64(new BigInteger(cellValue)));
+                 mb.setMetricValue(new BigDecimal(Double.parseDouble(cellValue)));
                  mb.setNodeID(nodeID);
                  mb.setRecordKeys(getRecordKeyListFromRowKey(category,rowKey));
                  TSDRMetricRecordList record = mb.build();

@@ -129,7 +129,9 @@ module TSDR {
         leaf MetricValue {
             description
                 "The value of the metric.";
-            type yang:counter64;
+            type decimal64{
+                fraction-digits 4;
+            }
         }
         leaf TimeStamp {
             description
@@ -285,7 +287,7 @@ module TSDR {
                }
                leaf value {
                   type decimal64{
-                       fraction-digits 6;
+                       fraction-digits 4;
                   }
                }
             }

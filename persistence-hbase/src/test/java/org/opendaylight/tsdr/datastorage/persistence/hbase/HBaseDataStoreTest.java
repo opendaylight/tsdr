@@ -6,10 +6,11 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.tsdr.datastorage.test;
+package org.opendaylight.tsdr.datastorage.persistence.hbase;
 
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.lang.Long;
 import java.util.ArrayList;
@@ -247,7 +248,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric1 =   builder1.setMetricName("PacketCount")
-            .setMetricValue(new Counter64(new BigInteger("10000000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("10000000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWSTATS)
@@ -256,7 +257,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric2 =   builder2.setMetricName("ByteCount")
-            .setMetricValue(new Counter64(new BigInteger("10000000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("10000000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWSTATS)
@@ -290,7 +291,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric1 =   builder1.setMetricName("PacketsMatched")
-            .setMetricValue(new Counter64(new BigInteger("20000000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("20000000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
@@ -299,7 +300,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric2 =   builder2.setMetricName("ActiveFlows")
-            .setMetricValue(new Counter64(new BigInteger("20000000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("20000000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
@@ -308,7 +309,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric3 =   builder3.setMetricName("PacketsLookedUp")
-            .setMetricValue(new Counter64(new BigInteger("20000000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("20000000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
@@ -342,7 +343,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric1 =   builder1.setMetricName("CollisionCount")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -352,7 +353,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric2 =   builder2.setMetricName("ReceiveCRCError")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -362,7 +363,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric3 =   builder3.setMetricName("ReceivedDrops")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -372,7 +373,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder4 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric4 =   builder4.setMetricName("ReceivedErrors")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -382,7 +383,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder5 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric5 =   builder5.setMetricName("ReceiveFrameError")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -392,7 +393,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder6 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric6 =   builder6.setMetricName("ReceiveOverRunError")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -402,7 +403,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder7 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric7 =   builder7.setMetricName("TransmitDrops")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -412,7 +413,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder8 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric8 =   builder8.setMetricName("TransmitErrors")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -422,7 +423,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder9 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric9 =   builder9.setMetricName("ReceivedPackets")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -431,7 +432,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder10 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric10 =   builder10.setMetricName("TransmittedPackets")
-            .setMetricValue(new Counter64(new BigInteger("2000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("2000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -441,7 +442,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder11 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric11 =   builder11.setMetricName("ReceivedBytes")
-            .setMetricValue(new Counter64(new BigInteger("20000000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("20000000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -451,7 +452,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder12 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric12 =   builder12.setMetricName("TransmittedBytes")
-            .setMetricValue(new Counter64(new BigInteger("20000000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("20000000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -460,7 +461,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder13 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric13 =   builder13.setMetricName("DurationInSeconds")
-            .setMetricValue(new Counter64(new BigInteger("20")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("20")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -470,7 +471,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder14 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric14 =   builder14.setMetricName("DurationInNanoSeconds")
-            .setMetricValue(new Counter64(new BigInteger("20")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("20")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.PORTSTATS)
@@ -518,7 +519,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric1 =   builder1.setMetricName("TransmissionErrors")
-            .setMetricValue(new Counter64(new BigInteger("3000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("3000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.QUEUESTATS)
@@ -527,7 +528,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric2 =   builder2.setMetricName("TransmittedBytes")
-            .setMetricValue(new Counter64(new BigInteger("3000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("3000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.QUEUESTATS)
@@ -536,7 +537,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric3 =   builder3.setMetricName("TransmittedPackets")
-            .setMetricValue(new Counter64(new BigInteger("3000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("3000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.QUEUESTATS)
@@ -576,7 +577,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric1 =   builder1.setMetricName("PacketCount")
-            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setMetricValue(new BigDecimal(Double.parseDouble(new Long(40).toString())))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWMETERSTATS)
@@ -585,7 +586,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric2 =   builder2.setMetricName("ByteCount")
-            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setMetricValue(new BigDecimal(Double.parseDouble(new Long(40).toString())))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWMETERSTATS)
@@ -594,7 +595,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric3 =   builder3.setMetricName("RefCount")
-            .setMetricValue(new Counter64(new BigInteger("4000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("4000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWMETERSTATS)
@@ -633,7 +634,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric1 =   builder1.setMetricName("PacketCount")
-            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setMetricValue(new BigDecimal(Double.parseDouble(new Long(40).toString())))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
@@ -642,7 +643,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric2 =   builder2.setMetricName("ByteCount")
-            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setMetricValue(new BigDecimal(Double.parseDouble(new Long(40).toString())))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
@@ -651,7 +652,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric3 =   builder3.setMetricName("RefCount")
-            .setMetricValue(new Counter64(new BigInteger("4000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("4000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
@@ -691,7 +692,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric1 =   builder1.setMetricName("PacketCount")
-            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setMetricValue(new BigDecimal(Double.parseDouble(new Long(40).toString())))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
@@ -700,7 +701,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder2 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric2 =   builder2.setMetricName("ByteCount")
-            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setMetricValue(new BigDecimal(Double.parseDouble(new Long(40).toString())))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
@@ -709,7 +710,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder3 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric3 =   builder3.setMetricName("RefCount")
-            .setMetricValue(new Counter64(new BigInteger("4000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("4000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
@@ -718,7 +719,7 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder4 = new TSDRMetricRecordBuilder();
 
         TSDRMetric tsdrMetric4 =   builder4.setMetricName("PacketCount")
-            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setMetricValue(new BigDecimal(Double.parseDouble(new Long(40).toString())))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
@@ -727,7 +728,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder5 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric5 =   builder5.setMetricName("ByteCount")
-            .setMetricValue(new Counter64(new BigInteger(new Long(40).toString())))
+            .setMetricValue(new BigDecimal(Double.parseDouble(new Long(40).toString())))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
@@ -736,7 +737,7 @@ public class HBaseDataStoreTest {
        TSDRMetricRecordBuilder builder6 = new TSDRMetricRecordBuilder();
 
        TSDRMetric tsdrMetric6 =   builder6.setMetricName("RefCount")
-            .setMetricValue(new Counter64(new BigInteger("4000")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("4000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)

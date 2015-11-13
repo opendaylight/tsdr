@@ -25,6 +25,7 @@ import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -74,7 +75,7 @@ public class TsdrH2PersistenceServiceImplTest {
 
         TSDRMetricRecordBuilder tsdrMetricBuilder = new TSDRMetricRecordBuilder();
         TSDRMetricRecord tsdrMetrics = tsdrMetricBuilder.setMetricName("METRIC_NAME")
-            .setMetricValue(new Counter64(new BigInteger("64")))
+            .setMetricValue(new BigDecimal(Double.parseDouble("64")))
             .setNodeID("openflow:dummy")
             .setRecordKeys(recordKeysList)
             .setTimeStamp(Long.parseLong(timeStamp))
@@ -132,7 +133,7 @@ public class TsdrH2PersistenceServiceImplTest {
             TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
 
             TSDRMetric tsdrMetric = builder.setMetricName(metricName)
-                .setMetricValue(new Counter64(new BigInteger(new Long(metricNameValues.get(metricName)).toString())))
+                .setMetricValue(new BigDecimal(Double.parseDouble(metricNameValues.get(metricName))))
                 .setNodeID(node)
                 .setRecordKeys(recordKeys)
                 .setTSDRDataCategory(dataCategory)

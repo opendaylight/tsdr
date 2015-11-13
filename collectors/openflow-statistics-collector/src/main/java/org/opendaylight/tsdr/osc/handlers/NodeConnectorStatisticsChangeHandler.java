@@ -7,12 +7,14 @@
  */
 package org.opendaylight.tsdr.osc.handlers;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
 import org.opendaylight.tsdr.osc.TSDRBaseDataHandler;
 import org.opendaylight.tsdr.osc.TSDRDOMCollector;
 import org.opendaylight.tsdr.osc.TSDRMetricRecordBuilderContainer;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
@@ -47,80 +49,68 @@ public class NodeConnectorStatisticsChangeHandler extends TSDRBaseDataHandler {
         if (bc != null) {
             TSDRMetricRecordBuilder builder[] = bc.getBuilders();
             long timeStamp = getTimeStamp();
-            builder[0].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getTransmitDrops())));
+            builder[0].setMetricValue(FormatUtil.toMetricValue(fs.getTransmitDrops()));
             builder[0].setTimeStamp(timeStamp);
-            builder[1].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getReceiveDrops())));
+            builder[1].setMetricValue(FormatUtil.toMetricValue( fs.getReceiveDrops()));
             builder[1].setTimeStamp(timeStamp);
-            builder[2].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getReceiveCrcError())));
+            builder[2].setMetricValue(FormatUtil.toMetricValue(fs.getReceiveCrcError()));
             builder[2].setTimeStamp(timeStamp);
-            builder[3].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getReceiveFrameError())));
+            builder[3].setMetricValue(FormatUtil.toMetricValue(fs.getReceiveFrameError()));
             builder[3].setTimeStamp(timeStamp);
-            builder[4].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getReceiveOverRunError())));
+            builder[4].setMetricValue(FormatUtil.toMetricValue(fs.getReceiveOverRunError()));
             builder[4].setTimeStamp(timeStamp);
-            builder[5].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getTransmitErrors())));
+            builder[5].setMetricValue(FormatUtil.toMetricValue(fs.getTransmitErrors()));
             builder[5].setTimeStamp(timeStamp);
-            builder[6].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getCollisionCount())));
+            builder[6].setMetricValue(FormatUtil.toMetricValue(fs.getCollisionCount()));
             builder[6].setTimeStamp(timeStamp);
-            builder[7].setMetricValue(new Counter64(new BigInteger(""
-                    + fs.getReceiveErrors())));
+            builder[7].setMetricValue(FormatUtil.toMetricValue(fs.getReceiveErrors()));
             builder[7].setTimeStamp(timeStamp);
             builder[8].setTimeStamp(timeStamp);
             builder[9].setTimeStamp(timeStamp);
             builder[10].setTimeStamp(timeStamp);
             builder[11].setTimeStamp(timeStamp);
             if (fs.getBytes() != null) {
-                builder[8].setMetricValue(new Counter64(fs.getBytes()
-                        .getTransmitted()));
-                builder[9].setMetricValue(new Counter64(fs.getBytes()
-                        .getReceived()));
+                builder[8].setMetricValue(FormatUtil.toMetricValue(fs.getBytes().getTransmitted()));
+                builder[9].setMetricValue(FormatUtil.toMetricValue(fs.getBytes().getReceived()));
             }
             if (fs.getPackets() != null) {
-                builder[10].setMetricValue(new Counter64(fs.getPackets()
-                        .getTransmitted()));
-                builder[11].setMetricValue(new Counter64(fs.getPackets()
-                        .getReceived()));
+                builder[10].setMetricValue(FormatUtil.toMetricValue(fs.getPackets().getTransmitted()));
+                builder[11].setMetricValue(FormatUtil.toMetricValue(fs.getPackets().getReceived()));
             }
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "TransmitDrops", "" + fs.getTransmitDrops(),
+                    "TransmitDrops",FormatUtil.toMetricValue(fs.getTransmitDrops()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceiveDrops", "" + fs.getReceiveDrops(),
+                    "ReceiveDrops",FormatUtil.toMetricValue(fs.getReceiveDrops()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceiveCrcError", "" + fs.getReceiveCrcError(),
+                    "ReceiveCrcError",FormatUtil.toMetricValue(fs.getReceiveCrcError()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceiveFrameError", "" + fs.getReceiveFrameError(),
+                    "ReceiveFrameError", FormatUtil.toMetricValue(fs.getReceiveFrameError()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceiveOverRunError", "" + fs.getReceiveOverRunError(),
+                    "ReceiveOverRunError", FormatUtil.toMetricValue(fs.getReceiveOverRunError()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "TransmitErrors", "" + fs.getTransmitErrors(),
+                    "TransmitErrors", FormatUtil.toMetricValue(fs.getTransmitErrors()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "CollisionCount", "" + fs.getCollisionCount(),
+                    "CollisionCount", FormatUtil.toMetricValue(fs.getCollisionCount()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceiveErrors", "" + fs.getReceiveErrors(),
+                    "ReceiveErrors", FormatUtil.toMetricValue(fs.getReceiveErrors()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "TransmittedBytes", "0", DataCategory.PORTSTATS);
+                    "TransmittedBytes", new BigDecimal(0), DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceivedBytes", "0", DataCategory.PORTSTATS);
+                    "ReceivedBytes", new BigDecimal(0), DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "TransmittedPackets", "0", DataCategory.PORTSTATS);
+                    "TransmittedPackets", new BigDecimal(0), DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceivedPackets", "0", DataCategory.PORTSTATS);
+                    "ReceivedPackets", new BigDecimal(0), DataCategory.PORTSTATS);
         }
     }
 }

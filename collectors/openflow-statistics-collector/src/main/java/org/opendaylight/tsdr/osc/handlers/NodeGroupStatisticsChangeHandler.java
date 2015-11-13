@@ -13,6 +13,7 @@ import java.util.List;
 import org.opendaylight.tsdr.osc.TSDRBaseDataHandler;
 import org.opendaylight.tsdr.osc.TSDRDOMCollector;
 import org.opendaylight.tsdr.osc.TSDRMetricRecordBuilderContainer;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
@@ -47,25 +48,22 @@ public class NodeGroupStatisticsChangeHandler extends TSDRBaseDataHandler {
         if (bc != null) {
             TSDRMetricRecordBuilder builder[] = bc.getBuilders();
             long timeStamp = getTimeStamp();
-            builder[0].setMetricValue(new Counter64(new BigInteger(""
-                    + gs.getRefCount().getValue())));
+            builder[0].setMetricValue(FormatUtil.toMetricValue(gs.getRefCount()));
             builder[0].setTimeStamp(timeStamp);
-            builder[1].setMetricValue(new Counter64(new BigInteger(""
-                    + gs.getPacketCount().getValue())));
+            builder[1].setMetricValue(FormatUtil.toMetricValue(gs.getPacketCount().getValue()));
             builder[1].setTimeStamp(timeStamp);
-            builder[2].setMetricValue(new Counter64(new BigInteger(""
-                    + gs.getByteCount().getValue())));
+            builder[2].setMetricValue(FormatUtil.toMetricValue(gs.getByteCount().getValue()));
             builder[2].setTimeStamp(timeStamp);
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "RefCount", "" + gs.getRefCount().getValue(),
+                    "RefCount", FormatUtil.toMetricValue(gs.getRefCount()),
                     DataCategory.FLOWGROUPSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "PacketCount", "" + gs.getPacketCount().getValue(),
+                    "PacketCount", FormatUtil.toMetricValue(gs.getPacketCount()),
                     DataCategory.FLOWGROUPSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ByteCount", "" + gs.getByteCount().getValue(),
+                    "ByteCount", FormatUtil.toMetricValue(gs.getByteCount()),
                     DataCategory.FLOWGROUPSTATS);
         }
     }

@@ -13,6 +13,7 @@ import java.util.List;
 import org.opendaylight.tsdr.osc.TSDRBaseDataHandler;
 import org.opendaylight.tsdr.osc.TSDRDOMCollector;
 import org.opendaylight.tsdr.osc.TSDRMetricRecordBuilderContainer;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
@@ -46,28 +47,25 @@ public class FlowCapableNodeConnectorQueueStatisticsDataHandler extends TSDRBase
         if (bc != null) {
             TSDRMetricRecordBuilder builder[] = bc.getBuilders();
             long timeStamp = getTimeStamp();
-            builder[0].setMetricValue(new Counter64(new BigInteger(""
-                    + gs.getTransmissionErrors().getValue())));
+            builder[0].setMetricValue(FormatUtil.toMetricValue(gs.getTransmissionErrors()));
             builder[0].setTimeStamp(timeStamp);
-            builder[1].setMetricValue(new Counter64(new BigInteger(""
-                    + gs.getTransmittedBytes().getValue())));
+            builder[1].setMetricValue(FormatUtil.toMetricValue(gs.getTransmittedBytes()));
             builder[1].setTimeStamp(timeStamp);
-            builder[2].setMetricValue(new Counter64(new BigInteger(""
-                    + gs.getTransmittedPackets().getValue())));
+            builder[2].setMetricValue(FormatUtil.toMetricValue(gs.getTransmittedPackets()));
             builder[2].setTimeStamp(timeStamp);
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
                     "TransmissionErrors",
-                    "" + gs.getTransmissionErrors().getValue(),
+                    FormatUtil.toMetricValue(gs.getTransmissionErrors()),
                     DataCategory.QUEUESTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
                     "TransmittedBytes",
-                    "" + gs.getTransmittedBytes().getValue(),
+                    FormatUtil.toMetricValue(gs.getTransmittedBytes()),
                     DataCategory.QUEUESTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
                     "TransmittedPackets",
-                    "" + gs.getTransmittedPackets().getValue(),
+                    FormatUtil.toMetricValue(gs.getTransmittedPackets()),
                     DataCategory.QUEUESTATS);
         }
     }
