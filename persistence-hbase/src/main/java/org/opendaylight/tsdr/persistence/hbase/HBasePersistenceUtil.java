@@ -132,26 +132,27 @@ public class HBasePersistenceUtil {
         entity.setTableName(tableName);
         entity.setRowKey(rowKey.toString());
         List<HBaseColumn> columnList = new ArrayList<HBaseColumn>();
-        
+
         //add attribute names as columns
         List<RecordAttributes> attributes = logRecord.getRecordAttributes();
-        for ( RecordAttributes attribute: attributes){
-            HBaseColumn column = new HBaseColumn();
-            column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);         
-            column.setTimeStamp(timeStamp);
-            column.setColumnQualifier(attribute.getName());
-            column.setValue(attribute.getValue());
-            columnList.add(column);
+        if ( attributes != null && attributes.size() != 0){
+            for ( RecordAttributes attribute: attributes){
+                HBaseColumn column = new HBaseColumn();
+                column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
+                column.setTimeStamp(timeStamp);
+                column.setColumnQualifier(attribute.getName());
+                column.setValue(attribute.getValue());
+                columnList.add(column);
+            }
         }
-        //add FullLengthText as the last column      
+        //add FullLengthText as the last column
         HBaseColumn column = new HBaseColumn();
-        column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);         
+        column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
         column.setTimeStamp(timeStamp);
         column.setColumnQualifier(TSDRHBaseDataStoreConstants.LOGRECORD_FULL_TEXT);
         column.setValue(logRecord.getRecordFullText());
         columnList.add(column);
-        
-       
+
         entity.setColumns(columnList);
         log.debug("Exiting getEntityFromLogRecord(TSDRLogRecord)");
         return entity;
