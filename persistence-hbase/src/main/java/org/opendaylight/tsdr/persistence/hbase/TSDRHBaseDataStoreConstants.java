@@ -25,16 +25,22 @@ public class TSDRHBaseDataStoreConstants {
     public static final String QUEUE_METRICS_TABLE_NAME = "QueueMetrics";
     public static final String GROUP_METRICS_TABLE_NAME = "GroupMetrics";
     public static final String METER_METRICS_TABLE_NAME = "MeterMetrics";
-    
+
     /**
      * HBase tables name for SysLog data.
      */
     public static final String SYSLOG_TABLE_NAME = "SysLog";
-    
+
     /**
      * HBase tables name for NetFlow data.
      */
     public static final String NETFLOW_TABLE_NAME = "NetFlow";
+
+    /**
+     * HBase tables name for SNMPInterfaces data
+     *
+     */
+    public static final String SNMP_INTERFACE_TABLE_NAME = "SNMPInterfaces";
     /**
      * Other constants used in HBase tables for OpenFlow statistics data.
     */

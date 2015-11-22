@@ -8,7 +8,6 @@
 package org.opendaylight.tsdr.persistence.hbase;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogreco
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
-import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -47,39 +45,39 @@ public class HBasePersistenceUtil {
     public static HBaseEntity getEntityFromMetricStats(TSDRMetric metricData
         , DataCategory dataCategory){
         log.debug("Entering getEntityFromMetricStats(TSDRMetric)");
-        if ( metricData == null){
-            log.error("metricData is null");
-            return null;
-        }else if ( metricData.getNodeID() == null){
-            log.error("NodeID in metric Data is null");
-            return null;
-        }else if ( metricData.getMetricName() == null){
-            log.error("MetricName is null");
-            return null;
-        }else if ( metricData.getMetricValue() == null){
-            log.error("MetricValue is null)");
+        if ( !validateMetricInput(metricData)){
             return null;
         }
-
-        HBaseEntity entity = new HBaseEntity();
-        String metricName = metricData.getMetricName();
-        if ( metricName == null || metricName.trim().length() == 0){
-            return null;
-        }
-        String metricValue = metricData.getMetricValue().toString();
-        Long timeStamp = new Long(metricData.getTimeStamp().longValue());
         String tableName = getTableNameFrom(dataCategory);
         if ( tableName == null || tableName.trim().length() == 0){
             return null;
         }
-        String keyString = getKeyStringFrom(metricData);
-        if ( keyString == null || keyString.trim().length() == 0){
-            return null;
+        HBaseEntity entity = new HBaseEntity();
+        String metricName = metricData.getMetricName(); 
+        String metricValue = metricData.getMetricValue().toString();
+        Long timeStamp = null;
+        //If there's no timestamp in the metric Data, append the current
+        //system timestamp
+        if ( metricData.getTimeStamp() != null ){
+            timeStamp = new Long(metricData.getTimeStamp().longValue());
+        }else{
+            timeStamp = System.currentTimeMillis();
         }
-       StringBuffer rowKey = new StringBuffer();
-        rowKey.append(metricName).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
-            .append(keyString).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
-            .append(timeStamp);
+       
+        String keyString = getKeyStringFrom(metricData);
+        StringBuffer rowKey = new StringBuffer();
+        /*
+         * keyString could be null. In the case the data is associated with node only,
+         * the keyString will be null.
+         */
+        if ( keyString != null && keyString.trim().length() != 0){
+            rowKey.append(metricName).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+                .append(keyString).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+                .append(timeStamp);
+        }else{
+            rowKey.append(metricName).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+            .append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT).append(timeStamp);
+        }
         entity.setTableName(tableName);
         entity.setRowKey(rowKey.toString());
         List<HBaseColumn> columnList = new ArrayList<HBaseColumn>();
@@ -93,7 +91,30 @@ public class HBasePersistenceUtil {
         log.debug("Exiting getEntityFromMetricStats(TSDRMetric)");
         return entity;
     }
-
+/**
+ * Check if the input of TSDRMetric is valid.
+ * @param metricData
+ * @return true - valid
+ *         false - invalid
+ */
+    private static boolean validateMetricInput(TSDRMetric metricData){
+        if ( metricData == null){
+            log.error("metricData is null");
+            return false;
+        }else if ( metricData.getNodeID() == null
+            || metricData.getNodeID().trim().length() == 0){
+            log.error("NodeID in metric Data is null");
+            return false;
+        }else if ( metricData.getMetricName() == null 
+            || metricData.getMetricName().trim().length() == 0){
+            log.error("MetricName is null");
+            return false;
+        }else if ( metricData.getMetricValue() == null){
+            log.error("MetricValue is null)");
+            return false;
+        }
+        return true;
+    }
     /**
      * Get HBaseEntity from TSDRLogRecord data structure.
      *
@@ -109,14 +130,13 @@ public class HBasePersistenceUtil {
         }else if ( logRecord.getNodeID() == null){
             log.error("NodeID in metric Data is null");
             return null;
-        } 
+        }
 
         HBaseEntity entity = new HBaseEntity();
         String nodeID = logRecord.getNodeID();
         if ( nodeID == null || nodeID.trim().length() == 0){
             return null;
         }
-         
         Long timeStamp = new Long(logRecord.getTimeStamp().longValue());
         String tableName = getTableNameFrom(dataCategory);
         if ( tableName == null || tableName.trim().length() == 0){
@@ -180,7 +200,9 @@ public class HBasePersistenceUtil {
             return TSDRHBaseDataStoreConstants.SYSLOG_TABLE_NAME;
         } else if (datacategory == DataCategory.NETFLOW){
             return TSDRHBaseDataStoreConstants.NETFLOW_TABLE_NAME;
-        } else{
+        }else if (datacategory == DataCategory.SNMPINTERFACES){
+            return TSDRHBaseDataStoreConstants.SNMP_INTERFACE_TABLE_NAME;
+        }else{
             log.error("The category is not supported:{}" , datacategory.toString());
             return "";
         }
@@ -278,6 +300,7 @@ public class HBasePersistenceUtil {
         hbaseTables.add(TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME);
         hbaseTables.add(TSDRHBaseDataStoreConstants.NETFLOW_TABLE_NAME);
         hbaseTables.add(TSDRHBaseDataStoreConstants.SYSLOG_TABLE_NAME);
+        hbaseTables.add(TSDRHBaseDataStoreConstants.SNMP_INTERFACE_TABLE_NAME);
         return hbaseTables;
     }
     /**
