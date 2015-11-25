@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2015 Scott Melton All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class contains the utility methods used by TSDR Data Query service.
+ * This class contains the utility methods used by TSDR Data Query service. TBD
  *
  * @author <a href="mailto:smelton2@uccs.edu">Scott Melton</a>
  */

@@ -7,10 +7,11 @@
         <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
-            <param-value>org.opendaylight.tsdr.dataquery.TSDRApplication</param-value>
+            <param-value>org.opendaylight.tsdr.dataquery.TSDRQueryServiceApplication</param-value>
         </init-param>
         <init-param>
-           <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name><param-value>true</param-value>
+           <param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
+           <param-value>true</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>

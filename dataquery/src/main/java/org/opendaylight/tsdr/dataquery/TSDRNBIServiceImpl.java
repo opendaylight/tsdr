@@ -7,6 +7,11 @@
  */
 package org.opendaylight.tsdr.dataquery;
 
+import java.math.BigDecimal;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Future;
+
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
@@ -16,7 +21,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricr
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
-import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddMetricInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.TSDRDataqueryImplService;
 import org.opendaylight.yangtools.yang.common.RpcResult;
@@ -24,26 +28,20 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.concurrent.Future;
-
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-public class TSDRNBIServiceImpl implements TSDRDataqueryImplService{
+public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
     private static Logger logger = LoggerFactory.getLogger(TSDRNBIServiceImpl.class);
     private TSDRService tsdrService = null;
     // The reference to the the RPC registry to store the data
     private RpcProviderRegistry rpcRegistry = null;
 
-    public TSDRNBIServiceImpl(TSDRService _tsdrService, RpcProviderRegistry _rpcRegistry){
+    public TSDRNBIServiceImpl(TSDRService _tsdrService, RpcProviderRegistry _rpcRegistry) {
         this.tsdrService = _tsdrService;
         this.rpcRegistry = _rpcRegistry;
     }
+
     @Override
     public Future<RpcResult<Void>> addMetric(AddMetricInput input) {
         TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
@@ -62,9 +60,10 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService{
         return rpc.buildFuture();
     }
 
-    public List<RecordKeys> parseRecordKeys(List<org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.addmetric.input.RecordKeys> recs) {
+    public List<RecordKeys> parseRecordKeys(
+            List<org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.addmetric.input.RecordKeys> recs) {
         List<RecordKeys> result = new LinkedList<>();
-        for(org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.addmetric.input.RecordKeys rec:recs){
+        for (org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.addmetric.input.RecordKeys rec : recs) {
             RecordKeysBuilder rb = new RecordKeysBuilder();
             rb.setKeyName(rec.getKey());
             rb.setKeyValue(rec.getValue());
@@ -75,9 +74,8 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService{
 
     // Invoke the storage rpc method
     private void store(StoreTSDRMetricRecordInput input) {
-        if(tsdrService==null){
-            tsdrService = this.rpcRegistry
-                .getRpcService(TSDRService.class);
+        if (tsdrService == null) {
+            tsdrService = this.rpcRegistry.getRpcService(TSDRService.class);
         }
         tsdrService.storeTSDRMetricRecord(input);
         logger.debug("Data Storage called");

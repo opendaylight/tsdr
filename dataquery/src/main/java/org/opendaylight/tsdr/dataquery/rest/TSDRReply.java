@@ -7,9 +7,10 @@
  */
 package org.opendaylight.tsdr.dataquery.rest;
 
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)

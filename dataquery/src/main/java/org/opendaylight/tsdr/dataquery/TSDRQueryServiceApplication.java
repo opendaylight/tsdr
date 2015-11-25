@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2015 Scott Melton All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -12,17 +12,22 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import org.opendaylight.tsdr.dataquery.rest.TSDRGetMetricsAPI;
-import org.opendaylight.tsdr.dataquery.rest.TSDRGetLogRecordsAPI;
+import javax.ws.rs.core.Application;
+
+import org.opendaylight.tsdr.dataquery.rest.GetLogRecordsAPI;
+import org.opendaylight.tsdr.dataquery.rest.GetMetricsAPI;
 import org.opendaylight.tsdr.dataquery.rest.TSDRNBIRestAPI;
 
 /**
+ * Jersey 1.17 Application - This class makes the Data Query API visible to the
+ * JAX-RS implementation.
+ *
  * @author <a href="mailto:smelton2@uccs.edu">Scott Melton</a>
  */
-public class TSDRApplication extends DefaultResourceConfig {
+public class TSDRQueryServiceApplication extends Application {
+
     @Override
     public Set<Class<?>> getClasses() {
-        return new HashSet<Class<?>>(Arrays.asList(TSDRGetMetricsAPI.class,TSDRNBIRestAPI.class));
+        return new HashSet<Class<?>>(Arrays.asList(GetMetricsAPI.class, GetLogRecordsAPI.class, TSDRNBIRestAPI.class));
     }
 }
