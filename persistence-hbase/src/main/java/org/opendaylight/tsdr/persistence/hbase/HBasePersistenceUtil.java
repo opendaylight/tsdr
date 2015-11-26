@@ -19,10 +19,13 @@ import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.TSDRLogRecordList;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.TSDRLogRecordListBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordListBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributesBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.slf4j.Logger;
@@ -99,22 +102,44 @@ public class HBasePersistenceUtil {
  */
     private static boolean validateMetricInput(TSDRMetric metricData){
         if ( metricData == null){
-            log.error("metricData is null");
+            log.error("metricData is null. The data is invalid and will not be persisted.");
             return false;
         }else if ( metricData.getNodeID() == null
             || metricData.getNodeID().trim().length() == 0){
-            log.error("NodeID in metric Data is null");
+            log.error("NodeID in metric Data is null. The data is invalid and will not be persisted.");
             return false;
-        }else if ( metricData.getMetricName() == null 
+        }else if ( metricData.getMetricName() == null
             || metricData.getMetricName().trim().length() == 0){
-            log.error("MetricName is null");
+            log.error("MetricName is null. The data is invalid and will not be persisted.");
             return false;
         }else if ( metricData.getMetricValue() == null){
-            log.error("MetricValue is null)");
+            log.error("MetricValue is null. The data is invalid and will not be persisted.)");
             return false;
         }
         return true;
     }
+
+    /**
+     * Check if the input of TSDRMetric is valid.
+     * @param metricData
+     * @return true - valid
+     *         false - invalid
+     */
+        private static boolean validateLogRecordInput(TSDRLogRecord logrecordData){
+            if ( logrecordData == null){
+                log.error("logrecordData is null. The data is invalid and will not be persisted.");
+                return false;
+            }else if ( logrecordData.getNodeID() == null
+                || logrecordData.getNodeID().trim().length() == 0){
+                log.error("NodeID in logrecord Data is null. The data is invalid and will not be persisted.");
+                return false;
+            }else if ( logrecordData.getRecordFullText() == null
+                || logrecordData.getRecordFullText().trim().length() == 0){
+                log.error("RecordFullText is null. The data is invalid and will not be persisted.");
+                return false;
+            }
+            return true;
+        }
     /**
      * Get HBaseEntity from TSDRLogRecord data structure.
      *
@@ -124,31 +149,39 @@ public class HBasePersistenceUtil {
     public static HBaseEntity getEntityFromLogRecord(TSDRLogRecord logRecord
         , DataCategory dataCategory){
         log.debug("Entering getEntityFromLogRecord(TSDRLogRecord)");
-        if ( logRecord == null){
-            log.error("logRecord is null");
-            return null;
-        }else if ( logRecord.getNodeID() == null){
-            log.error("NodeID in metric Data is null");
+        if ( !validateLogRecordInput(logRecord) ){
             return null;
         }
-
+        String tableName = getTableNameFrom(dataCategory);
+        if ( tableName == null || tableName.trim().length() == 0){
+            return null;
+        }
         HBaseEntity entity = new HBaseEntity();
         String nodeID = logRecord.getNodeID();
         if ( nodeID == null || nodeID.trim().length() == 0){
             return null;
         }
-        Long timeStamp = new Long(logRecord.getTimeStamp().longValue());
-        String tableName = getTableNameFrom(dataCategory);
-        if ( tableName == null || tableName.trim().length() == 0){
-            return null;
+        Long timeStamp = null;
+        //If there's no timestamp in the metric Data, append the current
+        //system timestamp
+        if ( logRecord.getTimeStamp() != null ){
+            timeStamp = new Long(logRecord.getTimeStamp().longValue());
+        }else{
+            timeStamp = System.currentTimeMillis();
         }
         String keyString = getKeyStringFrom(logRecord);
-        if ( keyString == null || keyString.trim().length() == 0){
-            return null;
-        }
         StringBuffer rowKey = new StringBuffer();
-        rowKey.append(keyString).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+        /*
+         * keyString could be null. In the case the data is associated with node only,
+         * the keyString will be null.
+         */
+        if ( keyString == null || keyString.trim().length() == 0){
+            rowKey.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
             .append(timeStamp);
+        }else{
+            rowKey.append(keyString).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+            .append(timeStamp);
+        }
         entity.setTableName(tableName);
         entity.setRowKey(rowKey.toString());
         List<HBaseColumn> columnList = new ArrayList<HBaseColumn>();
@@ -357,6 +390,42 @@ public class HBasePersistenceUtil {
             }
             return result;
         }
+        /**
+         * Convert the HBaseEntity list to TSDRLogRecord
+         * @param entities
+         * @return
+         */
+        public static List<TSDRLogRecordList> convertToTSDRLogRecords(DataCategory category,List<HBaseEntity> entities){
+            List<TSDRLogRecordList> result = new ArrayList<TSDRLogRecordList>();
+            for ( HBaseEntity entity : entities ){
+                 String rowKey = entity.getRowKey();
+                 String nodeID = getNodeIDFromLogRecordRowKey(rowKey);
+                 Long timestamp = getTimeStampFromRowKey(rowKey);
+
+                 List<HBaseColumn> columns = entity.getColumns();
+                 TSDRLogRecordListBuilder logRecordbuilder = new TSDRLogRecordListBuilder();
+                 logRecordbuilder.setNodeID(nodeID);
+                 logRecordbuilder.setTimeStamp(timestamp);
+                 List<RecordAttributes> recordAttributes = new ArrayList<RecordAttributes>();
+                 for ( HBaseColumn column: columns){
+                    if (column.getColumnQualifier().
+                        equalsIgnoreCase(TSDRHBaseDataStoreConstants.LOGRECORD_FULL_TEXT)){
+                        logRecordbuilder.setRecordFullText(column.getValue());
+                    }else{
+                        RecordAttributesBuilder attributesBuilder = new RecordAttributesBuilder();
+                        attributesBuilder.setName(column.getColumnQualifier());
+                        attributesBuilder.setValue(column.getValue());
+                        recordAttributes.add(attributesBuilder.build());
+                    }
+                 }
+                 logRecordbuilder.setRecordAttributes(recordAttributes);
+                 logRecordbuilder.setTSDRDataCategory(category);
+                 TSDRLogRecordList record = logRecordbuilder.build();
+                 result.add(record);
+            }
+            return result;
+        }
+
 
         /**
          * Get metricsID, which is at the leading position of rowKey, from the rowKey
@@ -377,6 +446,19 @@ public class HBasePersistenceUtil {
             if (sections != null && sections.length > 0){
                 //the second section of the rowkey is the NodeID
                 return sections[1];
+            }
+            return null;
+        }
+        /**
+         * Return the node id given the rowKey in logrecord
+         * In the column based format of logrecord, the node id is the first section of the rowkey.
+         * @param rowKey
+         * @return
+         */
+        public static String getNodeIDFromLogRecordRowKey(String rowKey){
+            String[] sections = rowKey.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+            if ( sections != null && sections.length >= 1){
+                return sections[0];
             }
             return null;
         }
@@ -525,5 +607,20 @@ public class HBasePersistenceUtil {
                 result = keyString;
             }
             return result;
+        }
+        /**
+         * Return the timestamp from the rowkey.
+         * In both metric and log record rowkey format, timestamp is always the last
+         * section in the rowkey.
+         * @param rowKey
+         * @return
+         */
+        public static Long getTimeStampFromRowKey(String rowKey){
+            String[] sections = rowKey.split(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT);
+            if (sections != null && sections.length >= 1 ){
+                //the last section of rowkey is the timestamp
+                return new Long(sections[sections.length -1]);
+            }
+            return null;
         }
 }

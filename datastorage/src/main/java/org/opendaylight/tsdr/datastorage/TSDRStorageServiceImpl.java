@@ -22,6 +22,9 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsOutputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutputBuilder;
@@ -33,6 +36,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.Metrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.MetricsBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.TSDRLogRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
@@ -247,6 +251,26 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
         return builder.buildFuture();
     }
 
+
+    @Override
+    /**
+     * Retrieve TSDRLogRecords
+     */
+    public Future<RpcResult<GetTSDRLogRecordsOutput>> getTSDRLogRecords(GetTSDRLogRecordsInput input){
+        List<?> result = TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore()
+            .getTSDRLogRecords(input.getTSDRDataCategory(), input.getStartTime(), input.getEndTime());
+        GetTSDRLogRecordsOutputBuilder output = new GetTSDRLogRecordsOutputBuilder();
+        List< TSDRLogRecordList> logRecords = new ArrayList<TSDRLogRecordList>();
+        for(Object obj:result){
+                TSDRLogRecordList mr = (TSDRLogRecordList) obj;
+                logRecords.add(mr);
+
+
+        }
+        output.setTSDRLogRecordList(logRecords);
+        RpcResultBuilder<GetTSDRLogRecordsOutput> builder = RpcResultBuilder.success(output);
+        return builder.buildFuture();
+    }
     public Future<RpcResult<Void>> storeTSDRLogRecord(StoreTSDRLogRecordInput input) {
         log.debug("Entering TSDRStorageService.storeTSDRLog()");
         if ( input == null || input.getTSDRLogRecord() == null){

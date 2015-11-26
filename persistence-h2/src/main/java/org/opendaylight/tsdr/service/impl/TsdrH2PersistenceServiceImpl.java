@@ -211,4 +211,10 @@ public class TsdrH2PersistenceServiceImpl implements
        throw new UnsupportedOperationException("TSDRLogRecord needs to be implmented");
     }
 
+    @Override
+    public List<?> getTSDRLogRecords(DataCategory category, long startTime, long endTime){
+        throw new UnsupportedOperationException("log records are not yet supported in h2 data store");
+    }
+
+
 }

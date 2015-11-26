@@ -26,6 +26,7 @@ import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.TSDRLogRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
@@ -238,6 +239,27 @@ public class TSDRHBasePersistenceServiceImpl  implements
         resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
                 (tableName,startTime, endTime);
         List<TSDRMetricRecordList> resultRecords = HBasePersistenceUtil.convertToTSDRMetrics( category,resultEntities);
+        return resultRecords;
+    }
+
+    @Override
+    /**
+     * Retrieve a list of TSDRLogRecords from HBase data store based on the
+     * specified data category, startTime, and endTime.
+     */
+    public List<?> getTSDRLogRecords(DataCategory category, long startTime, long endTime){
+        if ( category == null ){
+            log.error("The data category is not supported");
+            return null;
+        }
+        List<HBaseEntity> resultEntities = null;
+        String tableName = HBasePersistenceUtil.getTableNameFrom(category);
+        if ( tableName == null || tableName.length() == 0){
+            return null;
+        }
+        resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
+                (tableName,startTime, endTime);
+        List<TSDRLogRecordList> resultRecords = HBasePersistenceUtil.convertToTSDRLogRecords( category,resultEntities);
         return resultRecords;
     }
 

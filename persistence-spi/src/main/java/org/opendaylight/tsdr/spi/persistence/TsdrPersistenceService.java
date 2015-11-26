@@ -108,4 +108,13 @@ public interface TsdrPersistenceService {
      */
     //TODO:change name to purgeAll and Long to long
     void purgeAllTSDRRecords(Long timestamp);
+    /**
+     * Returns the TSDRLogRecords based on category, startTime, and endTime
+     * @param category
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<?> getTSDRLogRecords(DataCategory category, long startTime, long endTime);
+
 }

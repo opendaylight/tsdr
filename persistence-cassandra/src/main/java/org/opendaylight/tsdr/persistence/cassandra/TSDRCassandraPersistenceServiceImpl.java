@@ -69,7 +69,10 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
     public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
         return null;
        }
-
+    @Override
+    public List<?> getTSDRLogRecords(DataCategory category, long startTime, long endTime){
+        throw new UnsupportedOperationException("log records are not yet supported in cassandra data store");
+    }
     @Override
     public void purgeTSDRRecords(DataCategory category, Long retention_time){
         throw new UnsupportedOperationException("purgeTSDRRecords not yet supported by Cassandra");

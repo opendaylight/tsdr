@@ -315,12 +315,38 @@ module TSDR {
                type int64;
             }
         }
-        output { 
+        output {
              list TSDRMetricRecordList{
                  description
                     "A list of TSDRMetric";
                 uses TSDRMetric;
              }
+         }
+    }
+    rpc getTSDRLogRecords{
+       description
+            "The API to retrieve a list of TSDRRecord with specified category, start time, and end time.";
+        input {
+            leaf TSDRDataCategory {
+                description
+                    "The category of the TSDR data.";
+                type DataCategory;
+            }
+            leaf start_time{
+                description
+                    "The start time of the TSDR data.";
+               type int64;
+            }
+            leaf end_time{
+                description
+                    "The end time of the TSDR data.";
+               type int64;
+            }
+        }
+        output {
+            list TSDRLogRecordList{
+                     uses TSDRLog;
+                 }
          }
     }
 }
