@@ -267,6 +267,7 @@
     </pluginManagement>
   </build>
   <modules>
+    <module>configuration</module>
     <module>persistence-spi</module>
     <module>persistence-hbase</module>
     <module>persistence-h2</module>
