@@ -10,16 +10,6 @@
     <artifactId>tsdr-external-collector-service</artifactId>
     <packaging>bundle</packaging>
 
-<repositories>
-    <repository>
-        <id>datasand-mvn-repo</id>
-        <url>https://raw.github.com/saichler/datasand-maven-repo/master/</url>
-        <snapshots>
-            <enabled>true</enabled>
-            <updatePolicy>always</updatePolicy>
-        </snapshots>
-    </repository>
-</repositories>
     <build>
         <plugins>
             <plugin>
