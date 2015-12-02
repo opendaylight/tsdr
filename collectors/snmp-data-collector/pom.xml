@@ -82,6 +82,11 @@
                                     <type>xml</type>
                                     <classifier>config</classifier>
                                 </artifact>
+                                <artifact>
+                                    <file>${project.build.directory}/classes/configuration/initial/tsdr-snmp.cfg</file>
+                                    <type>cfg</type>
+                                    <classifier>config-1</classifier>
+                                </artifact>
                             </artifacts>
                         </configuration>
                     </execution>
@@ -143,6 +148,11 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.dependencymanager</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
