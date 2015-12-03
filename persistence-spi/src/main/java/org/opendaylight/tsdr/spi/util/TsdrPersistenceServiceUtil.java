@@ -49,6 +49,7 @@ public class TsdrPersistenceServiceUtil {
  * @param category
  * @return
  */
+/* We don't need this method,the enum has it by default
     public static String getCategoryNameFrom(DataCategory category){
         if ( category == DataCategory.EXTERNAL ){
             return TSDRConstants.EXTERNAL;
@@ -75,11 +76,13 @@ public class TsdrPersistenceServiceUtil {
             return null;
         }
     }
+    */
 /**
  * Return DataCategory Enum from String category name.
  * @param category
  * @return
  */
+/* We don't need this
     public static DataCategory getCategoryFrom(String category){
         if ( category.equalsIgnoreCase(TSDRConstants.EXTERNAL)){
             return DataCategory.EXTERNAL;
@@ -105,5 +108,6 @@ public class TsdrPersistenceServiceUtil {
             log.warn("The category is not supported", category);
             return null;
         }
-    }
+    }*/
+
 }

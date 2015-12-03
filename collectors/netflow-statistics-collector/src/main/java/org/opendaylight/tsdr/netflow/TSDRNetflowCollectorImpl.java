@@ -52,6 +52,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
      */
     public TSDRNetflowCollectorImpl(TsdrCollectorSpiService _collectorSPIService){
         super("TSDR NetFlow Listener");
+        this.setDaemon(true);
         this.collectorSPIService = _collectorSPIService;
         incomingNetFlow = new LinkedList<DatagramPacket>();
         try
@@ -105,6 +106,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
     private class NetFlowProcessor extends Thread{
         public NetFlowProcessor(){
             super("TSDR NetFlow Processor");
+            this.setDaemon(true);
             this.start();
         }
         public void run(){

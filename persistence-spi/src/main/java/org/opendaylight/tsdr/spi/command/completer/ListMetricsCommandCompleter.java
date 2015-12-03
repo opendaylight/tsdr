@@ -11,6 +11,7 @@ package org.opendaylight.tsdr.spi.command.completer;
 import org.apache.karaf.shell.console.Completer;
 import org.apache.karaf.shell.console.completer.StringsCompleter;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 
 import java.util.List;
 
@@ -26,14 +27,10 @@ public class ListMetricsCommandCompleter implements Completer {
 
     @Override
     public int complete(String buffer, int cursor, List<String> candidates) {
-
             StringsCompleter completer = new StringsCompleter();
-            completer.getStrings().add(TSDRConstants.FLOW_STATS_CATEGORY_NAME);
-            completer.getStrings().add(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME);
-            completer.getStrings().add(TSDRConstants.PORT_STATS_CATEGORY_NAME);
-            completer.getStrings().add(TSDRConstants.QUEUE_STATS_CATEGORY_NAME);
-           // completer.getStrings().add(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME);
-            //completer.getStrings().add(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME);
+            for(DataCategory c:DataCategory.values()){
+                completer.getStrings().add(c.name());
+            }
             return completer.complete(buffer, cursor, candidates);
         }
 }

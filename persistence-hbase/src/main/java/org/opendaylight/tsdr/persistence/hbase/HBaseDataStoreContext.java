@@ -18,8 +18,8 @@ package org.opendaylight.tsdr.persistence.hbase;
  *
  */
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 public class HBaseDataStoreContext {
     /**

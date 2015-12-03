@@ -9,27 +9,26 @@
 package org.opendaylight.tsdr.persistence.hbase;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
-
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.TSDRLogRecordList;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,11 +44,12 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed </a>
  *    --- Introduction of getMetrics in persistence SPI
  *
+ * Revision: Dec 10, 2015
+ * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
  *
  *
  */
-public class TSDRHBasePersistenceServiceImpl  implements
-    TsdrPersistenceService {
+public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService {
 
     private static final Logger log = LoggerFactory.getLogger(TSDRHBasePersistenceServiceImpl.class);
     private ScheduledFuture future;
@@ -176,103 +176,81 @@ public class TSDRHBasePersistenceServiceImpl  implements
         closeConnections();
         log.debug("Exiting stop(timeout)");
     }
-/**
- * Retrieve a list of HBaseEntity based on metrics Category, start time, and end time.
- */
-    @Override
-    public List<?> getMetrics(String metricsCategory, Date startDateTime, Date endDateTime) {
-        //this is for testing only. Eventually the metricsCategory is required argument in the list command
-        if ( metricsCategory == null || metricsCategory.length() == 0){
-            metricsCategory = TSDRConstants.PORT_STATS_CATEGORY_NAME;
-        }
-        List<HBaseEntity> resultEntities = null;
-        long startTime = startDateTime == null? 0: startDateTime.getTime();
-        long endTime = endDateTime == null? 0: endDateTime.getTime();
-        if ( metricsCategory.equalsIgnoreCase(TSDRConstants.FLOW_STATS_CATEGORY_NAME)){
-            String tableName = TSDRHBaseDataStoreConstants.FLOW_STATS_TABLE_NAME;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tableName,startTime, endTime);
-        }else if (metricsCategory.equalsIgnoreCase(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME)){
-            String tableName = TSDRHBaseDataStoreConstants.FLOW_TABLE_STATS_TABLE_NAME;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tableName,startTime, endTime);
-        }else if ( metricsCategory.equalsIgnoreCase(TSDRConstants.PORT_STATS_CATEGORY_NAME)){
-            String tableName = TSDRHBaseDataStoreConstants.INTERFACE_METRICS_TABLE_NAME;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tableName,startTime, endTime);
-        }else if ( metricsCategory.equalsIgnoreCase(TSDRConstants.QUEUE_STATS_CATEGORY_NAME)){
-            String tableName = TSDRHBaseDataStoreConstants.QUEUE_METRICS_TABLE_NAME;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tableName,startTime, endTime);
-        }else if ( metricsCategory.equalsIgnoreCase(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME)){
-            String tableName = TSDRHBaseDataStoreConstants.GROUP_METRICS_TABLE_NAME;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tableName,startTime, endTime);
-        }else if ( metricsCategory.equalsIgnoreCase(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME)){
-            String tableName = TSDRHBaseDataStoreConstants.METER_METRICS_TABLE_NAME;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tableName,startTime, endTime);
-        }else{
-            log.warn("The metricsCategory {} is not supported", metricsCategory);
-            return null;
-        }
-        List<String> resultRecords = HBasePersistenceUtil.convertToStringResultList( resultEntities);
-        return resultRecords;
-    }
-
 
     @Override
     /**
      * Retrieve a list of TSDRMetricRecords from HBase data store based on the
      * specified data category, startTime, and endTime.
      */
-    public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
-        if ( category == null ){
-            log.error("The data category is not supported");
-            return null;
+    public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startTime, long endTime){
+        final List<TSDRMetricRecord> resultRecords = new ArrayList<TSDRMetricRecord>();
+
+        if ( tsdrMetricKey == null ){
+            log.error("The tsdr metric key is null");
+            return resultRecords;
         }
-        List<HBaseEntity> resultEntities = null;
-        String tableName = HBasePersistenceUtil.getTableNameFrom(category);
-        if ( tableName == null || tableName.length() == 0){
-            return null;
+
+        //This is a category query
+        if(FormatUtil.isDataCategory(tsdrMetricKey)) {
+            List<HBaseEntity> resultEntities = null;
+            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(tsdrMetricKey, startTime, endTime);
+            for (HBaseEntity e : resultEntities) {
+                resultRecords.add(getTSDRMetricRecord(e));
+            }
+            return resultRecords;
+        }else{
+
+            if(!FormatUtil.isValidTSDRKey(tsdrMetricKey)){
+                log.error("TSDR Key {} is not in the correct format",tsdrMetricKey);
+                return resultRecords;
+            }
+
+            String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(tsdrMetricKey);
+
+            if(!FormatUtil.isDataCategory(dataCategory)){
+                log.error("Data Category is unknown {}",dataCategory);
+                return resultRecords;
+            }
+
+            List<HBaseEntity> resultEntities = null;
+            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory, startTime, endTime);
+            for (HBaseEntity e : resultEntities) {
+                resultRecords.add(getTSDRMetricRecord(e));
+            }
+            return resultRecords;
         }
-        resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tableName,startTime, endTime);
-        List<TSDRMetricRecordList> resultRecords = HBasePersistenceUtil.convertToTSDRMetrics( category,resultEntities);
-        return resultRecords;
     }
 
     @Override
     /**
      * Retrieve a list of TSDRLogRecords from HBase data store based on the
-     * specified data category, startTime, and endTime.
+     * specified data tsdrLogKey, startTime, and endTime.
      */
-    public List<?> getTSDRLogRecords(DataCategory category, long startTime, long endTime){
-        if ( category == null ){
-            log.error("The data category is not supported");
+    public List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startTime, long endTime){
+        if ( tsdrLogKey == null ){
+            log.error("The data tsdrLogKey is not supported");
             return null;
         }
         List<HBaseEntity> resultEntities = null;
-        String tableName = HBasePersistenceUtil.getTableNameFrom(category);
-        if ( tableName == null || tableName.length() == 0){
-            return null;
-        }
         resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tableName,startTime, endTime);
-        List<TSDRLogRecordList> resultRecords = HBasePersistenceUtil.convertToTSDRLogRecords( category,resultEntities);
+                (tsdrLogKey,startTime, endTime);
+        List<TSDRLogRecord> resultRecords = new ArrayList<TSDRLogRecord>(resultEntities.size());
+        for(HBaseEntity e:resultEntities){
+            resultRecords.add(getTSDRLogRecord(e));
+        }
         return resultRecords;
     }
 
     @Override
     public void purgeTSDRRecords(DataCategory category, Long retention_time){
-         String tableName = HBasePersistenceUtil.getTableNameFrom(category);
          try{
-             HBaseDataStoreFactory.getHBaseDataStore().deleteByTimestamp(tableName, retention_time);
+             HBaseDataStoreFactory.getHBaseDataStore().deleteByTimestamp(category.name(), retention_time);
          }catch ( IOException ioe){
              log.error("Error purging TSDR records in HBase data store {}", ioe);
          }
          return;
     }
+
     @Override
     public void purgeAllTSDRRecords(Long retention_time){
          DataCategory[] categories = DataCategory.values();
@@ -282,6 +260,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
          }
          return;
     }
+
     /**
      * convert TSDRMetricRecord to HBaseEntity.
      * @param metrics
@@ -304,7 +283,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
      }
     /**
      * convert TSDRMetricRecord to HBaseEntity.
-     * @param metrics
+     * @param logRecord
      * @return
     */
     private HBaseEntity convertToHBaseEntity(TSDRLogRecord logRecord){
@@ -338,6 +317,7 @@ public class TSDRHBasePersistenceServiceImpl  implements
 
     /**
      * Create TSDR Tables.
+     * @throws Exception - an exception.
      */
     public void createTables() throws Exception{
         log.debug("Entering createTables()");
@@ -385,4 +365,35 @@ public class TSDRHBasePersistenceServiceImpl  implements
         }
          log.debug("Exiting store(TSDRMetricRecord)");
     }
+
+    private static final TSDRMetricRecord getTSDRMetricRecord(HBaseEntity entity){
+        TSDRMetricRecordBuilder tsdrMetricRecordBuilder = new TSDRMetricRecordBuilder();
+        tsdrMetricRecordBuilder.setMetricName(FormatUtil.getMetriNameFromTSDRKey(entity.getRowKey()));
+        tsdrMetricRecordBuilder.setMetricValue(new BigDecimal(Double.parseDouble(entity.getColumns().get(0).getValue())));
+        tsdrMetricRecordBuilder.setNodeID(FormatUtil.getNodeIdFromTSDRKey(entity.getRowKey()));
+        tsdrMetricRecordBuilder.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(entity.getRowKey()));
+        tsdrMetricRecordBuilder.setTimeStamp(FormatUtil.getTimeStampFromTSDRKey(entity.getRowKey()));
+        tsdrMetricRecordBuilder.setTSDRDataCategory(DataCategory.valueOf(entity.getTableName()));
+        return tsdrMetricRecordBuilder.build();
+    }
+
+    private static final TSDRLogRecord getTSDRLogRecord(HBaseEntity entity){
+        TSDRLogRecordBuilder tsdrLogRecordBuilder = new TSDRLogRecordBuilder();
+        tsdrLogRecordBuilder.setTSDRDataCategory(DataCategory.valueOf(entity.getTableName()));
+        tsdrLogRecordBuilder.setTimeStamp(FormatUtil.getTimeStampFromTSDRKey(entity.getRowKey()));
+        tsdrLogRecordBuilder.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(entity.getRowKey()));
+        tsdrLogRecordBuilder.setNodeID(FormatUtil.getNodeIdFromTSDRKey(entity.getRowKey()));
+        tsdrLogRecordBuilder.setIndex(-1);
+        tsdrLogRecordBuilder.setRecordAttributes(null);
+        String fullText = null;
+        for ( HBaseColumn column: entity.getColumns()){
+            if (column.getColumnQualifier().equalsIgnoreCase(TSDRHBaseDataStoreConstants.LOGRECORD_FULL_TEXT)){
+                fullText = column.getValue();
+                break;
+            }
+        }
+        tsdrLogRecordBuilder.setRecordFullText(fullText);
+        return tsdrLogRecordBuilder.build();
+    }
+
 }

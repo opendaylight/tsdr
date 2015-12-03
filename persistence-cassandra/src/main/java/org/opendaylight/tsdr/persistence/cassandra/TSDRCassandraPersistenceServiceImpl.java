@@ -13,6 +13,8 @@ import java.util.List;
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
@@ -61,24 +63,22 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
     }
 
     @Override
-    public List<?> getMetrics(String metricsCategory, Date startDateTime,Date endDateTime) {
-        return store.getMetrics(metricsCategory, startDateTime, endDateTime);
-    }
-
-    @Override
-    public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
-        return null;
-       }
-    @Override
-    public List<?> getTSDRLogRecords(DataCategory category, long startTime, long endTime){
-        throw new UnsupportedOperationException("log records are not yet supported in cassandra data store");
-    }
-    @Override
     public void purgeTSDRRecords(DataCategory category, Long retention_time){
         throw new UnsupportedOperationException("purgeTSDRRecords not yet supported by Cassandra");
     }
+
     @Override
     public void purgeAllTSDRRecords(Long retention_time){
         throw new UnsupportedOperationException("purgeAllTSDRRecords not yet supported by Cassandra");
+    }
+
+    @Override
+    public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime) {
+        return store.getMetrics(tsdrMetricKey,startDateTime,endDateTime);
+    }
+
+    @Override
+    public List<TSDRLogRecord> getTSDRLogRecords(String tsdrMetricKey, long startTime, long endTime) {
+        return store.getLogs(tsdrMetricKey,startTime,endTime);
     }
 }

@@ -7,21 +7,15 @@
  */
 package org.opendaylight.tsdr.datastorage;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
+import com.google.common.util.concurrent.Futures;
+
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
-
 import org.opendaylight.tsdr.datastorage.persistence.TSDRPersistenceServiceFactory;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInput;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutput;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsOutputBuilder;
@@ -34,16 +28,16 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogReco
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.Metrics;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.MetricsBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.TSDRLogRecordList;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.Logs;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.LogsBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.MetricsBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.Futures;
 
 /**
  * TSDR storage service implementation class.
@@ -159,118 +153,46 @@ public class TSDRStorageServiceImpl implements TSDRService, AutoCloseable {
     }
 
     @Override
-    public Future<RpcResult<GetMetricOutput>> getMetric(GetMetricInput input) {
-        List<?> result = TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().getMetrics(input.getName(), new Date(input.getFrom()), new Date(input.getUntil()));
-        GetMetricOutputBuilder output = new GetMetricOutputBuilder();
+    public Future<RpcResult<GetTSDRMetricsOutput>> getTSDRMetrics(GetTSDRMetricsInput input) {
+        List<TSDRMetricRecord> result = TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().getTSDRMetricRecords(input.getTSDRDataCategory(), input.getStartTime(), input.getEndTime());
+        GetTSDRMetricsOutputBuilder output = new GetTSDRMetricsOutputBuilder();
         List<Metrics> metrics = new LinkedList<Metrics>();
-        Method mColumns = null;
-        List<?> columns = null;
-        Method mTime = null;
-        Method mValue = null;
-        boolean isCassandra = false;
-        boolean isH2 = false;
-        boolean isHBase = false;
-        for(Object o:result){
-            if(mTime==null){
-                if(isCassandra || o.getClass().getName().indexOf("Cassandra")!=-1){
-                    isCassandra = true;
-                    try {
-                        mTime = o.getClass().getMethod("getTime",(Class<?>[]) null);
-                        mValue = o.getClass().getMethod("getValue", (Class<?>[]) null);
-                    } catch (NoSuchMethodException | SecurityException e) {
-                        log.error("Can't find time method",e);
-                    }
-                }else
-                if(isH2 || o.getClass().getName().equals("org.opendaylight.tsdr.entity.Metric")){
-                    isH2 = true;
-                    try {
-                        mTime = o.getClass().getMethod("getMetricTimeStamp",(Class<?>[]) null);
-                        mValue = o.getClass().getMethod("getMetricValue", (Class<?>[]) null);
-                    } catch (NoSuchMethodException | SecurityException e) {
-                        log.error("Can't find time method",e);
-                    }
-                }else
-                if(isHBase || o.getClass().getName().equals("org.opendaylight.tsdr.persistence.hbase.HBaseEntity")){
-                    isHBase = true;
-                    try {
-                        mColumns = o.getClass().getMethod("getColumns",(Class<?>[]) null);
-                        columns = (List<?>)mColumns.invoke(o, (Object[])null);
-                        mTime = columns.get(0).getClass().getMethod("getTimeStamp",(Class<?>[]) null);
-                        mValue = columns.get(0).getClass().getMethod("getValue",(Class<?>[]) null);
-                    } catch (NoSuchMethodException | SecurityException | IllegalAccessException
-                            | IllegalArgumentException
-                            | InvocationTargetException e) {
-                        log.error("Can't find time method",e);
-                    }
-                }
-            }
-            try {
-                MetricsBuilder mb = new MetricsBuilder();
-                if(columns==null){
-                    Date time = (Date) mTime.invoke(o, (Object[]) null);
-                    Double value = (Double)mValue.invoke(o, (Object[])null);
-                    mb.setTime(time.getTime());
-                    mb.setValue(new BigDecimal(value));
-                    metrics.add(mb.build());
-                }else{
-                    for(Object col:columns){
-                        Date time = (Date) mTime.invoke(col, (Object[]) null);
-                        Double value = (Double)mValue.invoke(col, (Object[]) null);
-                        mb.setTime(time.getTime());
-                        mb.setValue(new BigDecimal(value));
-                        metrics.add(mb.build());
-                    }
-                }
-            } catch (IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException e) {
-                log.error("Failed to collect data from metric",e);
-            }
+        for(TSDRMetricRecord m:result){
+            MetricsBuilder b = new MetricsBuilder();
+            b.setMetricName(m.getMetricName());
+            b.setMetricValue(m.getMetricValue());
+            b.setNodeID(m.getNodeID());
+            b.setRecordKeys(m.getRecordKeys());
+            b.setTimeStamp(m.getTimeStamp());
+            b.setTSDRDataCategory(m.getTSDRDataCategory());
+            metrics.add(b.build());
         }
         output.setMetrics(metrics);
-        RpcResultBuilder<GetMetricOutput> builder = RpcResultBuilder.success(output);
-        return builder.buildFuture();
-    }
-
-    @Override
-    /**
-     * Retrieve TSDRMetricRecords
-     */
-    public Future<RpcResult<GetTSDRMetricsOutput>> getTSDRMetrics(GetTSDRMetricsInput input){
-        List<?> result = TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore()
-            .getTSDRMetrics(input.getTSDRDataCategory(), input.getStartTime(), input.getEndTime());
-        GetTSDRMetricsOutputBuilder output = new GetTSDRMetricsOutputBuilder();
-        List< TSDRMetricRecordList> metricRecords = new ArrayList<TSDRMetricRecordList>();
-        for(Object obj:result){
-                TSDRMetricRecordList mr = (TSDRMetricRecordList) obj;
-                metricRecords.add(mr);
-
-
-        }
-        output.setTSDRMetricRecordList(metricRecords);
         RpcResultBuilder<GetTSDRMetricsOutput> builder = RpcResultBuilder.success(output);
         return builder.buildFuture();
     }
 
-
     @Override
-    /**
-     * Retrieve TSDRLogRecords
-     */
-    public Future<RpcResult<GetTSDRLogRecordsOutput>> getTSDRLogRecords(GetTSDRLogRecordsInput input){
-        List<?> result = TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore()
-            .getTSDRLogRecords(input.getTSDRDataCategory(), input.getStartTime(), input.getEndTime());
+    public Future<RpcResult<GetTSDRLogRecordsOutput>> getTSDRLogRecords(GetTSDRLogRecordsInput input) {
+        List<TSDRLogRecord> result = TSDRPersistenceServiceFactory.getTSDRPersistenceDataStore().getTSDRLogRecords(input.getTSDRDataCategory(), input.getStartTime(), input.getEndTime());
         GetTSDRLogRecordsOutputBuilder output = new GetTSDRLogRecordsOutputBuilder();
-        List< TSDRLogRecordList> logRecords = new ArrayList<TSDRLogRecordList>();
-        for(Object obj:result){
-                TSDRLogRecordList mr = (TSDRLogRecordList) obj;
-                logRecords.add(mr);
-
-
+        List<Logs> logs = new LinkedList<Logs>();
+        for(TSDRLogRecord l:result){
+            LogsBuilder b = new LogsBuilder();
+            b.setTSDRDataCategory(l.getTSDRDataCategory());
+            b.setTimeStamp(l.getTimeStamp());
+            b.setRecordKeys(l.getRecordKeys());
+            b.setNodeID(l.getNodeID());
+            b.setIndex(l.getIndex());
+            b.setRecordAttributes(l.getRecordAttributes());
+            b.setRecordFullText(l.getRecordFullText());
+            logs.add(b.build());
         }
-        output.setTSDRLogRecordList(logRecords);
+        output.setLogs(logs);
         RpcResultBuilder<GetTSDRLogRecordsOutput> builder = RpcResultBuilder.success(output);
         return builder.buildFuture();
     }
+
     public Future<RpcResult<Void>> storeTSDRLogRecord(StoreTSDRLogRecordInput input) {
         log.debug("Entering TSDRStorageService.storeTSDRLog()");
         if ( input == null || input.getTSDRLogRecord() == null){

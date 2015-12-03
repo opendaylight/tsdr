@@ -445,6 +445,7 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
     private class StoringThread extends Thread {
         public StoringThread() {
             this.setName("TSDR Storing Thread");
+            this.setDaemon(true);
             this.start();
             log("Storing Thread Started", INFO);
         }

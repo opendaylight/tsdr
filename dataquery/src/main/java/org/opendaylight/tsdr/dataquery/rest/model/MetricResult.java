@@ -9,8 +9,7 @@
 package org.opendaylight.tsdr.dataquery.rest.model;
 
 import javax.xml.bind.annotation.XmlRootElement;
-
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
 
 /**
  * A container for the results returned from TSDR.  These results will
@@ -22,9 +21,9 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.o
 @XmlRootElement(name = "MetricResult")
 public class MetricResult {
     private final Long timeStamp;
-    private final TSDRMetricRecordList metricRecordList;
+    private final Metrics metricRecordList;
 
-    public MetricResult(Long timeStamp, TSDRMetricRecordList metricRecordList) {
+    public MetricResult(Long timeStamp, Metrics metricRecordList) {
         this.timeStamp = timeStamp;
         this.metricRecordList = metricRecordList;
     }
@@ -33,7 +32,7 @@ public class MetricResult {
         return timeStamp;
     }
 
-    public TSDRMetricRecordList getMetricRecord() {
+    public Metrics getMetricRecord() {
         return metricRecordList;
     }
 }

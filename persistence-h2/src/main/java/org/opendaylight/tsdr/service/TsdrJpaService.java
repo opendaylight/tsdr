@@ -8,11 +8,10 @@
 
 package org.opendaylight.tsdr.service;
 
+import java.util.List;
 import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-
-import java.util.Date;
-import java.util.List;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 
 /**
  * Defines the supported operations on the JPA store
@@ -43,21 +42,21 @@ public interface TsdrJpaService {
      * </p>
      * @param maxResults
      */
-    List<Metric> getMetricsFilteredByCategory(String category,int maxResults);
+    List<Metric> getMetricsFilteredByCategory(String tsdrMetricKey,int maxResults);
 
 
     /**
      *  Gets the specified number of metrics from store filtered by startDate and endDate
      * for a specific metric category
      *
-     * @param category  -- the category of metrics to filter upon
+     * @param tsdrMetricKey  -- the tsdr metric key, can be also just Data Category
      * @param startDateTime -- indicates from this time
      * @param endDateTime  --- indicate to this time
      * @return List&lt;Metric&gt; of metrics if found else empty list
      */
 
 
-    List<Metric> getMetricsFilteredByCategory(String category,Date startDateTime,Date endDateTime );
+    List<TSDRMetricRecord> getMetricsFilteredByCategory(String tsdrMetricKey, long startDateTime, long endDateTime );
 
     void close();
 

@@ -101,8 +101,8 @@ public class TSDRStorageImplTest {
                 List<TSDRMetricRecord> recordCol = new ArrayList<TSDRMetricRecord>();
                 if (arguments != null && arguments.length > 0 && arguments[0] != null) {
                     String tableName = (String)arguments[0];
-                    Date startDate = (Date)arguments[1];
-                    Date endDate = (Date)arguments[2];
+                    long startDate = (long)arguments[1];
+                    long endDate = (long)arguments[2];
                     System.out.println("Retrieving metrics from table name " + tableName + " records:"+tableRecordMap);
                     List<TSDRMetricRecord> allRecordCol = tableRecordMap.get(tableName);
                     System.out.println(allRecordCol);
@@ -110,7 +110,7 @@ public class TSDRStorageImplTest {
                         return recordCol;
                     }
                     for(TSDRMetricRecord record: allRecordCol){
-                        if(record.getTimeStamp().longValue() >= startDate.getTime() && record.getTimeStamp().longValue() <= endDate.getTime()){
+                        if(record.getTimeStamp().longValue() >= startDate && record.getTimeStamp().longValue() <= endDate){
                             recordCol.add(record);
                         }
                     }
@@ -120,7 +120,7 @@ public class TSDRStorageImplTest {
             }
         };
 
-        doAnswer(answerGetMetrics).when(persistenceService).getMetrics(any(String.class),any(Date.class),any(Date.class));
+        doAnswer(answerGetMetrics).when(persistenceService).getTSDRMetricRecords(any(String.class),any(long.class),any(long.class));
 
     }
 
@@ -165,7 +165,7 @@ public class TSDRStorageImplTest {
         Date endDate = new Date();
         boolean result = false;
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.FLOWSTATS), startDate, endDate).size() == 2;
+            result = persistenceService.getTSDRMetricRecords(getTableNameFrom(DataCategory.FLOWSTATS), startDate.getTime(), endDate.getTime()).size() == 2;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow stats table with specified time range.");
             result = false;
@@ -222,7 +222,7 @@ public class TSDRStorageImplTest {
         boolean result = false;
         Date endDate = new Date();
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.FLOWTABLESTATS),startDate, endDate).size() == 3;
+            result = persistenceService.getTSDRMetricRecords(getTableNameFrom(DataCategory.FLOWTABLESTATS),startDate.getTime(), endDate.getTime()).size() == 3;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flowtable stats table with specified time range.");
             result = false;
@@ -401,7 +401,7 @@ public class TSDRStorageImplTest {
         boolean result = false;
         Date endDate = new Date();
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.PORTSTATS),startDate, endDate).size() == 14;
+            result = persistenceService.getTSDRMetricRecords(getTableNameFrom(DataCategory.PORTSTATS),startDate.getTime(), endDate.getTime()).size() == 14;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from port stats table with specified time range.");
             result = false;
@@ -461,7 +461,7 @@ public class TSDRStorageImplTest {
         boolean result = false;
         Date endDate = new Date();
         try{
-            int colsize = persistenceService.getMetrics(getTableNameFrom(DataCategory.QUEUESTATS),startDate, endDate).size();
+            int colsize = persistenceService.getTSDRMetricRecords(getTableNameFrom(DataCategory.QUEUESTATS),startDate.getTime(), endDate.getTime()).size();
             System.out.println("collection size " + colsize);
             result = colsize == 3;
         }catch(Exception ee){
@@ -525,7 +525,7 @@ public class TSDRStorageImplTest {
         boolean result = false;
         Date endDate = new Date();
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.FLOWMETERSTATS),startDate, endDate).size() == 3;
+            result = persistenceService.getTSDRMetricRecords(getTableNameFrom(DataCategory.FLOWMETERSTATS),startDate.getTime(), endDate.getTime()).size() == 3;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow meter stats table with specified time range.");
             result = false;
@@ -588,7 +588,7 @@ public class TSDRStorageImplTest {
         boolean result = false;
         Date endDate = new Date();
         try{
-            result = persistenceService.getMetrics(getTableNameFrom(DataCategory.FLOWGROUPSTATS),startDate, endDate).size() == 3;
+            result = persistenceService.getTSDRMetricRecords(getTableNameFrom(DataCategory.FLOWGROUPSTATS),startDate.getTime(), endDate.getTime()).size() == 3;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow group stats table with specified time range.");
             result = false;

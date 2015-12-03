@@ -267,6 +267,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
     private class StoringThread extends Thread {
         public StoringThread() {
             this.setName("TSDR SNMP Storing Thread");
+            this.setDaemon(true);
             this.start();
             log("SNMP Storing Thread Started", INFO);
         }

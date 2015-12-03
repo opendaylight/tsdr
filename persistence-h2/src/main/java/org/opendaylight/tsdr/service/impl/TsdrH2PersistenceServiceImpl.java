@@ -7,10 +7,10 @@
  */
 package org.opendaylight.tsdr.service.impl;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import com.google.common.base.Preconditions;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
@@ -22,8 +22,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricr
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
 
 /**
  * Implementation of the TSDR Persistence SPI utilizing JPA based store
@@ -92,20 +90,14 @@ public class TsdrH2PersistenceServiceImpl implements
 
 
     @Override
-    public List<?> getMetrics(String metricsCategory, Date startDateTime, Date endDateTime) {
+    public List<TSDRMetricRecord> getTSDRMetricRecords(String metricsCategory, long startDateTime, long endDateTime) {
 
         if(jpaService != null){
             return jpaService.getMetricsFilteredByCategory(metricsCategory, startDateTime, endDateTime);
         }else{
             log.warn("JPA store service is found to be null in getMetrics");
-            return new ArrayList<Metric>();
+            return new ArrayList<TSDRMetricRecord>();
         }
-    }
-
-    @Override
-    public List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime){
-        return getMetrics(category.name(), new Date(startTime * 1000), new Date(endTime * 1000));
-
     }
 
     @Override
@@ -143,10 +135,9 @@ public class TsdrH2PersistenceServiceImpl implements
         metric.setMetricName(data.getMetricName());
         metric.setMetricValue(data.getMetricValue().doubleValue());
         metric.setMetricCategory(data.getTSDRDataCategory().name());
-        Date timeStamp = new Date(data.getTimeStamp().longValue());
-        metric.setMetricTimeStamp(timeStamp);
+        metric.setMetricTimeStamp(data.getTimeStamp());
         //String detail = FormatUtil.convertToMetricDetailsJSON(FormatUtil.getMetricsDetails(data), data.getTSDRDataCategory().name());
-        String detail = FormatUtil.getMetricID(data);
+        String detail = FormatUtil.getTSDRMetricKey(data);
         if(null != detail && !detail.isEmpty()) {
             metric.setMetricDetails(detail);
         }
@@ -170,7 +161,6 @@ public class TsdrH2PersistenceServiceImpl implements
 
         Metric metric = new Metric();
 
-
         metric.setNodeId(data.getNodeID());
         StringBuffer metricName = new StringBuffer();
         for(RecordAttributes recordAttributes:data.getRecordAttributes()){
@@ -185,10 +175,9 @@ public class TsdrH2PersistenceServiceImpl implements
             metric.setMetricName(data.getTSDRDataCategory().name());
         }
 
-        metric.setMetricValue(0.0);//TODO WHAT SHOULD BE VALUE.
+        metric.setMetricValue(0D);//TODO WHAT SHOULD BE VALUE.
         metric.setMetricCategory(data.getTSDRDataCategory().name());
-        Date timeStamp = new Date(data.getTimeStamp().longValue());
-        metric.setMetricTimeStamp(timeStamp);
+        metric.setMetricTimeStamp(data.getTimeStamp().longValue());
         //String detail = FormatUtil.convertToMetricDetailsJSON(FormatUtil.getMetricsDetails(data), data.getTSDRDataCategory().name());
         String detail = data.getRecordFullText();
         if(null != detail && !detail.isEmpty()) {
@@ -212,9 +201,7 @@ public class TsdrH2PersistenceServiceImpl implements
     }
 
     @Override
-    public List<?> getTSDRLogRecords(DataCategory category, long startTime, long endTime){
+    public List<TSDRLogRecord> getTSDRLogRecords(String category, long startTime, long endTime){
         throw new UnsupportedOperationException("log records are not yet supported in h2 data store");
     }
-
-
 }

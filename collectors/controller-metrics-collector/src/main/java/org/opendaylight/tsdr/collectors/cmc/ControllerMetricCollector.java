@@ -42,6 +42,7 @@ public class ControllerMetricCollector extends Thread{
         this.module = _module;
         this.rpcRegistry = _rpcRegistry;
         this.sigar = newSigar();
+        this.setDaemon(true);
         this.start();
     }
 

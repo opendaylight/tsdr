@@ -216,11 +216,13 @@ module TSDR {
             }
         }
     }
+
     list TSDRLogRecord {
         description
             "This data structure is designed for log type of data, such as syslog data.";
         uses TSDRLog;
     }
+
     rpc storeTSDRMetricRecord {
         description
             "The API to store a list of TSDRMetricRecord.";
@@ -268,33 +270,7 @@ module TSDR {
             }
         }
     }
-     
-    rpc getMetric{
-        input {
-            leaf name{
-               type string;
-            }
-            leaf from{
-               type int64;
-            }
-            leaf until{
-               type int64;
-            }
-        }
-        output {
-            list metrics {
-               leaf time {
-                  type int64;
-               }
-               leaf value {
-                  type decimal64{
-                       fraction-digits 4;
-                  }
-               }
-            }
-         }
-    }
-    
+
     rpc getTSDRMetrics{
        description
             "The API to retrieve a list of TSDRRecord with specified category, start time, and end time.";
@@ -302,7 +278,7 @@ module TSDR {
             leaf TSDRDataCategory {
                 description
                     "The category of the TSDR data.";
-                type DataCategory;
+                type string;
             }
             leaf start_time{
                 description
@@ -316,21 +292,21 @@ module TSDR {
             }
         }
         output {
-             list TSDRMetricRecordList{
-                 description
-                    "A list of TSDRMetric";
+            list Metrics {
                 uses TSDRMetric;
-             }
-         }
+            }
+        }
     }
+
     rpc getTSDRLogRecords{
        description
             "The API to retrieve a list of TSDRRecord with specified category, start time, and end time.";
+
         input {
             leaf TSDRDataCategory {
                 description
                     "The category of the TSDR data.";
-                type DataCategory;
+                type string;
             }
             leaf start_time{
                 description
@@ -343,10 +319,11 @@ module TSDR {
                type int64;
             }
         }
+
         output {
-            list TSDRLogRecordList{
-                     uses TSDRLog;
-                 }
+            list logs{
+                uses TSDRLog;
+            }
          }
     }
 }

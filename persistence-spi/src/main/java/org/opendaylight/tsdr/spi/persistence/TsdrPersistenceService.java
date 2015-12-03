@@ -9,14 +9,11 @@
 package org.opendaylight.tsdr.spi.persistence;
 
 
-import java.util.Date;
 import java.util.List;
-
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 
 /**
  * This interface provides a list of APIs for accessing TSDR persistence data store.
@@ -38,19 +35,19 @@ public interface TsdrPersistenceService {
 
     /**
      * Store TSDRMetricRecord.
-     * @param metricRecord
+     * @param metricRecord - An instance of tsdr metric record
      */
     void store(TSDRMetricRecord metricRecord);
 
     /**
      * Store TSDRMetricRecord.
-     * @param logRecord
+     * @param logRecord - an instane of tsdr log record
      */
     void store(TSDRLogRecord logRecord);
 
     /**
      * Store a list of TSDRRecord.
-     * @param recordList
+     * @param recordList - a list of tsdrRecord
      */
     void store(List<TSDRRecord> recordList);
 
@@ -75,28 +72,29 @@ public interface TsdrPersistenceService {
      * If startDateTime OR(/AND)  endDateTime is not specified returns the recent
      * predefined N metrics
      *
-     * @param metricsCategory -- this is required value for category
-     * @param startDateTime  -- can be null else will be the startDateTime
-     * @param endDateTime   -- can be null else will be the endDateTime
-     * @return List of persistence store dependents records
+     * @param tsdrMetricKey -- The tsdr metric key, can also be just Data Category,
+     * @param startDateTime  --The start time in milis
+     * @param endDateTime   -- The end time in milis
+     * @return - List of persistence store dependents records
      */
-    List<?> getMetrics(String metricsCategory,Date startDateTime, Date endDateTime);
+    //format of tsdrMetricKey is "[NID=<node id>][DC=<data category>][MN=<metric name>][RK=<a list or record keys>][TS=<timestamp - for hbase>]"
+    List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey,long startDateTime, long endDateTime);
 
     /**
-     * Returns the TSDRRecords based on category, startTime, and endTime
-     * @param category
-     * @param startTime
-     * @param endTime
-     * @return
+     * Returns the TSDRLogRecords based on category, startTime, and endTime
+     * @param tsdrLogKey - The tsdr log key, can be also just Data Category
+     * @param startTime - The starting time
+     * @param endTime - The end time
+     * @return - A list of log records
      */
-    //TODO: change from Long to long if there is no sepecific reason for using Long.
-    //TODO: change name to getMetrics.
-    List<?> getTSDRMetrics(DataCategory category, Long startTime, Long endTime);
+    List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startTime, long endTime);
+
     /**
      * Purges the data from TSDR data store.
      * @param category -- the category of the data.
      * @param timestamp -- the retention time.
      */
+
     //TODO: change from Long to long if there is no specific reason for using Long.
     //TODO:change name of method to purge
     void purgeTSDRRecords(DataCategory category, Long timestamp);
@@ -104,17 +102,8 @@ public interface TsdrPersistenceService {
     /**
      * Purges all the data from TSDR data store older than the
      * retention timestamp
-     * @param timestamp
+     * @param timestamp - The time stamp
      */
     //TODO:change name to purgeAll and Long to long
     void purgeAllTSDRRecords(Long timestamp);
-    /**
-     * Returns the TSDRLogRecords based on category, startTime, and endTime
-     * @param category
-     * @param startTime
-     * @param endTime
-     * @return
-     */
-    List<?> getTSDRLogRecords(DataCategory category, long startTime, long endTime);
-
 }

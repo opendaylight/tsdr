@@ -37,9 +37,9 @@ public class HBaseColumn implements Serializable{
 
       /**
        * Constructor with specified parameters.
-       * @param columnFamily
-       * @param columnQualifier
-       * @param value
+       * @param columnFamily - The column family
+       * @param columnQualifier - The column qualifier
+       * @param value - The value
        */
       public HBaseColumn(String columnFamily, String columnQualifier, String value){
               this.columnFamily=columnFamily;

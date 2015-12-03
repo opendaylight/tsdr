@@ -33,6 +33,7 @@ public class TSDRSyslogCollectorImpl extends Thread{
 
     public TSDRSyslogCollectorImpl(TsdrCollectorSpiService _collectorSPIService){
         super("TSDR Syslog Listener");
+        this.setDaemon(true);
         this.collectorSPIService = _collectorSPIService;
         try{
             socket = new DatagramSocket(514);
@@ -79,6 +80,7 @@ public class TSDRSyslogCollectorImpl extends Thread{
     private class SyslogProcessor extends Thread {
         public SyslogProcessor(){
             super("TSDR Syslog Processor");
+            this.setDaemon(true);
         }
         public void run(){
             DatagramPacket packet = null;

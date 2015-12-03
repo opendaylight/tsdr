@@ -9,12 +9,10 @@
 package org.opendaylight.tsdr.persistence.hbase.command;
 
 import java.util.List;
-
 import org.apache.karaf.shell.commands.Command;
 import org.opendaylight.tsdr.spi.command.AbstractListMetricsCommand;
-import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 
 /**
 *This class implement the functionality of the tsdr:list command from Karaf
@@ -31,25 +29,16 @@ import org.slf4j.LoggerFactory;
 **/
 @Command(scope = "tsdr", name = "list", description = "Lists recent 1000 metrics(default) or returns time specified metrics")
 public class ListMetricsCommand  extends AbstractListMetricsCommand {
-    private final Logger
-    log = LoggerFactory.getLogger(ListMetricsCommand.class);
-
-/**
- * Format and print out the result of the metrics on Karaf console.
- */
-@Override
-protected String listMetrics(List<?> metrics) {
-    log.debug("Entering ListMetrics");
-    List<String> metricList = (List<String>) metrics;
-    StringBuffer buffer = null;
-    buffer = new StringBuffer();
-    for (String record : metricList) {
-        buffer.append(record)
-                .append("\n");
+    /**
+     * Format and print out the result of the metrics on Karaf console.
+     */
+    @Override
+    protected String listMetrics(List<TSDRMetricRecord> metrics) {
+        StringBuilder buffer = new StringBuilder();
+        for (TSDRMetricRecord metric : metrics) {
+            buffer.append(FormatUtil.getTSDRMetricKeyWithTimeStamp(metric));
+            buffer.append("[").append(metric.getMetricValue()).append("]\n");
+        }
+        return buffer.toString();
     }
-    log.debug("Exiting ListMetrics");
-    return buffer.toString();
-}
-
-
 }

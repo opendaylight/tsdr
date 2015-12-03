@@ -46,7 +46,7 @@ public class AddMetricCommand extends OsgiCommandSupport {
 
     @Override protected Object doExecute() throws Exception {
         if(persistenceService != null) {
-            Metric metric = new Metric(new Date(), metricName, metricValue);
+            Metric metric = new Metric(System.currentTimeMillis(), metricName, metricValue);
             ((TsdrH2PersistenceServiceImpl)persistenceService).getJpaService().add(metric);
             return null;
         }else{

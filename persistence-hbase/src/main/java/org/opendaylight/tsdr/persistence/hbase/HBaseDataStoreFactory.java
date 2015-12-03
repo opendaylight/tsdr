@@ -22,11 +22,10 @@ package org.opendaylight.tsdr.persistence.hbase;
  *
  */
 
-import java.util.Properties;
-import java.io.InputStream;
-import java.io.FileInputStream;
 import java.io.File;
-
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

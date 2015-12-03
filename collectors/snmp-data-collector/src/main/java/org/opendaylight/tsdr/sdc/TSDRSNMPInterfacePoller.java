@@ -22,6 +22,7 @@ public class TSDRSNMPInterfacePoller extends Thread {
     public TSDRSNMPInterfacePoller(SNMPDataCollector _collector) {
         super("TSDR SNMP Interface Poller");
         this.collector = _collector;
+        this.setDaemon(true);
         _collector.loadConfigData();
         this.start();
     }

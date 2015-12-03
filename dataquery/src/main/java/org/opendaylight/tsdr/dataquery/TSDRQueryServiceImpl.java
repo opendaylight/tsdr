@@ -13,18 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.dataquery.rest.MetricsRequest;
 import org.opendaylight.tsdr.dataquery.rest.model.MetricId;
 import org.opendaylight.tsdr.dataquery.rest.model.MetricRecord;
 import org.opendaylight.tsdr.dataquery.rest.model.RecordKeysCombination;
-import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.TSDRMetricRecordList;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
@@ -76,7 +74,7 @@ public class TSDRQueryServiceImpl {
      * @return metricsRecordList - results from the TSDR SPI calls.
      */
     public static List<MetricRecord> getTSDRMetrics(List<MetricsRequest> requests) {
-        List<TSDRMetricRecordList> tsdrMetricRecordLists = null;
+        List<Metrics> tsdrMetricRecordLists = null;
         List<MetricRecord> metricRecordList = null;
 
         // Only process the first request for now.  MetricRequest contains the
@@ -87,7 +85,7 @@ public class TSDRQueryServiceImpl {
             // TODO: need a good, common way to get the DataCategory enum from string
             // inputBuilder.setTSDRDataCategory(request.getCategoryName());
  
-            inputBuilder.setTSDRDataCategory(TsdrPersistenceServiceUtil.getCategoryFrom(requests.get(0).getMetricIdList().get(0).getCategoryName())); // <== temporary hack
+            inputBuilder.setTSDRDataCategory(requests.get(0).getMetricIdList().get(0).getCategoryName()); // <== temporary hack
             inputBuilder.setStartTime(requests.get(0).getStartTime());
             inputBuilder.setEndTime(requests.get(0).getEndTime());
 
@@ -106,7 +104,7 @@ public class TSDRQueryServiceImpl {
 
                 // getTSDRMetricRecordList() throws Interrupted and Execution Exceptions.
                 // Is there a need to distinguish between the two?
-                tsdrMetricRecordLists = output.get().getResult().getTSDRMetricRecordList();
+                tsdrMetricRecordLists = output.get().getResult().getMetrics();
             } catch (IllegalStateException ex) {
                 log.error("TSDRQueryServiceImpl.getTSDRMetrics() caught unhandled IllegalStateException: " + ex
                         .getMessage());
@@ -137,17 +135,16 @@ public class TSDRQueryServiceImpl {
      * @param tsdrMetricRecordLists TSDR Metric Records
      * @return metricRecordList - Data Query return
      */
-    private static List<MetricRecord> convertTSDRMetricRecordListToMetricRecordList(
-            List<TSDRMetricRecordList> tsdrMetricRecordLists) {
+    private static List<MetricRecord> convertTSDRMetricRecordListToMetricRecordList(List<Metrics> tsdrMetricRecordLists) {
         List<MetricRecord> metricRecordList = new ArrayList<MetricRecord>();
 
-        for (TSDRMetricRecordList tsdrMetricRecordList : tsdrMetricRecordLists) {
+        for (Metrics tsdrMetricRecordList : tsdrMetricRecordLists) {
             MetricRecord metricRecord = new MetricRecord();
             metricRecord.setMetricName(tsdrMetricRecordList.getMetricName());
             metricRecord.setMetricValue(tsdrMetricRecordList.getMetricValue());
             metricRecord.setTimeStamp(BigDecimal.valueOf(System.currentTimeMillis()));
             metricRecord.setNodeId(tsdrMetricRecordList.getNodeID());
-            metricRecord.setCategoryName(TsdrPersistenceServiceUtil.getCategoryNameFrom(tsdrMetricRecordList.getTSDRDataCategory()));
+            metricRecord.setCategoryName(tsdrMetricRecordList.getTSDRDataCategory().name());
 
             // The following two data points are specific to a certain request, in this case, FlowTable statistics.
             // Is there a published list of these combinations?

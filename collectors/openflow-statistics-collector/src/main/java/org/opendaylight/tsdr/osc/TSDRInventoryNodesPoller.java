@@ -31,6 +31,7 @@ public class TSDRInventoryNodesPoller extends Thread {
     public TSDRInventoryNodesPoller(TSDRDOMCollector _collector) {
         super("TSDR Inventory Nodes Poller");
         this.collector = _collector;
+        this.setDaemon(true);
         _collector.loadConfigData();
         this.start();
     }

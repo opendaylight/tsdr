@@ -9,12 +9,10 @@ package org.opendaylight.tsdr.persistence.hbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -32,13 +30,8 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.PageFilter;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
-import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +67,7 @@ public class HBaseDataStore  {
       * Constructor with specified context info.
       *
       * populate the parameters from the context info.
-      * @param context
+      * @param context - the context
       */
      public HBaseDataStore(HBaseDataStoreContext context){
          log.debug("Entering constructor HBaseDataStore()");
@@ -119,8 +112,9 @@ public class HBaseDataStore  {
      }
      /**
       * Get connection to a HBase table.
-      * @param tableName
+      * @param tableName - The name of the table
       * @return HTableInterface, which is used to communicate with the HTable.
+      * @throws TableNotFoundException - a table not found exception
       */
      public HTableInterface getConnection(String tableName) throws TableNotFoundException {
          log.debug("Entering getConnection()");
@@ -155,7 +149,8 @@ public class HBaseDataStore  {
      }
      /**
       * Create HBase tables.
-      * @param tableName
+      * @param tableName - table name
+      * @throws  Exception - some exception
       */
      public void createTable(String tableName) throws Exception{
          log.debug("Entering createTable(tableName)");
@@ -202,6 +197,7 @@ public class HBaseDataStore  {
       *
       * @param entity - an object of HBaseEntity.
       * @return HBaseEntity - the object being created in HTable.
+      * @throws TableNotFoundException - a table not found exception
       */
      public HBaseEntity create(final HBaseEntity entity) throws TableNotFoundException{
          log.debug("Entering create(HBaseEntity entity)");
@@ -269,6 +265,7 @@ public class HBaseDataStore  {
       *
       * @param entityList - a list of objects of HBaseEntity.
       * @return HBaseEntity - the object being created in HTable.
+      * @throws TableNotFoundException - a table not found exception
       */
      public List<HBaseEntity> create(List<HBaseEntity> entityList) throws TableNotFoundException{
          log.debug("Entering create(HBaseEntity entity)");
@@ -343,12 +340,12 @@ public class HBaseDataStore  {
      /**
       * Retrieve data by specified tableName, startRowkey, endRowkey,
       * column family name, and column qualifier name.
-      * @param tableName
-      * @param startRow
-      * @param endRow
-      * @param family
-      * @param qualifier
-      * @return
+      * @param tableName - the table name
+      * @param startRow - the start row
+      * @param endRow - the end row
+      * @param family - the column family
+      * @param qualifier - the qualifier
+      * @return - a list of HBaseEntity
       */
      public List<HBaseEntity> getDataByRowFamilyQualifier(String tableName, String startRow, String endRow, String family, String qualifier){
          return getDataByRowFamilyQualifier(tableName, startRow, endRow, family, qualifier, 0);
@@ -358,13 +355,13 @@ public class HBaseDataStore  {
      /**
       * Retrieve data by specified tableName, startRowkey, endRowkey,
       * column family name, column qualifier name, and page size.
-      * @param tableName
-      * @param startRow
-      * @param endRow
-      * @param family
-      * @param qualifier
-      * @param pageSize
-      * @return
+      * @param tableName - the table name
+      * @param startRow - the start row
+      * @param endRow - the end row
+      * @param family - the family
+      * @param qualifier - qualifier
+      * @param pageSize - page size
+      * @return - return a list of hbase entity
       */
      public List<HBaseEntity> getDataByRowFamilyQualifier(String tableName, String startRow, String endRow, String family, String qualifier, long pageSize){
          List<HBaseEntity> resultEntityList=new ArrayList<HBaseEntity>();
@@ -403,12 +400,12 @@ public class HBaseDataStore  {
      /**
       * Retrieve data by the specified tableName, startRowkey, endRowkey,
       * column family name, and a list of column qualifier names.
-      * @param tableName
-      * @param startRow
-      * @param endRow
-      * @param family
-      * @param qualifierList
-      * @return
+      * @param tableName - the table name
+      * @param startRow - the start row
+      * @param endRow - the end row
+      * @param family - the family
+      * @param qualifierList - qualifier list
+      * @return - list of hbase entity
       */
      public List<HBaseEntity> getDataByRowFamilyQualifier(String tableName, String startRow, String endRow, String family, List<String> qualifierList){
          return getDataByRowFamilyQualifier(tableName, startRow, endRow, family, qualifierList, 0);
@@ -417,13 +414,13 @@ public class HBaseDataStore  {
      /**
       * Retrieve data by the specified tableName, startRowkey, endRowkey,
       * column family name, a list of column qualifier names, and page size.
-      * @param tableName
-      * @param startRow
-      * @param endRow
-      * @param family
-      * @param qualifierList
-      * @param pageSize
-      * @return
+      * @param tableName - the table name
+      * @param startRow - the start row
+      * @param endRow - the end row
+      * @param family - the family
+      * @param qualifierList - qualifier list
+      * @param pageSize - page size
+      * @return - a list of hbase entity
       */
      public List<HBaseEntity> getDataByRowFamilyQualifier(String tableName, String startRow, String endRow, String family, List<String> qualifierList, long pageSize){
          List<HBaseEntity> resultEntityList=new ArrayList<HBaseEntity>();
@@ -463,10 +460,10 @@ public class HBaseDataStore  {
 
      /**
       * Retrieve data by the specified tableName, start timestamp, and end timestamp.
-      * @param tableName
-      * @param startTime
-      * @param endTime
-      * @return
+      * @param tableName - table name
+      * @param startTime - start time
+      * @param endTime - end time
+      * @return a list of hbase entity
       */
      public List<HBaseEntity> getDataByTimeRange(String tableName, long startTime, long endTime){
             List<HBaseEntity> resultEntityList=new ArrayList<HBaseEntity>();
@@ -503,11 +500,55 @@ public class HBaseDataStore  {
 
      }
 
+    /**
+     * Retrieve data by the specified tsdrMetricKey, start timestamp, and end timestamp.
+     * @param tsdrMetricKey - metric id
+     * @param startTime - start time
+     * @param endTime - end time
+     * @return - a list of hbase entry
+     */
+   /* public List<HBaseEntity> getMetricDataByTimeRange(String tsdrMetricKey, long startTime, long endTime){
+        List<HBaseEntity> resultEntityList=new ArrayList<HBaseEntity>();
+        Scan scan =new Scan();
+        HTableInterface htable = null;
+        ResultScanner rs=null;
+        try {
+            if ( startTime != 0 && endTime != 0){
+                scan.setTimeRange(startTime, endTime);
+            }
+            String tableName = FormatUtil.getDataCategoryFromTSDRKey(tsdrMetricKey);
+            htable=getConnection(tableName);
+            rs = htable.getScanner(scan);
+            int count = 0;
+            for (Result currentResult = rs.next(); currentResult != null; currentResult = rs.next()) {
+                String rowKey = Bytes.toString(currentResult.getRow());
+                if(rowKey.indexOf(tsdrMetricKey)!=-1) {
+                    if (count++ < TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS) {
+                        resultEntityList.add(convertResultToEntity(tableName, currentResult));
+                    }
+                }
+            }
+        } catch (IOException ioe) {
+            log.error("Scanner error", ioe);
+        } catch (Exception e) {
+            log.error("Scanner error", e);
+        }finally{
+
+            if (rs!=null){
+                rs.close();
+                rs=null;
+            }
+            closeConnection(htable);
+        }
+        return resultEntityList;
+
+    }*/
+
      /**
       * Delete records from hbase data store based on tableName and timestamp.
-      * @param tableName
-      * @param timestamp
-      * @throws IOException
+      * @param tableName - table name
+      * @param timestamp - time stamp
+      * @throws IOException - an IOException
       */
      public void deleteByTimestamp(String tableName, long timestamp)
         throws IOException
@@ -563,9 +604,9 @@ public class HBaseDataStore  {
 
      /**
       * Convert the result from HBase query API to HBaseEntity.
-      * @param tableName
-      * @param result
-      * @return
+      * @param tableName - table name
+      * @param result - result
+      * @return - a list of hbase entity
       */
      private HBaseEntity convertResultToEntity(String tableName, Result result){
          if(result==null){
@@ -593,6 +634,7 @@ public class HBaseDataStore  {
 
      /**
       * Flush the commits for the given tablename
+      * @param tableName - the table name
       */
      public void flushCommit(String tableName){
          log.debug("Entering flushCommit(tableName)");
@@ -648,7 +690,7 @@ public class HBaseDataStore  {
      }
      /**
       * Close the connection to the specified HTable.
-      * @param htable
+      * @param htable - the htable
       */
      private void closeConnection(HTableInterface htable){
          log.debug("Entering closeConnection(HTableInterface htable)");

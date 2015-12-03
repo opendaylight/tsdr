@@ -12,6 +12,8 @@ import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.console.OsgiCommandSupport;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,9 +48,9 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
     }
 
 
-    protected Date getDate(String dateTime){
+    protected long getDate(String dateTime){
         if(dateTime == null){
-            return null;
+            return System.currentTimeMillis();
         }
         DateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.US);
         Date date = null;
@@ -60,33 +62,27 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
             System.out.println("Time format is invalid and will be ignored.");
             log.warn("getDate for " + dateTime + "caused exception {}", e);
         }
-        return date;
+        return date.getTime();
     }
 
 
     @Override
     protected Object doExecute() throws Exception {
 
-        Date startDate = getDate(startDateTime);
-        Date endDate = getDate(endDateTime);
-
-        if ((startDate != null) && (endDate != null)) {
-            if (startDate.getTime() >= endDate.getTime()) {
-                System.out.println("StatDateTime value cannot be greater or equal to EndDateTime");
-                return null;
-            }
+        long startDate = 0;
+        long endDate = Long.MAX_VALUE;
+        if(startDateTime!=null) {
+            startDate = getDate(startDateTime);
+            endDate = getDate(endDateTime);
         }
 
-        //validate the category names
-        if (!category.equalsIgnoreCase(TSDRConstants.FLOW_STATS_CATEGORY_NAME)
-            && !category.equalsIgnoreCase(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME)
-            && !category.equalsIgnoreCase(TSDRConstants.PORT_STATS_CATEGORY_NAME)
-            && !category.equalsIgnoreCase(TSDRConstants.QUEUE_STATS_CATEGORY_NAME)){
-                System.out.println("Category:" + category + " is not supported.");
-                return null;
-            }
+        if (startDate >= endDate) {
+            System.out.println("StatDateTime value cannot be greater or equal to EndDateTime");
+            return null;
+        }
+
         if (persistenceService != null) {
-            List<?> metrics = persistenceService.getMetrics(category, startDate, endDate);
+            List<TSDRMetricRecord> metrics = persistenceService.getTSDRMetricRecords(category, startDate, endDate);
             if (metrics == null || metrics.isEmpty()) {
                 System.out.println("No data of this category in the specified time range. ");
                 return null;
@@ -98,5 +94,5 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
         return null;
     }
 
-    abstract protected String listMetrics (List<?> metrics);
+    abstract protected String listMetrics (List<TSDRMetricRecord> metrics);
 }

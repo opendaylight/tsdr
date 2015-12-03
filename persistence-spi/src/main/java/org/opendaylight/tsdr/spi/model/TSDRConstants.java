@@ -8,6 +8,8 @@
  */
 package org.opendaylight.tsdr.spi.model;
 
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+
 /**
  * This class stores the constants that are shared among TSDR components.
  *
@@ -48,16 +50,17 @@ public class TSDRConstants {
     /**
      * constants for metrics categories
      */
+    /*Why do we need this???? we have DataCategory.name() **
     public static final String FLOW_STATS_CATEGORY_NAME = "FlowStats";
     public static final String FLOW_TABLE_STATS_CATEGORY_NAME = "FlowTableStats";;
     public static final String PORT_STATS_CATEGORY_NAME = "PortStats";
-    public static final String QUEUE_STATS_CATEGORY_NAME = "QueueStats";
+    public static final String QUEUE_STATS_CATEGORY_NAME = DataCategory.QUEUESTATS.name();
     public static final String FLOW_GROUP_STATS_CATEGORY_NAME = "FlowGroupStats";
     public static final String FLOW_METER_STATS_CATEGORY_NAME = "FlowMeterStats";
     public static final String SYSLOG_CATEGORY_NAME = "SysLog";
     public static final String NETFLOW_CATEGORY_NAME = "NetFlow";
     public static final String SNMPINTERFACE_CATEGORY_NAME = "SNMPInterfaces";
     public static final String EXTERNAL = "External";
-
+    */
     public static final String ROWKEY_SPLIT = "_";
 }

@@ -9,18 +9,22 @@
 package org.opendaylight.tsdr.service.impl;
 
 import com.google.common.base.Preconditions;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import org.opendaylight.tsdr.entity.Metric;
 import org.opendaylight.tsdr.service.TsdrJpaService;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import java.util.Date;
-import java.util.List;
 
 /**
  * JPA Service implementation helping in performing the
@@ -83,50 +87,74 @@ public class TsdrJpaServiceImpl implements TsdrJpaService {
     }
 
     @Override
-    public List<Metric> getMetricsFilteredByCategory(String category, Date startDateTime, Date endDateTime) {
+    public List<TSDRMetricRecord> getMetricsFilteredByCategory(String tsdrMetricKey, long startDateTime, long endDateTime) {
         Preconditions.checkArgument(em != null, "EntityManager found to be null");
         log.info("getMetricsFilteredByCateory:called with category={},startDateTime={},endDateTime ={}",
-                category, startDateTime, endDateTime);
+                tsdrMetricKey, startDateTime, endDateTime);
 
-        if((startDateTime == null )||(endDateTime == null)){
-            return getMetricsFilteredByCategory(category,TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
-        }else{
-            if(category.indexOf("%3A")!=-1){
-                category = category.replaceAll("%3A", ":");
-                StringBuffer sb = new StringBuffer();
-                sb.append("select * from Metric where metrictimestamp ")
-                  .append("between '")
-                  .append(FormatUtil.getFormattedTimeStamp(startDateTime.getTime(),
-                          FormatUtil.QUERY_TIMESTAMP))
-                  .append("' and '")
-                  .append(FormatUtil.getFormattedTimeStamp(endDateTime.getTime(),
-                                FormatUtil.QUERY_TIMESTAMP))
-                  .append("' and metricdetails = '")
-                  .append(category)
-                  .append("'")
-                  .append(" order by metrictimestamp");
-                log.info("getMetricsFilteredByCategory with start date and end date: query being sent is "+ sb.toString());
-                Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
-                return nativeQuery.getResultList();
-            }else{
-                StringBuffer sb = new StringBuffer();
-                sb.append("select * from Metric where metrictimestamp ")
-                  .append("between '")
-                  .append(FormatUtil.getFormattedTimeStamp(startDateTime.getTime(),
-                          FormatUtil.QUERY_TIMESTAMP))
-                  .append("' and '")
-                  .append(FormatUtil.getFormattedTimeStamp(endDateTime.getTime(),
-                                FormatUtil.QUERY_TIMESTAMP))
-                  .append("' and metriccategory = '")
-                  .append(category.toUpperCase())
-                  .append("'")
-                  .append(" order by metrictimestamp desc");
-                log.info("getMetricsFilteredByCategory with start date and end date: query being sent is "+ sb.toString());
-                Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
-                return nativeQuery.getResultList();
+        List<TSDRMetricRecord> results = new ArrayList<>();
+
+        if(!FormatUtil.isDataCategory(tsdrMetricKey)){
+
+            if(!FormatUtil.isValidTSDRKey(tsdrMetricKey)){
+                log.error("TSDR Metric Key {} is not in the correct format",tsdrMetricKey);
+                return results;
             }
-        }
 
+            String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(tsdrMetricKey);
+
+            if(!FormatUtil.isDataCategory(dataCategory)){
+                log.error("Data Category is unknown {}",dataCategory);
+                return results;
+            }
+
+            StringBuffer sb = new StringBuffer();
+            sb.append("select * from Metric where metrictimestamp ")
+              .append("between '")
+              .append(startDateTime)
+              .append("' and '")
+              .append(endDateTime)
+              .append("' and metricdetails = '")
+              .append(tsdrMetricKey)
+              .append("'")
+              .append(" order by metrictimestamp");
+            log.info("getMetricsFilteredByCategory with start date and end date: query being sent is "+ sb.toString());
+            Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
+            List<Metric> metrics = nativeQuery.getResultList();
+            for(Metric m:metrics){
+                results.add(getTSDRMetricRecord(m));
+            }
+            return results;
+        }else{
+            StringBuffer sb = new StringBuffer();
+            sb.append("select * from Metric where metrictimestamp ")
+              .append("between '")
+              .append(startDateTime)
+              .append("' and '")
+              .append(endDateTime)
+              .append("' and metriccategory = '")
+              .append(tsdrMetricKey.toUpperCase())
+              .append("'")
+              .append(" order by metrictimestamp desc");
+            log.info("getMetricsFilteredByCategory with start date and end date: query being sent is "+ sb.toString());
+            Query nativeQuery = em.createNativeQuery(sb.toString(),Metric.class);
+            List<Metric> metrics = nativeQuery.getResultList();
+            for(Metric m:metrics){
+                results.add(getTSDRMetricRecord(m));
+            }
+            return results;
+        }
+    }
+
+    private static final TSDRMetricRecord getTSDRMetricRecord(Metric entry){
+        TSDRMetricRecordBuilder rb = new TSDRMetricRecordBuilder();
+        rb.setMetricName(entry.getMetricName());
+        rb.setMetricValue(new BigDecimal(entry.getMetricValue()));
+        rb.setNodeID(entry.getNodeId());
+        rb.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(entry.getMetricDetails()));
+        rb.setTimeStamp(entry.getMetricTimeStamp());
+        rb.setTSDRDataCategory(DataCategory.valueOf(entry.getMetricCategory()));
+        return rb.build();
     }
 
     @Override public void close() {

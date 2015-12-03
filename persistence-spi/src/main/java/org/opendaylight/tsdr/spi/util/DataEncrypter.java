@@ -294,7 +294,8 @@ public class DataEncrypter {
 
     /**
      * Receive a filename and seeks all the defined tags in it and decrypt them.
-     * @param  filename  The filename to seek the tags and decrypt
+     * @param  filename - The filename to seek the tags and decrypt
+     * @return - StreamSource object
      */
     public final static StreamSource decryptCredentialAttributes(final String filename) {
         if(filename==null) {

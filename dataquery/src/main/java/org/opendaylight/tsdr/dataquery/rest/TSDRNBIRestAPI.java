@@ -10,7 +10,6 @@ package org.opendaylight.tsdr.dataquery.rest;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -20,11 +19,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
 import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetMetricOutput;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.getmetric.output.Metrics;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,10 +58,10 @@ public class TSDRNBIRestAPI {
     public Response post(@Context UriInfo info, TSDRRequest request) {
         TSDRReply reply = new TSDRReply();
         reply.setTarget(request.getTarget());
-        GetMetricInputBuilder input = new GetMetricInputBuilder();
-        input.setName(request.getTarget());
-        input.setFrom(getTimeFromString(request.getFrom()));
-        input.setUntil(getTimeFromString(request.getUntil()));
+        GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
+        input.setTSDRDataCategory(request.getTarget());
+        input.setStartTime(getTimeFromString(request.getFrom()));
+        input.setEndTime(getTimeFromString(request.getUntil()));
         long maxDataPoints = 0;
         try {
             maxDataPoints = Long.parseLong(request.getMaxDataPoints());
@@ -72,7 +70,7 @@ public class TSDRNBIRestAPI {
         if (maxDataPoints == 0){
             return Response.status(201).entity(reply).build();
         }
-        Future<RpcResult<GetMetricOutput>> metric = TSDRDataqueryModule.tsdrService.getMetric(input.build());
+        Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
         try {
             List<Metrics> metrics = metric.get().getResult().getMetrics();
             if (metrics == null || metrics.size() == 0) {
@@ -86,7 +84,7 @@ public class TSDRNBIRestAPI {
             int count = 0;
             for (Metrics m : metrics) {
                 if (count % skip == 0) {
-                    reply.addDataPoint(m.getTime(), m.getValue().doubleValue());
+                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
                 }
                 count++;
             }

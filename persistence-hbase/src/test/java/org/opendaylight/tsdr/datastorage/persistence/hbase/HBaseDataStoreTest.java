@@ -1,57 +1,57 @@
 /*
  * Copyright (c) 2015 Dell Inc. and others.  All rights reserved.
  * Copyright (c) 2015 xFlow Research Inc. and others.  All rights reserved
- * 
+ *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 package org.opendaylight.tsdr.datastorage.persistence.hbase;
-import static org.junit.Assert.assertTrue;
+
 import java.math.BigDecimal;
-import java.lang.Long;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opendaylight.tsdr.persistence.hbase.HBaseDataStore;
-import org.opendaylight.tsdr.persistence.hbase.TSDRHBasePersistenceServiceImpl;
-import org.opendaylight.tsdr.spi.model.TSDRConstants;
-import org.opendaylight.tsdr.persistence.hbase.HBaseEntity;
-import org.opendaylight.tsdr.persistence.hbase.HBaseColumn;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributesBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.TSDRLogRecordList;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Matchers.any;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.opendaylight.tsdr.persistence.hbase.HBaseColumn;
+import org.opendaylight.tsdr.persistence.hbase.HBaseDataStore;
+import org.opendaylight.tsdr.persistence.hbase.HBaseEntity;
+import org.opendaylight.tsdr.persistence.hbase.TSDRHBasePersistenceServiceImpl;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+
 /**
  * Unit Test for HBase data store under TSDR.
  * * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
- *
+ * <p/>
  * Created: Apr 27, 2015
  *
  * Revision: Dec 5, 2015
  * @author <a href="mailto:chaudhry.usama@xflowresearch.com">Chaudhry Muhammad Usama </a>
  */
+
 public class HBaseDataStoreTest {
     public TSDRHBasePersistenceServiceImpl storageService = null;
     private HBaseDataStore hbaseDataStore;
@@ -274,7 +274,8 @@ public class HBaseDataStoreTest {
         try{
             storageService.store((TSDRMetricRecord)tsdrMetric1);
             storageService.store((TSDRMetricRecord)tsdrMetric2);
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 2);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWSTATS.name(),0L,Long.parseLong(timeStamp))).size() == 2);
+
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow stats table with specified time range.");
             result = false;
@@ -316,7 +317,8 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord)tsdrMetric1);
             storageService.store((TSDRMetricRecord)tsdrMetric2);
             storageService.store((TSDRMetricRecord)tsdrMetric3);
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 3);
+
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flowtable stats table with specified time range.");
             result = false;
@@ -446,7 +448,7 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord)tsdrMetric12);
             storageService.store((TSDRMetricRecord)tsdrMetric13);
             storageService.store((TSDRMetricRecord)tsdrMetric14);
-            result = ((storageService.getMetrics(TSDRConstants.PORT_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 14);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.PORTSTATS.name(),0L,Long.parseLong(timeStamp))).size() == 14);
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from port stats table with specified time range.");
             result = false;
@@ -492,7 +494,7 @@ public class HBaseDataStoreTest {
            storageService.store((TSDRMetricRecord)tsdrMetric1);
            storageService.store((TSDRMetricRecord)tsdrMetric2);
            storageService.store((TSDRMetricRecord)tsdrMetric3);
-            result = ((storageService.getMetrics(TSDRConstants.QUEUE_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp)))).size() == 3);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.QUEUESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 3);
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from queue meter stats table with specified time range.");
             result = false;
@@ -500,6 +502,7 @@ public class HBaseDataStoreTest {
         }
         assertTrue(result);
     }
+
     @Test
     public void testFlowMeterStatistics() {
         List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
@@ -539,7 +542,7 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord)tsdrMetric1);
             storageService.store((TSDRMetricRecord)tsdrMetric2);
             storageService.store((TSDRMetricRecord)tsdrMetric3);
-            result = storageService.getMetrics(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME,new Date(0L),new Date(Long.parseLong(timeStamp))).size() == 3;
+            result = storageService.getTSDRMetricRecords(DataCategory.FLOWMETERSTATS.name(),0L,Long.parseLong(timeStamp)).size() == 3;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow meter stats table with specified time range.");
             result = false;
@@ -585,7 +588,7 @@ public class HBaseDataStoreTest {
            storageService.store((TSDRMetricRecord)tsdrMetric1);
            storageService.store((TSDRMetricRecord)tsdrMetric2);
            storageService.store((TSDRMetricRecord)tsdrMetric3);
-           result = storageService.getTSDRMetrics(DataCategory.FLOWGROUPSTATS, 0L , Long.parseLong(timeStamp)).size() == 3;
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWGROUPSTATS.name(),0L,Long.parseLong(timeStamp))).size() == 3);
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from flow group stats table with specified time range.");
             result = false;
@@ -656,9 +659,9 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord)tsdrMetric4);
             storageService.store((TSDRMetricRecord)tsdrMetric5);
             storageService.store((TSDRMetricRecord)tsdrMetric6);
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME,new Date(0L),new Date(LatestStamp))).size() == 6);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWGROUPSTATS.name(),0L,LatestStamp)).size() == 6);
             storageService.purgeTSDRRecords(DataCategory.FLOWGROUPSTATS,Long.parseLong(timeStamp));
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME,new Date(0L),new Date(LatestStamp))).size() == 3);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWGROUPSTATS.name(),0L,LatestStamp)).size() == 3);
         }catch(Exception ee){
             System.out.println("Error purging stats with specified time.");
             result = false;
@@ -671,7 +674,7 @@ public class HBaseDataStoreTest {
         String timeStamp = (new Long((new Date()).getTime())).toString();
         List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
         RecordKeys recordKey1 = new RecordKeysBuilder()
-            .setKeyName(TSDRConstants.SYSLOG_CATEGORY_NAME)
+            .setKeyName(DataCategory.SYSLOG.name())
             .setKeyValue("log1").build();
         recordKeys.add(recordKey1);
         TSDRLogRecordBuilder builder1 = new TSDRLogRecordBuilder();
@@ -692,7 +695,7 @@ public class HBaseDataStoreTest {
         try{
            storageService.store((TSDRLogRecord)tsdrLog1);
            storageService.store((TSDRLogRecord)tsdrLog2);
-           result = storageService.getTSDRLogRecords(DataCategory.SYSLOG, 0L, Long.parseLong(timeStamp)).size() == 2;
+           result = storageService.getTSDRLogRecords(DataCategory.SYSLOG.name(), 0L, Long.parseLong(timeStamp)).size() == 2;
         }catch(Exception ee){
             System.out.println("Error retrieving logs from sys log table with specified time range.");
             result = false;
@@ -700,6 +703,7 @@ public class HBaseDataStoreTest {
         }
         assertTrue(result);
     }
+
     @Test
     public void testPurgeAllRecord() {
         String timeStamp = (new Long((new Date()).getTime())).toString();
@@ -839,10 +843,10 @@ public class HBaseDataStoreTest {
         TSDRMetricRecordBuilder builder22 = new TSDRMetricRecordBuilder();
         TSDRMetric tsdrMetric22 = builder22.setMetricName("TransmittedPackets")
                 .setMetricValue(new BigDecimal(Double.parseDouble("3000"))).setNodeID("node1").setRecordKeys(recordKeys)
-                .setTSDRDataCategory(DataCategory.QUEUESTATS).setTimeStamp(new Long(timeStamp)).build(); 
+                .setTSDRDataCategory(DataCategory.QUEUESTATS).setTimeStamp(new Long(timeStamp)).build();
         recordKeys = new ArrayList<RecordKeys>();
         recordKey1 = new RecordKeysBuilder()
-            .setKeyName(TSDRConstants.SYSLOG_CATEGORY_NAME)
+            .setKeyName(DataCategory.SYSLOG.name())
             .setKeyValue("log1").build();
         recordKeys.add(recordKey1);
         TSDRLogRecordBuilder builder23 = new TSDRLogRecordBuilder();
@@ -885,29 +889,29 @@ public class HBaseDataStoreTest {
             storageService.store((TSDRMetricRecord) tsdrMetric22);
             storageService.store((TSDRLogRecord)tsdrLog1);
             storageService.store((TSDRLogRecord)tsdrLog2);
-            result = storageService.getTSDRLogRecords(DataCategory.SYSLOG, 0L, Long.parseLong(timeStamp)).size() == 2;
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp))).size() == 6);
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp))).size() == 4);
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp))).size() == 6);
-            result = storageService.getMetrics(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp)).size() == 3;
-            result = ((storageService.getMetrics(TSDRConstants.QUEUE_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp))).size() == 3);       
+            result = storageService.getTSDRLogRecords(DataCategory.SYSLOG.name(), 0L, Long.parseLong(timeStamp)).size() == 2;
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWGROUPSTATS.name(), 0L,
+                    LatestStamp)).size() == 6);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWSTATS.name(), 0L,
+                    LatestStamp)).size() == 4);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(), 0L,
+                    LatestStamp)).size() == 6);
+            result = storageService.getTSDRMetricRecords(DataCategory.FLOWMETERSTATS.name(), 0L,
+                    LatestStamp).size() == 3;
+            result = ((storageService.getTSDRMetricRecords(DataCategory.QUEUESTATS.name(), 0L,
+                    LatestStamp)).size() == 3);
             storageService.purgeAllTSDRRecords(Long.parseLong(timeStamp));
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_GROUP_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp))).size() == 3);
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp))).size() == 2);
-            result = ((storageService.getMetrics(TSDRConstants.FLOW_TABLE_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp))).size() == 3);
-            result = storageService.getMetrics(TSDRConstants.FLOW_METER_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp)).size() == 0;
-            result = ((storageService.getMetrics(TSDRConstants.QUEUE_STATS_CATEGORY_NAME, new Date(0L),
-                    new Date(LatestStamp))).size() == 0);
-            result = storageService.getTSDRLogRecords(DataCategory.SYSLOG, 0L, Long.parseLong(timeStamp)).size() == 0;
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWGROUPSTATS.name(), 0L,
+                    LatestStamp)).size() == 3);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWSTATS.name(), 0L,
+                    LatestStamp)).size() == 2);
+            result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(), 0L,
+                    LatestStamp)).size() == 3);
+            result = storageService.getTSDRMetricRecords(DataCategory.FLOWMETERSTATS.name(), 0L,
+                    LatestStamp).size() == 0;
+            result = ((storageService.getTSDRMetricRecords(DataCategory.QUEUESTATS.name(), 0L,
+                    LatestStamp)).size() == 0);
+            result = storageService.getTSDRLogRecords(DataCategory.SYSLOG.name(), 0L, Long.parseLong(timeStamp)).size() == 0;
         } catch (Exception ee) {
             System.out.println("Error purging All Records with specified time.");
             result = false;
@@ -955,7 +959,7 @@ public class HBaseDataStoreTest {
         boolean result = true;
         try{
            storageService.store(recordList);
-           result = storageService.getTSDRMetrics(DataCategory.FLOWGROUPSTATS, 0L , Long.parseLong(timeStamp)).size() == 3;
+           result = storageService.getTSDRMetricRecords(DataCategory.FLOWGROUPSTATS.name(), 0L , Long.parseLong(timeStamp)).size() == 3;
         }catch(Exception ee){
             System.out.println("Error retrieving metrics from list group stats table with specified time range.");
             result = false;
@@ -963,6 +967,7 @@ public class HBaseDataStoreTest {
         }
         assertTrue(result);
     }
+
     @After
     public void teardown() {
         storageService.stop(0);

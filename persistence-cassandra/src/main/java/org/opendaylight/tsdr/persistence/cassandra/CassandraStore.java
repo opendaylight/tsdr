@@ -7,29 +7,33 @@
  */
 package org.opendaylight.tsdr.persistence.cassandra;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
@@ -141,24 +145,24 @@ public class CassandraStore {
 
     public void store(TSDRMetricRecord mr){
         //create metric key
-        String metricID = FormatUtil.getMetricID(mr);
+        String tsdrMetricKey = FormatUtil.getTSDRMetricKey(mr);
         MD5Identifier ID = null;
-        MetricPathCacheEntry entry = pathCache.get(metricID);
+        MetricPathCacheEntry entry = pathCache.get(tsdrMetricKey);
 
         //if it does not exist, create it
         if(entry==null){
-            ID = new MD5Identifier(metricID.getBytes());
+            ID = new MD5Identifier(tsdrMetricKey.getBytes());
             StringBuilder cql = new StringBuilder();
             cql.append("insert into MetricPath (TSDRDataCategory,NodeID,MetricName,KeyPath,KeyA,KeyB) values(");
             cql.append("'").append(mr.getTSDRDataCategory().toString()).append("',");
             cql.append("'").append(mr.getNodeID()).append("',");
             cql.append("'").append(mr.getMetricName()).append("',");
-            cql.append("'").append(metricID).append("',");
+            cql.append("'").append(tsdrMetricKey).append("',");
             cql.append(ID.getA()).append(",");
             cql.append(ID.getB());
             cql.append(")");
             session.execute(cql.toString());
-            this.pathCache.put(metricID, new MetricPathCacheEntry(ID.getA(),ID.getB(), mr.getTSDRDataCategory(), mr.getNodeID(), mr.getMetricName()));
+            this.pathCache.put(tsdrMetricKey, new MetricPathCacheEntry(ID.getA(),ID.getB(), mr.getTSDRDataCategory(), mr.getNodeID(), mr.getMetricName()));
         }else{
             ID = new MD5Identifier(entry.keyA,entry.keyB);
         }
@@ -174,7 +178,7 @@ public class CassandraStore {
 
     public void store(TSDRLogRecord lr){
         //create log key
-        String logID = FormatUtil.getLogID(lr);
+        String logID = FormatUtil.getTSDRLogKey(lr);
         MD5Identifier ID = null;
         MetricPathCacheEntry entry = pathCache.get(logID);
 
@@ -218,34 +222,56 @@ public class CassandraStore {
         return arrayList;
     }
 
-    public List<?> getMetrics(String category, Date startDateTime,Date endDateTime) {
-        category = category.replaceAll("%3A", ":");
-        MetricPathCacheEntry entry = this.pathCache.get(category);
-        List<CassandraEntry> result = new LinkedList<CassandraEntry>();
+    public List<TSDRMetricRecord> getMetrics(String tsdrMetricKey, long startDateTime, long endDateTime) {
+        MetricPathCacheEntry entry = this.pathCache.get(tsdrMetricKey);
+        List<TSDRMetricRecord> result = new LinkedList<TSDRMetricRecord>();
         if(entry!=null){
-            String cql = "select * from MetricVal where KeyA="+entry.keyA+" and KeyB="+entry.keyB+" and Time>="+startDateTime.getTime()+" and Time<="+endDateTime.getTime();
+            String cql = "select * from MetricVal where KeyA="+entry.keyA+" and KeyB="+entry.keyB+" and Time>="+startDateTime+" and Time<="+endDateTime;
             ResultSet rs = session.execute(cql);
             for(Row r:rs.all()){
-                result.add(new CassandraEntry(r.getLong("Time"), r.getDouble("value")));
+                result.add(getTSDRMetricRecord(r.getLong("Time"), r.getDouble("value"),entry,tsdrMetricKey));
             }
-            return result;
         }
         return result;
     }
 
-    public static class CassandraEntry{
-        private long time = -1;
-        private double value = -1;
-        public CassandraEntry(long _time,double _value){
-            this.time = _time;
-            this.value = _value;
+    public List<TSDRLogRecord> getLogs(String tsdrLogKey, long startDateTime, long endDateTime) {
+        MetricPathCacheEntry entry = this.pathCache.get(tsdrLogKey);
+        List<TSDRLogRecord> result = new LinkedList<TSDRLogRecord>();
+        if(entry!=null){
+            String cql = "select * from MetricLog where KeyA="+entry.keyA+" and KeyB="+entry.keyB+" and Time>="+startDateTime+" and Time<="+endDateTime;
+            ResultSet rs = session.execute(cql);
+            for(Row r:rs.all()){
+                result.add(getTSDRLogRecord(r.getLong("Time"), r.getString("value"),r.getInt("xIndex"),entry,tsdrLogKey));
+            }
         }
-        public Date getTime(){
-            return new Date(this.time);
-        }
-        public double getValue(){
-            return this.value;
-        }
+        return result;
+    }
+
+    private static final List<RecordKeys> EMPTY_RECORD_KEYS = new ArrayList<>();
+    private static final List<RecordAttributes> EMPTY_RECORD_ATTRIBUTES = new ArrayList<>();
+
+    private static final TSDRMetricRecord getTSDRMetricRecord(long time, double value, MetricPathCacheEntry entry,String tsdrMetricKey){
+        TSDRMetricRecordBuilder rb = new TSDRMetricRecordBuilder();
+        rb.setMetricName(entry.MetricName);
+        rb.setMetricValue(new BigDecimal(value));
+        rb.setNodeID(entry.NodeID);
+        rb.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(tsdrMetricKey));
+        rb.setTimeStamp(time);
+        rb.setTSDRDataCategory(entry.TSDRDataCategory);
+        return rb.build();
+    }
+
+    private static final TSDRLogRecord getTSDRLogRecord(long time,String value,int index,MetricPathCacheEntry entry,String tdsrLogKey){
+        TSDRLogRecordBuilder lb = new TSDRLogRecordBuilder();
+        lb.setTSDRDataCategory(entry.TSDRDataCategory);
+        lb.setTimeStamp(time);
+        lb.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(tdsrLogKey));
+        lb.setNodeID(entry.NodeID);
+        lb.setIndex(index);
+        lb.setRecordAttributes(null);
+        lb.setRecordFullText(value);
+        return lb.build();
     }
 
     private void loadPathCache(){

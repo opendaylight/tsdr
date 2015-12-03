@@ -11,7 +11,6 @@ package org.opendaylight.tsdr.entity;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.util.Date;
 
 /**
  * Represents the Metric table in store's persistent entry
@@ -28,38 +27,21 @@ public class Metric {
     @Id
     @GeneratedValue
     private Long id;
-    private Date metricTimeStamp;
+    private Long metricTimeStamp;
     private String metricName;
     private Double metricValue;
     private String metricCategory;
     private String nodeId;
     private String metricDetails;
 
-
-
     public Metric() {
     }
 
-    public Metric(Date timeStamp, String metricName, double metricValue) {
+    public Metric(Long timeStamp, String metricName, double metricValue) {
         super();
         this.metricTimeStamp = timeStamp;
         this.metricName = metricName;
         this.metricValue = metricValue;
-    }
-
-    public String getMetricName() {
-        return metricName;
-    }
-    public void setMetricName(String name) {
-        this.metricName = name;
-    }
-
-    public Date getMetricTimeStamp() {
-        return metricTimeStamp;
-    }
-
-    public void setMetricTimeStamp(Date timeStamp) {
-        this.metricTimeStamp = timeStamp;
     }
 
     public Long getId() {
@@ -70,13 +52,29 @@ public class Metric {
         this.id = id;
     }
 
-    public void setMetricValue(Double metricValue) {
-        this.metricValue = metricValue;
+    public Long getMetricTimeStamp() {
+        return metricTimeStamp;
     }
+
+    public void setMetricTimeStamp(Long metricTimeStamp) {
+        this.metricTimeStamp = metricTimeStamp;
+    }
+
+    public String getMetricName() {
+        return metricName;
+    }
+
+    public void setMetricName(String metricName) {
+        this.metricName = metricName;
+    }
+
     public Double getMetricValue() {
         return metricValue;
     }
 
+    public void setMetricValue(Double metricValue) {
+        this.metricValue = metricValue;
+    }
 
     public String getMetricCategory() {
         return metricCategory;
@@ -98,7 +96,7 @@ public class Metric {
         return metricDetails;
     }
 
-    public void setMetricDetails(String details) {
-        this.metricDetails = details;
+    public void setMetricDetails(String metricDetails) {
+        this.metricDetails = metricDetails;
     }
 }
