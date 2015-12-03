@@ -4,7 +4,7 @@
     <parent>
         <artifactId>tsdr</artifactId>
         <groupId>org.opendaylight.tsdr</groupId>
-        <version>1.0.3-SNAPSHOT</version>
+        <version>1.0.3-Lithium-SR3</version>
     </parent>
     <artifactId>tsdr-persistence-spi</artifactId>
     <packaging>bundle</packaging>
