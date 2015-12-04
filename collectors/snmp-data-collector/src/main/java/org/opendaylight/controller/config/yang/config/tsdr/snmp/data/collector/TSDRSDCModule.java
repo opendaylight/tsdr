@@ -1,14 +1,20 @@
 package org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector;
 
 
+import java.util.Hashtable;
 import org.opendaylight.tsdr.sdc.SNMPDataCollector;
+import org.opendaylight.tsdr.sdc.TSDRSNMPConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TsdrSnmpDataCollectorService;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TSDRSDCModule extends org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.AbstractTSDRSDCModule{
     
     private static final Logger logger = LoggerFactory.getLogger(TSDRSDCModule.class);
+    private BundleContext bundleContext = null;
 
     boolean running = true;
     private SNMPDataCollector snmpCollector = null;
@@ -31,6 +37,8 @@ public class TSDRSDCModule extends org.opendaylight.controller.config.yang.confi
         logger.info("SNMP Data Collector started!");
         snmpCollector = new SNMPDataCollector(getDataBrokerDependency(),getRpcRegistryDependency());
         getRpcRegistryDependency().addRpcImplementation(TsdrSnmpDataCollectorService.class, snmpCollector);
+        registerConfiguration();
+
         return new AutoCloseable() {
             @Override
             public void close() throws Exception {
@@ -41,4 +49,13 @@ public class TSDRSDCModule extends org.opendaylight.controller.config.yang.confi
         };
     }
 
+    public void setBundleContext(BundleContext c){
+        this.bundleContext = c;
+    }
+
+    private  void registerConfiguration(){
+        Hashtable<String, String> properties = new Hashtable<String, String>();
+        properties.put(Constants.SERVICE_PID, "tsdr-snmp");
+        bundleContext.registerService(ManagedService.class.getName(), TSDRSNMPConfig.getInstance() , properties);
+    }
 }

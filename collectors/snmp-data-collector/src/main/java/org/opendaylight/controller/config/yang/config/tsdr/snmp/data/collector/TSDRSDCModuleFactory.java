@@ -8,6 +8,22 @@
 * Do not modify this file unless it is present under src/main directory
 */
 package org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector;
-public class TSDRSDCModuleFactory extends org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.AbstractTSDRSDCModuleFactory {
 
+import org.opendaylight.controller.config.api.DependencyResolver;
+import org.osgi.framework.BundleContext;
+
+public class TSDRSDCModuleFactory extends org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.AbstractTSDRSDCModuleFactory {
+    @Override
+    public TSDRSDCModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, TSDRSDCModule oldModule, AutoCloseable oldInstance, BundleContext bundleContext) {
+        TSDRSDCModule module =  super.instantiateModule(instanceName, dependencyResolver, oldModule, oldInstance, bundleContext);
+        module.setBundleContext(bundleContext);
+        return module;
+    }
+
+    @Override
+    public TSDRSDCModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, BundleContext bundleContext) {
+        TSDRSDCModule module = super.instantiateModule(instanceName, dependencyResolver, bundleContext);
+        module.setBundleContext(bundleContext);
+        return module;
+    }
 }
