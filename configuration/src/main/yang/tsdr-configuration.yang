@@ -43,4 +43,30 @@ module tsdr-configuration {
                     }
                 }
             }
+
+    rpc getProperty {
+        input {
+            leaf name {
+                type string;
+            }
+        }
+        output {
+            leaf value {
+                type string;
+            }
+        }
+    }
+
+    rpc getAllProperties {
+        output {
+            list properties {
+                leaf key {
+                    type string;
+                }
+                leaf value {
+                   type string;
+                }
+            }
+        }
+    }
 }

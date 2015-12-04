@@ -1,6 +1,8 @@
 package org.opendaylight.controller.config.yang.config.tsdr.configuration;
 
+import org.opendaylight.controller.sal.binding.api.BindingAwareBroker;
 import org.opendaylight.tsdr.configuration.TSDRConfiguration;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.configuration.rev151130.TsdrConfigurationService;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.cm.ManagedService;
@@ -28,11 +30,14 @@ public class TSDRConfigModule extends org.opendaylight.controller.config.yang.co
 
     @Override
     public java.lang.AutoCloseable createInstance() {
-        registerTSDRConfiguration();
+        final TSDRConfiguration config = new TSDRConfiguration();
+        final BindingAwareBroker.RpcRegistration<TsdrConfigurationService> reg = getRpcRegistryDependency().addRpcImplementation(TsdrConfigurationService.class, config);
+        registerTSDRConfiguration(config);
         logger.info("TSDR configuration Mudule initialized");
         return new AutoCloseable() {
             @Override
             public void close() throws Exception {
+                reg.close();
             }
         };
     }
@@ -41,9 +46,9 @@ public class TSDRConfigModule extends org.opendaylight.controller.config.yang.co
         this.context = bundleContext;
     }
 
-    private  void registerTSDRConfiguration(){
+    private  void registerTSDRConfiguration(final TSDRConfiguration config){
         Hashtable<String, String> properties = new Hashtable<String, String>();
         properties.put(Constants.SERVICE_PID, "tsdr");
-        context.registerService(ManagedService.class.getName(), TSDRConfiguration.getInstance() , properties);
+        context.registerService(ManagedService.class.getName(), config , properties);
     }
 }
