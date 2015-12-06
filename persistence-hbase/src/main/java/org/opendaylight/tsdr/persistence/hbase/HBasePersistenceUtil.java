@@ -56,7 +56,8 @@ public class HBasePersistenceUtil {
             return null;
         }
         HBaseEntity entity = new HBaseEntity();
-        String metricName = metricData.getMetricName(); 
+        String nodeID = metricData.getNodeID();
+        String metricName = metricData.getMetricName();
         String metricValue = metricData.getMetricValue().toString();
         Long timeStamp = null;
         //If there's no timestamp in the metric Data, append the current
@@ -66,20 +67,22 @@ public class HBasePersistenceUtil {
         }else{
             timeStamp = System.currentTimeMillis();
         }
-       
+
         String keyString = getKeyStringFrom(metricData);
         StringBuffer rowKey = new StringBuffer();
         /*
          * keyString could be null. In the case the data is associated with node only,
          * the keyString will be null.
          */
-        if ( keyString != null && keyString.trim().length() != 0){
+        if ( keyString != null && keyString.trim().length() != 0 ){
             rowKey.append(metricName).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+                .append(nodeID).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
                 .append(keyString).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
                 .append(timeStamp);
-        }else{
+        } else {
             rowKey.append(metricName).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
-            .append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT).append(timeStamp);
+                .append(nodeID).append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
+                .append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT).append(timeStamp);
         }
         entity.setTableName(tableName);
         entity.setRowKey(rowKey.toString());
@@ -288,7 +291,11 @@ public class HBasePersistenceUtil {
         List<RecordKeys> recordKeys = metricData.getRecordKeys();
         if ( recordKeys != null && recordKeys.size() != 0){
             for(RecordKeys key: recordKeys){
-                if (key.getKeyValue() != null && key.getKeyValue().length() != 0){
+                if (key.getKeyValue() != null && key.getKeyValue().length() != 0
+                    && !key.getKeyName().equalsIgnoreCase("Node")){
+                    //currently we have NodeID appended to rowKey
+                    //To do: remove NodeID from TSDRBaseRecord and make it part of RecordKeys
+                    //Then we don't need to skip Node ID when constructing keyString
                     keyString = keyString.append(TSDRHBaseDataStoreConstants.ROWKEY_SPLIT)
                             .append(key.getKeyValue());
                 }
