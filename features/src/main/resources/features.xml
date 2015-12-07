@@ -34,39 +34,16 @@
     <repository>mvn:org.ops4j.pax.jdbc/pax-jdbc-features/0.5.0/xml/features</repository>
     <repository>mvn:org.opendaylight.snmp/features-snmp/1.1.0-SNAPSHOT/xml/features</repository>
     
-    <feature name='odl-tsdr-h2-all' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence and all TSDR data collectors'>
+    <!-- H2 data store with default openflow data collector for user convenience -->
+    <feature name='odl-tsdr-h2-all' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence and openflow data collectors'>
+             <feature version='${project.version}'>odl-tsdr-core</feature>
              <feature version='${project.version}'>odl-tsdr-h2</feature>
              <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
-             <feature version='${project.version}'>odl-tsdr-netflow-statistics-collector</feature>
      </feature>
 
-    <feature name='odl-tsdr-hbase-all' version='${project.version}' description='OpenDaylight :: TSDR :: With hbase Persistence and all TSDR data collectors'>
-             <feature version='${project.version}'>odl-tsdr-hbase</feature>
-             <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
-             <feature version='${project.version}'>odl-tsdr-netflow-statistics-collector</feature>
-    </feature>
+     <!-- TSDR Collectors-->
 
-    <feature name='odl-tsdr-cassandra-all' version='${project.version}' description='OpenDaylight :: TSDR :: With cassandra Persistence and all TSDR data collectors'>
-            <feature version='${project.version}'>odl-tsdr-cassandra</feature>
-            <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
-            <feature version='${project.version}'>odl-tsdr-netflow-statistics-collector</feature>
-    </feature>
-
-    <feature name='odl-tsdr-h2' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence (Out Of The Box Working)'>
-        <feature version='${project.version}'>odl-tsdr-core</feature>
-        <feature version='${project.version}'>odl-tsdr-H2-persistence</feature>
-    </feature>
-
-    <feature name='odl-tsdr-cassandra' version='${project.version}' description='OpenDaylight :: TSDR :: Cassandra (Req Cassandra)'>
-        <feature version='${project.version}'>odl-tsdr-core</feature>
-        <feature version='${project.version}'>odl-tsdr-cassandra-persistence</feature>
-    </feature>
-
-    <feature name='odl-tsdr-hbase' version='${project.version}' description='OpenDaylight :: TSDR :: HBase Data Store (Req HBase)'>
-        <feature version='${project.version}'>odl-tsdr-core</feature>
-        <feature version='${project.version}'>odl-tsdr-hbase-persistence</feature>
-    </feature>
-
+    <!-- OpenFlow stats collector -->
     <feature name='odl-tsdr-openflow-statistics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Openflow Statistics Collector'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <feature version="0.3.0-SNAPSHOT">odl-l2switch-switch</feature>
@@ -74,17 +51,22 @@
         <configfile finalname="${config.configfile.directory}/151-tsdr-openflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-openflow-statistics-collector/${project.version}/xml/config</configfile>
     </feature>
 
+    <!-- NetFlow collector -->
     <feature name='odl-tsdr-netflow-statistics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Netflow Statistics Collector'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <feature version="0.3.0-SNAPSHOT">odl-l2switch-switch</feature>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-netflow-statistics-collector/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/156-tsdr-netflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-netflow-statistics-collector/${project.version}/xml/config</configfile>
     </feature>
+
+    <!-- Controller metrics collector -->
     <feature name='odl-tsdr-controller-metrics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Controller Metrics Collector'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-controller-metrics-collector/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/154-tsdr-controller-metrics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-controller-metrics-collector/${project.version}/xml/config</configfile>
     </feature>
+
+    <!-- SNMP collector -->
     <feature name='odl-tsdr-snmp-data-collector' version='${project.version}' description='OpenDaylight :: TSDR :: SNMP Data Collector'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <feature version="1.1.0-SNAPSHOT">odl-snmp-plugin</feature>
@@ -93,12 +75,15 @@
         <configfile finalname="${config.configfile.directory}/155-tsdr-snmp-data-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-snmp-data-collector/${project.version}/xml/config</configfile>
         <configfile finalname="/etc/tsdr-snmp.cfg">mvn:org.opendaylight.tsdr/${artifactName}-snmp-data-collector/${project.version}/cfg/config-1</configfile>
     </feature>
+
+    <!-- Syslog collector -->
     <feature name='odl-tsdr-syslog-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Syslog Collector'>
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-syslog-collector/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/154-tsdr-syslog-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-syslog-collector/${project.version}/xml/config</configfile>
     </feature>
 
+   <!-- TSDR core services -->
     <feature name='odl-tsdr-core' version='${project.version}' description='OpenDaylight :: TSDR :: Core'>
         <feature version='${yangtools.version}'>odl-yangtools-common</feature>
         <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
@@ -122,6 +107,9 @@
         <configfile finalname="${config.configfile.directory}/155-TSDR-dataquery-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-dataquery/${project.version}/xml/config</configfile>
     </feature>
 
+    <!-- TSDR Data Stores -->
+
+    <!-- HBase client wrapped in Karaf -->
     <feature name="odl-hbaseclient" version="0.94.15" resolver="(obr)" start-level="50" description='OpenDaylight :: TSDR :: HBase Client'>
        <feature>war</feature>
        <bundle dependency="true">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jaxws-api-2.2/1.9.0</bundle>
@@ -149,7 +137,9 @@
        <bundle>wrap:mvn:org.apache.hadoop/hadoop-core/1.2.0</bundle>
        <bundle>wrap:mvn:org.apache.hbase/hbase/0.94.15</bundle>
     </feature>
-    <feature name='odl-tsdr-hbase-persistence' version='${project.version}' description="OpenDaylight :: TSDR :: HBase Persistence">
+
+    <!-- HBase persistence data store -->
+    <feature name='odl-tsdr-hbase' version='${project.version}' description="OpenDaylight :: TSDR :: HBase Persistence">
        <feature version='"0.94.15"'>odl-hbaseclient</feature>
        <feature version='${yangtools.version}'>odl-yangtools-common</feature>
        <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
@@ -158,7 +148,9 @@
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-hbase/${project.version}</bundle>
        <configfile finalname="etc/tsdr-persistence-hbase.properties">mvn:org.opendaylight.tsdr/${artifactName}-persistence-hbase/${project.version}/xml/config</configfile>
     </feature>
-    <feature name='odl-tsdr-H2-persistence' version='${project.version}' description="OpenDaylight :: TSDR :: H2 Persistence">
+
+    <!-- H2 persistence data store -->
+    <feature name='odl-tsdr-h2' version='${project.version}' description="OpenDaylight :: TSDR :: H2 Persistence">
         <feature>jndi</feature>
         <feature>transaction</feature>
         <feature version="0.5.0">pax-jdbc-h2</feature>
@@ -173,7 +165,9 @@
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-h2/${project.version}</bundle>
         <configfile finalname="etc/org.ops4j.datasource-metric.cfg">mvn:org.opendaylight.tsdr/${artifactName}-persistence-h2/${project.version}/xml/config</configfile>
     </feature>
-    <feature name='odl-tsdr-cassandra-persistence' version='${project.version}' description="OpenDaylight :: TSDR :: Cassandra Persistence">
+
+    <!-- Cassandra persistence data store -->
+    <feature name='odl-tsdr-cassandra' version='${project.version}' description="OpenDaylight :: TSDR :: Cassandra Persistence">
        <bundle>wrap:mvn:com.codahale.metrics/metrics-core/3.0.2</bundle>
        <bundle>wrap:mvn:io.netty/netty/3.9.0.Final</bundle>
        <bundle>wrap:mvn:com.google.guava/guava/${guava.old.version}</bundle>
