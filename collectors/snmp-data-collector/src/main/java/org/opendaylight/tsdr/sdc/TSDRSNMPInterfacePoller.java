@@ -7,11 +7,14 @@
  */
 package org.opendaylight.tsdr.sdc;
 
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.nodeconfigdetails.NodeConfigDetails;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
+import org.opendaylight.yangtools.yang.common.RpcResult;
+
 /**
  * @author Prajaya Talwar(prajaya.talwar@tcs.com)
  **/
-// The inventory nodes poller is polling the inventory every 15 seconds and
-// determinate if there are nodes added/removed
+// The SNMP interface poller is polling the SNMP
 public class TSDRSNMPInterfacePoller extends Thread {
     // The collector
     private SNMPDataCollector collector = null;
@@ -26,8 +29,13 @@ public class TSDRSNMPInterfacePoller extends Thread {
     public void run() {
         while (collector.isRunning()) {
             //Call handle method of TSDR SNMP Collector
-            collector.loadGetInterfacesData();
-            collector.insertInterfacesEnteries();
+
+          for (NodeConfigDetails det: collector.getConfigData().getNodeConfigDetails()){
+          RpcResult<GetInterfacesOutput> result = null;
+                      result = collector.loadGetInterfacesData(det.getIpAddress(),det.getCommunity());
+                      collector.insertInterfacesEntries(det.getIpAddress(),result);
+               }
+
             synchronized(this.collector){
                 this.collector.notifyAll();
             }
@@ -35,9 +43,9 @@ public class TSDRSNMPInterfacePoller extends Thread {
             synchronized(this.collector.pollerSyncObject){
                 try {
                     this.collector.pollerSyncObject.wait(this.collector.getConfigData().getPollingInterval());
-                } catch (InterruptedException err) {
+                    } catch (InterruptedException err) {
                     SNMPDataCollector.log(
-                            "Unknown error when sleeping in TSDR poller",
+                            "Unknown error when sleeping in TSDR SNMP poller",
                             SNMPDataCollector.ERROR);
                 }
             }

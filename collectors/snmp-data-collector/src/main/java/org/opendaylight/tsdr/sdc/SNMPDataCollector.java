@@ -13,12 +13,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.concurrent.Future;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesInputBuilder;
-
-import org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.TSDRSDCModule;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
@@ -33,10 +30,13 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.SetIPCommunityInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.SetPollingIntervalInput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSDCConfig;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSDCConfigBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfig;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfigBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TsdrSnmpDataCollectorService;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.nodeconfigdetails.NodeConfigDetails;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.nodeconfigdetails.NodeConfigDetailsBuilder;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
@@ -45,19 +45,17 @@ import org.slf4j.LoggerFactory;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev100924.Ipv4Address;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.smiv2._if.mib.rev000614.interfaces.group.IfEntry;
 import org.opendaylight.snmp.plugin.internal.SNMPImpl;
-
 import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
-
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.CheckedFuture;
 
 
+
 /**
- * @author Prajaya Talwar(prajaya.talwar@tcs.com)
+ * @author Trapti Khandelwal(trapti.khandelwal@tcs.com)
  **/
 public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
     private static final Logger logger = LoggerFactory.getLogger(SNMPDataCollector.class);
-    private TSDRSDCModule module = null;
     // A reference to the data broker
     private DataBroker dataBroker = null;
     private TSDRMetricRecordBuilderContainer container = new TSDRMetricRecordBuilderContainer();
@@ -65,21 +63,26 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
     // The reference to the the RPC registry to store the data
     private RpcProviderRegistry rpcRegistry = null;
     private static boolean logToExternalFile = false;
-    private TSDRSDCConfig config = null;
+    private TSDRSnmpDataCollectorConfig config = null;
     protected Object pollerSyncObject = new Object();
     private TsdrCollectorSpiService collectorSPIService = null;
     private static final String COLLECTOR_CODE_NAME = SNMPDataCollector.class.getSimpleName();
-
+    private static final long pollingInterval=300000l;
     public SNMPDataCollector(DataBroker _dataBroker,
             RpcProviderRegistry _rpcRegistry) {
-        log("SNMP Collector Started", INFO);
+        
+        log("TSDR SNMP Collector Started", INFO);
         this.dataBroker = _dataBroker;
         this.rpcRegistry = _rpcRegistry;
 
-        TSDRSDCConfigBuilder b = new TSDRSDCConfigBuilder();
-        b.setPollingInterval(15000l);
-        b.setCommunity("mib2dev/if-mib");
-        b.setIpAddress(new Ipv4Address("127.0.0.1"));
+        TSDRSnmpDataCollectorConfigBuilder b = new TSDRSnmpDataCollectorConfigBuilder();
+        b.setPollingInterval(pollingInterval);
+        NodeConfigDetailsBuilder db = new NodeConfigDetailsBuilder();
+        db.setIpAddress(new Ipv4Address("127.0.0.1"));
+        db.setCommunity("public");
+        ArrayList<NodeConfigDetails> list =new ArrayList<NodeConfigDetails>();
+        list.add(db.build());
+        b.setNodeConfigDetails(list);
         this.config = b.build();
         new TSDRSNMPInterfacePoller(this);
         new StoringThread();
@@ -89,15 +92,15 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
         // try to load the configuration data from the configuration data store
         ReadOnlyTransaction rot = null;
         try {
-            InstanceIdentifier<TSDRSDCConfig> cid = InstanceIdentifier
-                    .create(TSDRSDCConfig.class);
+            InstanceIdentifier<TSDRSnmpDataCollectorConfig> cid = InstanceIdentifier
+                    .create(TSDRSnmpDataCollectorConfig.class);
             rot = this.dataBroker.newReadOnlyTransaction();
-            CheckedFuture<Optional<TSDRSDCConfig>, ReadFailedException> read = rot
+            CheckedFuture<Optional<TSDRSnmpDataCollectorConfig>, ReadFailedException> read = rot
                     .read(LogicalDatastoreType.CONFIGURATION, cid);
             if (read != null && read.get() != null) {
                 if (read.get().isPresent()) {
                     this.config = read.get().get();
-                }
+               }
             }
         } catch (Exception err) {
             log("Failed to read TSDR Data Collection configuration from data store, using defaults.",
@@ -109,68 +112,130 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
         }
     }
 
-    public void loadGetInterfacesData() {
+    public RpcResult<GetInterfacesOutput> loadGetInterfacesData(Ipv4Address ip, String community) {
         // fetch data from getInterfaces
-
+        RpcResult<GetInterfacesOutput> result = null;
         SNMPImpl snmpImpl = new SNMPImpl(rpcRegistry);
-        try 
+        try
         {
-            //this.config.setCommunity("mib2dev/if-mib");
-            //this.config.setIpAddress(new Ipv4Address("127.0.0.1"));
-            Ipv4Address ip = this.config.getIpAddress();
             GetInterfacesInputBuilder input = new GetInterfacesInputBuilder();
-            input.setCommunity("mib2dev/if-mib");
-            input.setIpAddress(new Ipv4Address("127.0.0.1"));
-            //System.out.println();
-            RpcResult<GetInterfacesOutput> result = null;
+            input.setCommunity(community);
+            input.setIpAddress(ip);
             Future<RpcResult<GetInterfacesOutput>> resultFuture = snmpImpl.getInterfaces(input.build());
             result = resultFuture.get();
             result.isSuccessful();
 
-            TSDRSDCConfigBuilder b = new TSDRSDCConfigBuilder();
-            b.setCommunity(this.config.getCommunity());
-            b.setIpAddress(this.config.getIpAddress());
-            b.setPollingInterval(this.config.getPollingInterval());
-            b.setIfNumber(result.getResult().getIfNumber());
-            b.setIfEntry(result.getResult().getIfEntry());
-
-            this.config = b.build();
-
-        }
+            return result;
+            }
         catch (Exception err) {
-            err.printStackTrace();
+            log("Failed to get interfaces data from SNMP"+err.toString(),
+                    ERROR);
+            return null;
         }
-
     }
 
-    public void insertInterfacesEnteries(){
+    public void insertInterfacesEntries(Ipv4Address ip, RpcResult<GetInterfacesOutput> result){
 
-        for(IfEntry entry : this.config.getIfEntry())
+      String[] metricname={"MTU","ifSpeed","ifInNUcastPkts","ifInDiscards","ifInErrors","ifInOctets",
+            "ifInUnknownProtos","ifInUcastPkts","ifOutQLen","ifOutNUcastPkts","ifOutErrors",
+            "ifOutDiscards","ifOutUcastPkts","ifOutOctets","ifOperStatus","ifAdminStatus"};
+      int metricIndex=0;
+      for(IfEntry entry : result.getResult().getIfEntry())
+      {
+        for(metricIndex=0;metricIndex<metricname.length;metricIndex++)
         {
+            TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+             
+            b.setMetricName(metricname[metricIndex]);
+            b.setTSDRDataCategory(DataCategory.SNMPINTERFACES);
+            b.setNodeID(ip.getValue().toString());
+            ArrayList<RecordKeys> list =new ArrayList<RecordKeys>();
+            RecordKeysBuilder recordKeyB = new RecordKeysBuilder();
+            recordKeyB.setKeyName("ifIndex");
+            recordKeyB.setKeyValue(String.valueOf(entry.getIfIndex().getValue()));
+            list.add(recordKeyB.build());
+            recordKeyB.setKeyName("ifName");
+            recordKeyB.setKeyValue(String.valueOf(entry.getIfType()));
+            list.add(recordKeyB.build());
+            b.setRecordKeys(list);
+            b.setTimeStamp(System.currentTimeMillis());
 
-        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
-        b.setMetricName(entry.getIfIndex().toString());
-        b.setTSDRDataCategory(DataCategory.SNMPINTERFACES);
-        b.setNodeID(this.config.getIpAddress().toString());
-        
-        RecordKeysBuilder recordKeyB = new RecordKeysBuilder();
-        recordKeyB.setKeyName(COLLECTOR_CODE_NAME);
-        recordKeyB.setKeyValue(entry.getIfIndex().toString());
-        ArrayList<RecordKeys> list =new ArrayList<RecordKeys>();
-        list.add(recordKeyB.build());
-        b.setRecordKeys(list);
+            switch(metricname[metricIndex])
+            {
+              case "MTU":
+                    b.setMetricValue(new BigDecimal(entry.getIfMtu()));
+                    break;
 
-        b.setTimeStamp(System.currentTimeMillis());
-        b.setMetricValue(new BigDecimal(entry.getIfMtu()));
-        container.addBuilder(b);
+              case "ifSpeed":
+                    b.setMetricValue(new BigDecimal(entry.getIfSpeed().getValue()));
+                    break;
+
+              case "ifInNUcastPkts":
+                    b.setMetricValue(new BigDecimal(entry.getIfInNUcastPkts().getValue()));
+                    break;
+
+              case "ifInDiscards":
+                    b.setMetricValue(new BigDecimal(entry.getIfInDiscards().getValue()));
+                    break;
+
+              case "ifInErrors":
+                    b.setMetricValue(new BigDecimal(entry.getIfInErrors().getValue()));
+                    break;
+
+              case "ifInOctets":
+                    b.setMetricValue(new BigDecimal(entry.getIfInOctets().getValue()));
+                    break;
+
+              case "ifInUnknownProtos":
+                    b.setMetricValue(new BigDecimal(entry.getIfInUnknownProtos().getValue()));
+                    break;
+
+              case "ifInUcastPkts":
+                    b.setMetricValue(new BigDecimal(entry.getIfInUcastPkts().getValue()));
+                    break;
+
+              case "ifOutQLen":
+                    b.setMetricValue(new BigDecimal(entry.getIfOutQLen().getValue()));
+                    break;
+
+              case "ifOutNUcastPkts":
+                    b.setMetricValue(new BigDecimal(entry.getIfOutNUcastPkts().getValue()));
+                    break;
+
+              case "ifOutErrors":
+                    b.setMetricValue(new BigDecimal(entry.getIfOutErrors().getValue()));
+                    break;
+
+              case "ifOutDiscards":
+                    b.setMetricValue(new BigDecimal(entry.getIfOutDiscards().getValue()));
+                    break;
+
+              case "ifOutUcastPkts":
+                    b.setMetricValue(new BigDecimal(entry.getIfOutUcastPkts().getValue()));
+                    break;
+
+              case "ifOutOctets":
+                    b.setMetricValue(new BigDecimal(entry.getIfOutOctets().getValue()));
+                    break;
+
+              case "ifOperStatus":
+                    b.setMetricValue(new BigDecimal(entry.getIfOperStatus().getIntValue()));
+                    break;
+
+              case "ifAdminStatus":
+                    b.setMetricValue(new BigDecimal(entry.getIfAdminStatus().getIntValue()));
+                    break;
 
         }
+        container.addBuilder(b);
+       }
+      }
     }
 
     public void saveConfigData() {
         try {
-            InstanceIdentifier<TSDRSDCConfig> cid = InstanceIdentifier
-                    .create(TSDRSDCConfig.class);
+            InstanceIdentifier<TSDRSnmpDataCollectorConfig> cid = InstanceIdentifier
+                    .create(TSDRSnmpDataCollectorConfig.class);
             WriteTransaction wrt = this.dataBroker.newWriteOnlyTransaction();
             wrt.put(LogicalDatastoreType.CONFIGURATION, cid, this.config);
             wrt.submit();
@@ -180,8 +245,8 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
         }
     }
 
-    public TSDRSDCConfig getConfigData() {
-        return this.config;
+    public TSDRSnmpDataCollectorConfig getConfigData() {
+       return this.config;
     }
 
     public void shutdown() {
@@ -224,8 +289,11 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
                         log("SNMP Storing Thread Interrupted.", ERROR);
                     }
                 }
+                if(!running)
+                {
+                    break;
+                }
                 try {
-                       // for (int i = 0; i < containers.length; i++) {
                     try {
                         InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
                         List<TSDRMetricRecord> list = new LinkedList<>();
@@ -237,8 +305,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
                         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
 
                         store(input.build());
-                        // store.storeTSDRMetricRecord(input.build());
-                    } catch (Exception err) {
+                   } catch (Exception err) {
                         log("Fail to store data due to the following exception:",
                                 ERROR);
                         log(err);
@@ -254,8 +321,8 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
     }
     // Invoke the storage rpc method
     private void store(InsertTSDRMetricRecordInput input) {
-        if(this.collectorSPIService==null){
-            this.collectorSPIService = this.rpcRegistry
+       if(this.collectorSPIService==null){
+           this.collectorSPIService = this.rpcRegistry
                     .getRpcService(TsdrCollectorSpiService.class);
         }
         this.collectorSPIService.insertTSDRMetricRecord(input);
@@ -307,7 +374,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
             } catch (Exception err) {
                 err.printStackTrace();
             }
-        } else {
+        } else{
             switch (type) {
             case INFO:
                 logger.info(str);
@@ -338,11 +405,20 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
     @Override
     public Future<RpcResult<Void>> setPollingInterval(
             SetPollingIntervalInput input) {
-        TSDRSDCConfigBuilder builder = new TSDRSDCConfigBuilder();
+        TSDRSnmpDataCollectorConfigBuilder builder = new TSDRSnmpDataCollectorConfigBuilder();
         builder.setPollingInterval(input.getInterval());
-        builder.setCommunity("mib2dev/if-mib");
-        builder.setIpAddress(new Ipv4Address("127.0.0.1"));
         this.config = builder.build();
+        saveConfigData();
+        RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
+        return rpc.buildFuture();
+    }
+
+    @Override
+    public Future<RpcResult<Void>> setIPCommunity(SetIPCommunityInput input) {
+        TSDRSnmpDataCollectorConfigBuilder tbuilder = new TSDRSnmpDataCollectorConfigBuilder();
+        tbuilder.setNodeConfigDetails(input.getNodeConfigDetails());
+        tbuilder.setPollingInterval(this.config.getPollingInterval());
+        this.config = tbuilder.build();
         saveConfigData();
         RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
         return rpc.buildFuture();
