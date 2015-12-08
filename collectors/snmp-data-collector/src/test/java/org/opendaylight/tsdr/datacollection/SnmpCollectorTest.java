@@ -159,6 +159,4 @@ public class SnmpCollectorTest {
             assertTrue(result.isSuccessful());
         }
     }
-    public void testGetInterfacesDataMapping() throws Exception {
-    }
 }

@@ -10,20 +10,17 @@ import org.osgi.framework.Constants;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-public class TSDRSDCModule extends org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.AbstractTSDRSDCModule{
-    
-    private static final Logger logger = LoggerFactory.getLogger(TSDRSDCModule.class);
-    private BundleContext bundleContext = null;
+public class TSDRSnmpDataCollectorModule extends org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.AbstractTSDRSnmpDataCollectorModule {
+    private static final Logger logger = LoggerFactory.getLogger(TSDRSnmpDataCollectorModule.class);
 
     boolean running = true;
     private SNMPDataCollector snmpCollector = null;
-
-    public TSDRSDCModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver) {
+    private BundleContext bundleContext = null;
+    public TSDRSnmpDataCollectorModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver) {
         super(identifier, dependencyResolver);
     }
 
-    public TSDRSDCModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver, org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.TSDRSDCModule oldModule, java.lang.AutoCloseable oldInstance) {
+    public TSDRSnmpDataCollectorModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver, org.opendaylight.controller.config.yang.config.tsdr.snmp.data.collector.TSDRSnmpDataCollectorModule oldModule, java.lang.AutoCloseable oldInstance) {
         super(identifier, dependencyResolver, oldModule, oldInstance);
     }
 
