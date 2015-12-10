@@ -89,9 +89,11 @@
         <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
         <feature version='${model.flow.statistics}'>odl-openflowplugin-nsf-model</feature>
 
+<!--
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-configuration/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/145-TSDR-configuration.xml">mvn:org.opendaylight.tsdr/${artifactName}-configuration/${project.version}/xml/config</configfile>
         <configfile finalname="/etc/tsdr.cfg">mvn:org.opendaylight.tsdr/${artifactName}-configuration/${project.version}/cfg/config-1</configfile>
+        -->
 
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}</bundle>

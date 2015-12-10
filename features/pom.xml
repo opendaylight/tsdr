@@ -162,6 +162,7 @@
           <classifier>config</classifier>
       </dependency>
 
+<!--
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-configuration</artifactId>
@@ -181,6 +182,7 @@
           <type>cfg</type>
           <classifier>config-1</classifier>
       </dependency>
+      -->
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-h2</artifactId>
