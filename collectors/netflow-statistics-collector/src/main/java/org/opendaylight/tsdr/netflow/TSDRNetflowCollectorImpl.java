@@ -7,7 +7,6 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 package org.opendaylight.tsdr.netflow;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -59,7 +58,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
         {
             socket = new DatagramSocket(2055);
             logger.info("NetFlow collector started listening on port 2055");
-            logger.info("NetFlow incoming queue initialized. Size: " + incomingNetFlow.size());
+            logger.info("NetFlow incoming queue initialized.");
             this.start();
             new NetFlowProcessor();
         }
@@ -108,6 +107,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
             super("TSDR NetFlow Processor");
             this.setDaemon(true);
             this.start();
+            logger.debug("NetFlow Processor thread initialized");
         }
         public void run(){
             DatagramPacket packet = null;
@@ -133,8 +133,11 @@ public class TSDRNetflowCollectorImpl extends Thread{
                         String flow_sequence = convert(buff, 16, 4);
                         String engine_type = Byte.toString(buff[20]);
                         String engine_id = Byte.toString(buff[21]);
-                        String srcAddr = convert(buff, 24, 4);
-                        String dstAddr = convert(buff, 28, 4);
+                        long s_interval = Convert(buff[23]);
+                        s_interval += Long.parseLong(convert(buff, 23, 1));
+                        String samplingInterval = "" + s_interval;
+                        String srcAddr = convertIPAddress(new Long(convert(buff, 24, 4)).longValue());
+                        String dstAddr = convertIPAddress(new Long(convert(buff, 28, 4)).longValue());
                         String nextHop = convert(buff, 32, 4);
                         String input = convert(buff, 36, 2);
                         String output = convert(buff, 38, 2);
@@ -164,9 +167,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
                         recordbuilder.setTimeStamp(System.currentTimeMillis());
                         recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
                         recordbuilder.setRecordFullText(recordFullText);
-                        logger.debug("************************");
                         logger.debug(recordFullText);
-                        logger.debug("************************");
                         /*List of Attributes (key/value pair) format*/
                         List<RecordAttributes> attributeList  = createAttributeList(srcIp, version,
                                 flowDuration, srcAddr, dstAddr, nextHop,input, output, dPkts, dOctets,
@@ -195,6 +196,40 @@ public class TSDRNetflowCollectorImpl extends Thread{
                 }
             }
         }
+    }
+    /**
+     * function to convert the IP address from byte to decimal (quad dotted) notation
+     *
+     * @return
+     */
+    private String convertIPAddress(long addr1){
+        int addr = (int) (addr1 & 0xffffffff);
+        StringBuffer buf = new StringBuffer();
+        buf.append(((addr >>> 24) & 0xff)).append('.').append(((addr >>> 16) & 0xff)).append('.').append(((addr >>> 8) & 0xff)).append('.').append(addr & 0xff);
+        return buf.toString();
+    }
+    /**
+     * function to convert attributes from byte data to long data type accordingly.
+     *
+     * @return
+     */
+    private String convert(byte[] p, int off, int len){
+        long ret = 0;
+        int done = off + len;
+        for (int i = off; i < done; i++){
+            ret = ((ret << 8) & 0xffffffff) + (p[i] & 0xff);
+        }
+        return (new Long(ret)).toString();
+    }
+    /**
+     * function to convert the sampling interval (6 bits of 23rd byte)
+     *
+     * @return
+     */
+    private long Convert(byte p){
+        long ret = 0;
+        ret = ((ret << 8) & 0xffffffff) + (p & 0x3f);
+        return ret;
     }
     /**
      * Construct a RecordFullText from netFlow attributes
@@ -262,9 +297,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
          .append(dstMask);
          return(recordFullTextBuffer.toString());
       }
-
     }
-
     /**
      * Create RecordAttribute list based on NetFlow attributes.
      * @param srcIp
@@ -324,15 +357,6 @@ public class TSDRNetflowCollectorImpl extends Thread{
         attributeList.add(attributeBuilder.build());
         return attributeList;
     }
-
-    private String convert(byte[] p, int off, int len){
-        long ret = 0;
-        int done = off + len;
-        for (int i = off; i < done; i++){
-            ret = ((ret << 8) & 0xffffffff) + (p[i] & 0xff);
-        }
-        return (new Long(ret)).toString();
-    }
     /**
      * Store the data into TSDR data store
      * @param queue
@@ -343,5 +367,4 @@ public class TSDRNetflowCollectorImpl extends Thread{
         input.setCollectorCodeName("TSDRNetFlowCollector");
         collectorSPIService.insertTSDRLogRecord(input.build());
     }
-
 }
