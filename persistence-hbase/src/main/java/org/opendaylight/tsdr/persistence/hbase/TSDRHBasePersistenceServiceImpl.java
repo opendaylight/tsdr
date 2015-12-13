@@ -29,6 +29,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogreco
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,13 +185,14 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
      */
     public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startTime, long endTime){
         final List<TSDRMetricRecord> resultRecords = new ArrayList<TSDRMetricRecord>();
+        final List<String> substringFilterList = new ArrayList<>(4);
 
         if ( tsdrMetricKey == null ){
             log.error("The tsdr metric key is null");
             return resultRecords;
         }
 
-        //This is a category query
+        //This is getting all data from the hbase table
         if(FormatUtil.isDataCategory(tsdrMetricKey)) {
             List<HBaseEntity> resultEntities = null;
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(tsdrMetricKey, startTime, endTime);
@@ -200,6 +202,8 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
             return resultRecords;
         }else{
 
+            // A valid tsdr metric key does need to contain all the keys but DOES NOT need to contain all the values.
+            // e.g. [NID=][DC=PORTSTATS][MN=][RK=] is a valid metric key
             if(!FormatUtil.isValidTSDRKey(tsdrMetricKey)){
                 log.error("TSDR Key {} is not in the correct format",tsdrMetricKey);
                 return resultRecords;
@@ -207,13 +211,34 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
 
             String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(tsdrMetricKey);
 
+            //The data category is a mandatory key for hbase as it defines the table name.
             if(!FormatUtil.isDataCategory(dataCategory)){
                 log.error("Data Category is unknown {}",dataCategory);
                 return resultRecords;
             }
 
+            //Add filter for node id
+            String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrMetricKey);
+            if(!nodeID.isEmpty()){
+                substringFilterList.add(nodeID);
+            }
+
+            //Add filter for metric name
+            String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrMetricKey);
+            if(!metricName.isEmpty()){
+                substringFilterList.add(metricName);
+            }
+
+            //Add filter for record keys
+            List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrMetricKey);
+            if(!recKeys.isEmpty()){
+                for(RecordKeys recKey:recKeys){
+                    substringFilterList.add(recKey.getKeyValue());
+                }
+            }
+
             List<HBaseEntity> resultEntities = null;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory, startTime, endTime);
+            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory,substringFilterList, startTime, endTime);
             for (HBaseEntity e : resultEntities) {
                 resultRecords.add(getTSDRMetricRecord(e));
             }
@@ -227,15 +252,57 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
      * specified data tsdrLogKey, startTime, and endTime.
      */
     public List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startTime, long endTime){
+        List<HBaseEntity> resultEntities = new ArrayList<>();
+        final List<TSDRLogRecord> resultRecords = new ArrayList<TSDRLogRecord>(resultEntities.size());
+        final List<String> substringFilterList = new ArrayList<>(4);
+
         if ( tsdrLogKey == null ){
             log.error("The data tsdrLogKey is not supported");
-            return null;
+            return resultRecords;
         }
-        List<HBaseEntity> resultEntities = null;
-        resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange
-                (tsdrLogKey,startTime, endTime);
-        List<TSDRLogRecord> resultRecords = new ArrayList<TSDRLogRecord>(resultEntities.size());
-        for(HBaseEntity e:resultEntities){
+
+        //the tsdr log key is just the data category
+        if(FormatUtil.isDataCategory(tsdrLogKey)) {
+            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(tsdrLogKey, startTime, endTime);
+        }else{
+            // A valid tsdr metric key does need to contain all the keys but DOES NOT need to contain all the values.
+            // e.g. [NID=][DC=PORTSTATS][MN=][RK=] is a valid metric key
+            if(!FormatUtil.isValidTSDRKey(tsdrLogKey)){
+                log.error("TSDR Key {} is not in the correct format",tsdrLogKey);
+                return resultRecords;
+            }
+
+            String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(tsdrLogKey);
+
+            //The data category is a mandatory key for hbase as it defines the table name.
+            if(!FormatUtil.isDataCategory(dataCategory)){
+                log.error("Data Category is unknown {}",dataCategory);
+                return resultRecords;
+            }
+
+            //Add filter for node id
+            String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrLogKey);
+            if(!nodeID.isEmpty()){
+                substringFilterList.add(nodeID);
+            }
+
+            //Add filter for metric name
+            String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrLogKey);
+            if(!metricName.isEmpty()){
+                substringFilterList.add(metricName);
+            }
+
+            //Add filter for record keys
+            List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrLogKey);
+            if(!recKeys.isEmpty()){
+                for(RecordKeys recKey:recKeys){
+                    substringFilterList.add(recKey.getKeyValue());
+                }
+            }
+
+            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(tsdrLogKey, substringFilterList, startTime, endTime);
+        }
+        for (HBaseEntity e : resultEntities) {
             resultRecords.add(getTSDRLogRecord(e));
         }
         return resultRecords;
