@@ -9,20 +9,20 @@ package org.opendaylight.tsdr.persistence.cassandra;
 
 import java.util.Date;
 import java.util.List;
-
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceService{
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(TSDRCassandraPersistenceServiceImpl.class);
     private CassandraStore store = null;
 
     public TSDRCassandraPersistenceServiceImpl(){
@@ -63,13 +63,16 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
     }
 
     @Override
-    public void purgeTSDRRecords(DataCategory category, Long retention_time){
-        throw new UnsupportedOperationException("purgeTSDRRecords not yet supported by Cassandra");
+    public void purgeTSDRRecords(DataCategory category, Long retentionTime){
+        LOGGER.info("Execute Purge with Category {} and earlier than {}.",category.name(),new Date(retentionTime));
+        store.purge(category,retentionTime);
     }
 
     @Override
-    public void purgeAllTSDRRecords(Long retention_time){
-        throw new UnsupportedOperationException("purgeAllTSDRRecords not yet supported by Cassandra");
+    public void purgeAllTSDRRecords(Long retentionTime){
+        for(DataCategory dataCategory:DataCategory.values()){
+            store.purge(dataCategory,retentionTime);
+        }
     }
 
     @Override

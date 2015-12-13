@@ -313,4 +313,17 @@ public class CassandraStore {
             try{this.session.close();}catch(Exception err){log.error("Failed to close the cassandra session",err);}
         }
     }
+
+    public void purge(DataCategory category, long retentionTime){
+        String cql1 = "Delete from MetricVal where keyA = ";
+        String cql2 = " and keyB = ";
+        String cql3 = " and timestamp<"+retentionTime;
+        for(MetricPathCacheEntry entry:this.pathCache.values()){
+            if(entry.TSDRDataCategory==category){
+                String cql = cql1 + entry.keyA+cql2+entry.keyB+cql3;
+                session.execute(cql);
+            }
+        }
+    }
+
 }
