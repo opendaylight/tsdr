@@ -89,7 +89,7 @@ public class TSDRPurgeServiceImpl {
                 }
             }
             try {
-                cal.setTime(sdf.parse("date_string"));
+                cal.setTime(sdf.parse(date_string));
             } catch (Exception e) {
                 log.error("Exception while parsing purge time", e);
             }
