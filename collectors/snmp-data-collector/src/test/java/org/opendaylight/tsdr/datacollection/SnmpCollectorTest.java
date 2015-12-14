@@ -72,6 +72,16 @@ public class SnmpCollectorTest {
     //private static AsyncGetHandler getHandler = null;
     private static Future<RpcResult<SnmpGetOutput>> futureSnmpGetOutput = null;
 
+    @Before
+    public void setUp() throws IOException {
+        mockRpcReg = mock(RpcProviderRegistry.class);
+        when(mockRpcReg.addRpcImplementation(eq(SnmpService.class), any(SnmpService.class))).thenReturn(null);
+
+        // GET response
+        mockSnmp = mock(Snmp.class);
+    }
+
+    @Test
     public void testGetInterfacesDataCollection() throws Exception {
         final String baseIFOIB = "1.3.6.1.2.1.2.2.1.";
         final OID ifIndexOID = new OID(baseIFOIB + "1");

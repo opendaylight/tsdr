@@ -30,13 +30,10 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.SetIPCommunityInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.SetPollingIntervalInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfigBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TsdrSnmpDataCollectorService;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.nodeconfigdetails.NodeConfigDetails;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.nodeconfigdetails.NodeConfigDetailsBuilder;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
@@ -70,19 +67,12 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
     private static final long pollingInterval=300000l;
     public SNMPDataCollector(DataBroker _dataBroker,
             RpcProviderRegistry _rpcRegistry) {
-        
         log("TSDR SNMP Collector Started", INFO);
         this.dataBroker = _dataBroker;
         this.rpcRegistry = _rpcRegistry;
 
         TSDRSnmpDataCollectorConfigBuilder b = new TSDRSnmpDataCollectorConfigBuilder();
         b.setPollingInterval(pollingInterval);
-        NodeConfigDetailsBuilder db = new NodeConfigDetailsBuilder();
-        db.setIpAddress(new Ipv4Address("127.0.0.1"));
-        db.setCommunity("public");
-        ArrayList<NodeConfigDetails> list =new ArrayList<NodeConfigDetails>();
-        list.add(db.build());
-        b.setNodeConfigDetails(list);
         this.config = b.build();
         new TSDRSNMPInterfacePoller(this);
         new StoringThread();
@@ -409,17 +399,6 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
         TSDRSnmpDataCollectorConfigBuilder builder = new TSDRSnmpDataCollectorConfigBuilder();
         builder.setPollingInterval(input.getInterval());
         this.config = builder.build();
-        saveConfigData();
-        RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
-        return rpc.buildFuture();
-    }
-
-    @Override
-    public Future<RpcResult<Void>> setIPCommunity(SetIPCommunityInput input) {
-        TSDRSnmpDataCollectorConfigBuilder tbuilder = new TSDRSnmpDataCollectorConfigBuilder();
-        tbuilder.setNodeConfigDetails(input.getNodeConfigDetails());
-        tbuilder.setPollingInterval(this.config.getPollingInterval());
-        this.config = tbuilder.build();
         saveConfigData();
         RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
         return rpc.buildFuture();

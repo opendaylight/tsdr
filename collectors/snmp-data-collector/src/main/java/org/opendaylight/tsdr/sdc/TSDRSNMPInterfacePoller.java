@@ -7,10 +7,10 @@
  */
 package org.opendaylight.tsdr.sdc;
 
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.nodeconfigdetails.NodeConfigDetails;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
 import org.opendaylight.yangtools.yang.common.RpcResult;
-
+import java.util.Dictionary;
+import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev100924.Ipv4Address;
 /**
  * @author Prajaya Talwar(prajaya.talwar@tcs.com)
  **/
@@ -30,12 +30,12 @@ public class TSDRSNMPInterfacePoller extends Thread {
     public void run() {
         while (collector.isRunning()) {
             //Call handle method of TSDR SNMP Collector
-
-          for (NodeConfigDetails det: collector.getConfigData().getNodeConfigDetails()){
-          RpcResult<GetInterfacesOutput> result = null;
-                      result = collector.loadGetInterfacesData(det.getIpAddress(),det.getCommunity());
-                      collector.insertInterfacesEntries(det.getIpAddress(),result);
-               }
+             Dictionary<String, Object> configuration = TSDRSNMPConfig.getInstance().getConfiguration();
+             Ipv4Address ip = new Ipv4Address(configuration.get(TSDRSNMPConfig.P_HOST).toString());
+             String community = configuration.get(TSDRSNMPConfig.P_COMMUNITY).toString();
+             RpcResult<GetInterfacesOutput> result = null;
+             result = collector.loadGetInterfacesData(ip,community);
+             collector.insertInterfacesEntries(ip,result);
 
             synchronized(this.collector){
                 this.collector.notifyAll();

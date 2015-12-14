@@ -35,26 +35,13 @@ module tsdr-snmp-data-collector {
             base config:module-type;
             config:java-name-prefix TSDRSnmpDataCollector;
     }
-    grouping NodeConfigDetails{
-         list NodeConfigDetails {
-         key "ip-address";
-         unique "ip-address";
-       leaf ip-address{
-          type inet:ipv4-address;
-       }
-       leaf community{
-          type string;
-       }
-     }
-    
-    
-    }
+
     container TSDRSnmpDataCollectorConfig{
        leaf polling-interval{
           type int64;
        }
-       uses NodeConfigDetails;
      }
+
     augment "/config:modules/config:module/config:configuration" {
                 case tsdr-snmp-data-collector {
                     when "/config:modules/config:module/config:type = 'tsdr-snmp-data-collector'";
@@ -87,12 +74,4 @@ module tsdr-snmp-data-collector {
             }
         }
     }
-
-   rpc setIPCommunity  {
-        description
-          "set ip and community string";
-        input {
-           uses NodeConfigDetails;
-  }
-}
 }
