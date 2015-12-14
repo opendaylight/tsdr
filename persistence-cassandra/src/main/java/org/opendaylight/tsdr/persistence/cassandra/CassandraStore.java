@@ -19,12 +19,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
+import org.opendaylight.tsdr.spi.util.TSDRKeyCache;
+import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRCacheEntry;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
@@ -44,7 +45,7 @@ public class CassandraStore {
     private String host = null;
     private int replication_factor = 1;
     private Logger log = LoggerFactory.getLogger(CassandraStore.class);
-    private Map<String,MetricPathCacheEntry> pathCache = new HashMap<String,MetricPathCacheEntry>();
+    private TSDRKeyCache cache = new TSDRKeyCache();
 
     public CassandraStore(){
         log.info("Connecting to Cassandra...");
@@ -117,14 +118,8 @@ public class CassandraStore {
     }
 
     private void createTSDRTables(){
-        String cql = "CREATE TABLE MetricPath ("+
-                        "TSDRDataCategory text,"+
-                        "NodeID text,"+
-                        "MetricName text,"+
-                        "KeyA bigint,"+
-                        "KeyB bigint,"+
-                        "KeyPath text,"+
-                        "PRIMARY KEY (KeyPath))";
+        String cql = "CREATE TABLE MetricPath (keyPath text,"+
+                "PRIMARY KEY (KeyPath))";
         this.session.execute(cql);
         cql = "CREATE TABLE MetricVal ("+
                   "KeyA bigint, "+
@@ -145,32 +140,23 @@ public class CassandraStore {
 
     public void store(TSDRMetricRecord mr){
         //create metric key
-        String tsdrMetricKey = FormatUtil.getTSDRMetricKey(mr);
-        MD5Identifier ID = null;
-        MetricPathCacheEntry entry = pathCache.get(tsdrMetricKey);
+        String tsdrKey = FormatUtil.getTSDRMetricKey(mr);
+        TSDRCacheEntry cacheEntry = cache.getCacheEntry(tsdrKey);
 
         //if it does not exist, create it
-        if(entry==null){
-            ID = new MD5Identifier(tsdrMetricKey.getBytes());
+        if(cacheEntry==null){
+            cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
             StringBuilder cql = new StringBuilder();
-            cql.append("insert into MetricPath (TSDRDataCategory,NodeID,MetricName,KeyPath,KeyA,KeyB) values(");
-            cql.append("'").append(mr.getTSDRDataCategory().toString()).append("',");
-            cql.append("'").append(mr.getNodeID()).append("',");
-            cql.append("'").append(mr.getMetricName()).append("',");
-            cql.append("'").append(tsdrMetricKey).append("',");
-            cql.append(ID.getA()).append(",");
-            cql.append(ID.getB());
+            cql.append("insert into MetricPath (KeyPath) values(");
+            cql.append("'").append(cacheEntry.getTsdrKey()).append("'");
             cql.append(")");
             session.execute(cql.toString());
-            this.pathCache.put(tsdrMetricKey, new MetricPathCacheEntry(ID.getA(),ID.getB(), mr.getTSDRDataCategory(), mr.getNodeID(), mr.getMetricName()));
-        }else{
-            ID = new MD5Identifier(entry.keyA,entry.keyB);
         }
 
         StringBuilder cql = new StringBuilder();
         cql.append("insert into MetricVal (KeyA,KeyB,Time,value) values(");
-        cql.append(ID.getA()).append(",");
-        cql.append(ID.getB()).append(",");
+        cql.append(cacheEntry.getMd5ID().getMd5Long1()).append(",");
+        cql.append(cacheEntry.getMd5ID().getMd5Long2()).append(",");
         cql.append(mr.getTimeStamp()).append(",");
         cql.append(mr.getMetricValue()).append(")");
         session.execute(cql.toString());
@@ -178,71 +164,65 @@ public class CassandraStore {
 
     public void store(TSDRLogRecord lr){
         //create log key
-        String logID = FormatUtil.getTSDRLogKey(lr);
-        MD5Identifier ID = null;
-        MetricPathCacheEntry entry = pathCache.get(logID);
-
+        String tsdrKey = FormatUtil.getTSDRLogKey(lr);
+        TSDRCacheEntry cacheEntry = cache.getCacheEntry(tsdrKey);
         //if it does not exist, create it
-        if(entry==null){
-            ID = new MD5Identifier(logID.getBytes());
+        if(cacheEntry==null){
+            cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
             StringBuilder cql = new StringBuilder();
-            cql.append("insert into MetricPath (TSDRDataCategory,NodeID,KeyPath,KeyA,KeyB) values(");
-            cql.append("'").append(lr.getTSDRDataCategory().toString()).append("',");
-            cql.append("'").append(lr.getNodeID()).append("',");
-            cql.append("'").append(logID).append("',");
-            cql.append(ID.getA()).append(",");
-            cql.append(ID.getB());
+            cql.append("insert into MetricPath (KeyPath) values(");
+            cql.append("'").append(cacheEntry.getTsdrKey()).append("',");
             cql.append(")");
             session.execute(cql.toString());
-            this.pathCache.put(logID, new MetricPathCacheEntry(ID.getA(),ID.getB(), lr.getTSDRDataCategory(), lr.getNodeID(), null));
-        }else{
-            ID = new MD5Identifier(entry.keyA,entry.keyB);
         }
 
         StringBuilder cql = new StringBuilder();
         cql.append("insert into MetricLog (KeyA,KeyB,Time,xIndex,value) values(");
-        cql.append(ID.getA()).append(",");
-        cql.append(ID.getB()).append(",");
+        cql.append(cacheEntry.getMd5ID().getMd5Long1()).append(",");
+        cql.append(cacheEntry.getMd5ID().getMd5Long2()).append(",");
         cql.append(lr.getTimeStamp()).append(",");
         cql.append(lr.getIndex()).append(",'");
         cql.append(lr.getRecordFullText()).append("')");
         session.execute(cql.toString());
     }
 
-    public List<?> get100Records(){
-        ResultSet rs = session.execute("select * from MetricVal limit 100");
-        List<String> arrayList = new ArrayList<>();
-        for(Row r:rs.all()){
-            long key = r.getLong("Key");
-            long time = r.getLong("Time");
-            double value = r.getDouble("value");
-            MetricPathCacheEntry entry = pathCache.get(key);
-            arrayList.add(entry.toString(time, value));
-        }
-        return arrayList;
-    }
-
-    public List<TSDRMetricRecord> getMetrics(String tsdrMetricKey, long startDateTime, long endDateTime) {
-        MetricPathCacheEntry entry = this.pathCache.get(tsdrMetricKey);
-        List<TSDRMetricRecord> result = new LinkedList<TSDRMetricRecord>();
+    public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime) {
+        List<TSDRCacheEntry> entries = new ArrayList<>();
+        TSDRCacheEntry entry = this.cache.getCacheEntry(tsdrMetricKey);
+        //Exact match was found
         if(entry!=null){
-            String cql = "select * from MetricVal where KeyA="+entry.keyA+" and KeyB="+entry.keyB+" and Time>="+startDateTime+" and Time<="+endDateTime;
+            entries.add(entry);
+        }else{
+            entries = this.cache.findMatchingTSDRCacheEntries(tsdrMetricKey);
+        }
+
+        List<TSDRMetricRecord> result = new LinkedList<TSDRMetricRecord>();
+        for(TSDRCacheEntry e:entries) {
+            String cql = "select * from MetricVal where KeyA=" + e.getMd5ID().getMd5Long1() + " and KeyB=" + e.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
             ResultSet rs = session.execute(cql);
-            for(Row r:rs.all()){
-                result.add(getTSDRMetricRecord(r.getLong("Time"), r.getDouble("value"),entry,tsdrMetricKey));
+            for (Row r : rs.all()) {
+                result.add(getTSDRMetricRecord(r.getLong("Time"), r.getDouble("value"), e));
             }
         }
         return result;
     }
 
-    public List<TSDRLogRecord> getLogs(String tsdrLogKey, long startDateTime, long endDateTime) {
-        MetricPathCacheEntry entry = this.pathCache.get(tsdrLogKey);
-        List<TSDRLogRecord> result = new LinkedList<TSDRLogRecord>();
+    public List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startDateTime, long endDateTime) {
+        List<TSDRCacheEntry> entries = new ArrayList<>();
+        TSDRCacheEntry entry = this.cache.getCacheEntry(tsdrLogKey);
+        //Exact match was found
         if(entry!=null){
-            String cql = "select * from MetricLog where KeyA="+entry.keyA+" and KeyB="+entry.keyB+" and Time>="+startDateTime+" and Time<="+endDateTime;
+            entries.add(entry);
+        }else{
+            entries = this.cache.findMatchingTSDRCacheEntries(tsdrLogKey);
+        }
+
+        List<TSDRLogRecord> result = new LinkedList<TSDRLogRecord>();
+        for(TSDRCacheEntry e:entries) {
+            String cql = "select * from MetricLog where KeyA=" + e.getMd5ID().getMd5Long1() + " and KeyB=" + e.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
             ResultSet rs = session.execute(cql);
-            for(Row r:rs.all()){
-                result.add(getTSDRLogRecord(r.getLong("Time"), r.getString("value"),r.getInt("xIndex"),entry,tsdrLogKey));
+            for (Row r : rs.all()) {
+                result.add(getTSDRLogRecord(r.getLong("Time"), r.getString("value"), r.getInt("xIndex"), e));
             }
         }
         return result;
@@ -251,23 +231,23 @@ public class CassandraStore {
     private static final List<RecordKeys> EMPTY_RECORD_KEYS = new ArrayList<>();
     private static final List<RecordAttributes> EMPTY_RECORD_ATTRIBUTES = new ArrayList<>();
 
-    private static final TSDRMetricRecord getTSDRMetricRecord(long time, double value, MetricPathCacheEntry entry,String tsdrMetricKey){
+    private static final TSDRMetricRecord getTSDRMetricRecord(long time, double value, TSDRCacheEntry entry){
         TSDRMetricRecordBuilder rb = new TSDRMetricRecordBuilder();
-        rb.setMetricName(entry.MetricName);
+        rb.setMetricName(entry.getMetricName());
         rb.setMetricValue(new BigDecimal(value));
-        rb.setNodeID(entry.NodeID);
-        rb.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(tsdrMetricKey));
+        rb.setNodeID(entry.getNodeID());
+        rb.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(entry.getTsdrKey()));
         rb.setTimeStamp(time);
-        rb.setTSDRDataCategory(entry.TSDRDataCategory);
+        rb.setTSDRDataCategory(entry.getDataCategory());
         return rb.build();
     }
 
-    private static final TSDRLogRecord getTSDRLogRecord(long time,String value,int index,MetricPathCacheEntry entry,String tdsrLogKey){
+    private static final TSDRLogRecord getTSDRLogRecord(long time,String value,int index,TSDRCacheEntry entry){
         TSDRLogRecordBuilder lb = new TSDRLogRecordBuilder();
-        lb.setTSDRDataCategory(entry.TSDRDataCategory);
+        lb.setTSDRDataCategory(entry.getDataCategory());
         lb.setTimeStamp(time);
-        lb.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(tdsrLogKey));
-        lb.setNodeID(entry.NodeID);
+        lb.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(entry.getTsdrKey()));
+        lb.setNodeID(entry.getNodeID());
         lb.setIndex(index);
         lb.setRecordAttributes(null);
         lb.setRecordFullText(value);
@@ -277,34 +257,8 @@ public class CassandraStore {
     private void loadPathCache(){
         ResultSet rs = session.execute("select * from MetricPath limit 100000");
         for(Row r:rs.all()){
-            this.pathCache.put(r.getString("KeyPath"), new MetricPathCacheEntry(r.getLong("KeyA"),r.getLong("KeyB"), DataCategory.valueOf(r.getString("TSDRDataCategory")),
-                                 r.getString("NodeID"),r.getString("MetricName")));
-        }
-    }
-
-    private class MetricPathCacheEntry {
-        private long keyA = -1;
-        private long keyB = -1;
-        private DataCategory TSDRDataCategory = null;
-        private String NodeID = null;
-        private String MetricName = null;
-
-        public MetricPathCacheEntry(long _keyA,long _keyB, DataCategory _category, String _nodeid, String _metricName){
-            this.keyA = _keyA;
-            this.keyB = _keyB;
-            this.TSDRDataCategory = _category;
-            this.NodeID = _nodeid;
-            this.MetricName = _metricName;
-        }
-
-        public String toString(long time,double value){
-            StringBuilder sb = new StringBuilder("|");
-            sb.append(TSDRDataCategory.toString()).append("|");
-            sb.append(NodeID).append("|");
-            sb.append(MetricName).append("|");
-            sb.append(new Date(time)).append("|");
-            sb.append(value).append("|");
-            return sb.toString();
+            String tsdrKey = r.getString("KeyPath");
+            this.cache.addTSDRCacheEntry(tsdrKey);
         }
     }
 
@@ -318,9 +272,9 @@ public class CassandraStore {
         String cql1 = "Delete from MetricVal where keyA = ";
         String cql2 = " and keyB = ";
         String cql3 = " and timestamp<"+retentionTime;
-        for(MetricPathCacheEntry entry:this.pathCache.values()){
-            if(entry.TSDRDataCategory==category){
-                String cql = cql1 + entry.keyA+cql2+entry.keyB+cql3;
+        for(TSDRCacheEntry entry:this.cache.getAll()){
+            if(entry.getDataCategory()==category){
+                String cql = cql1 + entry.getMd5ID().getMd5Long1()+cql2+entry.getMd5ID().getMd5Long2()+cql3;
                 session.execute(cql);
             }
         }

@@ -77,11 +77,11 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
 
     @Override
     public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime) {
-        return store.getMetrics(tsdrMetricKey,startDateTime,endDateTime);
+        return store.getTSDRMetricRecords(tsdrMetricKey,startDateTime,endDateTime);
     }
 
     @Override
     public List<TSDRLogRecord> getTSDRLogRecords(String tsdrMetricKey, long startTime, long endTime) {
-        return store.getLogs(tsdrMetricKey,startTime,endTime);
+        return store.getTSDRLogRecords(tsdrMetricKey,startTime,endTime);
     }
 }
