@@ -31,7 +31,6 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.PageFilter;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -458,14 +457,25 @@ public class HBaseDataStore  {
          return resultEntityList;
      }
 
+    /**
+     * Retrieve data by the specified tableName, start timestamp, and end timestamp.
+     * @param tableName - table name
+     * @param startTime - start time
+     * @param endTime - end time
+     * @return a list of hbase entity
+     */
+     public List<HBaseEntity> getDataByTimeRange(String tableName,long startTime, long endTime) {
+         return getDataByTimeRange(tableName,null,startTime,endTime);
+     }
      /**
       * Retrieve data by the specified tableName, start timestamp, and end timestamp.
       * @param tableName - table name
+      * @param filters - the substring filter
       * @param startTime - start time
       * @param endTime - end time
       * @return a list of hbase entity
       */
-     public List<HBaseEntity> getDataByTimeRange(String tableName, long startTime, long endTime){
+     public List<HBaseEntity> getDataByTimeRange(String tableName,List<String> filters,long startTime, long endTime){
             List<HBaseEntity> resultEntityList=new ArrayList<HBaseEntity>();
             Scan scan =new Scan();
             HTableInterface htable = null;
@@ -474,12 +484,50 @@ public class HBaseDataStore  {
                     if ( startTime != 0 && endTime != 0){
                         scan.setTimeRange(startTime, endTime);
                     }
+                    /*
+                        This is the proper code to use to filter the data, undortunatly I am getting a NoClassDefFound issue on FilterList
+
+                    if(filters!=null && !filters.isEmpty()){
+                        FilterList filterList = new FilterList();
+                        filterList.addFilter(new PageFilter(TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS));
+                        for(String filter:filters){
+                            filterList.addFilter(new SingleColumnValueFilter(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME.getBytes(),
+                                    TSDRHBaseDataStoreConstants.COLUMN_QUALIFIER_NAME.getBytes(), CompareFilter.CompareOp.EQUAL,
+                                    new SubstringComparator(filter)));
+
+                        }
+                        scan.setFilter(filterList);
+                    }else
+                    */
                     scan.setFilter(new PageFilter(TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS));
                     scan.setCaching(TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS);
                     htable=getConnection(tableName);
                     rs = htable.getScanner(scan);
                     int count = 0;
                     for (Result currentResult = rs.next(); currentResult != null; currentResult = rs.next()) {
+                        /*
+                            This is an improper way for doing this as it void all the hbase capabilities in scaling!!!
+                            However as I was not able to use HBase FilterList due to missing dependency, I had to resolve
+                            to using this method to satisfy fetching a single metric.
+                            We need to find a way to instantiate FilterList and install SubstringFilter inside it so we could put it
+                            in the scan and allow hbase agents to filter the data.
+                         */
+                        if(filters!=null && !filters.isEmpty()){
+                            String rowKey = Bytes.toString(currentResult.getRow());
+                            boolean doesFitFilter = true;
+                            for(String filter:filters){
+                                if(rowKey.indexOf(filter)==-1){
+                                    doesFitFilter = false;
+                                    break;
+                                }
+                            }
+                            if(!doesFitFilter){
+                                continue;
+                            }
+                        }
+                        /*
+                            End of improper method.
+                         */
                         if ( count++ < TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS){
                             resultEntityList.add(convertResultToEntity(tableName, currentResult));
                         }
@@ -499,50 +547,6 @@ public class HBaseDataStore  {
             return resultEntityList;
 
      }
-
-    /**
-     * Retrieve data by the specified tsdrMetricKey, start timestamp, and end timestamp.
-     * @param tsdrMetricKey - metric id
-     * @param startTime - start time
-     * @param endTime - end time
-     * @return - a list of hbase entry
-     */
-   /* public List<HBaseEntity> getMetricDataByTimeRange(String tsdrMetricKey, long startTime, long endTime){
-        List<HBaseEntity> resultEntityList=new ArrayList<HBaseEntity>();
-        Scan scan =new Scan();
-        HTableInterface htable = null;
-        ResultScanner rs=null;
-        try {
-            if ( startTime != 0 && endTime != 0){
-                scan.setTimeRange(startTime, endTime);
-            }
-            String tableName = FormatUtil.getDataCategoryFromTSDRKey(tsdrMetricKey);
-            htable=getConnection(tableName);
-            rs = htable.getScanner(scan);
-            int count = 0;
-            for (Result currentResult = rs.next(); currentResult != null; currentResult = rs.next()) {
-                String rowKey = Bytes.toString(currentResult.getRow());
-                if(rowKey.indexOf(tsdrMetricKey)!=-1) {
-                    if (count++ < TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS) {
-                        resultEntityList.add(convertResultToEntity(tableName, currentResult));
-                    }
-                }
-            }
-        } catch (IOException ioe) {
-            log.error("Scanner error", ioe);
-        } catch (Exception e) {
-            log.error("Scanner error", e);
-        }finally{
-
-            if (rs!=null){
-                rs.close();
-                rs=null;
-            }
-            closeConnection(htable);
-        }
-        return resultEntityList;
-
-    }*/
 
      /**
       * Delete records from hbase data store based on tableName and timestamp.
