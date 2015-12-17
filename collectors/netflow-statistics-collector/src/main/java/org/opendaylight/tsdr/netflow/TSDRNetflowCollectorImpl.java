@@ -44,6 +44,8 @@ public class TSDRNetflowCollectorImpl extends Thread{
     private long lastPersisted = System.currentTimeMillis();
     private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 5000;
     private static final long INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS = 2000;
+    private long lastTimeStamp = System.currentTimeMillis();
+    private int logRecordIndex = 0;
 
     /**
      * Constructor
@@ -52,6 +54,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
     public TSDRNetflowCollectorImpl(TsdrCollectorSpiService _collectorSPIService){
         super("TSDR NetFlow Listener");
         this.setDaemon(true);
+        logRecordIndex = 0;
         this.collectorSPIService = _collectorSPIService;
         incomingNetFlow = new LinkedList<DatagramPacket>();
         try
@@ -164,7 +167,15 @@ public class TSDRNetflowCollectorImpl extends Thread{
                         /*Fill up the RecordBuilder object*/
                         TSDRLogRecordBuilder recordbuilder = new TSDRLogRecordBuilder();
                         recordbuilder.setNodeID(srcIp);
-                        recordbuilder.setTimeStamp(System.currentTimeMillis());
+                        recordbuilder.setTimeStamp(lastTimeStamp);
+                        long currentTimeStamp = System.currentTimeMillis();
+                        if(lastTimeStamp == currentTimeStamp){
+                            recordbuilder.setIndex(logRecordIndex++);
+                        }else{
+                            logRecordIndex = 0;
+                            recordbuilder.setIndex(logRecordIndex);
+                        }
+                        lastTimeStamp = currentTimeStamp;
                         recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
                         recordbuilder.setRecordFullText(recordFullText);
                         logger.debug(recordFullText);
@@ -219,7 +230,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
         for (int i = off; i < done; i++){
             ret = ((ret << 8) & 0xffffffff) + (p[i] & 0xff);
         }
-        return (new Long(ret)).toString();
+    return (new Long(ret)).toString();
     }
     /**
      * function to convert the sampling interval (6 bits of 23rd byte)
