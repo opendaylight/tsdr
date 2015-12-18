@@ -8,17 +8,20 @@
 
 package org.opendaylight.controller.config.yang.config.TSDR_datapurge.impl;
 
-import org.opendaylight.controller.config.spi.Module;
-import org.opendaylight.controller.sal.binding.api.BindingAwareBroker;
+import java.util.Hashtable;
+import org.opendaylight.tsdr.datapurge.TSDRDataPurgeConfig;
 import org.opendaylight.tsdr.datapurge.TSDRPurgeServiceImpl;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TSDRDatapurgeModule extends org.opendaylight.controller.config.yang.config.TSDR_datapurge.impl.AbstractTSDRDatapurgeModule {
- private static final Logger log = LoggerFactory
-        .getLogger(TSDRDatapurgeModule.class);
+    private static final Logger log = LoggerFactory.getLogger(TSDRDatapurgeModule.class);
+    private BundleContext bundleContext = null;
 
-public TSDRDatapurgeModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver) {
+    public TSDRDatapurgeModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver) {
         super(identifier, dependencyResolver);
     }
 
@@ -40,6 +43,7 @@ public TSDRDatapurgeModule(org.opendaylight.controller.config.api.ModuleIdentifi
     public java.lang.AutoCloseable createInstance() {
         log.debug("TSDR Purge Entering createIntance()");
 
+        registerConfiguration();
         final TSDRPurgeServiceImpl tsdrPurgeServiceImpl = new TSDRPurgeServiceImpl(getDataBrokerDependency(), getRpcRegistryDependency());
 
         /*
@@ -60,5 +64,15 @@ public TSDRDatapurgeModule(org.opendaylight.controller.config.api.ModuleIdentifi
         AutoCloseable ret = new CloseResources();
         log.info("TSDRDataPurge (instance {}) initialized.", ret);
         return ret;
+    }
+
+    public void setBundleContext(BundleContext b){
+        this.bundleContext = b;
+    }
+
+    private  void registerConfiguration(){
+        Hashtable<String, String> properties = new Hashtable<String, String>();
+        properties.put(Constants.SERVICE_PID, "tsdr.data.purge");
+        bundleContext.registerService(ManagedService.class.getName(), TSDRDataPurgeConfig.getInstance() , properties);
     }
 }

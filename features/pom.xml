@@ -151,6 +151,13 @@
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-datapurge</artifactId>
+          <version>${tsdr.project.version}</version>
+          <type>cfg</type>
+          <classifier>config1</classifier>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-collector-spi</artifactId>
           <version>${tsdr.project.version}</version>
       </dependency>

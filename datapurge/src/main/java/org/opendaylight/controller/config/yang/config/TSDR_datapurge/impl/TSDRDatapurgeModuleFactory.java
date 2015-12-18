@@ -16,6 +16,22 @@
 * Do not modify this file unless it is present under src/main directory
 */
 package org.opendaylight.controller.config.yang.config.TSDR_datapurge.impl;
-public class TSDRDatapurgeModuleFactory extends org.opendaylight.controller.config.yang.config.TSDR_datapurge.impl.AbstractTSDRDatapurgeModuleFactory {
 
+import org.opendaylight.controller.config.api.DependencyResolver;
+import org.osgi.framework.BundleContext;
+
+public class TSDRDatapurgeModuleFactory extends org.opendaylight.controller.config.yang.config.TSDR_datapurge.impl.AbstractTSDRDatapurgeModuleFactory {
+    @Override
+    public TSDRDatapurgeModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, TSDRDatapurgeModule oldModule, AutoCloseable oldInstance, BundleContext bundleContext) {
+        TSDRDatapurgeModule module = super.instantiateModule(instanceName, dependencyResolver, oldModule, oldInstance, bundleContext);
+        module.setBundleContext(bundleContext);
+        return module;
+    }
+
+    @Override
+    public TSDRDatapurgeModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, BundleContext bundleContext) {
+        TSDRDatapurgeModule module = super.instantiateModule(instanceName, dependencyResolver, bundleContext);
+        module.setBundleContext(bundleContext);
+        return module;
+    }
 }

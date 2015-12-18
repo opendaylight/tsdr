@@ -88,20 +88,14 @@
         <feature version='${yangtools.version}'>odl-yangtools-common</feature>
         <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
         <feature version='${model.flow.statistics}'>odl-openflowplugin-nsf-model</feature>
-
-<!--
-        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-configuration/${project.version}</bundle>
-        <configfile finalname="${config.configfile.directory}/145-TSDR-configuration.xml">mvn:org.opendaylight.tsdr/${artifactName}-configuration/${project.version}/xml/config</configfile>
-        <configfile finalname="/etc/tsdr.cfg">mvn:org.opendaylight.tsdr/${artifactName}-configuration/${project.version}/cfg/config-1</configfile>
-        -->
-
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}</bundle>
-        <configfile finalname="${config.configfile.directory}/145-TSDR-collector-spi-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}/xml/config</configfile>        
+        <configfile finalname="${config.configfile.directory}/145-TSDR-collector-spi-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}/xml/config</configfile>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/150-TSDR-datastorage-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datastorage/${project.version}/xml/config</configfile>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-datapurge/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/152-TSDR-datapurge-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-datapurge/${project.version}/xml/config</configfile>
+        <configfile finalname="etc/tsdr.data.purge.cfg">mvn:org.opendaylight.tsdr/${artifactName}-datapurge/${project.version}/cfg/config1</configfile>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/145-TSDR-collector-spi-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}/xml/config</configfile>
         <feature version='${mdsal.version}'>odl-restconf</feature>

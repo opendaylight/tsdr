@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
+import org.opendaylight.tsdr.datapurge.TSDRDataPurgeConfig;
 import org.opendaylight.tsdr.datapurge.TSDRPurgeServiceImpl;
 
 /**
@@ -39,9 +40,8 @@ public class TSDRPurgeImplTest {
 
     @Test
     public void testPurgeScheduling() {
-
-        purgeService = new TSDRPurgeServiceImpl(this.dataBroker,
-            this.rpcRegistry);
+        TSDRDataPurgeConfig.getInstance().getConfiguration().put("data_purge_enabled","true");
+        purgeService = new TSDRPurgeServiceImpl(this.dataBroker, this.rpcRegistry);
         assertTrue(purgeService.isRunning());
     }
 
