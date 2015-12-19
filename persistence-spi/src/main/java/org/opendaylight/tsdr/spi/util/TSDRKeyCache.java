@@ -81,6 +81,9 @@ public class TSDRKeyCache {
                         break;
                     }
                 }
+                if(!fitCriteria){
+                    continue;
+                }
             }
             result.add(e);
         }
