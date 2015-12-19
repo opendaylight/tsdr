@@ -83,9 +83,9 @@
                                     <classifier>config</classifier>
                                 </artifact>
                                 <artifact>
-                                    <file>${project.build.directory}/classes/configuration/initial/tsdr-snmp.cfg</file>
+                                    <file>${project.build.directory}/classes/configuration/initial/tsdr.snmp.cfg</file>
                                     <type>cfg</type>
-                                    <classifier>config-1</classifier>
+                                    <classifier>config1</classifier>
                                 </artifact>
                             </artifacts>
                         </configuration>

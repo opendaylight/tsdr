@@ -39,10 +39,10 @@ public class TSDRSnmpDataCollectorModule extends org.opendaylight.controller.con
 
     @Override
     public java.lang.AutoCloseable createInstance() {
-        logger.info("SNMP Data Collector started!");
+        registerConfiguration();
         snmpCollector = new SNMPDataCollector(getDataBrokerDependency(),getRpcRegistryDependency());
         getRpcRegistryDependency().addRpcImplementation(TsdrSnmpDataCollectorService.class, snmpCollector);
-        registerConfiguration();
+        logger.info("SNMP Data Collector started!");
 
         return new AutoCloseable() {
             @Override
@@ -60,7 +60,7 @@ public class TSDRSnmpDataCollectorModule extends org.opendaylight.controller.con
 
     private  void registerConfiguration(){
         Hashtable<String, String> properties = new Hashtable<String, String>();
-        properties.put(Constants.SERVICE_PID, "tsdr-snmp");
+        properties.put(Constants.SERVICE_PID, "tsdr.snmp");
         bundleContext.registerService(ManagedService.class.getName(), TSDRSNMPConfig.getInstance() , properties);
     }
 }
