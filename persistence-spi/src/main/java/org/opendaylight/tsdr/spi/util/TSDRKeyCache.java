@@ -7,18 +7,12 @@
  */
 package org.opendaylight.tsdr.spi.util;
 
-import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.eclipse.xtend.lib.annotations.Data;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.RecordKey;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 
 /**
@@ -70,19 +64,19 @@ public class TSDRKeyCache {
         List<TSDRCacheEntry> result = new ArrayList<>();
 
         for(TSDRCacheEntry e:this.cache.values()){
-            if(dataCategory!=null && tsdrKey.indexOf(dataCategory)==-1){
+            if(dataCategory!=null && e.getTsdrKey().indexOf(dataCategory)==-1){
                 continue;
             }
-            if(nodeID!=null && tsdrKey.indexOf(nodeID)==-1){
+            if(nodeID!=null && e.getTsdrKey().indexOf(nodeID)==-1){
                 continue;
             }
-            if(metricName!=null && tsdrKey.indexOf(metricName)==-1){
+            if(metricName!=null && e.getTsdrKey().indexOf(metricName)==-1){
                 continue;
             }
             if(recKeys!=null){
                 boolean fitCriteria = true;
                 for(RecordKeys r:recKeys){
-                    if(tsdrKey.indexOf(r.getKeyName())==-1 || tsdrKey.indexOf(r.getKeyValue())==-1){
+                    if(e.getTsdrKey().indexOf(r.getKeyName())==-1 || e.getTsdrKey().indexOf(r.getKeyValue())==-1){
                         fitCriteria = false;
                         break;
                     }
