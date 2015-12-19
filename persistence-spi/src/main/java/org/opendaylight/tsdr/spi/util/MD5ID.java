@@ -28,7 +28,7 @@ public class MD5ID {
 
     private final long md5Long1;
     private final long md5Long2;
-    private byte[] by = null;
+    private byte[] hashByteArray = null;
 
     static {
         if (md == null) {
@@ -53,9 +53,9 @@ public class MD5ID {
     }
 
     /**
-      This constructor is calculating two longs that represent the MD5 hashing of the input byte array.
-      @param byteArray - A byte array to be hashed or an already hashed byte array.
-      @param alreadyHashed - If the byte array is already hashed, don't hash it again.
+     This constructor is calculating two longs that represent the MD5 hashing of the input byte array.
+     @param byteArray - A byte array to be hashed or an already hashed byte array.
+     @param alreadyHashed - If the byte array is already hashed, don't hash it again.
      **/
     private MD5ID(byte byteArray[],boolean alreadyHashed) {
 
@@ -63,31 +63,33 @@ public class MD5ID {
             try {
                 writeLock.lock();
                 md.update(byteArray);
-                by = md.digest();
+                hashByteArray = md.digest();
             } finally {
                 writeLock.unlock();
             }
+        }else{
+            hashByteArray = byteArray;
         }
 
         //Calculate the two longs
-        long md5Long1 = (0 << 8) + (by[0] & 0xff);
-        md5Long1 = (md5Long1 << 8) + (by[1] & 0xff);
-        md5Long1 = (md5Long1 << 8) + (by[2] & 0xff);
-        md5Long1 = (md5Long1 << 8) + (by[3] & 0xff);
-        md5Long1 = (md5Long1 << 8) + (by[4] & 0xff);
-        md5Long1 = (md5Long1 << 8) + (by[5] & 0xff);
-        md5Long1 = (md5Long1 << 8) + (by[6] & 0xff);
-        md5Long1 = (md5Long1 << 8) + (by[7] & 0xff);
+        long md5Long1 = (0 << 8) + (hashByteArray[0] & 0xff);
+        md5Long1 = (md5Long1 << 8) + (hashByteArray[1] & 0xff);
+        md5Long1 = (md5Long1 << 8) + (hashByteArray[2] & 0xff);
+        md5Long1 = (md5Long1 << 8) + (hashByteArray[3] & 0xff);
+        md5Long1 = (md5Long1 << 8) + (hashByteArray[4] & 0xff);
+        md5Long1 = (md5Long1 << 8) + (hashByteArray[5] & 0xff);
+        md5Long1 = (md5Long1 << 8) + (hashByteArray[6] & 0xff);
+        md5Long1 = (md5Long1 << 8) + (hashByteArray[7] & 0xff);
         this.md5Long1 = md5Long1;
 
-        long md5Long2 = (0 << 8) + (by[8] & 0xff);
-        md5Long2 = (md5Long2 << 8) + (by[9] & 0xff);
-        md5Long2 = (md5Long2 << 8) + (by[10] & 0xff);
-        md5Long2 = (md5Long2 << 8) + (by[11] & 0xff);
-        md5Long2 = (md5Long2 << 8) + (by[12] & 0xff);
-        md5Long2 = (md5Long2 << 8) + (by[13] & 0xff);
-        md5Long2 = (md5Long2 << 8) + (by[14] & 0xff);
-        md5Long2 = (md5Long2 << 8) + (by[15] & 0xff);
+        long md5Long2 = (0 << 8) + (hashByteArray[8] & 0xff);
+        md5Long2 = (md5Long2 << 8) + (hashByteArray[9] & 0xff);
+        md5Long2 = (md5Long2 << 8) + (hashByteArray[10] & 0xff);
+        md5Long2 = (md5Long2 << 8) + (hashByteArray[11] & 0xff);
+        md5Long2 = (md5Long2 << 8) + (hashByteArray[12] & 0xff);
+        md5Long2 = (md5Long2 << 8) + (hashByteArray[13] & 0xff);
+        md5Long2 = (md5Long2 << 8) + (hashByteArray[14] & 0xff);
+        md5Long2 = (md5Long2 << 8) + (hashByteArray[15] & 0xff);
         this.md5Long2 = md5Long2;
     }
 
@@ -115,6 +117,8 @@ public class MD5ID {
     public long[] toLongArray() {
         return new long[] {md5Long1, md5Long2};
     }
+
+    public byte[] toByteArray(){ return this.hashByteArray;}
 
     public static final MD5ID createTSDRID(final String tsdrKey) {
         return new MD5ID(tsdrKey.getBytes(),false);
