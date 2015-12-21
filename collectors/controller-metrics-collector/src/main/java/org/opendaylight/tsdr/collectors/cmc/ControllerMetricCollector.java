@@ -66,6 +66,10 @@ public class ControllerMetricCollector extends Thread{
         return null;
     }
 
+    protected void setSigar(Object s){
+        this.sigar = s;
+    }
+
     public void run(){
        while(module.isRunning()){
            insertMemorySample();
@@ -101,7 +105,8 @@ public class ControllerMetricCollector extends Thread{
         }
         return 0l;
     }
-    private void insertMemorySample(){
+
+    protected void insertMemorySample(){
         TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
         b.setMetricName("Heap:Memory:Usage");
         b.setTSDRDataCategory(DataCategory.EXTERNAL);
@@ -117,7 +122,7 @@ public class ControllerMetricCollector extends Thread{
         module.getTSDRCollectorSPIService().insertTSDRMetricRecord(input.build());
     }
 
-    private void insertControllerCPUSample(){
+    protected void insertControllerCPUSample(){
         TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
         b.setMetricName("CPU:Usage");
         b.setTSDRDataCategory(DataCategory.EXTERNAL);
@@ -134,7 +139,7 @@ public class ControllerMetricCollector extends Thread{
         module.getTSDRCollectorSPIService().insertTSDRMetricRecord(input.build());
     }
 
-    private void insertMachineCPUSample(){
+    protected void insertMachineCPUSample(){
         TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
         b.setMetricName("CPU:Usage");
         b.setTSDRDataCategory(DataCategory.EXTERNAL);
