@@ -33,7 +33,7 @@ import com.google.common.util.concurrent.Futures;
  **/
 public class CollectorSPIImpl implements TsdrCollectorSpiService{
 
-    private TSDRService tsdrService = null;
+    private final TSDRService tsdrService;
 
     public CollectorSPIImpl(TSDRService _service){
         this.tsdrService = _service;
