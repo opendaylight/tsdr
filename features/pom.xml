@@ -45,17 +45,17 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-spi</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
         <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datastorage</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datastorage</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
@@ -63,24 +63,24 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-syslog-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-syslog-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-dataquery</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-dataquery</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
@@ -88,12 +88,12 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-netflow-statistics-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-netflow-statistics-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
@@ -101,12 +101,12 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-snmp-data-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-snmp-data-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
@@ -114,12 +114,12 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-openflow-statistics-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-openflow-statistics-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
@@ -127,12 +127,12 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-controller-metrics-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-controller-metrics-collector</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
@@ -140,31 +140,31 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datapurge</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datapurge</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-datapurge</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>cfg</type>
           <classifier>config1</classifier>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-collector-spi</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-collector-spi</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
@@ -173,19 +173,19 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-configuration</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-configuration</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-configuration</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>cfg</type>
           <classifier>config-1</classifier>
       </dependency>
@@ -193,38 +193,38 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-h2</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-h2</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-cassandra</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-cassandra</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-hbase</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-hbase</artifactId>
-          <version>${tsdr.project.version}</version>
+          <version>${project.version}</version>
       </dependency>
         <dependency>
           <groupId>org.apache.hbase</groupId>

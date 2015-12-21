@@ -113,7 +113,7 @@
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
             <artifactId>tsdr-persistence-spi</artifactId>
-            <version>${tsdr.project.version}</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -139,7 +139,6 @@
         <dependency>
       <groupId>equinoxSDK381</groupId>
       <artifactId>org.eclipse.osgi</artifactId>
-      <version>${equinox.osgi.version}</version>
     </dependency>
 
      <dependency>
@@ -150,12 +149,10 @@
       <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
     </dependency>
     <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-all</artifactId>
-        <version>${mockito.version}</version>
     </dependency>
     <dependency>
         <groupId>org.apache.felix</groupId>

@@ -18,7 +18,6 @@
         <guava.old.version>16.0.1</guava.old.version>
         <config.version>0.4.0-SNAPSHOT</config.version>
         <config.configfile.directory>etc/opendaylight/karaf</config.configfile.directory>
-        <equinox.osgi.version>3.8.1.v20120830-144521</equinox.osgi.version>
         <features.test.version>1.6.0-SNAPSHOT</features.test.version>
         <hbase.version>0.94.15</hbase.version>
         <hadoop.version>1.2.0</hadoop.version>
@@ -33,18 +32,13 @@
         <model.version>1.6.0-SNAPSHOT</model.version>
         <model.flow.statistics>0.2.0-SNAPSHOT</model.flow.statistics>
         <nexusproxy>http://nexus.opendaylight.org/content</nexusproxy>
-        <osgi.compendium.version>5.0.0</osgi.compendium.version>
-        <osgi.core.version>5.0.0</osgi.core.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <protobuf.version>2.4.1</protobuf.version>
         <restconf.version>1.3.0-SNAPSHOT</restconf.version>
         <sitedeploy>dav:http://nexus.opendaylight.org/content/sites/site</sitedeploy>
-        <spring.version>3.1.3.RELEASE</spring.version>
         <salGeneratorPath>src/main/yang-gen-sal</salGeneratorPath>
         <sal.binding.config>1.3.0-SNAPSHOT</sal.binding.config>
         <sal.core.api>1.3.0-SNAPSHOT</sal.core.api>
-        <tsdr.project.version>1.1.0-SNAPSHOT</tsdr.project.version>
-        <project.version>1.1.0-SNAPSHOT</project.version>
         <yangtools.version>0.8.0-SNAPSHOT</yangtools.version>
         <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
         <karaf.distro.empty.version>1.6.0-SNAPSHOT</karaf.distro.empty.version>
