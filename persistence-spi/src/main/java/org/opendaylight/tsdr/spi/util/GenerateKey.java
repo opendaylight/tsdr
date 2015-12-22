@@ -33,6 +33,9 @@ public class GenerateKey {
     private static byte[] iv = { 0, 4, 0, 0, 6, 81, 0, 8, 0, 0, 0, 0, 0, 43, 0,1 };
     private static IvParameterSpec ivspec = new IvParameterSpec(iv);
 
+    private GenerateKey(){
+    }
+
     public static final void generateKey() {
         try {
             KeyGenerator keyGen = KeyGenerator.getInstance(KEY_METHOD);

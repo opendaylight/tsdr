@@ -42,11 +42,6 @@ public class MD5ID {
         }
     }
 
-    private MD5ID(long[] l, int offset) {
-        this.md5Long1 = l[offset];
-        this.md5Long2 = l[offset + 1];
-    }
-
     private MD5ID(long md5long1, long md5long2) {
         this.md5Long1 = md5long1;
         this.md5Long2 = md5long2;
@@ -112,10 +107,6 @@ public class MD5ID {
 
     public long getMd5Long2() {
         return this.md5Long2;
-    }
-
-    public long[] toLongArray() {
-        return new long[] {md5Long1, md5Long2};
     }
 
     public byte[] toByteArray(){ return this.hashByteArray;}

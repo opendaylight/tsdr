@@ -65,7 +65,6 @@
             <artifactId>org.apache.karaf.shell.commands</artifactId>
             <version>${karaf.shell.command.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.opendaylight.mdsal</groupId>
             <artifactId>yang-binding</artifactId>
@@ -76,27 +75,20 @@
             <version>${yangtools.version}</version>
         </dependency>
         <dependency>
-       <groupId>org.opendaylight.mdsal.model</groupId>
-       <artifactId>ietf-inet-types</artifactId>
-      </dependency>
-      <dependency>
-       <groupId>org.opendaylight.mdsal.model</groupId>
-       <artifactId>ietf-yang-types</artifactId>
-      </dependency>
-    <dependency>
-      <groupId>org.opendaylight.controller</groupId>
-      <artifactId>sal-binding-config</artifactId>
-      <version>${sal.binding.config}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.opendaylight.controller</groupId>
-      <artifactId>sal-core-api</artifactId>
-      <version>${sal.core.api}</version>
-    </dependency>
-     <dependency>
-       <groupId>org.opendaylight.openflowplugin.model</groupId>
-       <artifactId>model-flow-statistics</artifactId>
-       <version>${model.flow.statistics}</version>
-     </dependency>
+            <groupId>org.opendaylight.controller</groupId>
+            <artifactId>sal-binding-config</artifactId>
+            <version>${sal.binding.config}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opendaylight.controller</groupId>
+            <artifactId>sal-core-api</artifactId>
+            <version>${sal.core.api}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

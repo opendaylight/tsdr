@@ -14,16 +14,8 @@ module TSDR {
     prefix TSDR;
     import config { prefix config; revision-date 2013-04-05; }
     import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
-    import opendaylight-flow-statistics {prefix flow-stats;revision-date "2013-08-19";}
-    import opendaylight-flow-table-statistics {prefix flow-table-stats;revision-date "2013-12-15";}
-    import opendaylight-group-statistics {prefix group-stats;revision-date "2013-11-11";}   
-    import opendaylight-port-statistics {prefix port-stats;revision-date "2013-12-14";} 
-    import opendaylight-queue-statistics {prefix queue-stats;revision-date "2013-12-16";}   
     import rpc-context { prefix rpcx; revision-date 2013-06-17; }
-    import opendaylight-md-sal-dom {prefix sal;}
-    import opendaylight-md-sal-common {prefix common;}
-    import ietf-inet-types { prefix "inet"; revision-date 2010-09-24; }
-    import ietf-yang-types {prefix yang; revision-date "2010-09-24";}
+
     contact
       "YuLing Chen <yuling_c@dell.com>, Sharon Aicler <saichler@cisco.com>";
 
