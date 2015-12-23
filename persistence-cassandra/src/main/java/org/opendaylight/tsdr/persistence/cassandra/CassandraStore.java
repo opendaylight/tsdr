@@ -171,7 +171,7 @@ public class CassandraStore {
             cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
             StringBuilder cql = new StringBuilder();
             cql.append("insert into MetricPath (KeyPath) values(");
-            cql.append("'").append(cacheEntry.getTsdrKey()).append("',");
+            cql.append("'").append(cacheEntry.getTsdrKey()).append("'");
             cql.append(")");
             session.execute(cql.toString());
         }
