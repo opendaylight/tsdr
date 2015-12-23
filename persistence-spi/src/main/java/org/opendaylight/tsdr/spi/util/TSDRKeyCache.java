@@ -58,6 +58,16 @@ public class TSDRKeyCache {
      */
     public List<TSDRCacheEntry> findMatchingTSDRCacheEntries(String tsdrKey){
         String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(tsdrKey);
+        //In case the dataCategory is null, it may be that the source
+        //of the call is from the tsdr:list command, hence the tsdrKey
+        //is actually a Data Category. in this case, try to see if the TSDRKey
+        //is a data category.
+        if(dataCategory==null){
+            try{
+                DataCategory dc = DataCategory.valueOf(tsdrKey);
+                dataCategory = dc.name();
+            }catch(Exception e){/*Don't care*/}
+        }
         String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrKey);
         String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrKey);
         List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrKey);
