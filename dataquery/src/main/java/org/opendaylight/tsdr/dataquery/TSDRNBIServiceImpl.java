@@ -7,20 +7,20 @@
  */
 package org.opendaylight.tsdr.dataquery;
 
-import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
-
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogRecordInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddLogInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddMetricInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.TSDRDataqueryImplService;
 import org.opendaylight.yangtools.yang.common.RpcResult;
@@ -46,11 +46,11 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
     public Future<RpcResult<Void>> addMetric(AddMetricInput input) {
         TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
         b.setMetricName(input.getMetricName());
-        b.setMetricValue(new BigDecimal(Double.parseDouble(input.getMetricValue())));
+        b.setMetricValue(input.getMetricValue());
         b.setNodeID(input.getNodeID());
-        b.setTimeStamp(Long.parseLong(input.getTimestamp()));
-        b.setTSDRDataCategory(DataCategory.forValue(input.getCategory()));
-        b.setRecordKeys(parseRecordKeys(input.getRecordKeys()));
+        b.setTimeStamp(input.getTimeStamp());
+        b.setTSDRDataCategory(input.getTSDRDataCategory());
+        b.setRecordKeys(input.getRecordKeys());
         StoreTSDRMetricRecordInputBuilder in = new StoreTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> list = new LinkedList<>();
         list.add(b.build());
@@ -60,16 +60,23 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
         return rpc.buildFuture();
     }
 
-    public List<RecordKeys> parseRecordKeys(
-            List<org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.addmetric.input.RecordKeys> recs) {
-        List<RecordKeys> result = new LinkedList<>();
-        for (org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.addmetric.input.RecordKeys rec : recs) {
-            RecordKeysBuilder rb = new RecordKeysBuilder();
-            rb.setKeyName(rec.getKey());
-            rb.setKeyValue(rec.getValue());
-            result.add(rb.build());
-        }
-        return result;
+    @Override
+    public Future<RpcResult<Void>> addLog(AddLogInput input) {
+        TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
+        b.setRecordFullText(input.getRecordFullText());
+        b.setNodeID(input.getNodeID());
+        b.setTimeStamp(input.getTimeStamp());
+        b.setTSDRDataCategory(input.getTSDRDataCategory());
+        b.setRecordKeys(input.getRecordKeys());
+        b.setRecordAttributes(input.getRecordAttributes());
+        StoreTSDRLogRecordInputBuilder in = new StoreTSDRLogRecordInputBuilder();
+        List<TSDRLogRecord> list = new LinkedList<>();
+        list.add(b.build());
+        in.setTSDRLogRecord(list);
+        store(in.build());
+        RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
+        return rpc.buildFuture();
+
     }
 
     // Invoke the storage rpc method
@@ -78,6 +85,15 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
             tsdrService = this.rpcRegistry.getRpcService(TSDRService.class);
         }
         tsdrService.storeTSDRMetricRecord(input);
+        logger.debug("Data Storage called");
+    }
+
+    // Invoke the storage rpc method
+    private void store(StoreTSDRLogRecordInput input) {
+        if (tsdrService == null) {
+            tsdrService = this.rpcRegistry.getRpcService(TSDRService.class);
+        }
+        tsdrService.storeTSDRLogRecord(input);
         logger.debug("Data Storage called");
     }
 }

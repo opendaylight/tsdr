@@ -22,6 +22,8 @@ import java.util.StringTokenizer;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributesBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter32;
@@ -48,7 +50,9 @@ public class FormatUtil {
     public static final String KEY_METRICNAME = "[MN=";
     public static final String KEY_RECORDKEYS = "[RK=";
     public static final String KEY_TIMESTAMP = "[TS=";
+    public static final String KEY_RECORD_ATTRIBUTES = "[RA=";
     private static final Set<String> dataCategoryStrings = new HashSet<>();
+
     static {
         for(DataCategory c:DataCategory.values()){
             dataCategoryStrings.add(c.name());
@@ -175,10 +179,59 @@ public class FormatUtil {
         return result;
     }
 
+    public final static List<RecordAttributes> getRecordAttributesFromTSDRKey(String tsdrKey){
+        int index1 = tsdrKey.indexOf(KEY_RECORD_ATTRIBUTES);
+        if(index1==-1){
+            return null;
+        }
+        int index2 = tsdrKey.indexOf("]",index1);
+        String recs = tsdrKey.substring(index1+KEY_RECORD_ATTRIBUTES.length(),index2);
+        StringTokenizer tokens = new StringTokenizer(recs,",");
+        List<RecordAttributes> result = new ArrayList<>();
+        while(tokens.hasMoreTokens()){
+            String recKey = tokens.nextToken();
+            int index3 = recKey.indexOf(":");
+            RecordAttributesBuilder rb = new RecordAttributesBuilder();
+            if(index3==-1){
+                rb.setName(recKey);
+                rb.setValue(recKey);
+            }else{
+                rb.setName(recKey.substring(0,index3));
+                rb.setValue(recKey.substring(index3+1));
+            }
+            result.add(rb.build());
+        }
+        return result;
+    }
+
     public final static String getTSDRMetricKeyWithTimeStamp(TSDRMetric m){
         StringBuilder sb = new StringBuilder(getTSDRMetricKey(m));
         sb.append(KEY_TIMESTAMP);
         sb.append(m.getTimeStamp());
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public final static String getTSDRLogKeyWithRecordAttributes(TSDRLog l){
+        StringBuilder sb = new StringBuilder(getTSDRLogKey(l));
+        sb.append(KEY_RECORD_ATTRIBUTES);
+        if(l.getRecordAttributes()!=null){
+            boolean isFirst = true;
+            for(RecordAttributes rec:l.getRecordAttributes()){
+                if(!isFirst)
+                    sb.append(",");
+                if(rec.getName()!=null && rec.getValue()!=null) {
+                    if(rec.getName().equals(rec.getValue())){
+                        sb.append(rec.getName());
+                    }else {
+                        sb.append(rec.getName());
+                        sb.append(":");
+                        sb.append(rec.getValue());
+                    }
+                }
+                isFirst = false;
+            }
+        }
         sb.append("]");
         return sb.toString();
     }

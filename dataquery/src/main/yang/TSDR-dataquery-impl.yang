@@ -14,6 +14,8 @@ module TSDR-dataquery-impl {
     import config { prefix config; revision-date 2013-04-05; }
     import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
     import rpc-context { prefix rpcx; revision-date 2013-06-17; }
+    import TSDR { prefix TSDR; revision-date 2015-02-19;}
+
     contact
       "YuLing Chen <yuling_c@dell.com>";
     description
@@ -64,33 +66,20 @@ module TSDR-dataquery-impl {
             }
         }
     }
+
     rpc addMetric {
         description
-          "Add a metric record to a specific metric";
+          "Add metric RPC method for external collectors";
         input {
-            leaf metric-name {
-                type string;
-            }
-            leaf metric-value {
-                type string;
-            }
-            leaf timestamp {
-                type string;
-            }
-            leaf nodeID {
-              type string;
-            }
-            list record-keys{
-              leaf key {
-                type string;
-              }
-              leaf value {
-                type string;
-              }
-            }
-            leaf category{
-              type int32;
-            }
+            uses TSDR:TSDRMetric;
+        }
+    }
+
+    rpc addLog {
+        description
+          "Add log record RPC method for external collectors";
+        input {
+            uses TSDR:TSDRLog;
         }
     }
 }

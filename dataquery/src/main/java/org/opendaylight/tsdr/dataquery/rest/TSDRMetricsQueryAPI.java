@@ -10,6 +10,7 @@ package org.opendaylight.tsdr.dataquery.rest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -33,69 +34,45 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-@Path("/nbi")
-public class TSDRNBIRestAPI {
+@Path("/metrics")
+public class TSDRMetricsQueryAPI {
     private static final Logger logger = LoggerFactory.getLogger(TSDRNBIRestAPI.class);
     @GET
-    @Path("/{render}")
+    @Path("/{query}")
     @Produces("application/json")
-    public Response get(@PathParam("render") String render,
-            @QueryParam("target") String target,
-            @QueryParam("from") String from,
-            @QueryParam("until") String until,
-            @QueryParam("format") String format,
-            @QueryParam("maxDataPoints") String maxDataPoints) {
-        //Example query from Grafana
-        //Get render?target=EXTERNAL.Heap:Memory:Usage.Controller&from=-5min&until=now&format=json&maxDataPoints=1582
-        TSDRRequest request = new TSDRRequest();
-        request.setFormat(format);
+    public Response get(@PathParam("query") String query,
+                        @QueryParam("tsdrkey") String tsdrkey,
+                        @QueryParam("from") String from,
+                        @QueryParam("until") String until) throws ExecutionException, InterruptedException {
+        TSDRQueryRequest request = new TSDRQueryRequest();
+        request.setTsdrkey(tsdrkey);
         request.setFrom(from);
-        request.setMaxDataPoints(maxDataPoints);
-        request.setTarget(target);
         request.setUntil(until);
         return post(null,request);
     }
 
     @POST
     @Produces("application/json")
-    public Response post(@Context UriInfo info, TSDRRequest request) {
-        TSDRReply reply = new TSDRReply();
-        reply.setTarget(request.getTarget());
+    public Response post(@Context UriInfo info, TSDRQueryRequest request) throws ExecutionException, InterruptedException {
+
         GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
-        input.setTSDRDataCategory(request.getTarget());
+        input.setTSDRDataCategory(request.getTsdrkey());
         input.setStartTime(getTimeFromString(request.getFrom()));
         input.setEndTime(getTimeFromString(request.getUntil()));
-        long maxDataPoints = 0;
-        try {
-            maxDataPoints = Long.parseLong(request.getMaxDataPoints());
-        } catch (Exception err) {
-        }
-        if (maxDataPoints == 0){
+
+        Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
+
+        List<TSDRMetricsQueryReply> reply = new ArrayList<>();
+
+        List<Metrics> metrics = metric.get().getResult().getMetrics();
+        if (metrics == null || metrics.size() == 0) {
             return Response.status(201).entity(reply).build();
         }
-        Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
-        try {
-            List<Metrics> metrics = metric.get().getResult().getMetrics();
-            if (metrics == null || metrics.size() == 0) {
-                return Response.status(201).entity(reply).build();
-            }
-            int skip = 1;
-            if (metrics.size() > maxDataPoints) {
-                skip = (int) (metrics.size() / maxDataPoints);
-            }
-            reply.setTarget(request.getTarget());
-            int count = 0;
-            for (Metrics m : metrics) {
-                if (count % skip == 0) {
-                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
-                }
-                count++;
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("Failed to execute request",e);
+        for (Metrics m : metrics) {
+            reply.add(new TSDRMetricsQueryReply(m));
         }
 
-        return Response.status(201).entity(toJson(new TSDRReply[]{reply})).build();
+        return Response.status(201).entity(toJson(reply)).build();
     }
 
     public static long getTimeFromString(String t) {
@@ -128,7 +105,7 @@ public class TSDRNBIRestAPI {
     }
 
     public static final String toJson(Object obj){
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         return gson.toJson(obj);
     }
 }

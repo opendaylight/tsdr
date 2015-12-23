@@ -358,6 +358,11 @@
           <artifactId>hsqldb</artifactId>
           <version>${hsqldb.version}</version>
       </dependency>
+      <dependency>
+          <groupId>com.google.code.gson</groupId>
+          <artifactId>gson</artifactId>
+          <version>${gson.version}</version>
+      </dependency>
   </dependencies>
 
   <build>

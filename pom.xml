@@ -54,6 +54,7 @@
         <sigar.version>1.6.4</sigar.version>
         <yang-jmx-generator.version>0.4.0-SNAPSHOT</yang-jmx-generator.version>
         <hsqldb.version>1.8.0.10</hsqldb.version>
+        <gson.version>2.5</gson.version>
     </properties>
 
   <scm>

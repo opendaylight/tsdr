@@ -10,6 +10,7 @@ package org.opendaylight.tsdr.dataquery.rest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -23,9 +24,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrlogrecords.output.Logs;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,69 +34,45 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-@Path("/nbi")
-public class TSDRNBIRestAPI {
+@Path("/logs")
+public class TSDRLogQueryAPI {
     private static final Logger logger = LoggerFactory.getLogger(TSDRNBIRestAPI.class);
     @GET
-    @Path("/{render}")
+    @Path("/{query}")
     @Produces("application/json")
-    public Response get(@PathParam("render") String render,
-            @QueryParam("target") String target,
-            @QueryParam("from") String from,
-            @QueryParam("until") String until,
-            @QueryParam("format") String format,
-            @QueryParam("maxDataPoints") String maxDataPoints) {
-        //Example query from Grafana
-        //Get render?target=EXTERNAL.Heap:Memory:Usage.Controller&from=-5min&until=now&format=json&maxDataPoints=1582
-        TSDRRequest request = new TSDRRequest();
-        request.setFormat(format);
+    public Response get(@PathParam("query") String query,
+                        @QueryParam("tsdrkey") String tsdrkey,
+                        @QueryParam("from") String from,
+                        @QueryParam("until") String until) throws ExecutionException, InterruptedException {
+        TSDRQueryRequest request = new TSDRQueryRequest();
+        request.setTsdrkey(tsdrkey);
         request.setFrom(from);
-        request.setMaxDataPoints(maxDataPoints);
-        request.setTarget(target);
         request.setUntil(until);
         return post(null,request);
     }
 
     @POST
     @Produces("application/json")
-    public Response post(@Context UriInfo info, TSDRRequest request) {
-        TSDRReply reply = new TSDRReply();
-        reply.setTarget(request.getTarget());
-        GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
-        input.setTSDRDataCategory(request.getTarget());
+    public Response post(@Context UriInfo info, TSDRQueryRequest request) throws ExecutionException, InterruptedException {
+
+        GetTSDRLogRecordsInputBuilder input = new GetTSDRLogRecordsInputBuilder();
+        input.setTSDRDataCategory(request.getTsdrkey());
         input.setStartTime(getTimeFromString(request.getFrom()));
         input.setEndTime(getTimeFromString(request.getUntil()));
-        long maxDataPoints = 0;
-        try {
-            maxDataPoints = Long.parseLong(request.getMaxDataPoints());
-        } catch (Exception err) {
-        }
-        if (maxDataPoints == 0){
+
+        Future<RpcResult<GetTSDRLogRecordsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRLogRecords(input.build());
+
+        List<TSDRLogQueryReply> reply = new ArrayList<>();
+
+        List<Logs> logs = metric.get().getResult().getLogs();
+        if (logs == null || logs.size() == 0) {
             return Response.status(201).entity(reply).build();
         }
-        Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
-        try {
-            List<Metrics> metrics = metric.get().getResult().getMetrics();
-            if (metrics == null || metrics.size() == 0) {
-                return Response.status(201).entity(reply).build();
-            }
-            int skip = 1;
-            if (metrics.size() > maxDataPoints) {
-                skip = (int) (metrics.size() / maxDataPoints);
-            }
-            reply.setTarget(request.getTarget());
-            int count = 0;
-            for (Metrics m : metrics) {
-                if (count % skip == 0) {
-                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
-                }
-                count++;
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("Failed to execute request",e);
+        for (Logs l : logs) {
+            reply.add(new TSDRLogQueryReply(l));
         }
 
-        return Response.status(201).entity(toJson(new TSDRReply[]{reply})).build();
+        return Response.status(201).entity(toJson(reply)).build();
     }
 
     public static long getTimeFromString(String t) {
@@ -128,7 +105,7 @@ public class TSDRNBIRestAPI {
     }
 
     public static final String toJson(Object obj){
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         return gson.toJson(obj);
     }
 }

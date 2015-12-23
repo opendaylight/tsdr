@@ -76,7 +76,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     }
 
     /**
-     * Store TSDRMetricRecord.         
+     * Store TSDRMetricRecord.
      */
     @Override
     public void store(TSDRMetricRecord metrics){
@@ -109,7 +109,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     @Override
     public void store(List<TSDRRecord> recordList){
         log.debug("Entering store(List<TSDRRecord>)");
-        
+
         //tableName, entityList Map
         Map<String, List<HBaseEntity>> entityListMap = new HashMap<String, List<HBaseEntity>>();
 
@@ -300,7 +300,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
                 }
             }
 
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(tsdrLogKey, substringFilterList, startTime, endTime);
+            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory, substringFilterList, startTime, endTime);
         }
         for (HBaseEntity e : resultEntities) {
             resultRecords.add(getTSDRLogRecord(e));
