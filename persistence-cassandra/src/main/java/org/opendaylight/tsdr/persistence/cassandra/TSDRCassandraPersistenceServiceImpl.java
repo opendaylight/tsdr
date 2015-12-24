@@ -57,6 +57,10 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
         store = new CassandraStore();
     }
 
+    public void start(CassandraStore s) {
+        this.store = s;
+    }
+
     @Override
     public void stop(int timeout) {
         store.shutdown();

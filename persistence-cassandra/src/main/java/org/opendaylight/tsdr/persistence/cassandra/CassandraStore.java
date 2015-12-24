@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 public class CassandraStore {
     private static final String confFile = "./etc/tsdr-persistence-cassandra.properties";
     private Session session = null;
+    private Cluster cluster = null;
     private boolean isMaster = true;
     private String host = null;
     private int replication_factor = 1;
@@ -49,6 +50,18 @@ public class CassandraStore {
 
     public CassandraStore(){
         log.info("Connecting to Cassandra...");
+        try {
+            getSession();
+            loadPathCache();
+        } catch (Exception e) {
+            log.error("Failed to connect to Cassandra",e);
+        }
+    }
+
+    public CassandraStore(Session s,Cluster c){
+        log.info("Connecting to Cassandra...");
+        this.session = s;
+        this.cluster = c;
         try {
             getSession();
             loadPathCache();
@@ -117,7 +130,7 @@ public class CassandraStore {
         return session;
     }
 
-    private void createTSDRTables(){
+    public void createTSDRTables(){
         String cql = "CREATE TABLE MetricPath (keyPath text,"+
                 "PRIMARY KEY (KeyPath))";
         this.session.execute(cql);
@@ -254,7 +267,7 @@ public class CassandraStore {
         return lb.build();
     }
 
-    private void loadPathCache(){
+    public void loadPathCache(){
         ResultSet rs = session.execute("select * from MetricPath limit 100000");
         for(Row r:rs.all()){
             String tsdrKey = r.getString("KeyPath");
