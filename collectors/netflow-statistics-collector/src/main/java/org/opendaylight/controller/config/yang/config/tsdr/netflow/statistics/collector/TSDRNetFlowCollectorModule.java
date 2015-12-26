@@ -9,6 +9,7 @@
 
 package org.opendaylight.controller.config.yang.config.tsdr.netflow.statistics.collector;
 
+import java.io.IOException;
 import org.opendaylight.tsdr.netflow.TSDRNetflowCollectorImpl;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.slf4j.Logger;
@@ -40,16 +41,22 @@ public class TSDRNetFlowCollectorModule extends org.opendaylight.controller.conf
 
     @Override
     public java.lang.AutoCloseable createInstance() {
-        final TSDRNetflowCollectorImpl impl = new TSDRNetflowCollectorImpl(getRpcRegistryDependency().getRpcService(TsdrCollectorSpiService.class));
-        final class CloseResources implements AutoCloseable {
+        try {
+            final TSDRNetflowCollectorImpl impl = new TSDRNetflowCollectorImpl(getRpcRegistryDependency().getRpcService(TsdrCollectorSpiService.class));
+            final class CloseResources implements AutoCloseable {
 
-            @Override
-            public void close() throws Exception {
-                log.info("TSDR NetFlow Data Collector (instance {}) torn down.", this);
+                @Override
+                public void close() throws Exception {
+                    impl.shutdown();
+                    log.info("TSDR NetFlow Data Collector (instance {}) torn down.", this);
+                }
             }
+            AutoCloseable ret = new CloseResources();
+            log.info("NetFlow Data Colletor Initialized");
+            return ret;
+        }catch(IOException e){
+            log.error("Failed to start netflow collector",e);
         }
-        AutoCloseable ret = new CloseResources();
-        log.info("NetFlow Data Colletor Initialized");
-        return ret;
+        return null;
     }
 }
