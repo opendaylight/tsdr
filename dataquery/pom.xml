@@ -17,7 +17,15 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Import-Package>*,com.sun.jersey.spi.container.servlet, org.eclipse.jetty.servlets</Import-Package>
+                        <Import-Package>
+                            *,
+                            com.sun.jersey.spi.container.servlet,
+                            org.eclipse.jetty.servlets,
+                            org.opendaylight.aaa.shiro.filters,
+                            org.opendaylight.aaa.shiro.realm,
+                            org.opendaylight.aaa.shiro.web.env,
+                            org.apache.shiro.web.env
+                        </Import-Package>
                         <Web-ContextPath>/tsdr</Web-ContextPath>
                     </instructions>
                 </configuration>
