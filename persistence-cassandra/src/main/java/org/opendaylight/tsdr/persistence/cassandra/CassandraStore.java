@@ -284,7 +284,7 @@ public class CassandraStore {
     public void purge(DataCategory category, long retentionTime){
         String cql1 = "Delete from MetricVal where keyA = ";
         String cql2 = " and keyB = ";
-        String cql3 = " and timestamp<"+retentionTime;
+        String cql3 = " and time < "+retentionTime;
         for(TSDRCacheEntry entry:this.cache.getAll()){
             if(entry.getDataCategory()==category){
                 String cql = cql1 + entry.getMd5ID().getMd5Long1()+cql2+entry.getMd5ID().getMd5Long2()+cql3;
