@@ -42,6 +42,27 @@ module tsdr-snmp-data-collector {
        }
      }
 
+    typedef snmp-metric {
+        type enumeration {
+            //enum MTU; this is not a metric
+            //enum ifSpeed; this is also not a metric but a const of interface speed
+            enum ifInNUcastPkts;
+            enum ifInDiscards;
+            enum ifInErrors;
+            enum ifInOctets;
+            enum ifInUnknownProtos;
+            enum ifInUcastPkts;
+            enum ifOutQLen;
+            enum ifOutNUcastPkts;
+            enum ifOutErrors;
+            enum ifOutDiscards;
+            enum ifOutUcastPkts;
+            enum ifOutOctets;
+            //enum ifOperStatus; not a metric, the operation status of the interface up/down
+            //enum ifAdminStatus; not a metric, the admin status of the interface up/down
+        }
+    }
+
     augment "/config:modules/config:module/config:configuration" {
                 case tsdr-snmp-data-collector {
                     when "/config:modules/config:module/config:type = 'tsdr-snmp-data-collector'";
