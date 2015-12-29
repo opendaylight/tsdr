@@ -12,6 +12,7 @@ import java.util.List;
 import org.apache.karaf.shell.commands.Command;
 import org.opendaylight.tsdr.spi.command.AbstractListMetricsCommand;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 
 /**
@@ -38,6 +39,16 @@ public class ListMetricsCommand  extends AbstractListMetricsCommand {
         for (TSDRMetricRecord metric : metrics) {
             buffer.append(FormatUtil.getTSDRMetricKeyWithTimeStamp(metric));
             buffer.append("[").append(metric.getMetricValue()).append("]\n");
+        }
+        return buffer.toString();
+    }
+
+    @Override
+    protected String listLogs(List<TSDRLogRecord> logs) {
+        StringBuilder buffer = new StringBuilder();
+        for (TSDRLogRecord log : logs) {
+            buffer.append(FormatUtil.getTSDRLogKeyWithTimeStamp(log));
+            buffer.append("[").append(log.getRecordFullText()).append("]\n");
         }
         return buffer.toString();
     }

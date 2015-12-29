@@ -7,22 +7,21 @@
  */
 package org.opendaylight.tsdr.spi.command;
 
-import org.apache.karaf.shell.commands.Argument;
-import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.console.OsgiCommandSupport;
-import org.opendaylight.tsdr.spi.model.TSDRConstants;
-import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import org.apache.karaf.shell.commands.Argument;
+import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.console.OsgiCommandSupport;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This command is provided to get a list of metrics based on arguments passed
@@ -80,14 +79,24 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
             System.out.println("StatDateTime value cannot be greater or equal to EndDateTime");
             return null;
         }
-
+        DataCategory dataCategory = DataCategory.valueOf(category);
         if (persistenceService != null) {
-            List<TSDRMetricRecord> metrics = persistenceService.getTSDRMetricRecords(category, startDate, endDate);
-            if (metrics == null || metrics.isEmpty()) {
-                System.out.println("No data of this category in the specified time range. ");
-                return null;
+            if(dataCategory== DataCategory.NETFLOW || dataCategory==DataCategory.SYSLOG || dataCategory==DataCategory.LOGRECORDS){
+                List<TSDRLogRecord> logs = persistenceService.getTSDRLogRecords(category, startDate, endDate);
+                if (logs == null || logs.isEmpty()) {
+                    System.out.println("No data of this category in the specified time range. ");
+                    return null;
+                }
+                System.out.println(listLogs(logs));
+
+            }else {
+                List<TSDRMetricRecord> metrics = persistenceService.getTSDRMetricRecords(category, startDate, endDate);
+                if (metrics == null || metrics.isEmpty()) {
+                    System.out.println("No data of this category in the specified time range. ");
+                    return null;
+                }
+                System.out.println(listMetrics(metrics));
             }
-            System.out.println(listMetrics(metrics));
         } else {
             log.warn("ListMetricsCommand: persistence service is found to be null.");
         }
@@ -95,4 +104,5 @@ public abstract class AbstractListMetricsCommand extends OsgiCommandSupport {
     }
 
     abstract protected String listMetrics (List<TSDRMetricRecord> metrics);
+    abstract protected String listLogs(List<TSDRLogRecord> logs);
 }
