@@ -7,6 +7,12 @@
  */
 package org.opendaylight.tsdr.spi.util;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -14,6 +20,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
    The TSDRKeyCache is build to mediate between a full String TSDR Key String to a MD5 hash so
@@ -25,12 +33,43 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
  */
 public class TSDRKeyCache {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRKeyCache.class);
+
+    public static final String TSDR_KEY_CACHE_FILENAME = "tsdr/tsdrKeyCache.txt";
     //The main cache mapping between the TSDRKey to the TSDRCacheEntry
     private final Map<String,TSDRCacheEntry> cache = new ConcurrentHashMap<>();
     //The mapping between the MD5 and the TSDRCacheEntry
     private final Map<MD5ID,TSDRCacheEntry> md52CacheEntry = new ConcurrentHashMap<>();
+    //File that serves as the Key Store.
+    private FileOutputStream cacheStore = null;
 
     public TSDRKeyCache(){
+        File dir = new File("tsdr");
+        if(!dir.exists()){
+            dir.mkdirs();
+        }
+        try {
+            loadTSDRCacheKey();
+            File file = new File(TSDR_KEY_CACHE_FILENAME);
+            cacheStore = new FileOutputStream(file,true);
+        } catch (IOException e) {
+            LOG.error("Failed to load key cache",e);
+        }
+    }
+
+    private void loadTSDRCacheKey() throws IOException {
+        synchronized(cache) {
+            File file = new File(TSDR_KEY_CACHE_FILENAME);
+            if(file.exists() && file.length()>0){
+                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                String tsdrKey = in.readLine();
+                while (tsdrKey!=null){
+                    addTSDRCacheEntry(tsdrKey.substring(0,tsdrKey.indexOf("|")),false);
+                    tsdrKey = in.readLine();
+                }
+                in.close();
+            }
+        }
     }
 
     public final TSDRCacheEntry getCacheEntry(final String tsdrKey){
@@ -42,10 +81,40 @@ public class TSDRKeyCache {
     }
 
     public final TSDRCacheEntry addTSDRCacheEntry(final String tsdrKey){
+        return addTSDRCacheEntry(tsdrKey,true);
+    }
+
+    private final TSDRCacheEntry addTSDRCacheEntry(final String tsdrKey,boolean save){
         final TSDRCacheEntry entry = new TSDRCacheEntry(tsdrKey);
-        this.cache.put(entry.getTsdrKey(),entry);
-        this.md52CacheEntry.put(entry.getMd5ID(),entry);
-        return entry;
+        if(this.cache.get(entry.getTsdrKey())==null) {
+            this.cache.put(entry.getTsdrKey(), entry);
+            this.md52CacheEntry.put(entry.getMd5ID(), entry);
+            if(save && cacheStore!=null){
+                try {
+                    synchronized(cache) {
+                        cacheStore.write(tsdrKey.getBytes());
+                        cacheStore.write('|');
+                        cacheStore.write((""+entry.getMd5ID().getMd5Long1()).getBytes());
+                        cacheStore.write('|');
+                        cacheStore.write((""+entry.getMd5ID().getMd5Long2()).getBytes());
+                        cacheStore.write("\n".getBytes());
+                        cacheStore.flush();
+                    }
+                }catch(IOException e){
+                    LOG.error("Failed to save to key cache store",e);
+                    if(cacheStore!=null) {
+                        try {
+                            cacheStore.close();
+                        } catch (IOException err) {
+                            LOG.error("Failed to close the cache store", e);
+                        }
+                    }
+                    cacheStore = null;
+                }
+            }
+            return entry;
+        }
+        return this.cache.get(entry.getTsdrKey());
     }
 
     /**
@@ -147,4 +216,11 @@ public class TSDRKeyCache {
         }
     }
 
+    public void shutdown(){
+        try {
+            this.cacheStore.close();
+        } catch (IOException e) {
+            LOG.error("Failed to close the cache store file.",e);
+        }
+    }
 }
