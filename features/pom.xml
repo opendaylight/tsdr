@@ -350,6 +350,11 @@
           <artifactId>org.apache.servicemix.bundles.snmp4j</artifactId>
           <version>2.3.4_1</version>
       </dependency>
+      <dependency>
+          <groupId>hsqldb</groupId>
+          <artifactId>hsqldb</artifactId>
+          <version>${hsqldb.version}</version>
+      </dependency>
   </dependencies>
 
   <build>
