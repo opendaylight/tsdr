@@ -60,7 +60,13 @@ public class TSDRPurgeServiceImpl {
         }
 
         try {
+            int year = cal.get(Calendar.YEAR);
+            int month = cal.get(Calendar.MONTH);
+            int day = cal.get(Calendar.DAY_OF_MONTH);
             cal.setTime(sdf.parse(date_string));
+            cal.set(Calendar.YEAR,year);
+            cal.set(Calendar.MONTH,month);
+            cal.set(Calendar.DAY_OF_MONTH,day);
         } catch (Exception e) {
             log.error("Exception while parsing purge time", e);
         }
