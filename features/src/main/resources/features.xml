@@ -169,4 +169,12 @@
        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-cassandra/${project.version}</bundle>
        <configfile finalname="etc/tsdr-persistence-cassandra.properties">mvn:org.opendaylight.tsdr/${artifactName}-persistence-cassandra/${project.version}/xml/config</configfile>
     </feature>
+
+    <!-- HSQLDB persistence data store -->
+    <feature name='odl-tsdr-hsqldb' version='${project.version}' description="OpenDaylight :: TSDR :: HSQLDB Persistence">
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <bundle>wrap:mvn:hsqldb/hsqldb/${hsqldb.version}</bundle>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-hsqldb/${project.version}</bundle>
+    </feature>
 </features>

@@ -51,6 +51,7 @@
         <com.datastax.cassandra.version>2.1.2</com.datastax.cassandra.version>
         <sigar.version>1.6.4</sigar.version>
         <yang-jmx-generator.version>0.4.0-SNAPSHOT</yang-jmx-generator.version>
+        <hsqldb.version>1.8.0.10</hsqldb.version>
     </properties>
 
   <scm>
@@ -268,6 +269,7 @@
     <module>persistence-hbase</module>
     <module>persistence-h2</module>
     <module>persistence-cassandra</module>
+    <module>persistence-hsqldb</module>
     <module>datastorage</module>
     <module>dataquery</module>
     <module>datapurge</module>
