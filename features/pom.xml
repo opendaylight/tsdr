@@ -190,6 +190,7 @@
           <classifier>config-1</classifier>
       </dependency>
       -->
+<!--
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-h2</artifactId>
@@ -202,6 +203,7 @@
           <artifactId>tsdr-persistence-h2</artifactId>
           <version>${project.version}</version>
       </dependency>
+      -->
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-cassandra</artifactId>
@@ -252,7 +254,7 @@
           <artifactId>org.apache.karaf.shell.commands</artifactId>
           <version>${karaf.shell.command.version}</version>
       </dependency>
-
+      <!--
       <dependency>
           <groupId>org.hibernate.javax.persistence</groupId>
           <artifactId>hibernate-jpa-2.1-api</artifactId>
@@ -275,6 +277,7 @@
           <artifactId>h2</artifactId>
           <version>${h2.store.version}</version>
       </dependency>
+      -->
        <dependency>
           <groupId>org.opendaylight.controller</groupId>
           <artifactId>features-mdsal</artifactId>
