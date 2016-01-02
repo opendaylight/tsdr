@@ -5,7 +5,7 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.dataquery.rest;
+package org.opendaylight.tsdr.dataquery.rest.query;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -46,26 +46,6 @@ public class TSDRLogQueryReply {
                 recordAttributes.add(new LogRecordAttributes(rk));
             }
         }
-    }
-
-    public String getRecordFullText(){
-        return recordFullText;
-    }
-
-    public String getTimeStamp() {
-        return timeStamp;
-    }
-
-    public String getNodeID() {
-        return nodeID;
-    }
-
-    public String getTSDRDataCategory() {
-        return tsdrDataCategory;
-    }
-
-    public List<LogRecordKeys> getRecordKeys() {
-        return recordKeys;
     }
 
     public static class LogRecordKeys {
