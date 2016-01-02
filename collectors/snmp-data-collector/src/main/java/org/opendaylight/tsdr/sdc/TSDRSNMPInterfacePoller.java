@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
  * Copyright (c) 2015 Tata Consultancy Services, Inc. and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
@@ -10,33 +11,44 @@ package org.opendaylight.tsdr.sdc;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import java.util.Dictionary;
+import java.util.Enumeration;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev100924.Ipv4Address;
 /**
+ * @author Sharon Aicler(saichler@gmail.com)
  * @author Prajaya Talwar(prajaya.talwar@tcs.com)
+ * @author Trapti Khandelwal(trapti.khandelwal@tcs.com)
  **/
 // The SNMP interface poller is polling the SNMP
 public class TSDRSNMPInterfacePoller extends Thread {
     // The collector
     private SNMPDataCollector collector = null;
+    private Dictionary<String, String[]> configuration =null;
+    private Enumeration<String> nodeConfigKeys =null;
+    private int nodeConfigDetails=0;
+    private Ipv4Address ip=null;
+    private String community = null;
+    private RpcResult<GetInterfacesOutput> result = null;
 
     public TSDRSNMPInterfacePoller(SNMPDataCollector _collector) {
         super("TSDR SNMP Interface Poller");
         this.collector = _collector;
         this.setDaemon(true);
-        _collector.loadConfigData();
+        this.collector.loadConfigData();
+        configuration = TSDRSNMPConfig.getInstance().getConfiguration();
+        nodeConfigKeys = configuration.keys();
         this.start();
     }
 
     public void run() {
         while (collector.isRunning()) {
             //Call handle method of TSDR SNMP Collector
-             Dictionary<String, Object> configuration = TSDRSNMPConfig.getInstance().getConfiguration();
-             Ipv4Address ip = new Ipv4Address(configuration.get(TSDRSNMPConfig.P_HOST).toString());
-             String community = configuration.get(TSDRSNMPConfig.P_COMMUNITY).toString();
-             RpcResult<GetInterfacesOutput> result = null;
-             result = collector.loadGetInterfacesData(ip,community);
-             collector.insertInterfacesEntries(ip,result);
-
+            for(nodeConfigDetails=0; nodeConfigDetails < configuration.get(TSDRSNMPConfig.P_HOST).length; nodeConfigDetails++)
+            {
+                  ip = new Ipv4Address(configuration.get(TSDRSNMPConfig.P_HOST)[nodeConfigDetails].toString());
+                  community = configuration.get(TSDRSNMPConfig.P_COMMUNITY)[nodeConfigDetails].toString();
+                  result = collector.loadGetInterfacesData(ip,community);
+                  collector.insertInterfacesEntries(ip,result);
+            }
             synchronized(this.collector){
                 this.collector.notifyAll();
             }
@@ -51,6 +63,8 @@ public class TSDRSNMPInterfacePoller extends Thread {
                 }
             }
             this.collector.loadConfigData();
+            configuration = TSDRSNMPConfig.getInstance().getConfiguration();
+            nodeConfigKeys = configuration.keys();
         }
     }
 }
