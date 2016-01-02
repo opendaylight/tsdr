@@ -44,6 +44,7 @@ public class TSDRDataPurgeConfig implements ManagedService {
                 String value = (String) properties.get(key);
                 configurations.put(key, value);
             }
+            PurgingScheduler.getInstance().reSchedule();
         }
     }
 
