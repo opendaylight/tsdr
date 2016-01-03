@@ -7,13 +7,10 @@
  */
 package org.opendaylight.tsdr.datapurge;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Properties;
+
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
@@ -44,7 +41,8 @@ public class TSDRDataPurgeConfig implements ManagedService {
                 String value = (String) properties.get(key);
                 configurations.put(key, value);
             }
-            PurgingScheduler.getInstance().reSchedule();
+            PurgingScheduler.getInstance().loadProperties();
+            PurgingScheduler.getInstance().schedule();
         }
     }
 

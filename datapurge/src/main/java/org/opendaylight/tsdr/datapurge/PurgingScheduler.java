@@ -50,19 +50,6 @@ public class PurgingScheduler {
        super();
     }
 
-    /**
-     * Initialize, load properties from configuration, and schedule the purging task
-     * This method is meant for the first time to schedule the purging task
-     * when purging service is started.
-     * @param _rpcRegistry
-     */
-    public void initAndScheduleTask(RpcProviderRegistry _rpcRegistry){
-        rpcRegistry = _rpcRegistry;
-        //load properties from configuration
-        loadProperties();
-        //schedule the purging task
-        this.future = schedulePurgingTask();
-    }
     private String getPropertyVal(String property, String default_val) {
         String property_val = TSDRDataPurgeConfig.getInstance().getProperty(
                 property);
@@ -70,12 +57,11 @@ public class PurgingScheduler {
     }
 
     /**
-     * Schedule the purging task according the properties.
-     * @return
+     * Schedule the Purging Task according to the properites.
      */
-    private ScheduledFuture schedulePurgingTask(){
+    public void schedulePurgingTask(){
         if (!isEnabled) {
-            return null;
+            return;
         }
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
@@ -94,15 +80,16 @@ public class PurgingScheduler {
         long first_time = cal.getTime().getTime() - System.currentTimeMillis();
         purgedatatask = new PurgeDataTask(rpcRegistry);
         purgedatatask.setRetentionTimeinHours(this.retentionTime);
-        return(SchedulerService.getInstance().scheduleTaskAtFixedRate(
+        this.future = SchedulerService.getInstance().scheduleTaskAtFixedRate(
                 purgedatatask, TimeUnit.MILLISECONDS.toSeconds(first_time),
-                TimeUnit.MINUTES.toSeconds(purgingInterval)));
+                TimeUnit.MINUTES.toSeconds(purgingInterval));
+        return;
 
     }
     /**
      * Set the instance variables with properties being loaded from configuration.
      */
-    private void loadProperties(){
+    public void loadProperties(){
         this.isEnabled = Boolean.parseBoolean(getPropertyVal("data_purge_enabled", "false"));
         this.purgingTime = getPropertyVal("data_purge_time", DEFAULT_PURGE_TIME);
         this.purgingInterval = Integer.valueOf(getPropertyVal(
@@ -113,12 +100,11 @@ public class PurgingScheduler {
     /**
      * Reschedule the purging task when the properties are changed from the configuration file.
      */
-    public void reSchedule(){
-        loadProperties();
+    public void schedule(){
         if (this.future != null){
             future.cancel(true);
         }
-        this.future = schedulePurgingTask();
+        schedulePurgingTask();
     }
     /**
      * Cancel the scheduled purging task
@@ -126,14 +112,48 @@ public class PurgingScheduler {
     public void cancelScheduledTask(){
         if (this.future != null){
             future.cancel(true);
+            future = null;
         }
     }
     /**Return if the Purging task is currently running
      *
-     * @return
+     * @return - true if the scheduled task is not null.
+     *         - false if the scheduled task is null.
      */
     public boolean isRunning(){
         return(this.future != null);
+    }
+
+    public boolean isEnabled() {
+        return isEnabled;
+    }
+
+    public void setEnabled(boolean isEnabled) {
+        this.isEnabled = isEnabled;
+    }
+
+    public int getPurgingInterval() {
+        return purgingInterval;
+    }
+
+    public void setPurgingInterval(int purgingInterval) {
+        this.purgingInterval = purgingInterval;
+    }
+
+    public String getPurgingTime() {
+        return purgingTime;
+    }
+
+    public void setPurgingTime(String purgingTime) {
+        this.purgingTime = purgingTime;
+    }
+
+    public int getRetentionTime() {
+        return retentionTime;
+    }
+
+    public void setRetentionTime(int retentionTime) {
+        this.retentionTime = retentionTime;
     }
 
 }
