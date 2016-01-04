@@ -89,16 +89,8 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
             return;
             }
             HBaseDataStoreFactory.getHBaseDataStore().create(entity);
-            flushCommit(entity.getTableName());
         } catch(TableNotFoundException e){
-            synchronized(future){
-                if(future.isDone() || future.isCancelled()){
-                    log.info("Triggering CreateTableTask");
-                    CreateTableTask createTableTask = new CreateTableTask();
-                    Long interval = HBaseDataStoreContext.getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
-                    future = SchedulerService.getInstance().scheduleTaskAtFixedRate(createTableTask, 0L, interval);
-                }
-            }
+              TriggerTableCreatingTask();
         }
          log.debug("Exiting store(TSDRMetricRecord)");
      }
@@ -140,18 +132,11 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
                 while ( iter.hasNext()){
                     String tableName = iter.next();
                     HBaseDataStoreFactory.getHBaseDataStore().create(entityListMap.get(tableName));
-                    flushCommit(tableName);
+
                 }
-                closeConnections();
+
             } catch(TableNotFoundException e){
-                synchronized(future){
-                    if(future.isDone() || future.isCancelled()){
-                        log.info("Triggering CreateTableTask");
-                        CreateTableTask createTableTask = new CreateTableTask();
-                        Long interval = HBaseDataStoreContext.getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
-                        future = SchedulerService.getInstance().scheduleTaskAtFixedRate(createTableTask, 0L, interval);
-                    }
-                }
+                 TriggerTableCreatingTask();
             }
         }
         log.debug("Exiting store(List<TSDRRecord>)");
@@ -327,7 +312,23 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
          }
          return;
     }
+    /**
+     * Trigger CreateTableTask".
+     * @param
+     * @return
+    */
 
+    private void TriggerTableCreatingTask()
+    {
+         synchronized(future){
+             if(future.isDone() || future.isCancelled()){
+                 log.info("Triggering CreateTableTask");
+                 CreateTableTask createTableTask = new CreateTableTask();
+                 Long interval = HBaseDataStoreContext.getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
+                 future = SchedulerService.getInstance().scheduleTaskAtFixedRate(createTableTask, 0L, interval);
+             }
+         }
+    }
     /**
      * convert TSDRMetricRecord to HBaseEntity.
      * @param metrics
@@ -419,16 +420,8 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
             return;
             }
             HBaseDataStoreFactory.getHBaseDataStore().create(entity);
-            flushCommit(entity.getTableName());
         } catch(TableNotFoundException e){
-            synchronized(future){
-                if(future.isDone() || future.isCancelled()){
-                    log.info("Triggering CreateTableTask");
-                    CreateTableTask createTableTask = new CreateTableTask();
-                    Long interval = HBaseDataStoreContext.getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
-                    future = SchedulerService.getInstance().scheduleTaskAtFixedRate(createTableTask, 0L, interval);
-                }
-            }
+               TriggerTableCreatingTask();
         }
          log.debug("Exiting store(TSDRMetricRecord)");
     }

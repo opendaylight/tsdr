@@ -127,9 +127,6 @@ public class HBasePersistenceUtil {
         }
         HBaseEntity entity = new HBaseEntity();
         String nodeID = logRecord.getNodeID();
-        if ( nodeID == null || nodeID.trim().length() == 0){
-            return null;
-        }
         Long timeStamp = null;
         //If there's no timestamp in the metric Data, append the current
         //system timestamp

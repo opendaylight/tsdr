@@ -38,14 +38,21 @@ public class CreateTableTask extends Task{
         Thread.currentThread().setName("TSDR HBase Data Store CreateTableTask-thread-" + Thread.currentThread().getId());
         createTables();
     }
-
+/**
+ * Calls the CreateTable function for the tableName passed in the DataStore.
+ * @param tableName
+ * @throws Throwable
+ */
+    public void runCreateTable (String tableName) throws Throwable{
+              HBaseDataStoreFactory.getHBaseDataStore().createTable(tableName);
+    }
     public void createTables(){
          log.debug("Entering createTables()");
          Iterator<String> tableNameIter = pendingTableNames.iterator();
          while( tableNameIter.hasNext()){
              String  tableName = tableNameIter.next();
              try{
-                 HBaseDataStoreFactory.getHBaseDataStore().createTable(tableName);
+                 runCreateTable(tableName);
                  tableNameIter.remove();
              }catch ( Throwable t){
                  log.error("Exception caught creating tables", t);

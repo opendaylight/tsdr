@@ -230,6 +230,7 @@ public class HBaseDataStore  {
                  try {
                      htable = getConnection(entity.getTableName());
                      htable.put(p);
+                     flushCommit(entity.getTableName());
                  } catch (TableNotFoundException nfe) {
                      throw nfe;
                  } catch ( IOException ioe){
@@ -308,6 +309,7 @@ public class HBaseDataStore  {
                  try {
                      htable = getConnection(tableName);
                      htable.put(putList);
+                     flushCommit(tableName);
                  } catch (TableNotFoundException nfe) {
                      throw nfe;
                  } catch ( IOException ioe){
