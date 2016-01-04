@@ -206,6 +206,11 @@
       -->
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-persistence-hsqldb</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-cassandra</artifactId>
           <version>${project.version}</version>
       </dependency>
