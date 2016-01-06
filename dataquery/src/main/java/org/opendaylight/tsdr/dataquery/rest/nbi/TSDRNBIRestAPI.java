@@ -5,12 +5,10 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.dataquery.rest;
+package org.opendaylight.tsdr.dataquery.rest.nbi;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -34,45 +32,59 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-@Path("/metrics")
-public class TSDRMetricsQueryAPI {
+@Path("/nbi")
+public class TSDRNBIRestAPI {
     private static final Logger logger = LoggerFactory.getLogger(TSDRNBIRestAPI.class);
     @GET
-    @Path("/{query}")
+    @Path("/{render}")
     @Produces("application/json")
-    public Response get(@PathParam("query") String query,
-                        @QueryParam("tsdrkey") String tsdrkey,
-                        @QueryParam("from") String from,
-                        @QueryParam("until") String until) throws ExecutionException, InterruptedException {
-        TSDRQueryRequest request = new TSDRQueryRequest();
-        request.setTsdrkey(tsdrkey);
+    public Response get(@PathParam("render") String render,
+            @QueryParam("target") String target,
+            @QueryParam("from") String from,
+            @QueryParam("until") String until,
+            @QueryParam("format") String format,
+            @QueryParam("maxDataPoints") String maxDataPoints) throws ExecutionException, InterruptedException {
+        //Example query from Grafana
+        //Get render?target=EXTERNAL.Heap:Memory:Usage.Controller&from=-5min&until=now&format=json&maxDataPoints=1582
+        TSDRNBIRequest request = new TSDRNBIRequest();
+        request.setFormat(format);
         request.setFrom(from);
+        request.setMaxDataPoints(maxDataPoints);
+        request.setTarget(target);
         request.setUntil(until);
         return post(null,request);
     }
 
     @POST
     @Produces("application/json")
-    public Response post(@Context UriInfo info, TSDRQueryRequest request) throws ExecutionException, InterruptedException {
-
-        GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
-        input.setTSDRDataCategory(request.getTsdrkey());
+    public Response post(@Context UriInfo info, TSDRNBIRequest request) throws ExecutionException, InterruptedException {
+        final TSDRNBIReply reply = new TSDRNBIReply();
+        reply.setTarget(request.getTarget());
+        final GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
+        input.setTSDRDataCategory(request.getTarget());
         input.setStartTime(getTimeFromString(request.getFrom()));
         input.setEndTime(getTimeFromString(request.getUntil()));
+        final long maxDataPoints = Long.parseLong(request.getMaxDataPoints());
 
         Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
-
-        List<TSDRMetricsQueryReply> reply = new ArrayList<>();
-
         List<Metrics> metrics = metric.get().getResult().getMetrics();
         if (metrics == null || metrics.size() == 0) {
             return Response.status(201).entity(reply).build();
         }
+        int skip = 1;
+        if (metrics.size() > maxDataPoints) {
+            skip = (int) (metrics.size() / maxDataPoints);
+        }
+        reply.setTarget(request.getTarget());
+        int count = 0;
         for (Metrics m : metrics) {
-            reply.add(new TSDRMetricsQueryReply(m));
+            if (count % skip == 0) {
+                reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
+            }
+            count++;
         }
 
-        return Response.status(201).entity(toJson(reply)).build();
+        return Response.status(201).entity(toJson(new TSDRNBIReply[]{reply})).build();
     }
 
     public static long getTimeFromString(String t) {
@@ -105,7 +117,7 @@ public class TSDRMetricsQueryAPI {
     }
 
     public static final String toJson(Object obj){
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new Gson();
         return gson.toJson(obj);
     }
 }

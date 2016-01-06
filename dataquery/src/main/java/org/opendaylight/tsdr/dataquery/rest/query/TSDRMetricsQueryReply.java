@@ -5,7 +5,7 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.dataquery.rest;
+package org.opendaylight.tsdr.dataquery.rest.query;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -42,30 +42,6 @@ public class TSDRMetricsQueryReply {
                 recordKeys.add(new MetricRecordKeys(rk));
             }
         }
-    }
-
-    public String getMetricName() {
-        return metricName;
-    }
-
-    public BigDecimal getMetricValue() {
-        return metricValue;
-    }
-
-    public String getTimeStamp() {
-        return timeStamp;
-    }
-
-    public String getNodeID() {
-        return nodeID;
-    }
-
-    public String getTSDRDataCategory() {
-        return tsdrDataCategory;
-    }
-
-    public List<MetricRecordKeys> getRecordKeys() {
-        return recordKeys;
     }
 
     public static class MetricRecordKeys {

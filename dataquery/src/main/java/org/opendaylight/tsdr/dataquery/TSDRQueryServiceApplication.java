@@ -14,9 +14,9 @@ import java.util.Set;
 import javax.ws.rs.core.Application;
 import org.opendaylight.tsdr.dataquery.rest.GetLogRecordsAPI;
 import org.opendaylight.tsdr.dataquery.rest.GetMetricsAPI;
-import org.opendaylight.tsdr.dataquery.rest.TSDRLogQueryAPI;
-import org.opendaylight.tsdr.dataquery.rest.TSDRMetricsQueryAPI;
-import org.opendaylight.tsdr.dataquery.rest.TSDRNBIRestAPI;
+import org.opendaylight.tsdr.dataquery.rest.query.TSDRLogQueryAPI;
+import org.opendaylight.tsdr.dataquery.rest.query.TSDRMetricsQueryAPI;
+import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNBIRestAPI;
 
 /**
  * Jersey 1.17 Application - This class makes the Data Query API visible to the

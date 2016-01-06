@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
 package org.opendaylight.tsdr.dataquery;
 
 import com.sun.jersey.api.client.WebResource;
@@ -9,7 +16,6 @@ import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -18,10 +24,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
-import org.opendaylight.tsdr.dataquery.rest.TSDRLogQueryAPI;
-import org.opendaylight.tsdr.dataquery.rest.TSDRMetricsQueryAPI;
-import org.opendaylight.tsdr.dataquery.rest.TSDRNBIRestAPI;
-import org.opendaylight.tsdr.dataquery.rest.TSDRReply;
+import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNBIRestAPI;
+import org.opendaylight.tsdr.dataquery.rest.query.TSDRLogQueryAPI;
+import org.opendaylight.tsdr.dataquery.rest.query.TSDRMetricsQueryAPI;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsOutput;
@@ -41,14 +46,14 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.opendaylight.yangtools.yang.common.RpcResult;
 
 /**
- * Created by root on 12/26/15.
- */
-public class TSDRQueryNBITest extends JerseyTest{
+ * @author Sharon Aicler(saichler@gmail.com)
+ **/
+public class TSDRQueryAndNBITest extends JerseyTest{
 
     private QueryResourceConfig config;
     private static final String NBI_RESPONSE = "[{\"datapoints\":[[10.0,";
 
-    public static GetTSDRMetricsOutput createMetricRecords(){
+    public static GetTSDRMetricsOutput createMetricRecords(boolean emptyResult){
         MetricsBuilder rb = new MetricsBuilder();
         rb.setMetricValue(new BigDecimal(10D));
         rb.setTSDRDataCategory(DataCategory.EXTERNAL);
@@ -62,7 +67,9 @@ public class TSDRQueryNBITest extends JerseyTest{
         recordKeys.add(rkb.build());
         rb.setRecordKeys(recordKeys);
         List<Metrics> result = new ArrayList<>();
-        result.add(rb.build());
+        if(!emptyResult) {
+            result.add(rb.build());
+        }
         GetTSDRMetricsOutputBuilder b = new GetTSDRMetricsOutputBuilder();
         b.setMetrics(result);
         return b.build();
@@ -106,13 +113,13 @@ public class TSDRQueryNBITest extends JerseyTest{
         try {
             Mockito.when(metric.get()).thenReturn(rpcResult);
             Mockito.when(metric2.get()).thenReturn(rpcResult2);
-            Mockito.when(rpcResult.getResult()).thenReturn(createMetricRecords());
-            Mockito.when(rpcResult2.getResult()).thenReturn(createLogRecords());
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();
         }
+        Mockito.when(rpcResult.getResult()).thenReturn(createMetricRecords(false));
+        Mockito.when(rpcResult2.getResult()).thenReturn(createLogRecords());
         return new LowLevelAppDescriptor.Builder(config).build();
     }
 
@@ -147,6 +154,49 @@ public class TSDRQueryNBITest extends JerseyTest{
                 .get(String.class);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.startsWith(NBI_RESPONSE));
+    }
+
+    @Test
+    public void testNBIEmptyResponseForMetrics(){
+        TSDRDataqueryModule.tsdrService = Mockito.mock(TSDRService.class);
+        Future<RpcResult<GetTSDRMetricsOutput>> metric = Mockito.mock(Future.class);
+        RpcResult<GetTSDRMetricsOutput> rpcResult = Mockito.mock(RpcResult.class);
+        Mockito.when(TSDRDataqueryModule.tsdrService.getTSDRMetrics(Mockito.any(GetTSDRMetricsInput.class))).thenReturn(metric);
+        try {
+            Mockito.when(metric.get()).thenReturn(rpcResult);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        Mockito.when(rpcResult.getResult()).thenReturn(createMetricRecords(true));
+
+        WebResource webResource = resource();
+        String result = webResource.path("/nbi/render").queryParam("tsdrkey", "[NID=128.0.0.1]")
+                .queryParam("from","0")
+                .queryParam("until",""+Long.MAX_VALUE)
+                .queryParam("format","json")
+                .queryParam("maxDataPoints","960")
+                .get(String.class);
+        Assert.assertNotNull(result);
+        Assert.assertEquals("{}",result);
+        configure();
+    }
+
+    @Test
+    public void testTimeConvertion(){
+        Long time = TSDRNBIRestAPI.getTimeFromString(null);
+        Assert.assertNotNull(time);
+        time = TSDRNBIRestAPI.getTimeFromString("now");
+        Assert.assertTrue(time>System.currentTimeMillis()-2000);
+        time = TSDRNBIRestAPI.getTimeFromString("-5min");
+        Assert.assertTrue(time>System.currentTimeMillis()-302000);
+        time = TSDRNBIRestAPI.getTimeFromString("-1h");
+        Assert.assertTrue(time>System.currentTimeMillis()-(60000*60+2000));
+        time = TSDRNBIRestAPI.getTimeFromString("-1d");
+        Assert.assertTrue(time>System.currentTimeMillis()-(60000*60*24+2000));
+        time = TSDRNBIRestAPI.getTimeFromString("1");
+        Assert.assertTrue(time==1000);
     }
 
     private class QueryResourceConfig extends DefaultResourceConfig {

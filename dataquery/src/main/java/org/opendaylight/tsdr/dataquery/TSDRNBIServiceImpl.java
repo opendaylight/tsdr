@@ -35,7 +35,7 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
     private static Logger logger = LoggerFactory.getLogger(TSDRNBIServiceImpl.class);
     private TSDRService tsdrService = null;
     // The reference to the the RPC registry to store the data
-    private RpcProviderRegistry rpcRegistry = null;
+    private final RpcProviderRegistry rpcRegistry;
 
     public TSDRNBIServiceImpl(TSDRService _tsdrService, RpcProviderRegistry _rpcRegistry) {
         this.tsdrService = _tsdrService;
