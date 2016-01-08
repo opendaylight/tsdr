@@ -20,6 +20,8 @@ import java.util.List;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRCacheEntry;
+import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRLogCollectJob;
+import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRMetricCollectJob;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
@@ -134,52 +136,92 @@ public class HSQLDBStore {
         st.close();
     }
 
-    public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime) throws SQLException {
-        List<TSDRCacheEntry> entries = new ArrayList<>();
+    public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime,int recordLimit) throws SQLException {
         TSDRCacheEntry entry = this.cache.getCacheEntry(tsdrMetricKey);
         //Exact match was found
         if(entry!=null){
-            entries.add(entry);
-        }else{
-            entries = this.cache.findMatchingTSDRCacheEntries(tsdrMetricKey);
-        }
-
-        List<TSDRMetricRecord> result = new LinkedList<TSDRMetricRecord>();
-        for(TSDRCacheEntry e:entries) {
-            String sql = "select * from "+METRIC_TABLE+" where KeyA=" + e.getMd5ID().getMd5Long1() + " and KeyB=" + e.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
+            List<TSDRMetricRecord> result = new LinkedList<TSDRMetricRecord>();
+            String sql = "select * from "+METRIC_TABLE+" where KeyA=" + entry.getMd5ID().getMd5Long1()
+                    + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
             Statement st = connection.createStatement();
             ResultSet rs = st.executeQuery(sql);
             while(rs.next()){
-                result.add(getTSDRMetricRecord(rs.getLong("Time"), rs.getDouble("value"), e));
+                result.add(getTSDRMetricRecord(rs.getLong("Time"), rs.getDouble("value"), entry));
+                if(result.size()>=recordLimit){
+                    break;
+                }
             }
             rs.close();
             st.close();
+            return result;
+        }else{
+            TSDRMetricCollectJob job = new TSDRMetricCollectJob() {
+                @Override
+                public void collectMetricRecords(TSDRCacheEntry entry, long startDateTime, long endDateTime, int recordLimit, List<TSDRMetricRecord> globalResult) {
+                    String sql = "select * from "+METRIC_TABLE+" where KeyA=" + entry.getMd5ID().getMd5Long1()
+                            + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
+                    try {
+                        Statement st = connection.createStatement();
+                        ResultSet rs = st.executeQuery(sql);
+                        while (rs.next()) {
+                            globalResult.add(getTSDRMetricRecord(rs.getLong("Time"), rs.getDouble("value"), entry));
+                            if (globalResult.size() >= recordLimit) {
+                                break;
+                            }
+                        }
+                        rs.close();
+                        st.close();
+                    }catch(SQLException e){
+                        log.error("SQL Error while retrieving records",e);
+                    }
+                }
+            };
+            return this.cache.getTSDRMetricRecords(tsdrMetricKey,startDateTime,endDateTime,recordLimit,job);
         }
-        return result;
     }
 
-    public List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startDateTime, long endDateTime) throws SQLException {
-        List<TSDRCacheEntry> entries = new ArrayList<>();
+    public List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startDateTime, long endDateTime, int recordLimit) throws SQLException {
         TSDRCacheEntry entry = this.cache.getCacheEntry(tsdrLogKey);
         //Exact match was found
         if(entry!=null){
-            entries.add(entry);
-        }else{
-            entries = this.cache.findMatchingTSDRCacheEntries(tsdrLogKey);
-        }
-
-        List<TSDRLogRecord> result = new LinkedList<TSDRLogRecord>();
-        for(TSDRCacheEntry e:entries) {
-            String sql = "select * from "+ LOG_TABLE +" where KeyA=" + e.getMd5ID().getMd5Long1() + " and KeyB=" + e.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
+            List<TSDRLogRecord> result = new LinkedList<TSDRLogRecord>();
+            String sql = "select * from "+ LOG_TABLE +" where KeyA=" + entry.getMd5ID().getMd5Long1()
+                    + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
             Statement st = connection.createStatement();
             ResultSet rs = st.executeQuery(sql);
             while(rs.next()){
-                result.add(getTSDRLogRecord(rs.getLong("Time"), rs.getString("value"), rs.getInt("xIndex"), e));
+                result.add(getTSDRLogRecord(rs.getLong("Time"), rs.getString("value"), rs.getInt("xIndex"), entry));
+                if(result.size()>=recordLimit){
+                    break;
+                }
             }
             rs.close();
             st.close();
+            return result;
+        }else{
+            TSDRLogCollectJob job = new TSDRLogCollectJob() {
+                @Override
+                public void collectLogRecords(TSDRCacheEntry entry, long startDateTime, long endDateTime, int recordLimit, List<TSDRLogRecord> globalResult) {
+                    String sql = "select * from "+ LOG_TABLE +" where KeyA=" + entry.getMd5ID().getMd5Long1()
+                            + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
+                    try {
+                        Statement st = connection.createStatement();
+                        ResultSet rs = st.executeQuery(sql);
+                        while (rs.next()) {
+                            globalResult.add(getTSDRLogRecord(rs.getLong("Time"), rs.getString("value"), rs.getInt("xIndex"), entry));
+                            if (globalResult.size() >= recordLimit) {
+                                break;
+                            }
+                        }
+                        rs.close();
+                        st.close();
+                    }catch(SQLException e){
+                        log.error("SQL Error while retrieving records",e);
+                    }
+                }
+            };
+            return this.cache.getTSDRLogRecords(tsdrLogKey,startDateTime,endDateTime,recordLimit,job);
         }
-        return result;
     }
 
     private static final List<RecordKeys> EMPTY_RECORD_KEYS = new ArrayList<>();

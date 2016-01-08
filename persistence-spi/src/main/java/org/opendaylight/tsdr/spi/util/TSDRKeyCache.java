@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,29 +120,34 @@ public class TSDRKeyCache {
     }
 
     /**
-       This method receive as an input a TSDR Key and scan the cache for those entries
-       That match those part of the key that have values. For example if the passed tsdr key is
-       something like "[NID=openflow:1][DC=PORTSTATS][MN=][RK=]" this method will retrieve all
-       the entries that belong to both openflow:1 node and are of type PORTSTATS.
-     * @param tsdrKey - The TSDR Key, can be partial but needs to contain all the tags but not all the values.
-     * @return - A list of cache entries.
-     */
-    public List<TSDRCacheEntry> findMatchingTSDRCacheEntries(String tsdrKey){
-        String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(tsdrKey);
+        When the TSDR Pseudo Key is a general one and a few records in the cache fits that pseudo key,
+        the persistence layer should create a Job that this method will utilize to collect the amount of records requested while iterating
+        over the exact keys.
+        @param tsdrMetricKey - The psudo metric key
+        @param startDateTime - The start time
+        @param endDateTime - The end time
+        @param recordLimit - The number of records to collect
+        @param job - The Persistence Layer Job implementation
+        @return  - A list of TSDR Metric Records.
+     **/
+    public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime,int recordLimit,TSDRMetricCollectJob job) {
+        String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(tsdrMetricKey);
         //In case the dataCategory is null, it may be that the source
         //of the call is from the tsdr:list command, hence the tsdrKey
         //is actually a Data Category. in this case, try to see if the TSDRKey
         //is a data category.
         if(dataCategory==null){
             try{
-                DataCategory dc = DataCategory.valueOf(tsdrKey);
+                DataCategory dc = DataCategory.valueOf(tsdrMetricKey);
                 dataCategory = dc.name();
-            }catch(Exception e){/*Don't care*/}
+            }catch(Exception e){
+                LOG.trace("TSDR Metric Key {} is not a DataCategory",tsdrMetricKey);
+            }
         }
-        String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrKey);
-        String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrKey);
-        List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrKey);
-        List<TSDRCacheEntry> result = new ArrayList<>();
+        String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrMetricKey);
+        String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrMetricKey);
+        List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrMetricKey);
+        final List<TSDRMetricRecord> result = new ArrayList<>();
 
         for(TSDRCacheEntry e:this.cache.values()){
             if(dataCategory!=null && e.getTsdrKey().indexOf(dataCategory)==-1){
@@ -164,9 +171,82 @@ public class TSDRKeyCache {
                     continue;
                 }
             }
-            result.add(e);
+            job.collectMetricRecords(e,startDateTime,endDateTime,recordLimit,result);
+            if(result.size()>=recordLimit){
+                break;
+            }
         }
         return result;
+
+    }
+
+    /**
+     When the TSDR Pseudo Key is a general one and a few records in the cache fits that pseudo key,
+     the persistence layer should create a Job that this method will utilize to collect the amount of records requested while iterating
+     over the exact keys.
+     @param tsdrLogKey - The psudo log key
+     @param startDateTime - The start time
+     @param endDateTime - The end time
+     @param recordLimit - The number of records to collect
+     @param job - The Persistence Layer Job implementation
+     @return  - A list of TSDR Log Records.
+     **/
+    public List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startDateTime, long endDateTime, int recordLimit, TSDRLogCollectJob job) {
+        String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(tsdrLogKey);
+        //In case the dataCategory is null, it may be that the source
+        //of the call is from the tsdr:list command, hence the tsdrKey
+        //is actually a Data Category. in this case, try to see if the TSDRKey
+        //is a data category.
+        if(dataCategory==null){
+            try{
+                DataCategory dc = DataCategory.valueOf(tsdrLogKey);
+                dataCategory = dc.name();
+            }catch(Exception e){
+                LOG.trace("TSDR Log Key {} is not a Data Category.",tsdrLogKey);
+            }
+        }
+        String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrLogKey);
+        String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrLogKey);
+        List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrLogKey);
+        final List<TSDRLogRecord> result = new ArrayList<>();
+
+        for(TSDRCacheEntry e:this.cache.values()){
+            if(dataCategory!=null && e.getTsdrKey().indexOf(dataCategory)==-1){
+                continue;
+            }
+            if(nodeID!=null && e.getTsdrKey().indexOf(nodeID)==-1){
+                continue;
+            }
+            if(metricName!=null && e.getTsdrKey().indexOf(metricName)==-1){
+                continue;
+            }
+            if(recKeys!=null){
+                boolean fitCriteria = true;
+                for(RecordKeys r:recKeys){
+                    if(e.getTsdrKey().indexOf(r.getKeyName())==-1 || e.getTsdrKey().indexOf(r.getKeyValue())==-1){
+                        fitCriteria = false;
+                        break;
+                    }
+                }
+                if(!fitCriteria){
+                    continue;
+                }
+            }
+            job.collectLogRecords(e,startDateTime,endDateTime,recordLimit,result);
+            if(result.size()>=recordLimit){
+                break;
+            }
+        }
+        return result;
+
+    }
+
+    public static interface TSDRMetricCollectJob {
+        public void collectMetricRecords(TSDRCacheEntry entry,long startDateTime, long endDateTime,int recordLimit,List<TSDRMetricRecord> globalResult);
+    }
+
+    public static interface TSDRLogCollectJob {
+        public void collectLogRecords(TSDRCacheEntry entry,long startDateTime, long endDateTime,int recordLimit,List<TSDRLogRecord> globalResult);
     }
 
     public Collection<TSDRCacheEntry> getAll(){

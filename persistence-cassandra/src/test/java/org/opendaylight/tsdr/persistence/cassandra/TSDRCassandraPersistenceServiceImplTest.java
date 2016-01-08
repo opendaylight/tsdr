@@ -15,7 +15,6 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.internal.verification.AtLeast;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
@@ -90,12 +89,12 @@ public class TSDRCassandraPersistenceServiceImplTest {
     @Test
     public void testGetTSDRMetricRecords(){
         impl.getTSDRMetricRecords("Test",0L,0L);
-        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRMetricRecords("Test",0L,0L);
+        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRMetricRecords("Test",0L,0L,1000);
     }
 
     @Test
     public void testGetTSDRLogRecords(){
         impl.getTSDRLogRecords("Test",0L,0L);
-        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRLogRecords("Test",0L,0L);
+        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRLogRecords("Test",0L,0L,1000);
     }
 }
