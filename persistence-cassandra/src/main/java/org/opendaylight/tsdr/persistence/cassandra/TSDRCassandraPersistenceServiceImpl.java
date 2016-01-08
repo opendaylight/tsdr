@@ -9,6 +9,7 @@ package org.opendaylight.tsdr.persistence.cassandra;
 
 import java.util.Date;
 import java.util.List;
+import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
@@ -81,11 +82,11 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
 
     @Override
     public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime) {
-        return store.getTSDRMetricRecords(tsdrMetricKey,startDateTime,endDateTime);
+        return store.getTSDRMetricRecords(tsdrMetricKey,startDateTime,endDateTime, TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
     }
 
     @Override
     public List<TSDRLogRecord> getTSDRLogRecords(String tsdrMetricKey, long startTime, long endTime) {
-        return store.getTSDRLogRecords(tsdrMetricKey,startTime,endTime);
+        return store.getTSDRLogRecords(tsdrMetricKey,startTime,endTime,TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
     }
 }

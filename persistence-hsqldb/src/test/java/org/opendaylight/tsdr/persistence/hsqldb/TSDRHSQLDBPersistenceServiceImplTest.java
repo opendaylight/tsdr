@@ -87,12 +87,12 @@ public class TSDRHSQLDBPersistenceServiceImplTest {
     @Test
     public void testGetTSDRMetricRecords() throws SQLException {
         impl.getTSDRMetricRecords("Test",0L,0L);
-        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRMetricRecords("Test",0L,0L);
+        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRMetricRecords("Test",0L,0L,1000);
     }
 
     @Test
     public void testGetTSDRLogRecords() throws SQLException {
         impl.getTSDRLogRecords("Test",0L,0L);
-        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRLogRecords("Test",0L,0L);
+        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRLogRecords("Test",0L,0L,1000);
     }
 }

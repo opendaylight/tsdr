@@ -199,46 +199,64 @@ public class CassandraStore {
         session.execute(cql.toString());
     }
 
-    public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime) {
-        List<TSDRCacheEntry> entries = new ArrayList<>();
+    public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime,int recordLimit) {
         TSDRCacheEntry entry = this.cache.getCacheEntry(tsdrMetricKey);
         //Exact match was found
         if(entry!=null){
-            entries.add(entry);
-        }else{
-            entries = this.cache.findMatchingTSDRCacheEntries(tsdrMetricKey);
-        }
-
-        List<TSDRMetricRecord> result = new LinkedList<TSDRMetricRecord>();
-        for(TSDRCacheEntry e:entries) {
-            String cql = "select * from MetricVal where KeyA=" + e.getMd5ID().getMd5Long1() + " and KeyB=" + e.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
+            final List<TSDRMetricRecord> result = new LinkedList<TSDRMetricRecord>();
+            String cql = "select * from MetricVal where KeyA=" + entry.getMd5ID().getMd5Long1()
+                    + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime
+                    + " and Time<=" + endDateTime + " limit "+recordLimit;
             ResultSet rs = session.execute(cql);
             for (Row r : rs.all()) {
-                result.add(getTSDRMetricRecord(r.getLong("Time"), r.getDouble("value"), e));
+                result.add(getTSDRMetricRecord(r.getLong("Time"), r.getDouble("value"), entry));
             }
+            return result;
+        }else{
+            final TSDRKeyCache.TSDRMetricCollectJob job = new TSDRKeyCache.TSDRMetricCollectJob() {
+                @Override
+                public void collectMetricRecords(TSDRCacheEntry entry, long startDateTime, long endDateTime, int recordLimit, List<TSDRMetricRecord> globalResult) {
+                    String cql = "select * from MetricVal where KeyA=" + entry.getMd5ID().getMd5Long1()
+                            + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime
+                            + " and Time<=" + endDateTime + " limit "+(recordLimit-globalResult.size());
+                    ResultSet rs = session.execute(cql);
+                    for (Row r : rs.all()) {
+                        globalResult.add(getTSDRMetricRecord(r.getLong("Time"), r.getDouble("value"), entry));
+                    }
+                }
+            };
+            return this.cache.getTSDRMetricRecords(tsdrMetricKey,startDateTime,endDateTime,recordLimit,job);
         }
-        return result;
     }
 
-    public List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startDateTime, long endDateTime) {
-        List<TSDRCacheEntry> entries = new ArrayList<>();
+    public List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startDateTime, long endDateTime, int recordLimit) {
         TSDRCacheEntry entry = this.cache.getCacheEntry(tsdrLogKey);
         //Exact match was found
         if(entry!=null){
-            entries.add(entry);
-        }else{
-            entries = this.cache.findMatchingTSDRCacheEntries(tsdrLogKey);
-        }
-
-        List<TSDRLogRecord> result = new LinkedList<TSDRLogRecord>();
-        for(TSDRCacheEntry e:entries) {
-            String cql = "select * from MetricLog where KeyA=" + e.getMd5ID().getMd5Long1() + " and KeyB=" + e.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
+            final List<TSDRLogRecord> result = new LinkedList<TSDRLogRecord>();
+            String cql = "select * from MetricLog where KeyA=" + entry.getMd5ID().getMd5Long1()
+                    + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>="
+                    + startDateTime + " and Time<=" + endDateTime + " limit "+recordLimit;
             ResultSet rs = session.execute(cql);
             for (Row r : rs.all()) {
-                result.add(getTSDRLogRecord(r.getLong("Time"), r.getString("value"), r.getInt("xIndex"), e));
+                result.add(getTSDRLogRecord(r.getLong("Time"), r.getString("value"), r.getInt("xIndex"), entry));
             }
+            return result;
+        }else{
+            TSDRKeyCache.TSDRLogCollectJob job = new TSDRKeyCache.TSDRLogCollectJob() {
+                @Override
+                public void collectLogRecords(TSDRCacheEntry entry, long startDateTime, long endDateTime, int recordLimit, List<TSDRLogRecord> globalResult) {
+                    String cql = "select * from MetricLog where KeyA=" + entry.getMd5ID().getMd5Long1()
+                            + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>="
+                            + startDateTime + " and Time<=" + endDateTime + " limit "+(recordLimit-globalResult.size());
+                    ResultSet rs = session.execute(cql);
+                    for (Row r : rs.all()) {
+                        globalResult.add(getTSDRLogRecord(r.getLong("Time"), r.getString("value"), r.getInt("xIndex"), entry));
+                    }
+                }
+            };
+            return this.cache.getTSDRLogRecords(tsdrLogKey,startDateTime,endDateTime,recordLimit,job);
         }
-        return result;
     }
 
     private static final List<RecordKeys> EMPTY_RECORD_KEYS = new ArrayList<>();

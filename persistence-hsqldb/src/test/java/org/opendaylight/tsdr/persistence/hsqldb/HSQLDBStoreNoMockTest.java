@@ -70,7 +70,7 @@ public class HSQLDBStoreNoMockTest {
         TSDRMetricRecord rec = createMetricRecord();
         store.store(rec);
         String key = FormatUtil.getTSDRMetricKey(rec);
-        List<TSDRMetricRecord> list = store.getTSDRMetricRecords(key,0L,Long.MAX_VALUE);
+        List<TSDRMetricRecord> list = store.getTSDRMetricRecords(key,0L,Long.MAX_VALUE,10);
         Assert.assertNotNull(list);
         Assert.assertTrue(list.size()==1);
         Assert.assertEquals(rec.getMetricValue(),list.get(0).getMetricValue());
@@ -82,7 +82,7 @@ public class HSQLDBStoreNoMockTest {
         TSDRLogRecord rec = createLogRecord();
         store.store(rec);
         String key = FormatUtil.getTSDRLogKey(rec);
-        List<TSDRLogRecord> list = store.getTSDRLogRecords(key,0L,Long.MAX_VALUE);
+        List<TSDRLogRecord> list = store.getTSDRLogRecords(key,0L,Long.MAX_VALUE,10);
         Assert.assertNotNull(list);
         Assert.assertTrue(list.size()==1);
         Assert.assertEquals(rec.getRecordFullText(),list.get(0).getRecordFullText());
