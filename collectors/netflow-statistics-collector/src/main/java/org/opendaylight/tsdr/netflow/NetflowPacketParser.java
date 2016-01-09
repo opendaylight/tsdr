@@ -59,7 +59,7 @@ public class NetflowPacketParser {
         return this.recordAttributes;
     }
 
-    private void addValue(String name,String value){
+    public void addValue(String name,String value){
         RecordAttributesBuilder builder = new RecordAttributesBuilder();
         builder.setName(name);
         builder.setValue(value);

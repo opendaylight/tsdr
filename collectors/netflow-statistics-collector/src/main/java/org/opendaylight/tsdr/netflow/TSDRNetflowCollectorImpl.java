@@ -13,6 +13,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.LinkedList;
 import java.util.List;
+
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
@@ -39,7 +40,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
     private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 5000;
     private static final long INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS = 2000;
     private static final Logger logger = LoggerFactory.getLogger(TSDRNetflowCollectorImpl.class);
-
+    private static byte packetsCountForTests = 0; //Just to test the counts of packet for test
     private final TsdrCollectorSpiService collectorSPIService;
     private final DatagramSocket socket;
     private boolean running = true;
@@ -47,7 +48,6 @@ public class TSDRNetflowCollectorImpl extends Thread{
     private long lastPersisted = System.currentTimeMillis();
     private long lastTimeStamp = System.currentTimeMillis();
     private int logRecordIndex = 0;
-
     /**
      * Constructor
      * @param _collectorSPIService
@@ -61,7 +61,12 @@ public class TSDRNetflowCollectorImpl extends Thread{
         this.start();
         new NetFlowProcessor();
     }
-
+    public long getIncomingNetflowSize(){
+        return incomingNetFlow.size();
+    }
+    public byte getPacketCount(){
+        return packetsCountForTests;
+    }
     public void run(){
         if(this.socket==null || this.socket.isClosed()){
             shutdown();
@@ -93,6 +98,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
     public void handleNetFlow(DatagramPacket packet){
         synchronized(incomingNetFlow){
             incomingNetFlow.add(packet);
+            packetsCountForTests = (byte) (((int)packetsCountForTests) + 1);
             incomingNetFlow.notifyAll();
         }
     }
