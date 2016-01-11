@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 xFlow Research Inc. and others.  All rights reserved
+ * Copyright (c) 2016 xFlow Research Inc. and others.  All rights reserved
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
@@ -17,7 +17,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendaylight.tsdr.persistence.hbase.HBaseDataStoreContext;
-
+/**
+ * @author <a href="mailto:chaudhry.usama@xflowresearch.com">Chaudhry Muhammad Usama</a>
+ * Created by Chaudhry Usama on 1/6/16.
+ */
 public class HBaseDataStoreContextTest {
     public HBaseDataStoreContext ContextService = null;
 
