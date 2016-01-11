@@ -62,6 +62,21 @@ public class HBaseDataStore  {
         super();
      }
 
+     /*
+      * Setter for UT purpose
+      */
+
+     public void setHBaseDataStoreHtableMap(Map sethtableMap){
+         if(htableMap.isEmpty()){
+             htableMap = sethtableMap; //just for UT purpose
+         }
+     }
+
+     public void setHBaseDataStoreHtableMap(Configuration setconf){
+         if(conf == null){
+             conf = setconf; //just for UT purpose
+         }
+     }
      /**
       * Constructor with specified context info.
       *
@@ -103,7 +118,7 @@ public class HBaseDataStore  {
       * HBase data store context.
       * @return
       */
-     private HTablePool getHTablePool() {
+     public HTablePool getHTablePool() {
         log.debug("Entering getHTablePool()");
         HTablePool htablePool = new HTablePool(getConfiguration(), 1);
         log.debug("Exiting getHTablePool()");
@@ -156,8 +171,7 @@ public class HBaseDataStore  {
          HBaseAdmin hbase = null;
          ClassLoader ocl = Thread.currentThread().getContextClassLoader();
          try{
-             Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader())
-;
+             Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader());
              if (tableName != null){
                 hbase = new HBaseAdmin(getConfiguration());
                 HTableDescriptor desc = new HTableDescriptor(tableName);
@@ -221,7 +235,7 @@ public class HBaseDataStore  {
                                                  Bytes.toBytes(currentColumn.getValue()));
                                  }else{
                                      p.add(Bytes.toBytes(currentColumn.getColumnFamily()),
-                                         Bytes.toBytes(currentColumn.getColumnQualifier()),
+                                         null,//Bytes.toBytes(currentColumn.getColumnQualifier()),
                                          Bytes.toBytes(currentColumn.getValue()));
                                  }
                          }
@@ -297,7 +311,7 @@ public class HBaseDataStore  {
                                                  Bytes.toBytes(currentColumn.getValue()));
                                  }else{
                                      p.add(Bytes.toBytes(currentColumn.getColumnFamily()),
-                                         Bytes.toBytes(currentColumn.getColumnQualifier()),
+                                         null,//Bytes.toBytes(currentColumn.getColumnQualifier()),
                                          Bytes.toBytes(currentColumn.getValue()));
                                  }
                          }
@@ -569,7 +583,7 @@ public class HBaseDataStore  {
                htable = getConnection(tableName);
                ResultScanner rs = htable.getScanner(scan);
                int count = 0;
-               for ( Result rr: rs){
+              for ( Result rr= rs.next(); rr!= null; rr = rs.next()){
                   deleteList.add(new Delete(rr.getRow()));
                   count++;
                   if ( count >= batchSize){
@@ -614,7 +628,7 @@ public class HBaseDataStore  {
       * @param result - result
       * @return - a list of hbase entity
       */
-     private HBaseEntity convertResultToEntity(String tableName, Result result){
+     public HBaseEntity convertResultToEntity(String tableName, Result result){
          if(result==null){
                  return null;
          }
