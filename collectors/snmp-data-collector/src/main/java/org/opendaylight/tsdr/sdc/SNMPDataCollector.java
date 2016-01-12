@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  * @author Trapti Khandelwal(trapti.khandelwal@tcs.com)
+ * @author Razi Ahmed(ahmed.razi@tcs.com)
  **/
 public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
     private static final Logger logger = LoggerFactory.getLogger(SNMPDataCollector.class);
@@ -153,11 +154,10 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
                 b.setTimeStamp(System.currentTimeMillis());
 
                 switch(snmpMetric) {
-                    /* MTU is not a metric, it is a const value
-                    case MTU:
+                // do not need to be stored as they do not change often
+                /*    case MTU:
                         b.setMetricValue(new BigDecimal(entry.getIfMtu()));
-                        break;*/
-                    /* Also this one is not a metric, it is a const defines the interface speed
+                        break;
                     case IfSpeed:
                         b.setMetricValue(new BigDecimal(entry.getIfSpeed().getValue()));
                         break;*/
@@ -197,14 +197,12 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
                     case IfOutOctets:
                         b.setMetricValue(new BigDecimal(entry.getIfOutOctets().getValue()));
                         break;
-                    /*Not a metric, it defines the interface operation status
                     case IfOperStatus:
                         b.setMetricValue(new BigDecimal(entry.getIfOperStatus().getIntValue()));
-                        break;*/
-                    /*Not a metric, it defines the interface administration status
+                        break;
                     case IfAdminStatus:
                         b.setMetricValue(new BigDecimal(entry.getIfAdminStatus().getIntValue()));
-                        break;*/
+                        break;
                 }
                 synchronized(SNMPDataCollector.class) {
                     tsdrMetricRecordList.add(b.build());

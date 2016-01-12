@@ -19,21 +19,22 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by saichler@gmail.com on 12/2/15.
  * @author Trapti Khandelwal(trapti.khandelwal@tcs.com)
+ * @author Razi Ahmed(ahmed.razi@tcs.com)
  */
 public class TSDRSNMPConfig implements ManagedService {
 
     private static TSDRSNMPConfig instance = new TSDRSNMPConfig();
     /*There is multiple values against single key i.e  host and community_string.
      * So array of String is to hold multiple values against single key.
-     * eg host=127.0.0.1,172.21.182.215
-     * community_string=public,public*/
+     * eg credentials=[127.0.0.1,public],[127.0.0.1,public]
+    */
     private Dictionary<String, String[]> configurations = new Hashtable<>();
-    public static final String P_HOST = "host";
-    public static final String P_COMMUNITY = "community_string";
+    public static final String P_CREDENTIALS = "credentials";
     private static final Logger log = LoggerFactory
             .getLogger(TSDRSNMPConfig.class);
 
     private TSDRSNMPConfig() {
+        configurations.put(P_CREDENTIALS, new String[]{"127.0.0.1","public"});
     }
 
     public static TSDRSNMPConfig getInstance() {
@@ -46,7 +47,7 @@ public class TSDRSNMPConfig implements ManagedService {
             Enumeration<String> k = properties.keys();
             while (k.hasMoreElements()) {
                 String key = k.nextElement();
-                String[] list = ((String) properties.get(key)).split(",");
+                String[] list = ((String) properties.get(key)).replace("[", "").replace("]", "").split(",");
                 configurations.put(key, list);
             }
         }

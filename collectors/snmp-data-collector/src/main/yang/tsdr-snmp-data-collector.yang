@@ -20,7 +20,7 @@ module tsdr-snmp-data-collector {
     import config { prefix config; revision-date 2013-04-05; }
     import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
     contact
-      "Prajaya Talwar <prajaya.talwar@tcs.com>";
+      "Trapti Khandelwal <trapti.khandelwal@tcs.com>";
     description
         "This module contains the base YANG definitions for
         tsdr-snmp-data-collector impl implementation.";
@@ -44,8 +44,8 @@ module tsdr-snmp-data-collector {
 
     typedef snmp-metric {
         type enumeration {
-            //enum MTU; this is not a metric
-            //enum ifSpeed; this is also not a metric but a const of interface speed
+         // enum MTU;        does not need to be stored since it does not change often
+         // enum ifSpeed;    does not need to be stored since it does not change often
             enum ifInNUcastPkts;
             enum ifInDiscards;
             enum ifInErrors;
@@ -58,8 +58,8 @@ module tsdr-snmp-data-collector {
             enum ifOutDiscards;
             enum ifOutUcastPkts;
             enum ifOutOctets;
-            //enum ifOperStatus; not a metric, the operation status of the interface up/down
-            //enum ifAdminStatus; not a metric, the admin status of the interface up/down
+            enum ifOperStatus;
+            enum ifAdminStatus;
         }
     }
 
