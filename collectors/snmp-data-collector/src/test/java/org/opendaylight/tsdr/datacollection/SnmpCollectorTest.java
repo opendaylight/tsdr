@@ -15,6 +15,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
+import org.opendaylight.controller.md.sal.binding.api.ReadWriteTransaction;
+import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
@@ -43,10 +45,14 @@ import org.snmp4j.smi.Variable;
 import org.snmp4j.smi.VariableBinding;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.Inet4Address;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +81,7 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.SetPollingIntervalInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfigBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TsdrSnmpDataCollectorService;
 
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.CheckedFuture;
@@ -91,11 +98,13 @@ public class SnmpCollectorTest {
     private static Snmp mockSnmp = null;
     private static RpcProviderRegistry mockRpcReg = null;
     private ReadOnlyTransaction readTransaction = null;
-    private TSDRSnmpDataCollectorConfig nodes = null;
+    private WriteTransaction writeTransaction =null;
+    private TSDRSnmpDataCollectorConfig collectorConfig = null;
     private CheckedFuture<Optional<TSDRSnmpDataCollectorConfig>, ReadFailedException> checkedFuture = mock(CheckedFuture.class);
     private static Future<RpcResult<SnmpGetOutput>> futureSnmpGetOutput = null;
     private DataBroker dataBroker = null;
     private RpcProviderRegistry rpcRegistry = null;
+    private InstanceIdentifier<TSDRSnmpDataCollectorConfig> id= null;
     private SNMPDataCollector collector = null;
     private TSDRSNMPConfig tsdrSnmpConfigObj = null;
     private Ipv4Address ip=new Ipv4Address("127.0.0.1");
@@ -104,14 +113,18 @@ public class SnmpCollectorTest {
 
     @Before
     public void setUp() throws IOException {
-        tsdrSnmpConfigObj=TSDRSNMPConfig.getInstance();
-        mockRpcReg = mock(RpcProviderRegistry.class);
-        when(mockRpcReg.addRpcImplementation(eq(SnmpService.class), any(SnmpService.class))).thenReturn(null);
+        tsdrSnmpConfigObj=TSDRSNMPConfig.getInstance();  
+        rpcRegistry = mock(RpcProviderRegistry.class);
+        when(rpcRegistry.addRpcImplementation(eq(TsdrSnmpDataCollectorService.class), any(TsdrSnmpDataCollectorService.class))).thenReturn(null);
         dataBroker = mock(DataBroker.class);
         readTransaction = mock(ReadOnlyTransaction.class);
+        writeTransaction = mock (ReadWriteTransaction.class);
+        id = InstanceIdentifier.create(TSDRSnmpDataCollectorConfig.class);
         when(dataBroker.newReadOnlyTransaction()).thenReturn(readTransaction);
-        InstanceIdentifier<TSDRSnmpDataCollectorConfig> id = InstanceIdentifier.create(TSDRSnmpDataCollectorConfig.class);
-        nodes = buildNodes();
+        when(dataBroker.newWriteOnlyTransaction()).thenReturn(writeTransaction);
+        collectorConfig = buildNodes();
+        writeTransaction.put(LogicalDatastoreType.CONFIGURATION, id, collectorConfig);
+        readTransaction.read(LogicalDatastoreType.CONFIGURATION, id);
         when(readTransaction.read(LogicalDatastoreType.CONFIGURATION, id)).thenReturn(checkedFuture);
         try {
             when(checkedFuture.get()).thenReturn(optional);
@@ -119,11 +132,8 @@ public class SnmpCollectorTest {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        when(optional.get()).thenReturn(nodes);
-        // GET response
+        when(optional.get()).thenReturn(collectorConfig);
         mockSnmp = mock(Snmp.class);
-        dataBroker = mock(DataBroker.class);
-        rpcRegistry = mock(RpcProviderRegistry.class);
         collector = new SNMPDataCollector(this.dataBroker, rpcRegistry);
     }
 
@@ -181,11 +191,6 @@ public class SnmpCollectorTest {
     }
 
     @Test
-    public void testsaveConfigData() throws Exception {
-        collector.saveConfigData();
-    }
-
-    @Test
     public void testLog() throws Exception {
 
         SNMPDataCollector.log(new Exception());
@@ -197,12 +202,10 @@ public class SnmpCollectorTest {
     }
 
     @Test
-    public void testsetPollingIntervals() throws Exception {
-        InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
-        List<TSDRMetricRecord> list = tsdrMetricRecordList;
-        tsdrMetricRecordList = new LinkedList<>();
-        input.setTSDRMetricRecord(list);
-        input.build();
+    public void testupdatedDictionary() throws Exception {
+        Dictionary<String, String> dict = new Hashtable<>();
+        dict.put("credentials", "[172.21.182.143,mib2dev/if-mib]");
+        tsdrSnmpConfigObj.updated(dict);
     }
 
     @Test
@@ -220,93 +223,5 @@ public class SnmpCollectorTest {
     @Test
     public void testgetConfig() throws Exception {
         tsdrSnmpConfigObj.getConfig("credentials");
-    }
-
-    @Test
-    public void testGetInterfacesDataCollection() throws Exception {
-        final String baseIFOIB = "1.3.6.1.2.1.2.2.1.";
-        final OID ifIndexOID = new OID(baseIFOIB + "1");
-        final OID ifAdminStatusOID = new OID(baseIFOIB + "7");
-        final OID ifDescrOID = new OID(baseIFOIB + "2");
-        final OID ifInErrorsOID = new OID(baseIFOIB + "14");
-
-        // Generate the test list of interfaces
-        final List<IfEntry> testInterfaceEntries = new ArrayList<>();
-
-        for (int i=0; i<10; i++) {
-            IfEntryBuilder ifEntryBuilder = new IfEntryBuilder()
-            .setIfIndex(new InterfaceIndex(i + 1))
-            .setIfAdminStatus(IfEntry.IfAdminStatus.forValue(i % 3))
-            .setIfDescr(new DisplayString(String.format("Interface %s", i)))
-            .setIfInErrors(new Counter32(99l-i));
-            testInterfaceEntries.add(ifEntryBuilder.build());
-        }
-
-        // Set up the response for the mock snmp4j
-        // This is responsible for calling the onResponse() callback for SNMP messages
-        doAnswer(new Answer<Object>() {
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                PDU requestPDU = (PDU) invocation.getArguments()[0];
-                ResponseListener callback = (ResponseListener) invocation.getArguments()[3];
-
-                // Create the response PDU based on the request PDU
-                PDU responsePDU = new PDU();
-                responsePDU.setType(PDU.GET);
-
-                // Get the OID of the request
-                assertEquals("Checking size of PDU response variable bindings", 1, requestPDU.getVariableBindings().size());
-                OID requestOID = requestPDU.getVariableBindings().get(0).getOid();
-
-                for (int i=0; i<testInterfaceEntries.size(); i++) {
-                    IfEntry testIfEntry = testInterfaceEntries.get(i);
-                    int[] prefix = requestOID.getValue();
-                    Variable val = null;
-
-                    if (requestOID.equals(ifIndexOID)) {
-                        // Add all of the ifIndexes to the response
-                        val = new Integer32(i + 1);
-
-                    } else if (requestOID.equals(ifAdminStatusOID)) {
-                        val = new Integer32(i % 3);
-
-                    } else if (requestOID.equals(ifDescrOID)) {
-                        val = new OctetString(testIfEntry.getIfDescr().toString());
-
-                    } else if (requestOID.equals(ifInErrorsOID)) {
-                        val = new org.snmp4j.smi.Counter32(testIfEntry.getIfInErrors().getValue());
-
-                    } else {
-                        // Don't add any variable bindings to the response
-                        break;
-                    }
-
-                    if (val != null) {
-                        OID objOID = new OID(prefix, i);
-                        responsePDU.add(new VariableBinding(objOID, val));
-                    }
-                }
-
-                ResponseEvent responseEvent = new ResponseEvent(mockSnmp,
-                        new UdpAddress(Inet4Address.getByName(GET_IP_ADDRESS), snmpListenPort),
-                        requestPDU,
-                        responsePDU,
-                        null,
-                        null);
-
-                callback.onResponse(responseEvent);
-                return null;
-            }
-        }).when(mockSnmp).send(any(PDU.class), any(Target.class), any(), (ResponseListener) any());
-
-        try (SNMPImpl snmpImpl = new SNMPImpl(mockRpcReg)) {
-            Ipv4Address ip = new Ipv4Address(GET_IP_ADDRESS);
-            GetInterfacesInputBuilder input = new GetInterfacesInputBuilder();
-            input.setCommunity(COMMUNITY);
-            input.setIpAddress(ip);
-            RpcResult<GetInterfacesOutput> result = null;
-            Future<RpcResult<GetInterfacesOutput>> resultFuture = snmpImpl.getInterfaces(input.build());
-            result = resultFuture.get();
-            assertTrue(result.isSuccessful());
-        }
     }
 }

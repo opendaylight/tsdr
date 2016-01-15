@@ -9,9 +9,9 @@
 
 package org.opendaylight.tsdr.sdc;
 
+import org.opendaylight.tsdr.spi.util.DataEncrypter;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
 import org.opendaylight.yangtools.yang.common.RpcResult;
-import java.util.Enumeration;
 import java.util.Dictionary;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev100924.Ipv4Address;
 /**
@@ -25,7 +25,6 @@ public class TSDRSNMPInterfacePoller extends Thread {
     // The collector
     private SNMPDataCollector collector = null;
     private Dictionary<String, String[]> configuration = null;
-    private Enumeration<String> nodeConfigKeys = null;
     private int nodeConfigDetails = 0;
     private Ipv4Address ip = null;
     private String community = null;
@@ -37,7 +36,6 @@ public class TSDRSNMPInterfacePoller extends Thread {
         this.setDaemon(true);
         this.collector.loadConfigData();
         configuration = TSDRSNMPConfig.getInstance().getConfiguration();
-        nodeConfigKeys = configuration.keys();
         this.start();
     }
 
@@ -47,7 +45,7 @@ public class TSDRSNMPInterfacePoller extends Thread {
             for(nodeConfigDetails = 0; nodeConfigDetails < configuration.get(TSDRSNMPConfig.P_CREDENTIALS).length; nodeConfigDetails += 2)
             {
                 ip = new Ipv4Address(configuration.get(TSDRSNMPConfig.P_CREDENTIALS)[nodeConfigDetails].toString());
-                community = configuration.get(TSDRSNMPConfig.P_CREDENTIALS)[nodeConfigDetails+1].toString();
+                community = DataEncrypter.decrypt(configuration.get(TSDRSNMPConfig.P_CREDENTIALS)[nodeConfigDetails+1].toString());
                 result = collector.loadGetInterfacesData(ip,community);
                 collector.insertInterfacesEntries(ip,result);
             }
@@ -67,7 +65,6 @@ public class TSDRSNMPInterfacePoller extends Thread {
             }
             this.collector.loadConfigData();
             configuration = TSDRSNMPConfig.getInstance().getConfiguration();
-            nodeConfigKeys = configuration.keys();
         }
     }
 }
