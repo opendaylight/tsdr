@@ -1,16 +1,18 @@
 /*
- * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc. and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.persistence.cassandra.command;
+package org.opendaylight.tsdr.spi.command;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
@@ -20,10 +22,9 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
 /**
- * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
- * Created by saichler on 12/16/15.
- */
-public class CommandListTest {
+ * @author saichler@gmail.com
+ **/
+public class AbstractListMetricsCommandTest {
 
     public static TSDRLogRecord createLogRecord(){
         TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
@@ -56,19 +57,47 @@ public class CommandListTest {
         return b.build();
     }
 
-    @Test
-    public void testListMetricCommand() throws Exception {
-        ListMetricsCommand c = new ListMetricsCommand();
-        List<TSDRMetricRecord> recs = new ArrayList<>();
-        recs.add(createMetricRecord());
-        c.listMetrics(recs);
-    }
 
     @Test
-    public void testListLogCommand() throws Exception {
-        ListMetricsCommand c = new ListMetricsCommand();
-        List<TSDRLogRecord> recs = new ArrayList<>();
-        recs.add(createLogRecord());
-        c.listLogs(recs);
+    public void test() throws Exception {
+        AbstractListMetricsCommand cmd = new AbstractListMetricsCommand() {
+            @Override
+            protected String listMetrics(List<TSDRMetricRecord> metrics) {
+                return null;
+            }
+
+            @Override
+            protected String listLogs(List<TSDRLogRecord> logs) {
+                return null;
+            }
+        };
+        cmd.category = "EXTERNAL";
+        cmd.doExecute();
+        TsdrPersistenceService service = Mockito.mock(TsdrPersistenceService.class);
+        cmd.setPersistenceService(service);
+        cmd.doExecute();
+        List<TSDRMetricRecord> metric = new ArrayList<>();
+        metric.add(createMetricRecord());
+        Mockito.when(service.getTSDRMetricRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong())).thenReturn(metric);
+        cmd.doExecute();
+
+        List<TSDRLogRecord> logs = new ArrayList<>();
+        logs.add(createLogRecord());
+        Mockito.when(service.getTSDRLogRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong())).thenReturn(logs);
+        cmd.category = DataCategory.LOGRECORDS.name();
+        cmd.doExecute();
+        cmd.startDateTime = "10/10/2010 22:22:22";
+        cmd.endDateTime = "10/10/2010 22:23:22";
+        cmd.doExecute();
+        cmd.startDateTime = "10/10/2010 22:22:22";
+        cmd.endDateTime = "10/10/2010 22:22:22";
+        cmd.doExecute();
+        cmd.getDate("10/10/2010 22:22:22");
+        cmd.getDate(null);
+        try {
+            cmd.getDate("10/10/2010 22:2222");
+        }catch(NullPointerException e){
+
+        }
     }
 }

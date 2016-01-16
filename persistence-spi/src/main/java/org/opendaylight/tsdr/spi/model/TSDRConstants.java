@@ -21,6 +21,8 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
  *
  */
 public class TSDRConstants {
+    public TSDRConstants(){
+    }
     /**
      * Keys used in a TSDR Record.
     */

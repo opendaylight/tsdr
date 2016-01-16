@@ -6,7 +6,7 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.tsdr.dataquery;
+package org.opendaylight.tsdr.dataquery.nontested;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

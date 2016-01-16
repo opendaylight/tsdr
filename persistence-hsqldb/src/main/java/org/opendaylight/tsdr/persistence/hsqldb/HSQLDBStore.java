@@ -258,6 +258,7 @@ public class HSQLDBStore {
                 log.error("Failed to close the DB Connection",err);
             }
         }
+        this.cache.shutdown();
     }
 
     private void purgeMetrics(DataCategory category, long retentionTime) throws SQLException {

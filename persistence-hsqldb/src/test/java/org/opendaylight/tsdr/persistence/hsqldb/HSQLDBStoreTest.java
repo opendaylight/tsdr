@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.persistence.hsqldb;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -14,13 +15,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.opendaylight.tsdr.persistence.hsqldb.HSQLDBStore;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
@@ -37,12 +39,13 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 public class HSQLDBStoreTest {
     private Connection connection = Mockito.mock(Connection.class);
     private Statement statement = Mockito.mock(Statement.class);
-    private HSQLDBStore store = new HSQLDBStore(connection);
+    private HSQLDBStore store = null;
     private ResultSet resultSet = Mockito.mock(ResultSet.class);
     private boolean next = false;
 
     @Before
     public void before() throws SQLException {
+        store = new HSQLDBStore(connection);
         Mockito.when(connection.createStatement()).thenReturn(statement);
         Mockito.when(statement.executeQuery(Mockito.anyString())).thenReturn(resultSet);
         Mockito.when(resultSet.next()).thenAnswer(new Answer<Boolean>() {
@@ -55,6 +58,28 @@ public class HSQLDBStoreTest {
         Mockito.when(resultSet.getString("KeyPath")).thenReturn(FormatUtil.getTSDRMetricKey(createMetricRecord()));
         Mockito.when(resultSet.getDouble("value")).thenReturn(11d);
         Mockito.when(resultSet.getString("value")).thenReturn(createLogRecord().getRecordFullText());
+    }
+
+    @After
+    public void after(){
+        store.shutdown();
+        File dir = new File("./tsdr");
+        File[] files = dir.listFiles();
+        for(File f:files){
+            f.delete();
+        }
+        dir.delete();
+    }
+
+    @AfterClass
+    public static void afterClass(){
+        File dir = new File("./tsdr");
+        if(!dir.exists()) return;
+        File[] files = dir.listFiles();
+        for(File f:files){
+            f.delete();
+        }
+        dir.delete();
     }
 
     public static TSDRMetricRecord createMetricRecord(){
@@ -117,10 +142,34 @@ public class HSQLDBStoreTest {
     }
 
     @Test
+    public void testGetMetricRecordsJob() throws SQLException {
+        TSDRMetricRecord rec = createMetricRecord();
+        String key = FormatUtil.getTSDRMetricKey(rec);
+        store.store(rec);
+        key = "[NID=Test]";
+        List<TSDRMetricRecord> list = store.getTSDRMetricRecords(key,0L,Long.MAX_VALUE,10);
+        Assert.assertNotNull(list);
+        Assert.assertTrue(list.size()==1);
+        Assert.assertEquals(rec.getMetricValue(),list.get(0).getMetricValue());
+    }
+
+    @Test
     public void testGetLogRecords() throws SQLException {
         TSDRLogRecord rec = createLogRecord();
         String key = FormatUtil.getTSDRLogKey(rec);
         store.store(rec);
+        List<TSDRLogRecord> list = store.getTSDRLogRecords(key,0L,Long.MAX_VALUE,10);
+        Assert.assertNotNull(list);
+        Assert.assertTrue(list.size()==1);
+        Assert.assertEquals(rec.getRecordFullText(),list.get(0).getRecordFullText());
+    }
+
+    @Test
+    public void testGetLogRecordsJob() throws SQLException {
+        TSDRLogRecord rec = createLogRecord();
+        String key = FormatUtil.getTSDRLogKey(rec);
+        store.store(rec);
+        key = "[NID=Test]";
         List<TSDRLogRecord> list = store.getTSDRLogRecords(key,0L,Long.MAX_VALUE,10);
         Assert.assertNotNull(list);
         Assert.assertTrue(list.size()==1);

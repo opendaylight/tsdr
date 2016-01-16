@@ -6,7 +6,7 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.tsdr.dataquery.rest.model;
+package org.opendaylight.tsdr.dataquery.nontested.model;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;

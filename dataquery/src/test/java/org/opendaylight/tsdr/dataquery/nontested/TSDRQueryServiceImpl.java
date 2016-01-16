@@ -6,7 +6,7 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.tsdr.dataquery;
+package org.opendaylight.tsdr.dataquery.nontested;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
-import org.opendaylight.tsdr.dataquery.rest.MetricsRequest;
-import org.opendaylight.tsdr.dataquery.rest.model.MetricId;
-import org.opendaylight.tsdr.dataquery.rest.model.MetricRecord;
-import org.opendaylight.tsdr.dataquery.rest.model.RecordKeysCombination;
+import org.opendaylight.tsdr.dataquery.nontested.query.MetricsRequest;
+import org.opendaylight.tsdr.dataquery.nontested.model.MetricId;
+import org.opendaylight.tsdr.dataquery.nontested.model.MetricRecord;
+import org.opendaylight.tsdr.dataquery.nontested.model.RecordKeysCombination;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;

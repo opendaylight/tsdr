@@ -6,11 +6,10 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.tsdr.dataquery.rest;
+package org.opendaylight.tsdr.dataquery.nontested.query;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -19,10 +18,8 @@ import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
-import org.opendaylight.tsdr.dataquery.TSDRQueryServiceImpl;
-import org.opendaylight.tsdr.dataquery.rest.model.MetricId;
-import org.opendaylight.tsdr.dataquery.rest.model.MetricRecord;
+import org.opendaylight.tsdr.dataquery.nontested.model.MetricId;
+import org.opendaylight.tsdr.dataquery.nontested.model.MetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +88,6 @@ public class GetMetricsAPI {
      * Parse the client rest query parameters and build the Data Query requests.
      * These requests will be marshalled into TSDR requests in TSDRQueryServiceImpl.
      *
-     * @param queryParams - rest query parameters supplied by the client
      * @return metricsRequestList - list of requests that define calls to the
      * TSDR Data Storage Service.
      */
@@ -148,7 +144,7 @@ public class GetMetricsAPI {
         List<MetricsResponse> metricsResponseList = new ArrayList<MetricsResponse>();
         MetricsResponse metricsResponse = new MetricsResponse();
 
-        List<MetricRecord> metricRecordList = TSDRQueryServiceImpl.getTSDRMetrics(metricsRequests);
+        List<MetricRecord> metricRecordList = null;//TSDRQueryServiceImpl.getTSDRMetrics(metricsRequests);
 
         metricsResponse.setMetricRecordList(metricRecordList);
         metricsResponseList.add(metricsResponse);
