@@ -12,9 +12,13 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,13 +39,14 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 public class CassandraStoreTest {
     private Cluster cluster = Mockito.mock(Cluster.class);
     private Session session = Mockito.mock(Session.class);
-    private CassandraStore store = new CassandraStore(session,cluster);
+    private CassandraStore store = null;
     private ResultSet resultSet = Mockito.mock(ResultSet.class);
     private Row row = Mockito.mock(Row.class);
     private List<Row> rows = new ArrayList<>();
 
     @Before
     public void before(){
+        store = new CassandraStore(session,cluster);
         Mockito.when(session.execute(Mockito.anyString())).thenReturn(resultSet);
         Mockito.when(resultSet.all()).thenReturn(rows);
         Mockito.when(row.getString("KeyPath")).thenReturn(FormatUtil.getTSDRMetricKey(createMetricRecord()));
@@ -51,6 +56,28 @@ public class CassandraStoreTest {
         if(rows.isEmpty()){
             rows.add(row);
         }
+    }
+
+    @After
+    public void after(){
+        store.shutdown();
+        File dir = new File("./tsdr");
+        File[] files = dir.listFiles();
+        for(File f:files){
+            f.delete();
+        }
+        dir.delete();
+    }
+
+    @AfterClass
+    public static void afterClass(){
+        File dir = new File("./tsdr");
+        if(!dir.exists()) return;
+        File[] files = dir.listFiles();
+        for(File f:files){
+            f.delete();
+        }
+        dir.delete();
     }
 
     public static TSDRMetricRecord createMetricRecord(){
@@ -118,9 +145,31 @@ public class CassandraStoreTest {
     }
 
     @Test
+    public void testGetMetricRecordsJob(){
+        TSDRMetricRecord rec = createMetricRecord();
+        String key = "[NID=Test]";
+        store.store(rec);
+        List<TSDRMetricRecord> list = store.getTSDRMetricRecords(key,0L,Long.MAX_VALUE,10);
+        Assert.assertNotNull(list);
+        Assert.assertTrue(list.size()==1);
+        Assert.assertEquals(rec.getMetricValue(),list.get(0).getMetricValue());
+    }
+
+    @Test
     public void testGetLogRecords(){
         TSDRLogRecord rec = createLogRecord();
         String key = FormatUtil.getTSDRLogKey(rec);
+        store.store(rec);
+        List<TSDRLogRecord> list = store.getTSDRLogRecords(key,0L,Long.MAX_VALUE,10);
+        Assert.assertNotNull(list);
+        Assert.assertTrue(list.size()==1);
+        Assert.assertEquals(rec.getRecordFullText(),list.get(0).getRecordFullText());
+    }
+
+    @Test
+    public void testGetLogRecordsJob(){
+        TSDRLogRecord rec = createLogRecord();
+        String key = "[NID=Test]";
         store.store(rec);
         List<TSDRLogRecord> list = store.getTSDRLogRecords(key,0L,Long.MAX_VALUE,10);
         Assert.assertNotNull(list);

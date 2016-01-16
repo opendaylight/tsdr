@@ -297,6 +297,7 @@ public class CassandraStore {
         if(this.session!=null){
             try{this.session.close();}catch(Exception err){log.error("Failed to close the cassandra session",err);}
         }
+        this.cache.shutdown();
     }
 
     public void purge(DataCategory category, long retentionTime){

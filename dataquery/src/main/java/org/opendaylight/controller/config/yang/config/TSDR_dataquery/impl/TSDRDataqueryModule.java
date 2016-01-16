@@ -10,7 +10,6 @@ package org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl;
 
 import org.opendaylight.controller.sal.binding.api.BindingAwareBroker.RpcRegistration;
 import org.opendaylight.tsdr.dataquery.TSDRNBIServiceImpl;
-import org.opendaylight.tsdr.dataquery.TSDRQueryServiceImpl;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.TSDRDataqueryImplService;
 import org.slf4j.Logger;
@@ -20,7 +19,7 @@ public class TSDRDataqueryModule extends AbstractTSDRDataqueryModule {
 
     private static final Logger log = LoggerFactory.getLogger(TSDRDataqueryModule.class);
     public static TSDRService tsdrService = null;
-    public static TSDRQueryServiceImpl tsdrQueryServiceImpl;
+    //public static TSDRQueryServiceImpl tsdrQueryServiceImpl;
 
     /**
      * Constructor
@@ -67,7 +66,7 @@ public class TSDRDataqueryModule extends AbstractTSDRDataqueryModule {
          * the TSDR Data Storage Service.
          */
         tsdrService = this.getRpcRegistryDependency().getRpcService(TSDRService.class);
-        tsdrQueryServiceImpl = new TSDRQueryServiceImpl(tsdrService, getRpcRegistryDependency());
+        //tsdrQueryServiceImpl = new TSDRQueryServiceImpl(tsdrService, getRpcRegistryDependency());
 
         final TSDRNBIServiceImpl nbiService = new TSDRNBIServiceImpl(tsdrService, getRpcRegistryDependency());
         final RpcRegistration<TSDRDataqueryImplService> serviceRegistation = getRpcRegistryDependency()
