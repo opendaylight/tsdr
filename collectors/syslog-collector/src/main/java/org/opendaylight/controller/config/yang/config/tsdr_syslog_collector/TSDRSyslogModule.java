@@ -27,6 +27,7 @@ public class TSDRSyslogModule extends org.opendaylight.controller.config.yang.co
 
     @Override
     public java.lang.AutoCloseable createInstance() {
+        getDataBrokerDependency();
         final TSDRSyslogCollectorImpl impl = new TSDRSyslogCollectorImpl(getRpcRegistryDependency().getRpcService(TsdrCollectorSpiService.class));
         return new AutoCloseable() {
             @Override

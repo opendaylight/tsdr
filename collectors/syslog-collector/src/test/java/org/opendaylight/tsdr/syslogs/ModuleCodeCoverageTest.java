@@ -21,11 +21,14 @@ public class ModuleCodeCoverageTest {
     @Test
     public void codeCoverageModule(){
         TSDRSyslogModuleFactory mf = new TSDRSyslogModuleFactory();
+        new TSDRSyslogModule(null,null,null,null);
         TSDRSyslogModule module1 = new TSDRSyslogModule(null,null);
         TSDRSyslogModule module2 = new TSDRSyslogModule(null,null);
         setupModuleWithMocks(module1);
         setupModuleWithMocks(module2);
         AutoCloseable c = module1.createInstance();
+        module1.getDataBroker();
+        module1.setDataBroker(null);
         module1.equals(new TSDRSyslogModule(null,null));
         module1.customValidation();
         module1.canReuseInstance(module2);
@@ -38,8 +41,14 @@ public class ModuleCodeCoverageTest {
         module1.hashCode();
         try{
             module1.isSame(null);
-        }catch(Exception err){}
+        }catch(Exception err){
+        }
         module1.isSame(module2);
+        try{
+            c.close();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     public static final void setupModuleWithMocks(Object obj){
