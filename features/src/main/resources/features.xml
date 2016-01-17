@@ -35,6 +35,9 @@
     <repository>mvn:org.ops4j.pax.jdbc/pax-jdbc-features/0.5.0/xml/features</repository>
     -->
     <repository>mvn:org.opendaylight.snmp/features-snmp/1.2.0-SNAPSHOT/xml/features</repository>
+   <!-- this section is kept so as not to break the integration/test
+   will be removed after integration/test patch set is merged
+   -->
     <!-- H2 data store with default openflow data collector for user convenience -->
     <feature name='odl-tsdr-h2-all' version='${project.version}' description='OpenDaylight :: TSDR :: With h2 Persistence and openflow data collectors'>
              <feature version='${project.version}'>odl-tsdr-core</feature>
@@ -44,6 +47,12 @@
              <feature version='${project.version}'>odl-tsdr-hsqldb</feature>
              <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
      </feature>
+     <!-- HSQLDB data store with default openflow data collector for user convenience -->
+    <feature name='odl-tsdr-hsqldb-all' version='${project.version}' description='OpenDaylight :: TSDR :: With hsqldb Persistence and openflow data collectors'>
+            <feature version='${project.version}'>odl-tsdr-core</feature>
+            <feature version='${project.version}'>odl-tsdr-hsqldb</feature>
+            <feature version='${project.version}'>odl-tsdr-openflow-statistics-collector</feature>
+    </feature>
 
      <!-- TSDR Collectors-->
 
