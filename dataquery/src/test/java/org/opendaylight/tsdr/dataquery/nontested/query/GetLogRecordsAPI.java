@@ -6,7 +6,7 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.tsdr.dataquery.rest;
+package org.opendaylight.tsdr.dataquery.nontested.query;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.opendaylight.tsdr.dataquery.rest.model.LogRecordSourceId;
+import org.opendaylight.tsdr.dataquery.nontested.model.LogRecordSourceId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

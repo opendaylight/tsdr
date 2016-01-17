@@ -6,14 +6,14 @@
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
 
-package org.opendaylight.tsdr.dataquery.rest;
+package org.opendaylight.tsdr.dataquery.nontested.query;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.opendaylight.tsdr.dataquery.rest.model.MetricRecord;
+import org.opendaylight.tsdr.dataquery.nontested.model.MetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

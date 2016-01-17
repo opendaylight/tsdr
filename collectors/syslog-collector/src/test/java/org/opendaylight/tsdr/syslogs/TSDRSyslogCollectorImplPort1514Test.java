@@ -72,9 +72,10 @@ public class TSDRSyslogCollectorImplPort1514Test {
         sendSysLog("Hello");
         sendSysLog("World");
         sendSysLog("This is a Syslog Test");
+        sendSysLog("Original Address = 19.19.19.19 This is a syslog with originator");
         //sleep 5 seconds as Syslog collector flush the buffer every 2.5 seconds
         Thread.sleep(5000);
-        Assert.assertEquals(3,this.storedRecords.size());
+        Assert.assertEquals(4,this.storedRecords.size());
     }
 
     @After

@@ -10,9 +10,10 @@ package org.opendaylight.tsdr.persistence.hsqldb.command;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Assert;
 import org.junit.Test;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
@@ -24,7 +25,22 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
  */
 public class CommandListTest {
 
-    public static TSDRMetricRecord createMetricRecord(){
+    public static TSDRLogRecord createLogRecord() {
+        TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
+        b.setNodeID("Test");
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.EXTERNAL);
+        b.setRecordFullText("Some syslog text");
+        List<RecordKeys> recs = new ArrayList<>();
+        RecordKeysBuilder rb = new RecordKeysBuilder();
+        rb.setKeyValue("Test1");
+        rb.setKeyName("Test2");
+        recs.add(rb.build());
+        b.setRecordKeys(recs);
+        return b.build();
+    }
+
+    public static TSDRMetricRecord createMetricRecord() {
         TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
         b.setNodeID("Test");
         b.setTimeStamp(System.currentTimeMillis());
@@ -45,9 +61,14 @@ public class CommandListTest {
         ListMetricsCommand c = new ListMetricsCommand();
         List<TSDRMetricRecord> recs = new ArrayList<>();
         recs.add(createMetricRecord());
-        String result = c.listMetrics(recs);
-        Assert.assertNotNull(result);
-        Assert.assertTrue(result.indexOf("EXTERNAL")!=-1);
-        Assert.assertTrue(result.indexOf("11")!=-1);
+        c.listMetrics(recs);
+    }
+
+    @Test
+    public void testListLogCommand() throws Exception {
+        ListMetricsCommand c = new ListMetricsCommand();
+        List<TSDRLogRecord> recs = new ArrayList<>();
+        recs.add(createLogRecord());
+        c.listLogs(recs);
     }
 }

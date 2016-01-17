@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc. and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
@@ -7,9 +7,12 @@
  */
 package org.opendaylight.tsdr.spi.util;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRCacheEntry;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
@@ -24,7 +27,23 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricr
 public class TSDRKeyCacheTest {
 
     private static final String TSDR_TEST_KEY = "[NID=127.0.0.1][DC=EXTERNAL][MN=Memory][RK=hello:world,Testing:test]";
-    private TSDRKeyCache keyCache = new TSDRKeyCache();
+    private TSDRKeyCache keyCache = null;
+
+    @Before
+    public void before(){
+        keyCache = new TSDRKeyCache();
+    }
+
+    @After
+    public void after(){
+        keyCache.shutdown();
+        File dir = new File("./tsdr");
+        File[] files = dir.listFiles();
+        for(File f:files){
+            f.delete();
+        }
+        dir.delete();
+    }
 
     @Test
     public void testAddTsdrCacheEntry(){
