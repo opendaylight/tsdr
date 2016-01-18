@@ -16,6 +16,8 @@ import org.opendaylight.tsdr.persistence.hbase.CreateTableTask;
 import org.opendaylight.tsdr.persistence.hbase.HBaseDataStore;
 import org.opendaylight.tsdr.persistence.hbase.HBaseDataStoreFactory;
 
+import junit.framework.Assert;
+
 import static org.mockito.Mockito.mock;
 
 import java.util.concurrent.ScheduledFuture;
@@ -41,20 +43,34 @@ public class CreateTableTaskTest {
     @Test
     public void testCreateTables() {
         TableService.setScheduledFuture(future);
+        Assert.assertNotNull(TableService.future);
         TableService.createTables();
+        Assert.assertTrue(TableService.pendingTableNames.size()==0);
 
     }
 
     @Test
     public void testRunTask() {
         TableService.setScheduledFuture(future);
+        Assert.assertNotNull(TableService.future);
         TableService.runTask();
 
     }
 
     @Test
+    public void testException() {
+        CreateTableTask TableService1 = null;
+        TableService1 = new CreateTableTask(){@Override public void runCreateTable (String tableName) throws Throwable{throw new Exception();}};
+        TableService1.setScheduledFuture(future);
+        Assert.assertNotNull(TableService1.future);
+        TableService1.createTables();
+        Assert.assertTrue(TableService1.pendingTableNames.size()!=0);
+    }
+
+    @Test
     public void testSetScheduledFuture() {
         TableService.setScheduledFuture(null);
+        Assert.assertNull(TableService.future);
     }
 
     @After

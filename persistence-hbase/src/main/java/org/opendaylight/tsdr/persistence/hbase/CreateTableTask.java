@@ -26,8 +26,8 @@ import org.slf4j.LoggerFactory;
  */
 public class CreateTableTask extends Task{
     private static final Logger log = LoggerFactory.getLogger(CreateTableTask.class);
-    private ScheduledFuture future = null;
-    private List<String> pendingTableNames = new ArrayList<String>();
+    public ScheduledFuture future = null;
+    public List<String> pendingTableNames = new ArrayList<String>();
     public CreateTableTask(){
         super();
         pendingTableNames = new ArrayList<String>(HBasePersistenceUtil.getTSDRHBaseTables());

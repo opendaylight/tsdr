@@ -17,7 +17,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HConnectionManager;
@@ -77,6 +79,11 @@ public class HBaseDataStore  {
              conf = setconf; //just for UT purpose
          }
      }
+
+     public HBaseAdmin getnewHBaseAdmin() throws Throwable{
+         return new HBaseAdmin(getConfiguration());
+
+     }
      /**
       * Constructor with specified context info.
       *
@@ -95,7 +102,7 @@ public class HBaseDataStore  {
 
      /**
       * Create a HBase configuration based on the data store context info.
-      * @return
+      * @return Configuration
       */
      private static Configuration getConfiguration() {
         log.debug("Entering getConfiguration()");
@@ -116,9 +123,9 @@ public class HBaseDataStore  {
      /**
       * Create an HTable pool based on the poolSize obtained from the
       * HBase data store context.
-      * @return
+      * @return HTablePool
       */
-     public HTablePool getHTablePool() {
+     public HTablePool getHTablePool() throws Exception{
         log.debug("Entering getHTablePool()");
         HTablePool htablePool = new HTablePool(getConfiguration(), 1);
         log.debug("Exiting getHTablePool()");
@@ -130,7 +137,7 @@ public class HBaseDataStore  {
       * @return HTableInterface, which is used to communicate with the HTable.
       * @throws TableNotFoundException - a table not found exception
       */
-     public HTableInterface getConnection(String tableName) throws TableNotFoundException {
+     public HTableInterface getConnection(String tableName) throws Exception {
          log.debug("Entering getConnection()");
          HTableInterface htableResult = null;
          ClassLoader ocl = Thread.currentThread().getContextClassLoader();
@@ -173,7 +180,7 @@ public class HBaseDataStore  {
          try{
              Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader());
              if (tableName != null){
-                hbase = new HBaseAdmin(getConfiguration());
+                hbase = getnewHBaseAdmin();
                 HTableDescriptor desc = new HTableDescriptor(tableName);
                 HColumnDescriptor column = new HColumnDescriptor("c1".getBytes());
                 desc.addFamily(column);
@@ -696,7 +703,7 @@ public class HBaseDataStore  {
       * Close the connection to the specified HTable.
       * @param htable - HTable
       */
-     private void closeConnection(HTable htable){
+     public void closeConnection(HTable htable){
          log.debug("Entering closeConnection(HTable htable)");
          if (htable != null) {
                          try {

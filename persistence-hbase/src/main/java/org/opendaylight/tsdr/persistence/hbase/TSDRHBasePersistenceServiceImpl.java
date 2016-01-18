@@ -53,7 +53,7 @@ import org.slf4j.LoggerFactory;
 public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService {
 
     private static final Logger log = LoggerFactory.getLogger(TSDRHBasePersistenceServiceImpl.class);
-    private ScheduledFuture future;
+    public ScheduledFuture future;
 
     /**
      * Constructor.
@@ -70,10 +70,18 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     *  This overloaded constructor version is added for UT purpose.
     *  Refrain from calling it(except from UT)
     */
-    public TSDRHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore){
+    public TSDRHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore, ScheduledFuture sfuture){
        HBaseDataStoreFactory.setHBaseDataStoreIfAbsent(hbaseDataStore);
+       future = sfuture;
     }
-
+    /*
+    *  This overloaded constructor version is added for UT purpose.
+    *  Refrain from calling it(except from UT)
+    */
+    public TSDRHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore){
+        HBaseDataStoreFactory.setHBaseDataStoreIfAbsent(hbaseDataStore);
+     }
+    
     /**
      * Store TSDRMetricRecord.
      */
@@ -319,11 +327,9 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     }
     /**
      * Trigger CreateTableTask".
-     * @param
-     * @return
     */
 
-    private void TriggerTableCreatingTask()
+    public void TriggerTableCreatingTask()
     {
          synchronized(future){
              if(future.isDone() || future.isCancelled()){
@@ -337,7 +343,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     /**
      * convert TSDRMetricRecord to HBaseEntity.
      * @param metrics
-     * @return
+     * @return HBaseEntity
     */
     private HBaseEntity convertToHBaseEntity(TSDRMetricRecord metrics){
         log.debug("Entering convertToHBaseEntity(TSDRMetricRecord)");
@@ -357,9 +363,9 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     /**
      * convert TSDRMetricRecord to HBaseEntity.
      * @param logRecord
-     * @return
+     * @return HBaseEntity
     */
-    private HBaseEntity convertToHBaseEntity(TSDRLogRecord logRecord){
+    public HBaseEntity convertToHBaseEntity(TSDRLogRecord logRecord){
         log.debug("Entering convertToHBaseEntity(TSDRLogRecord)");
         HBaseEntity entity = new HBaseEntity();
 
@@ -406,7 +412,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
         HBaseDataStoreFactory.getHBaseDataStore().flushCommit(tableName);
     }
 
-    private void flushCommit(Set<String> tableNames){
+    public void flushCommit(Set<String> tableNames){
         log.debug("Entering flushing commits");
         for ( String tableName: tableNames){
             flushCommit(tableName);

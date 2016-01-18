@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static org.mockito.Mockito.mock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,14 +28,12 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogreco
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
 import junit.framework.Assert;
-/**
- * @author <a href="mailto:chaudhry.usama@xflowresearch.com">Chaudhry Muhammad Usama</a>
- * Created by Chaudhry Usama on 1/6/16.
- */
+
 public class HBasePersistenceUtilTest {
     public HBasePersistenceUtil hBasePersistenceUtil = null;
 
@@ -75,11 +74,15 @@ public class HBasePersistenceUtilTest {
             .setKeyValue("log1").build();
         recordKeys.add(recordKey1);
         TSDRLogRecordBuilder builder1 = new TSDRLogRecordBuilder();
+        List<RecordAttributes> value = new ArrayList<RecordAttributes>();
+        value.add(mock(RecordAttributes.class));
+        value.add(mock(RecordAttributes.class));
         TSDRLog tsdrLog1 =   builder1.setIndex(1)
             .setRecordFullText("su root failed for lonvick")
             .setNodeID("node1.example.com")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.SYSLOG)
+            .setRecordAttributes(value)
             .setTimeStamp(new Long(timeStamp)).build();
         hBasePersistenceUtil.getEntityFromLogRecord(null, DataCategory.SYSLOG);
         hBasePersistenceUtil.getEntityFromLogRecord(builder1.setNodeID("node1.example.com").setTimeStamp(null).build(), DataCategory.SYSLOG);

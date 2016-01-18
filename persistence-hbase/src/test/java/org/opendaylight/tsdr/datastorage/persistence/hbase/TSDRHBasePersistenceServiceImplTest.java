@@ -10,11 +10,17 @@ package org.opendaylight.tsdr.datastorage.persistence.hbase;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ScheduledFuture;
+
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +45,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
 import jline.internal.ShutdownHooks.Task;
+import junit.framework.Assert;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -59,12 +66,14 @@ public class TSDRHBasePersistenceServiceImplTest {
     public TSDRHBasePersistenceServiceImpl storageService = null;
     private HBaseDataStore hbaseDataStore;
     private SchedulerService schedulerService;
+    private ScheduledFuture future;
     private static Map<String, Map<String,List<HBaseEntity>>> tableEntityMap;
     @Before
     public void setup() {
         hbaseDataStore = mock(HBaseDataStore.class);
+        future = mock(ScheduledFuture.class);
         schedulerService = mock(SchedulerService.class);
-        storageService = new TSDRHBasePersistenceServiceImpl(hbaseDataStore);
+        storageService = new TSDRHBasePersistenceServiceImpl(hbaseDataStore,future);
         tableEntityMap = new HashMap<String, Map<String, List<HBaseEntity>>>();
         try{
             doAnswer(new Answer<HBaseEntity>() {
@@ -124,7 +133,6 @@ public class TSDRHBasePersistenceServiceImplTest {
         }catch(Exception ee){
             System.out.println("Error while creating TSDR records with list in HBase data store {}");
             ee.printStackTrace();
-
         }
     doAnswer(new Answer() {
             @Override
@@ -194,6 +202,7 @@ public class TSDRHBasePersistenceServiceImplTest {
            ee.printStackTrace();}
        Mockito.doNothing().when(hbaseDataStore).closeConnection(any(String.class));//.thenReturn(true);
        Mockito.when(schedulerService.scheduleTask((org.opendaylight.tsdr.spi.scheduler.Task) any(Task.class))).thenReturn(null);//.thenReturn(true);
+       Mockito.when(future.isDone()).thenReturn(true);
        try{
            storageService.createTables();
        }catch (Exception ee) {
@@ -205,6 +214,19 @@ public class TSDRHBasePersistenceServiceImplTest {
     public void testStart() {
         storageService.start(10);
     }
+
+    @Test
+    public void testTriggerTableCreatingTask() {
+        storageService.TriggerTableCreatingTask();
+        Assert.assertNotNull(storageService.future);
+    }
+    @Test
+    public void testFlushCommitTables() {
+        String[] words = {"table1", "table2"};
+        Set<String> tableNames = new HashSet<String>(Arrays.asList(words));
+        storageService.flushCommit(tableNames);
+    }
+
     @Test
     public void testStoreLog() {
         String timeStamp = (new Long((new Date()).getTime())).toString();
@@ -369,6 +391,21 @@ public class TSDRHBasePersistenceServiceImplTest {
         storageService.store(recordList);
         result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 1);
         assertTrue(result);
+        storageService.store((List<TSDRRecord>)null);
+        List<TSDRRecord> recordList1 = new ArrayList<TSDRRecord>();
+        storageService.store(recordList1);
+        TSDRHBasePersistenceServiceImpl storageService1 = new TSDRHBasePersistenceServiceImpl(hbaseDataStore,future){@Override public HBaseEntity convertToHBaseEntity(TSDRLogRecord logRecord){return null;}};
+        List<TSDRRecord> recordList2 = new ArrayList<TSDRRecord>();
+        recordList.add(tsdrMetric1);
+        TSDRLogRecordBuilder builder3 = new TSDRLogRecordBuilder();
+        TSDRLog tsdrLog2 =   builder3.setIndex(1)
+                .setRecordFullText("su root failed for lonvick")
+                .setNodeID("node1.example.com")
+                .setRecordKeys(recordKeys)
+                .setTSDRDataCategory(DataCategory.SYSLOG)
+                .setTimeStamp(new Long(timeStamp)).build();
+        recordList2.add(tsdrLog2);
+        storageService1.store(recordList2);
     }
 
     @After
