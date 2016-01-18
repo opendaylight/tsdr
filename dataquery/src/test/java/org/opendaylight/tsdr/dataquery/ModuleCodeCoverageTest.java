@@ -5,7 +5,7 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.syslogs;
+package org.opendaylight.tsdr.dataquery;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -20,9 +20,9 @@ import org.opendaylight.controller.config.api.DynamicMBeanWithInstance;
 import org.opendaylight.controller.config.api.ModuleIdentifier;
 import org.opendaylight.controller.config.api.annotations.AbstractServiceInterface;
 import org.opendaylight.controller.config.spi.Module;
-import org.opendaylight.controller.config.yang.config.tsdr_syslog_collector.AbstractTSDRSyslogModuleFactory;
-import org.opendaylight.controller.config.yang.config.tsdr_syslog_collector.TSDRSyslogModule;
-import org.opendaylight.controller.config.yang.config.tsdr_syslog_collector.TSDRSyslogModuleFactory;
+import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.AbstractTSDRDataqueryModuleFactory;
+import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
+import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModuleFactory;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -33,17 +33,17 @@ import org.osgi.framework.BundleContext;
 public class ModuleCodeCoverageTest {
     @Test
     public void codeCoverageModule(){
-        TSDRSyslogModuleFactory mf = new TSDRSyslogModuleFactory();
-        new TSDRSyslogModule(null,null,null,null);
-        TSDRSyslogModule module1 = new TSDRSyslogModule(null,null);
-        TSDRSyslogModule module2 = new TSDRSyslogModule(null,null);
-        TSDRSyslogModule module3 = new TSDRSyslogModule(null,null);
+        TSDRDataqueryModuleFactory mf = new TSDRDataqueryModuleFactory();
+        new TSDRDataqueryModule(null,null,null,null);
+        TSDRDataqueryModule module1 = new TSDRDataqueryModule(null,null);
+        TSDRDataqueryModule module2 = new TSDRDataqueryModule(null,null);
+        TSDRDataqueryModule module3 = new TSDRDataqueryModule(null,null);
         setupModuleWithMocks(module1,"X");
         setupModuleWithMocks(module2,"X");
         setupModuleWithMocks(module3,"Y");
         AutoCloseable c = module1.createInstance();
         module1.getDataBroker();
-        module1.equals(new TSDRSyslogModule(null,null));
+        module1.equals(new TSDRDataqueryModule(null,null));
         module1.customValidation();
         module1.canReuseInstance(module2);
         module1.getRpcRegistry();
@@ -76,7 +76,7 @@ public class ModuleCodeCoverageTest {
         }
 
 
-        AbstractTSDRSyslogModuleFactory factory = new AbstractTSDRSyslogModuleFactory() {
+        AbstractTSDRDataqueryModuleFactory factory = new AbstractTSDRDataqueryModuleFactory() {
             @Override
             public Set<Class<? extends AbstractServiceInterface>> getImplementedServiceIntefaces() {
                 return super.getImplementedServiceIntefaces();
@@ -93,22 +93,22 @@ public class ModuleCodeCoverageTest {
             }
 
             @Override
-            public TSDRSyslogModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, TSDRSyslogModule oldModule, AutoCloseable oldInstance, BundleContext bundleContext) {
+            public TSDRDataqueryModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, TSDRDataqueryModule oldModule, AutoCloseable oldInstance, BundleContext bundleContext) {
                 return super.instantiateModule(instanceName, dependencyResolver, oldModule, oldInstance, bundleContext);
             }
 
             @Override
-            public TSDRSyslogModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, BundleContext bundleContext) {
+            public TSDRDataqueryModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, BundleContext bundleContext) {
                 return super.instantiateModule(instanceName, dependencyResolver, bundleContext);
             }
 
             @Override
-            public TSDRSyslogModule handleChangedClass(DynamicMBeanWithInstance old) throws Exception {
+            public TSDRDataqueryModule handleChangedClass(DynamicMBeanWithInstance old) throws Exception {
                 return super.handleChangedClass(old);
             }
 
             @Override
-            public Set<TSDRSyslogModule> getDefaultModules(DependencyResolverFactory dependencyResolverFactory, BundleContext bundleContext) {
+            public Set<TSDRDataqueryModule> getDefaultModules(DependencyResolverFactory dependencyResolverFactory, BundleContext bundleContext) {
                 return super.getDefaultModules(dependencyResolverFactory, bundleContext);
             }
         };
@@ -131,7 +131,7 @@ public class ModuleCodeCoverageTest {
         try {
             DependencyResolver dpr = Mockito.mock(DependencyResolver.class);
             BundleContext b = Mockito.mock(BundleContext.class);
-            org.opendaylight.controller.config.api.DynamicMBeanWithInstance old = Mockito.mock(org.opendaylight.controller.config.api.DynamicMBeanWithInstance.class);
+            DynamicMBeanWithInstance old = Mockito.mock(DynamicMBeanWithInstance.class);
             factory.createModule("tsdr-syslog-collector",dpr , old,b);
         }catch (Exception e){
             e.printStackTrace();

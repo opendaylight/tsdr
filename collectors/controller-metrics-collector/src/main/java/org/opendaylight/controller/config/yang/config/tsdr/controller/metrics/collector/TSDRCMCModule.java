@@ -30,7 +30,7 @@ public class TSDRCMCModule extends org.opendaylight.controller.config.yang.confi
 
     @Override
     public void customValidation() {
-        // add custom validation form module attributes here.
+        super.customValidation();
     }
 
     @Override
@@ -47,6 +47,7 @@ public class TSDRCMCModule extends org.opendaylight.controller.config.yang.confi
     }
 
     public TsdrCollectorSpiService getTSDRCollectorSPIService(){
+        getDataBrokerDependency();
         if(collectorSPIService==null){
             collectorSPIService = getRpcRegistryDependency().getRpcService(TsdrCollectorSpiService.class);
         }

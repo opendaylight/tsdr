@@ -52,7 +52,7 @@ public class TSDRDataqueryModule extends AbstractTSDRDataqueryModule {
      */
     @Override
     public void customValidation() {
-
+        super.customValidation();
     }
 
     /**
@@ -61,6 +61,7 @@ public class TSDRDataqueryModule extends AbstractTSDRDataqueryModule {
      */
     @Override
     public java.lang.AutoCloseable createInstance() {
+        getDataBrokerDependency();
         /**
          * Get the tsdrService from the Registry so the Data Query API can query
          * the TSDR Data Storage Service.
