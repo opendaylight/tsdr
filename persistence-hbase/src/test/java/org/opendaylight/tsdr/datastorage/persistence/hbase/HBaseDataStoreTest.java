@@ -23,18 +23,22 @@ import org.apache.hadoop.hbase.client.Result;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 
 import javax.ws.rs.PUT;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableNotFoundException;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.HTablePool;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -59,16 +63,23 @@ public class HBaseDataStoreTest {
     private Configuration conf;
     private Map<String, HTableInterface> htableMap;
     private Result result;
+    private HBaseAdmin hbase;
+    private NavigableMap nmap;
+    private HTable htable;
+
     @Before
     public void setup() {
+        nmap = mock(NavigableMap.class);
         hbaseDataStore = new HBaseDataStore();
         conf = mock(Configuration.class);
+        htable = mock(HTable.class);
         hBaseDataStoreContext = mock(HBaseDataStoreContext.class);
         htablePool = mock(HTablePool.class);
         hTableInterface = mock(HTableInterface.class);
         resultScanner = mock(ResultScanner.class);
         htableMap = mock(Map.class);
         result = mock(Result.class);
+        hbase = mock(HBaseAdmin.class);
         hbaseDataStore = new HBaseDataStore(hBaseDataStoreContext){
             @Override public HTablePool getHTablePool(){
                 return htablePool;
@@ -86,6 +97,9 @@ public class HBaseDataStoreTest {
                 columnList1.add(column);
                 dentity.setColumns(columnList1);
                 return dentity;
+            }
+            @Override public HBaseAdmin getnewHBaseAdmin(){
+                return hbase;
             }
         };
         hbaseDataStore.setHBaseDataStoreHtableMap(htableMap);
@@ -113,17 +127,9 @@ public class HBaseDataStoreTest {
             e2.printStackTrace();
         }
 
-        try {
-             Mockito.when(resultScanner.next()).thenReturn(result).thenReturn(result).thenReturn(null);
-        } catch (IOException e1) {
-            System.out.println("Can't return result");
-            e1.printStackTrace();
-        }
-
         doReturn("".getBytes()).when(result).getRow();
-
+        doReturn(nmap).when(result).getMap();
         doReturn(hTableInterface).when(htableMap).get(any(String.class));
-
         doReturn(hTableInterface).when(htablePool).getTable(any(String.class));
         try {
                 doReturn(resultScanner).when(hTableInterface).getScanner(any(Scan.class));
@@ -131,6 +137,13 @@ public class HBaseDataStoreTest {
             System.out.println("Can't Scan");
         e.printStackTrace();
         }
+
+        try {
+            Mockito.when(resultScanner.next()).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null).thenReturn(result).thenReturn(null);
+       } catch (IOException e1) {
+           System.out.println("Can't return result");
+           e1.printStackTrace();
+       }
 
         try{
             Mockito.doNothing().when(htablePool).putTable(any(HTableInterface.class));
@@ -148,17 +161,20 @@ public class HBaseDataStoreTest {
     }
 
     @Test
-    public void testGetConnection() throws Exception{
+    public void testGetConnection() throws Throwable{
         hbaseDataStore.getConnection("tableName");
     }
 
     @Test
     public void testCreateTable() throws Exception{
         hbaseDataStore.createTable(null);
+        hbaseDataStore.createTable("tableName");
     }
     @Test
     public void testCloseConnection() throws Exception{
-        hbaseDataStore.closeConnection(null);
+        hbaseDataStore.closeConnection((HTable) null);
+        hbaseDataStore.closeConnection((String) null);
+        hbaseDataStore.closeConnection(htable);
         hbaseDataStore.closeConnection("tableName");
     }
 
@@ -185,6 +201,10 @@ public class HBaseDataStoreTest {
     public void testGetDataByTimeRange() throws Exception{
         hbaseDataStore.getDataByTimeRange("tableName", 0L, 100);
         hbaseDataStore.getDataByTimeRange("tableName", 100, 200);
+        List<String> filters = new ArrayList<String>();
+        filters.add("filter1");
+        filters.add("filter2");
+        hbaseDataStore.getDataByTimeRange("tableName",filters, 0L, 100);
     }
 
     @Test
@@ -219,7 +239,7 @@ public class HBaseDataStoreTest {
     }
 
     @Test
-    public void testCreateEntityList() throws Exception{
+    public void testCreateEntityList() throws Throwable{
         List<HBaseEntity> entityList = new ArrayList<HBaseEntity>();
         hbaseDataStore.create(entityList);
         HBaseEntity dentity1 = new HBaseEntity();
@@ -279,7 +299,7 @@ public class HBaseDataStoreTest {
     }
 
     @Test
-    public void testGetHTablePool(){
+    public void testGetHTablePool() throws Throwable{
         HBaseDataStore hbasedatastore = new HBaseDataStore();
         Configuration mockconf = mock(Configuration.class);
         hbasedatastore.setHBaseDataStoreHtableMap(mockconf);
@@ -287,6 +307,181 @@ public class HBaseDataStoreTest {
         hbasedatastore.setHBaseDataStoreHtableMap(mockconf);
     }
 
+    @Test
+    public void testConvertResultToEntity(){
+        HBaseDataStore hbasedatastore = new HBaseDataStore();
+        hbasedatastore.convertResultToEntity("tableName", (Result) null);
+        hbasedatastore.convertResultToEntity("tableName", result);
+    }
+
+    @Test
+    public void testCreateTableException(){
+        HBaseDataStore hbasedatastore1 = null;
+        hbasedatastore1 = new HBaseDataStore(){@Override public HBaseAdmin getnewHBaseAdmin() throws Throwable {throw new IOException();}};
+        try {
+            hbasedatastore1.createTable("tableName");
+        } catch (Exception e) {
+        e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HBaseAdmin getnewHBaseAdmin() throws Throwable {throw new Exception();}};
+        try {
+            hbasedatastore1.createTable("tableName");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HBaseAdmin getnewHBaseAdmin() throws Throwable {throw new Throwable();}};
+        try {
+            hbasedatastore1.createTable("tableName");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testDeleteByTimestampException(){
+        HBaseDataStore hbasedatastore1 = null;
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new IOException();}};
+        try {
+            hbasedatastore1.deleteByTimestamp("tableName",0L);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new Exception();}};
+        try {
+            hbasedatastore1.deleteByTimestamp("tableName",0L);
+        } catch (Exception e) {
+        e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new TableNotFoundException();}};
+        try {
+            hbasedatastore1.deleteByTimestamp("tableName",0L);
+        } catch (Exception e) {
+       e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testGetDataByTimeRangeException(){
+        HBaseDataStore hbasedatastore1 = null;
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new IOException();}};
+        try {
+            hbasedatastore1.getDataByTimeRange("tableName", 100, 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new Exception();}};
+        try {
+            hbasedatastore1.getDataByTimeRange("tableName", 100, 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testGetConnectionException(){
+        HBaseDataStore hbasedatastore1 = null;
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTablePool getHTablePool() throws Exception{throw new IOException();}};
+        try {
+            hbasedatastore1.getConnection("tableName");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+}
+
+    @Test
+    public void testCreateEntityException(){
+        HBaseDataStore hbasedatastore1 = null;
+        HBaseEntity dentity = new HBaseEntity();
+        dentity.setRowKey("rowKey1");
+        dentity.setTableName("tableName1");
+        List<HBaseColumn> columnList1 = new ArrayList<HBaseColumn>();
+        HBaseColumn column = new HBaseColumn();
+        column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
+        column.setColumnQualifier(TSDRHBaseDataStoreConstants.COLUMN_QUALIFIER_NAME);
+        column.setTimeStamp(1000);
+        column.setValue("metricValue");
+        columnList1.add(column);
+        dentity.setColumns(columnList1);
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new IOException();}};
+        try {
+            hbasedatastore1.create(dentity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new Exception();}};
+        try {
+            hbasedatastore1.create(dentity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new TableNotFoundException();}};
+        try {
+            hbasedatastore1.create(dentity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testCreateEntityListException(){
+        HBaseDataStore hbasedatastore1 = null;
+        List<HBaseEntity> entityList = new ArrayList<HBaseEntity>();
+        HBaseEntity dentity = new HBaseEntity();
+        dentity.setRowKey("rowKey1");
+        dentity.setTableName("tableName1");
+        List<HBaseColumn> columnList1 = new ArrayList<HBaseColumn>();
+        HBaseColumn column = new HBaseColumn();
+        column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
+        column.setColumnQualifier(TSDRHBaseDataStoreConstants.COLUMN_QUALIFIER_NAME);
+        column.setTimeStamp(1000);
+        column.setValue("metricValue");
+        columnList1.add(column);
+        dentity.setColumns(columnList1);
+        entityList.add(dentity);
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new IOException();}};
+        try {
+            hbasedatastore1.create(entityList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new Exception();}};
+        try {
+            hbasedatastore1.create(entityList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new TableNotFoundException();}};
+        try {
+            hbasedatastore1.create(entityList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testGetDataByRowFamilyQualifierException(){
+        HBaseDataStore hbasedatastore1 = null;
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new IOException();}};
+        try {
+            List<String> qualifierList = new ArrayList<String>();
+            qualifierList.add("qualifier1");
+            qualifierList.add("qualifier2");
+            hbasedatastore1.getDataByRowFamilyQualifier("tableName", "startRow", "endRow", "family", qualifierList,0);
+            hbasedatastore1.getDataByRowFamilyQualifier("tableName", "startRow", "endRow", "family", "qualifier",0);
+            } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hbasedatastore1 = new HBaseDataStore(){@Override public HTableInterface getConnection(String tableName) throws Exception {throw new Exception();}};
+        try {
+            List<String> qualifierList = new ArrayList<String>();
+            qualifierList.add("qualifier1");
+            qualifierList.add("qualifier2");
+            hbasedatastore1.getDataByRowFamilyQualifier("tableName", "startRow", "endRow", "family", qualifierList,0);
+            hbasedatastore1.getDataByRowFamilyQualifier("tableName", "startRow", "endRow", "family", "qualifier",0);
+            } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @After
     public void teardown() {
