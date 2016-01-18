@@ -27,7 +27,7 @@ public class TSDRCollectorSPIModule extends org.opendaylight.controller.config.y
 
     @Override
     public void customValidation() {
-        // add custom validation form module attributes here.
+        super.customValidation();
     }
 
     @Override

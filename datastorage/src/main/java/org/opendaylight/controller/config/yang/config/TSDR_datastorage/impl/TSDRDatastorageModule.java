@@ -60,7 +60,7 @@ public class TSDRDatastorageModule
 
     @Override
     public void customValidation() {
-
+        super.customValidation();
     }
 
     /**
@@ -69,6 +69,7 @@ public class TSDRDatastorageModule
      */
     @Override
     public java.lang.AutoCloseable createInstance() {
+        getDataBrokerDependency();
         log.debug("Entering createIntance()");
         /*
          * The implementation of TSDRStorageservice.

@@ -31,7 +31,7 @@ public class TSDRDatapurgeModule extends org.opendaylight.controller.config.yang
 
     @Override
     public void customValidation() {
-        // add custom validation form module attributes here.
+        super.customValidation();
     }
 
     /**
@@ -42,7 +42,6 @@ public class TSDRDatapurgeModule extends org.opendaylight.controller.config.yang
     @Override
     public java.lang.AutoCloseable createInstance() {
         log.debug("TSDR Purge Entering createIntance()");
-
         registerConfiguration();
         final TSDRPurgeServiceImpl tsdrPurgeServiceImpl = new TSDRPurgeServiceImpl(getDataBrokerDependency(), getRpcRegistryDependency());
 

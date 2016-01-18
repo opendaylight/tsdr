@@ -36,27 +36,31 @@ public class TSDRNetFlowCollectorModule extends org.opendaylight.controller.conf
 
     @Override
     public void customValidation() {
-        // add custom validation form module attributes here.
+        super.customValidation();
     }
 
     @Override
     public java.lang.AutoCloseable createInstance() {
+        getDataBrokerDependency();
+        TSDRNetflowCollectorImpl impl = null;
         try {
-            final TSDRNetflowCollectorImpl impl = new TSDRNetflowCollectorImpl(getRpcRegistryDependency().getRpcService(TsdrCollectorSpiService.class));
-            final class CloseResources implements AutoCloseable {
-
-                @Override
-                public void close() throws Exception {
-                    impl.shutdown();
-                    log.info("TSDR NetFlow Data Collector (instance {}) torn down.", this);
-                }
-            }
-            AutoCloseable ret = new CloseResources();
-            log.info("NetFlow Data Colletor Initialized");
-            return ret;
-        }catch(IOException e){
-            log.error("Failed to start netflow collector",e);
+            impl = new TSDRNetflowCollectorImpl(getRpcRegistryDependency().getRpcService(TsdrCollectorSpiService.class));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return null;
+        return new ModuleAutoCloseable(impl);
     }
+
+    private class ModuleAutoCloseable implements AutoCloseable{
+        private final TSDRNetflowCollectorImpl impl;
+        public ModuleAutoCloseable(TSDRNetflowCollectorImpl impl){
+            this.impl = impl;
+        }
+        @Override
+        public void close() throws Exception {
+            impl.shutdown();
+            log.info("TSDR NetFlow Data Collector (instance {}) torn down.", this);
+        }
+    }
+
 }

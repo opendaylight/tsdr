@@ -22,7 +22,7 @@ public class TSDRSyslogModule extends org.opendaylight.controller.config.yang.co
 
     @Override
     public void customValidation() {
-        // add custom validation form module attributes here.
+        super.customValidation();
     }
 
     @Override

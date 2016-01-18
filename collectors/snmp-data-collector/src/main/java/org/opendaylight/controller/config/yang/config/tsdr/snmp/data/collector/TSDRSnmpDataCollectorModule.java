@@ -34,11 +34,12 @@ public class TSDRSnmpDataCollectorModule extends org.opendaylight.controller.con
 
     @Override
     public void customValidation() {
-        // add custom validation form module attributes here.
+        super.customValidation();
     }
 
     @Override
     public java.lang.AutoCloseable createInstance() {
+        getDataBrokerDependency();
         registerConfiguration();
         snmpCollector = new SNMPDataCollector(getDataBrokerDependency(),getRpcRegistryDependency());
         getRpcRegistryDependency().addRpcImplementation(TsdrSnmpDataCollectorService.class, snmpCollector);
