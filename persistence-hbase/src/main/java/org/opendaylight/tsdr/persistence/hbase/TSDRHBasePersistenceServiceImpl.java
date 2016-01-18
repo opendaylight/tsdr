@@ -61,8 +61,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     public TSDRHBasePersistenceServiceImpl(){
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
         log.info("TSDR HBase Data Store is initialized.");
-        System.out.println("TSDR HBase Data Store is initialized. "
-            + "Please do not install another TSDR Data Store without uninstalling HBase Data Store.");
+        System.out.println("TSDR HBase Data Store was initialized. ");
 
     }
 

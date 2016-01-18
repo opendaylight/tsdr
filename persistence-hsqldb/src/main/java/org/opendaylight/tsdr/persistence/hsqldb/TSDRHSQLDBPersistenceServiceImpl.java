@@ -29,7 +29,7 @@ public class TSDRHSQLDBPersistenceServiceImpl implements TsdrPersistenceService{
 
     public TSDRHSQLDBPersistenceServiceImpl(){
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
-        System.out.println("HSQLDB Store was initialized...");
+        System.out.println("TSDR HSQLDB Data Store was initialized.");
     }
 
     @Override
