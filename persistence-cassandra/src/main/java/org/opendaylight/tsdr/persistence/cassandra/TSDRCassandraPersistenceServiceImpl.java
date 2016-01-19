@@ -28,7 +28,7 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
 
     public TSDRCassandraPersistenceServiceImpl(){
         TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
-        System.out.println("Cassandra Store was initialized...");
+        System.out.println("TSDR Cassandra Store was initialized.");
     }
 
     @Override
