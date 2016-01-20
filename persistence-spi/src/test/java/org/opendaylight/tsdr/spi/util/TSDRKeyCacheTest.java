@@ -26,7 +26,10 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricr
  **/
 public class TSDRKeyCacheTest {
 
-    private static final String TSDR_TEST_KEY = "[NID=127.0.0.1][DC=EXTERNAL][MN=Memory][RK=hello:world,Testing:test]";
+    private static final String TSDR_TEST_KEY = "[NID=openflow:1][DC=EXTERNAL][MN=Memory][RK=hello:world,Testing:test]";
+    private static final String TSDR_TEST_KEY2 = "[NID=openflow:11][DC=EXTERNAL][MN=Memory][RK=hello:world,Testing:test]";
+    private static final String TSDR_TEST_KEY3 = "[NID=openflow:11][DC=EXTERNAL][MN=Memory][RK=he:world,Testing:test]";
+    private static final String TSDR_TEST_KEY4 = "[NID=openflow:11][DC=EXTERNAL][MN=Memory][RK=hello:worl,Testing:test]";
     private TSDRKeyCache keyCache = null;
 
     @Before
@@ -48,7 +51,7 @@ public class TSDRKeyCacheTest {
     @Test
     public void testAddTsdrCacheEntry(){
         TSDRCacheEntry entry = keyCache.addTSDRCacheEntry(TSDR_TEST_KEY);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getDataCategory());
         Assert.assertEquals("Memory",entry.getMetricName());
         Assert.assertEquals("world",entry.getRecordKeys().get(0).getKeyValue());
@@ -58,7 +61,7 @@ public class TSDRKeyCacheTest {
     public void testGetTsdrCacheEntry(){
         keyCache.addTSDRCacheEntry(TSDR_TEST_KEY);
         TSDRCacheEntry entry = keyCache.getCacheEntry(TSDR_TEST_KEY);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getDataCategory());
         Assert.assertEquals("Memory",entry.getMetricName());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
@@ -69,7 +72,7 @@ public class TSDRKeyCacheTest {
         keyCache.addTSDRCacheEntry(TSDR_TEST_KEY);
         MD5ID md5 = MD5ID.createTSDRID(TSDR_TEST_KEY);
         TSDRCacheEntry entry = keyCache.getCacheEntry(md5);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getDataCategory());
         Assert.assertEquals("Memory",entry.getMetricName());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
@@ -81,7 +84,7 @@ public class TSDRKeyCacheTest {
         Collection<TSDRCacheEntry> all = keyCache.getAll();
         Assert.assertEquals(1,all.size());
         TSDRCacheEntry entry = all.iterator().next();
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getDataCategory());
         Assert.assertEquals("Memory",entry.getMetricName());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
@@ -118,7 +121,7 @@ public class TSDRKeyCacheTest {
         List<TSDRMetricRecord> list = keyCache.getTSDRMetricRecords(FormatUtil.KEY_NODEID+FormatUtil.getNodeIdFromTSDRKey(TSDR_TEST_KEY)+"]",0,Long.MAX_VALUE,1000,new TestMetricJob());
         Assert.assertEquals(1,list.size());
         TSDRMetricRecord entry = list.get(0);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
         Assert.assertEquals("Memory",entry.getMetricName());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
@@ -131,7 +134,7 @@ public class TSDRKeyCacheTest {
         List<TSDRMetricRecord> list = keyCache.getTSDRMetricRecords(FormatUtil.KEY_CATEGORY+FormatUtil.getDataCategoryFromTSDRKey(TSDR_TEST_KEY)+"]",0,Long.MAX_VALUE,1000,new TestMetricJob());
         Assert.assertEquals(1,list.size());
         TSDRMetricRecord entry = list.get(0);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
         Assert.assertEquals("Memory",entry.getMetricName());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
@@ -143,7 +146,7 @@ public class TSDRKeyCacheTest {
         List<TSDRMetricRecord> list = keyCache.getTSDRMetricRecords(FormatUtil.KEY_METRICNAME+FormatUtil.getMetriNameFromTSDRKey(TSDR_TEST_KEY)+']',0,Long.MAX_VALUE,1000,new TestMetricJob());
         Assert.assertEquals(1,list.size());
         TSDRMetricRecord entry = list.get(0);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
         Assert.assertEquals("Memory",entry.getMetricName());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
@@ -155,7 +158,7 @@ public class TSDRKeyCacheTest {
         List<TSDRMetricRecord> list = keyCache.getTSDRMetricRecords(FormatUtil.KEY_RECORDKEYS+"hello:world"+']',0,Long.MAX_VALUE,1000,new TestMetricJob());
         Assert.assertEquals(1,list.size());
         TSDRMetricRecord entry = list.get(0);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
         Assert.assertEquals("Memory",entry.getMetricName());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
@@ -168,7 +171,7 @@ public class TSDRKeyCacheTest {
         List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(FormatUtil.KEY_NODEID+FormatUtil.getNodeIdFromTSDRKey(TSDR_TEST_KEY)+"]",0,Long.MAX_VALUE,1000,new TestLogJob());
         Assert.assertEquals(1,list.size());
         TSDRLogRecord entry = list.get(0);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
     }
@@ -180,7 +183,7 @@ public class TSDRKeyCacheTest {
         List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(FormatUtil.KEY_CATEGORY+FormatUtil.getDataCategoryFromTSDRKey(TSDR_TEST_KEY)+"]",0,Long.MAX_VALUE,1000,new TestLogJob());
         Assert.assertEquals(1,list.size());
         TSDRLogRecord entry = list.get(0);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
     }
@@ -191,7 +194,7 @@ public class TSDRKeyCacheTest {
         List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(FormatUtil.KEY_METRICNAME+FormatUtil.getMetriNameFromTSDRKey(TSDR_TEST_KEY)+']',0,Long.MAX_VALUE,1000,new TestLogJob());
         Assert.assertEquals(1,list.size());
         TSDRLogRecord entry = list.get(0);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
     }
@@ -202,7 +205,47 @@ public class TSDRKeyCacheTest {
         List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(FormatUtil.KEY_RECORDKEYS+"hello:world"+']',0,Long.MAX_VALUE,1000,new TestLogJob());
         Assert.assertEquals(1,list.size());
         TSDRLogRecord entry = list.get(0);
-        Assert.assertEquals("127.0.0.1",entry.getNodeID());
+        Assert.assertEquals("openflow:1",entry.getNodeID());
+        Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
+        Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
+    }
+
+    @Test
+    public void tesBugFixPrefix(){
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY2);
+        List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(FormatUtil.KEY_NODEID+"openflow:1]",0,Long.MAX_VALUE,1000,new TestLogJob());
+        Assert.assertEquals(1,list.size());
+        TSDRLogRecord entry = list.get(0);
+        Assert.assertEquals("openflow:1",entry.getNodeID());
+        Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
+        Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
+    }
+
+    @Test
+    public void tesBugFixRKKey(){
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY2);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY3);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY4);
+        List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(FormatUtil.KEY_RECORDKEYS+"he:world]",0,Long.MAX_VALUE,1000,new TestLogJob());
+        Assert.assertEquals(1,list.size());
+        TSDRLogRecord entry = list.get(0);
+        Assert.assertEquals("openflow:11",entry.getNodeID());
+        Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
+        Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
+    }
+
+    @Test
+    public void tesBugFixRKValue(){
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY2);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY3);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_KEY4);
+        List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(FormatUtil.KEY_RECORDKEYS+"hello:worl]",0,Long.MAX_VALUE,1000,new TestLogJob());
+        Assert.assertEquals(1,list.size());
+        TSDRLogRecord entry = list.get(0);
+        Assert.assertEquals("openflow:11",entry.getNodeID());
         Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
         Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
     }
