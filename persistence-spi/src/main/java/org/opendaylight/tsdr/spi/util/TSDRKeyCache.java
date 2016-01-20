@@ -147,6 +147,17 @@ public class TSDRKeyCache {
         String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrMetricKey);
         String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrMetricKey);
         List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrMetricKey);
+
+        if(dataCategory!=null){
+            dataCategory+="]";
+        }
+        if(metricName!=null){
+            metricName+="]";
+        }
+        if(nodeID!=null){
+            nodeID+="]";
+        }
+
         final List<TSDRMetricRecord> result = new ArrayList<>();
 
         for(TSDRCacheEntry e:this.cache.values()){
@@ -162,7 +173,8 @@ public class TSDRKeyCache {
             if(recKeys!=null){
                 boolean fitCriteria = true;
                 for(RecordKeys r:recKeys){
-                    if(e.getTsdrKey().indexOf(r.getKeyName())==-1 || e.getTsdrKey().indexOf(r.getKeyValue())==-1){
+                    if((e.getTsdrKey().indexOf(","+r.getKeyName()+":")==-1 && e.getTsdrKey().indexOf("[RK="+r.getKeyName()+":")==-1) ||
+                            (e.getTsdrKey().indexOf(":"+r.getKeyValue()+"]")==-1 && e.getTsdrKey().indexOf(":"+r.getKeyValue()+",")==-1)){
                         fitCriteria = false;
                         break;
                     }
@@ -208,6 +220,17 @@ public class TSDRKeyCache {
         String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrLogKey);
         String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrLogKey);
         List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrLogKey);
+
+        if(dataCategory!=null){
+            dataCategory+="]";
+        }
+        if(metricName!=null){
+            metricName+="]";
+        }
+        if(nodeID!=null){
+            nodeID+="]";
+        }
+
         final List<TSDRLogRecord> result = new ArrayList<>();
 
         for(TSDRCacheEntry e:this.cache.values()){
@@ -223,7 +246,8 @@ public class TSDRKeyCache {
             if(recKeys!=null){
                 boolean fitCriteria = true;
                 for(RecordKeys r:recKeys){
-                    if(e.getTsdrKey().indexOf(r.getKeyName())==-1 || e.getTsdrKey().indexOf(r.getKeyValue())==-1){
+                    if((e.getTsdrKey().indexOf(","+r.getKeyName()+":")==-1 && e.getTsdrKey().indexOf("[RK="+r.getKeyName()+":")==-1) ||
+                            (e.getTsdrKey().indexOf(":"+r.getKeyValue()+"]")==-1 && e.getTsdrKey().indexOf(":"+r.getKeyValue()+",")==-1)){
                         fitCriteria = false;
                         break;
                     }
