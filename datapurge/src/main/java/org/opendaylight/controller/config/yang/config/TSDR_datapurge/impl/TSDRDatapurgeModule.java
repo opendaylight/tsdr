@@ -42,16 +42,11 @@ public class TSDRDatapurgeModule extends org.opendaylight.controller.config.yang
     @Override
     public java.lang.AutoCloseable createInstance() {
         log.debug("TSDR Purge Entering createIntance()");
-        registerConfiguration();
+        /* TSDRPurgeServiceImpl will be initialized which in turn initializes TSDRDataPurgeConfig
+        and PurgingScheduler
+        */
         final TSDRPurgeServiceImpl tsdrPurgeServiceImpl = new TSDRPurgeServiceImpl(getDataBrokerDependency(), getRpcRegistryDependency());
-
-        /*
-         * Currently there are no rpc function to register
-         */
-        //final BindingAwareBroker.RpcRegistration<tsdrPurgeServiceImpl> rpcRegistration = getRpcRegistryDependency()
-         //   .addRpcImplementation(TSDRPurgeServiceImpl.class,
-          //  tsdrPurgeServiceImpl);
-
+        registerConfiguration();
         final class CloseResources implements AutoCloseable {
 
             @Override

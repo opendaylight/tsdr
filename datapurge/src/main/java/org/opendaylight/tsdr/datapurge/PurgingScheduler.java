@@ -28,7 +28,7 @@ public class PurgingScheduler {
     private static PurgingScheduler instance = null;
     private static final Logger log = LoggerFactory
             .getLogger(PurgingScheduler.class);
-    private static RpcProviderRegistry rpcRegistry;
+    private RpcProviderRegistry rpcRegistry;
     private ScheduledFuture future = null;
     private PurgeDataTask purgedatatask;
     private static final int DEFULT_INTERVAL = 24 * 60; /* Default one day */
@@ -155,5 +155,8 @@ public class PurgingScheduler {
     public void setRetentionTime(int retentionTime) {
         this.retentionTime = retentionTime;
     }
-
+    
+    public void setRpcRegistry(RpcProviderRegistry rpcRegistry) {
+        this.rpcRegistry = rpcRegistry;
+    }
 }
