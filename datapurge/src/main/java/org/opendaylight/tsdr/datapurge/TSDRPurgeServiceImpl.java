@@ -44,8 +44,7 @@ public class TSDRPurgeServiceImpl {
         if (tsdrService == null) {
             tsdrService = this.rpcRegistry.getRpcService(TSDRService.class);
         }
-      //  PurgingScheduler.getInstance().loadProperties();
-       // PurgingScheduler.getInstance().initAndScheduleTask(_rpcRegistry);;
+        PurgingScheduler.getInstance().setRpcRegistry(_rpcRegistry);
     }
 
     public void shutdown() {
