@@ -64,6 +64,81 @@ public class FormatUtilTest {
         return b.build();
     }
 
+    public static TSDRLogRecord createDataCategoryLogRecord(){
+        TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.NETFLOW);
+        return b.build();
+    }
+
+    public static TSDRMetricRecord createDataCategoryMetricRecord(){
+        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.EXTERNAL);
+        return b.build();
+    }
+
+    public static TSDRLogRecord createLogRecordWithDCAndNID(){
+        TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.NETFLOW);
+        b.setNodeID("Test");
+        b.setRecordFullText("Some syslog text");
+        List<RecordAttributes> attributes = new LinkedList<>();
+        RecordAttributesBuilder rab = new RecordAttributesBuilder();
+        rab.setName("RATest");
+        rab.setValue("RAValue");
+        attributes.add(rab.build());
+        b.setRecordAttributes(attributes);
+        return b.build();
+    }
+    public static TSDRLogRecord createLogRecordWithDCAndRK(){
+        TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.NETFLOW);
+        List<RecordKeys> recs = new ArrayList<>();
+        RecordKeysBuilder rb = new RecordKeysBuilder();
+        rb.setKeyValue("Test1");
+        rb.setKeyName("Test2");
+        recs.add(rb.build());
+        b.setRecordKeys(recs);
+        b.setRecordFullText("Some syslog text");
+        List<RecordAttributes> attributes = new LinkedList<>();
+        RecordAttributesBuilder rab = new RecordAttributesBuilder();
+        rab.setName("RATest");
+        rab.setValue("RAValue");
+        attributes.add(rab.build());
+        b.setRecordAttributes(attributes);
+        return b.build();
+    }
+    public static TSDRMetricRecord createMetricRecordWithDCAndNID(){
+        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.SNMPINTERFACES);
+        b.setNodeID("Test");
+        return b.build();
+    }
+    public static TSDRMetricRecord createMetricRecordWithDCAndMN(){
+        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.SNMPINTERFACES);
+        b.setMetricName("Test");
+        b.setMetricValue(new BigDecimal(11D));
+        return b.build();
+    }
+    public static TSDRMetricRecord createMetricRecordWithDCAndRK(){
+        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
+        b.setTimeStamp(System.currentTimeMillis());
+        b.setTSDRDataCategory(DataCategory.SNMPINTERFACES);
+        List<RecordKeys> recs = new ArrayList<>();
+        RecordKeysBuilder rb = new RecordKeysBuilder();
+        rb.setKeyValue("Test1");
+        rb.setKeyName("Test2");
+        recs.add(rb.build());
+        b.setRecordKeys(recs);
+        return b.build();
+    }
+
     @Test
     public void testGetTSDRMetricKey(){
         String key = FormatUtil.getTSDRMetricKey(createMetricRecord());
@@ -110,6 +185,52 @@ public class FormatUtilTest {
     public void testIsValidKey(){
         String key = FormatUtil.getTSDRMetricKey(createMetricRecord());
         Assert.assertTrue(FormatUtil.isValidTSDRKey(key));
+    }
+
+    @Test
+    public void testIsValidTSDRLogKey(){
+        String key = FormatUtil.getTSDRLogKey(createLogRecord());
+        Assert.assertTrue(FormatUtil.isValidTSDRLogKey(key));
+    }
+
+    @Test
+    public void testIsDataCategoryKey(){
+        //test invalid tsdrMetricKey
+        String key = "[NID=][MN=][DC=][RK=]";
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = "[NID=][MN=]DC=[RK=]";
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = "[DC=PORTSTATS][MN=][RK=]";
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = "[NID=][DC=PORTSTATS][MN=]";
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        //test invalid tsdrlogkey
+        key = "[NID=][DC=][RK=]";
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = "[NID=]DC=[RK=]";
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = "[DC=][RK=]";
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = "[NID=][DC=PORTSTATS]";
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        //test when the key is a valid tsdrKey
+        //test metrickey
+        key = FormatUtil.getTSDRMetricKey(createMetricRecordWithDCAndNID());
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = FormatUtil.getTSDRMetricKey(createMetricRecordWithDCAndMN());
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = FormatUtil.getTSDRMetricKey(createMetricRecordWithDCAndRK());
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        key = FormatUtil.getTSDRMetricKey(createDataCategoryMetricRecord());
+        Assert.assertTrue(FormatUtil.isDataCategoryKey(key));
+        //test logkey
+        key = FormatUtil.getTSDRLogKey(createLogRecordWithDCAndNID());
+        Assert.assertFalse(FormatUtil.isDataCategory(key));
+        key = FormatUtil.getTSDRLogKey(createLogRecordWithDCAndRK());
+        Assert.assertFalse(FormatUtil.isDataCategoryKey(key));
+        Assert.assertFalse(FormatUtil.isDataCategory(key));
+        key = FormatUtil.getTSDRLogKey(createDataCategoryLogRecord());
+        Assert.assertTrue(FormatUtil.isDataCategoryKey(key));
     }
 
     @Test

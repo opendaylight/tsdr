@@ -62,7 +62,41 @@ public class FormatUtil {
     public static boolean isDataCategory(String str){
         return dataCategoryStrings.contains(str);
     }
-
+/**
+ * Check if the tsdrKey is a valid tsdrKey and only contains DC section.
+ * @param tsdrKey
+ * @return
+ */
+    public static boolean isDataCategoryKey(String tsdrKey){
+         if (isValidTSDRKey(tsdrKey)){
+             /* if it's a valid metircs key,
+              * getNodeId, getMetriName, getRecordKeys, and getDataCategory from the tsdrkey
+              * would not be null.
+              */
+             if (getNodeIdFromTSDRKey(tsdrKey).length() == 0
+                 && getMetriNameFromTSDRKey(tsdrKey).length() == 0
+                 && getRecordKeysFromTSDRKey(tsdrKey).size() == 0
+                 && getDataCategoryFromTSDRKey(tsdrKey).length() != 0){
+                 return true;
+             }else{
+                 return false;
+             }
+         }else if (isValidTSDRLogKey(tsdrKey)){
+               /* if it's valid log key,
+                * getNodeId, getRecordKeys, and getDataCategory from the tsdrKey 
+                * would not be null.
+                */
+                 if (getNodeIdFromTSDRKey(tsdrKey).length() == 0
+                     && getRecordKeysFromTSDRKey(tsdrKey).size() == 0
+                     && getDataCategoryFromTSDRKey(tsdrKey).length() != 0){
+                     return true;
+                 }else{
+                     return false;
+                 }
+         }else{//not a valid tsdrkey
+             return false;
+         }
+    }
     public static String getFormattedTimeStamp(long timestamp, String formatString) {
         Date date = new Date(timestamp);
         DateFormat formatter = new SimpleDateFormat(formatString, Locale.US);
@@ -110,6 +144,19 @@ public class FormatUtil {
             return false;
         }
         if(getMetriNameFromTSDRKey(str)==null){
+            return false;
+        }
+        if(getNodeIdFromTSDRKey(str)==null){
+            return false;
+        }
+        if(getRecordKeysFromTSDRKey(str)==null){
+            return false;
+        }
+        return true;
+    }
+
+    public final static boolean isValidTSDRLogKey(String str){
+        if(getDataCategoryFromTSDRKey(str)==null) {
             return false;
         }
         if(getNodeIdFromTSDRKey(str)==null){
