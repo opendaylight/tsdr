@@ -69,7 +69,7 @@ public class TSDRNBIRestAPI {
         Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
         List<Metrics> metrics = metric.get().getResult().getMetrics();
         if (metrics == null || metrics.size() == 0) {
-            return Response.status(201).entity(reply).build();
+            return Response.status(201).entity("{}").build();
         }
         int skip = 1;
         if (metrics.size() > maxDataPoints) {

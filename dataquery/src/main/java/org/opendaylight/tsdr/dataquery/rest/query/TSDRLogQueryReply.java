@@ -21,33 +21,43 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 
 @XmlRootElement(name = "TSDRMetricsQueryReply")
 public class TSDRLogQueryReply {
+    private final int recordCount;
+    private final List<LogRecords> logRecords = new ArrayList<>();
 
-    private final String recordFullText;
-    private final String timeStamp;
-    private final String nodeID;
-    private final String tsdrDataCategory;
-    private final List<LogRecordKeys> recordKeys = new ArrayList<>();
-    private final List<LogRecordAttributes> recordAttributes = new ArrayList<>();
-
-    public TSDRLogQueryReply(Logs mr){
-        Calendar c = Calendar.getInstance();
-        c.setTimeInMillis(mr.getTimeStamp());
-        this.timeStamp = c.getTime().toString();
-        this.nodeID = mr.getNodeID();
-        this.tsdrDataCategory = mr.getTSDRDataCategory().name();
-        this.recordFullText = mr.getRecordFullText();
-        if(mr.getRecordKeys()!=null){
-            for(RecordKeys rk:mr.getRecordKeys()){
-                recordKeys.add(new LogRecordKeys(rk));
-            }
-        }
-        if(mr.getRecordAttributes()!=null){
-            for(RecordAttributes rk:mr.getRecordAttributes()){
-                recordAttributes.add(new LogRecordAttributes(rk));
-            }
+    public TSDRLogQueryReply(List<Logs> logs){
+        this.recordCount = logs.size();
+        for (Logs l : logs) {
+            logRecords.add(new LogRecords(l));
         }
     }
 
+    public static class LogRecords {
+        private final String recordFullText;
+        private final String timeStamp;
+        private final String nodeID;
+        private final String tsdrDataCategory;
+        private final List<LogRecordKeys> recordKeys = new ArrayList<>();
+        private final List<LogRecordAttributes> recordAttributes = new ArrayList<>();
+
+        public LogRecords(Logs mr) {
+            Calendar c = Calendar.getInstance();
+            c.setTimeInMillis(mr.getTimeStamp());
+            this.timeStamp = c.getTime().toString();
+            this.nodeID = mr.getNodeID();
+            this.tsdrDataCategory = mr.getTSDRDataCategory().name();
+            this.recordFullText = mr.getRecordFullText();
+            if (mr.getRecordKeys() != null) {
+                for (RecordKeys rk : mr.getRecordKeys()) {
+                    recordKeys.add(new LogRecordKeys(rk));
+                }
+            }
+            if (mr.getRecordAttributes() != null) {
+                for (RecordAttributes rk : mr.getRecordAttributes()) {
+                    recordAttributes.add(new LogRecordAttributes(rk));
+                }
+            }
+        }
+    }
     public static class LogRecordKeys {
         private final String keyName;
         private final String keyValue;
