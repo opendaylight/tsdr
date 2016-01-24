@@ -63,15 +63,8 @@ public class TSDRMetricsQueryAPI {
 
         Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
 
-        List<TSDRMetricsQueryReply> reply = new ArrayList<>();
-
         List<Metrics> metrics = metric.get().getResult().getMetrics();
-        if (metrics == null || metrics.size() == 0) {
-            return Response.status(201).entity(reply).build();
-        }
-        for (Metrics m : metrics) {
-            reply.add(new TSDRMetricsQueryReply(m));
-        }
+        TSDRMetricsQueryReply reply = new TSDRMetricsQueryReply(metrics);
 
         return Response.status(201).entity(toJson(reply)).build();
     }

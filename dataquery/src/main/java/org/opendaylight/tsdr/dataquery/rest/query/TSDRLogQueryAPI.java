@@ -10,7 +10,6 @@ package org.opendaylight.tsdr.dataquery.rest.query;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -63,15 +62,8 @@ public class TSDRLogQueryAPI {
 
         Future<RpcResult<GetTSDRLogRecordsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRLogRecords(input.build());
 
-        List<TSDRLogQueryReply> reply = new ArrayList<>();
-
         List<Logs> logs = metric.get().getResult().getLogs();
-        if (logs == null || logs.size() == 0) {
-            return Response.status(201).entity(reply).build();
-        }
-        for (Logs l : logs) {
-            reply.add(new TSDRLogQueryReply(l));
-        }
+        TSDRLogQueryReply reply = new TSDRLogQueryReply(logs);
 
         return Response.status(201).entity(toJson(reply)).build();
     }
