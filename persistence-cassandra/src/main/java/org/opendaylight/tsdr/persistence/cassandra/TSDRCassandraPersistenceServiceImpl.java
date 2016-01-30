@@ -33,7 +33,9 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
 
     @Override
     public void store(TSDRMetricRecord metricRecord) {
+        store.startBatch();
         store.store(metricRecord);
+        store.executeBatch();
     }
 
     @Override
@@ -43,14 +45,16 @@ public class TSDRCassandraPersistenceServiceImpl implements TsdrPersistenceServi
 
     @Override
     public void store(List<TSDRRecord> metricRecordList) {
-       for(TSDRRecord record:metricRecordList){
+        store.startBatch();
+        for(TSDRRecord record:metricRecordList){
            if(record instanceof TSDRMetricRecord){
-               store((TSDRMetricRecord)record);
+               store.store((TSDRMetricRecord)record);
            }else
            if(record instanceof TSDRLogRecord){
-               store((TSDRLogRecord)record);
+               store.store((TSDRLogRecord)record);
            }
-       }
+        }
+        store.executeBatch();
     }
 
     @Override

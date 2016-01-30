@@ -14,7 +14,6 @@ import com.datastax.driver.core.Session;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -52,7 +51,7 @@ public class CassandraStoreTest {
         Mockito.when(row.getString("KeyPath")).thenReturn(FormatUtil.getTSDRMetricKey(createMetricRecord()));
         Mockito.when(row.getDouble("value")).thenReturn(11d);
         Mockito.when(row.getString("value")).thenReturn(createLogRecord().getRecordFullText());
-
+        store.startBatch();
         if(rows.isEmpty()){
             rows.add(row);
         }
@@ -114,13 +113,13 @@ public class CassandraStoreTest {
     @Test
     public void testCreateTables(){
         store.createTSDRTables();
-        Mockito.verify(session,Mockito.atLeast(3)).execute(Mockito.anyString());
+        Mockito.verify(session,Mockito.atLeast(2)).execute(Mockito.anyString());
     }
 
     @Test
     public void testStoreTSDRMetric(){
         store.store(createMetricRecord());
-        Mockito.verify(session,Mockito.atLeast(2)).execute(Mockito.anyString());
+        Assert.assertEquals(1,store.getBatch().size());
         store.shutdown();
         Mockito.verify(session,Mockito.atLeast(1)).close();
     }
@@ -128,7 +127,7 @@ public class CassandraStoreTest {
     @Test
     public void testStoreTSDRLog(){
         store.store(createLogRecord());
-        Mockito.verify(session,Mockito.atLeast(2)).execute(Mockito.anyString());
+        Assert.assertEquals(1,store.getBatch().size());
         store.shutdown();
         Mockito.verify(session,Mockito.atLeast(1)).close();
     }
@@ -180,15 +179,9 @@ public class CassandraStoreTest {
     @Test
     public void testPurge(){
         store.store(createMetricRecord());
-        Mockito.verify(session,Mockito.atLeast(2)).execute(Mockito.anyString());
+        Assert.assertEquals(1,store.getBatch().size());
         store.purge(DataCategory.EXTERNAL,0L);
         Mockito.verify(session,Mockito.atLeast(1)).execute(Mockito.anyString());
-    }
-
-    @Test
-    public void testLoadPathsCache(){
-        store.store(createMetricRecord());
-        store.loadPathCache();
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
+ * Copyright (c) 2016 Cisco Systems, Inc. and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
@@ -7,11 +7,14 @@
  */
 package org.opendaylight.tsdr.persistence.cassandra;
 
+import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -39,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 public class CassandraStore {
+    private static final int MAX_BATCH_SIZE = 500;
     private static final String confFile = "./etc/tsdr-persistence-cassandra.properties";
     private Session session = null;
     private Cluster cluster = null;
@@ -47,12 +51,12 @@ public class CassandraStore {
     private int replication_factor = 1;
     private Logger log = LoggerFactory.getLogger(CassandraStore.class);
     private TSDRKeyCache cache = new TSDRKeyCache();
+    private BatchStatement batch = null;
 
     public CassandraStore(){
         log.info("Connecting to Cassandra...");
         try {
             getSession();
-            loadPathCache();
         } catch (Exception e) {
             log.error("Failed to connect to Cassandra",e);
         }
@@ -64,7 +68,6 @@ public class CassandraStore {
         this.cluster = c;
         try {
             getSession();
-            loadPathCache();
         } catch (Exception e) {
             log.error("Failed to connect to Cassandra",e);
         }
@@ -84,6 +87,10 @@ public class CassandraStore {
         }
         in.close();
         return result;
+    }
+
+    public BatchStatement getBatch(){
+        return this.batch;
     }
 
     public Session getSession() throws Exception {
@@ -131,10 +138,7 @@ public class CassandraStore {
     }
 
     public void createTSDRTables(){
-        String cql = "CREATE TABLE MetricPath (keyPath text,"+
-                "PRIMARY KEY (KeyPath))";
-        this.session.execute(cql);
-        cql = "CREATE TABLE MetricVal ("+
+        String cql = "CREATE TABLE MetricVal ("+
                   "KeyA bigint, "+
                   "KeyB bigint, "+
                   "Time bigint, "+
@@ -151,6 +155,18 @@ public class CassandraStore {
         this.session.execute(cql);
     }
 
+    public void startBatch(){
+        this.batch = new BatchStatement();
+    }
+
+    public void executeBatch(){
+        try {
+            this.session.execute(this.batch);
+        }catch(Exception err){
+            log.error("Failed to run batch",err);
+        }
+    }
+
     public void store(TSDRMetricRecord mr){
         //create metric key
         String tsdrKey = FormatUtil.getTSDRMetricKey(mr);
@@ -159,20 +175,20 @@ public class CassandraStore {
         //if it does not exist, create it
         if(cacheEntry==null){
             cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
-            StringBuilder cql = new StringBuilder();
-            cql.append("insert into MetricPath (KeyPath) values(");
-            cql.append("'").append(cacheEntry.getTsdrKey()).append("'");
-            cql.append(")");
-            session.execute(cql.toString());
         }
 
-        StringBuilder cql = new StringBuilder();
-        cql.append("insert into MetricVal (KeyA,KeyB,Time,value) values(");
-        cql.append(cacheEntry.getMd5ID().getMd5Long1()).append(",");
-        cql.append(cacheEntry.getMd5ID().getMd5Long2()).append(",");
-        cql.append(mr.getTimeStamp()).append(",");
-        cql.append(mr.getMetricValue()).append(")");
-        session.execute(cql.toString());
+        RegularStatement st = QueryBuilder.insertInto("tsdr","MetricVal").
+                value("KeyA",cacheEntry.getMd5ID().getMd5Long1()).
+                value("KeyB",cacheEntry.getMd5ID().getMd5Long2()).
+                value("Time",mr.getTimeStamp()).
+                value("value",mr.getMetricValue().doubleValue());
+
+        this.batch.add(st);
+
+        if(this.batch.size()>=MAX_BATCH_SIZE){
+            this.executeBatch();
+            this.startBatch();
+        }
     }
 
     public void store(TSDRLogRecord lr){
@@ -182,21 +198,21 @@ public class CassandraStore {
         //if it does not exist, create it
         if(cacheEntry==null){
             cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
-            StringBuilder cql = new StringBuilder();
-            cql.append("insert into MetricPath (KeyPath) values(");
-            cql.append("'").append(cacheEntry.getTsdrKey()).append("'");
-            cql.append(")");
-            session.execute(cql.toString());
         }
 
-        StringBuilder cql = new StringBuilder();
-        cql.append("insert into MetricLog (KeyA,KeyB,Time,xIndex,value) values(");
-        cql.append(cacheEntry.getMd5ID().getMd5Long1()).append(",");
-        cql.append(cacheEntry.getMd5ID().getMd5Long2()).append(",");
-        cql.append(lr.getTimeStamp()).append(",");
-        cql.append(lr.getIndex()).append(",'");
-        cql.append(lr.getRecordFullText()).append("')");
-        session.execute(cql.toString());
+        RegularStatement st = QueryBuilder.insertInto("tsdr","MetricLog").
+                value("KeyA",cacheEntry.getMd5ID().getMd5Long1()).
+                value("KeyB",cacheEntry.getMd5ID().getMd5Long2()).
+                value("Time",lr.getTimeStamp()).
+                value("xIndex",lr.getIndex()).
+                value("value",lr.getRecordFullText());
+
+        this.batch.add(st);
+
+        if(this.batch.size()>=MAX_BATCH_SIZE){
+            this.executeBatch();
+            this.startBatch();
+        }
     }
 
     public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime,int recordLimit) {
@@ -283,14 +299,6 @@ public class CassandraStore {
         lb.setRecordAttributes(null);
         lb.setRecordFullText(value);
         return lb.build();
-    }
-
-    public void loadPathCache(){
-        ResultSet rs = session.execute("select * from MetricPath limit 100000");
-        for(Row r:rs.all()){
-            String tsdrKey = r.getString("KeyPath");
-            this.cache.addTSDRCacheEntry(tsdrKey);
-        }
     }
 
     public void shutdown(){
