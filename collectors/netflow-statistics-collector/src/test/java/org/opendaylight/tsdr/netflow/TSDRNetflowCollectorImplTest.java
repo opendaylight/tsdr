@@ -24,6 +24,7 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
  * Unit test for Netflow statistics collector
  * @author Muhammad Umair(muhammad.umair@xflowresearch.com)
  * Created: Dec 30, 2015
+ * Modified: Feb 08, 2016
 **/
 
 public class TSDRNetflowCollectorImplTest {
@@ -41,9 +42,9 @@ public class TSDRNetflowCollectorImplTest {
     }
     @Test
     public void sendPacketsTest() throws InterruptedException, IOException{
-        byte[] a = "125788522585645856".getBytes();
+        byte[] a = "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".getBytes();
         sendNetflowData(a);
-        a = "47984566465132646".getBytes();
+        a = "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".getBytes();
         sendNetflowData(a);
         Thread.sleep(500);//0.5 sec delay for packet(s) transmission
         Assert.assertEquals(2, (int)implObj.getPacketCount());

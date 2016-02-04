@@ -13,11 +13,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Unit tests for Netflow data parser
  * @author Muhammad Umair(muhammad.umair@xflowresearch.com)
  * Created: Dec 30, 2015
+ * Modified: Feb 08, 2016
 **/
 
 public class NetflowPacketParserTest {
@@ -60,7 +63,8 @@ public class NetflowPacketParserTest {
     @Test
     public void toStringTest(){
         String result = parserService.toString();
-        String expectedResult = "version=0,sysUpTime=0,unix_secs=0,unix_nsecs=0,flow_sequence=0,engine_type=0,engine_id=0,samplingInterval=0,srcAddr=0.0.0.0,dstAddr=0.0.0.0,nextHop=0,input=0,output=0,dPkts=0,dOctets=0,First=0,Last=0,srcPort=0,dstPort=0,tcpFlags=0,protocol=0,tos=0,srcAS=0,dstAS=0,srcMask=0,dstMask=0,flowDuration=0";
+        /*The packet sent for test has nothing, 0 PDU. Thus only verifying the Netflow header.*/
+        String expectedResult = "version=0,sysUpTime=0,unix_secs=0,unix_nsecs=0,flow_sequence=0,engine_type=0,engine_id=0,samplingInterval=0";
         Assert.assertEquals(expectedResult, result);
     }
     @Test
