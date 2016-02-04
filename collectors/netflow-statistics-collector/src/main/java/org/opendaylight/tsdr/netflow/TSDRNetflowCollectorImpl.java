@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2015 Dell Inc. and others.  All rights reserved.
- * Copyright (c) 2015 xFlow Research Inc. and others.  All rights reserved.
+ * Copyright (c) 2015 Cisco Systems, Inc. and others.  All rights reserved.
+ * Copyright (c) 2015 xFlow Research Inc. and others, All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
@@ -32,13 +32,13 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:saichler@xgmail.com">Sharon Aicler</a>
  *
  * Created: December 1, 2015
- * Modified: December 25, 2015
- *
+ * Modified: Feb 8, 2016
  */
 public class TSDRNetflowCollectorImpl extends Thread{
 
     private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 5000;
     private static final long INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS = 2000;
+    private static final int FLOW_SIZE_FOR_NETFLOW_PACKET = 48;
     private static final Logger logger = LoggerFactory.getLogger(TSDRNetflowCollectorImpl.class);
     private static byte packetsCountForTests = 0; //Just to test the counts of packet for test
     private final TsdrCollectorSpiService collectorSPIService;
@@ -84,7 +84,6 @@ public class TSDRNetflowCollectorImpl extends Thread{
             }
         }
     }
-
     public void shutdown(){
         running = false;
         if(socket!=null){
@@ -116,7 +115,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
             while(running){
                 synchronized(incomingNetFlow) {
                     if (incomingNetFlow.isEmpty()) {
-                        logger.debug("No Pkts in queue");
+                        logger.info("No Pkts in queue");
                         try {
                             incomingNetFlow.wait(INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS);
                         } catch (InterruptedException e) {
@@ -132,30 +131,30 @@ public class TSDRNetflowCollectorImpl extends Thread{
                     logger.debug("Pkts found");
                     byte[] buff = packet.getData();
                     String srcIp = packet.getAddress().getHostAddress().trim();
-                    NetflowPacketParser parser = new NetflowPacketParser(buff);
-
-                    /*Fill up the RecordBuilder object*/
-                    TSDRLogRecordBuilder recordbuilder = new TSDRLogRecordBuilder();
-                    recordbuilder.setNodeID(srcIp);
-                    recordbuilder.setTimeStamp(lastTimeStamp);
+                    int totalPDU = new Integer(NetflowPacketParser.convert(buff, 2, 2)).intValue();
+                    int pduCounter = 1;
+                    int dataBufferOffset = 0;
                     long currentTimeStamp = System.currentTimeMillis();
-                    if(lastTimeStamp == currentTimeStamp){
-                        recordbuilder.setIndex(logRecordIndex++);
-                    }else{
-                        logRecordIndex = 0;
-                        recordbuilder.setIndex(logRecordIndex);
-                    }
-                    lastTimeStamp = currentTimeStamp;
-                    recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
-                    recordbuilder.setRecordFullText(parser.toString());
-                    if(logger.isDebugEnabled()) {
-                        logger.debug(parser.toString());
-                    }
-                    recordbuilder.setRecordAttributes(parser.getRecordAttributes());
-                    TSDRLogRecord logRecord =  recordbuilder.build();
-
-                    if(logRecord!=null){
-                        netFlowQueue.add(logRecord);
+                    while(pduCounter <= totalPDU && dataBufferOffset < (buff.length + FLOW_SIZE_FOR_NETFLOW_PACKET)){
+                        TSDRLogRecordBuilder recordbuilder = new TSDRLogRecordBuilder();
+                        NetflowPacketParser parser = new NetflowPacketParser(buff);
+                        parser.addFormat(buff, dataBufferOffset);
+                        dataBufferOffset += FLOW_SIZE_FOR_NETFLOW_PACKET;
+                        /*Fill up the RecordBuilder object*/
+                        recordbuilder.setNodeID(srcIp);
+                        recordbuilder.setTimeStamp(currentTimeStamp);
+                        recordbuilder.setIndex(pduCounter);
+                        recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
+                        recordbuilder.setRecordFullText(parser.toString());
+                        if(logger.isDebugEnabled()) {
+                            logger.debug(parser.toString());
+                        }
+                        recordbuilder.setRecordAttributes(parser.getRecordAttributes());
+                        TSDRLogRecord logRecord =  recordbuilder.build();
+                        if(logRecord!=null){
+                            netFlowQueue.add(logRecord);
+                        }
+                        pduCounter += 1;
                     }
                     if(System.currentTimeMillis()-lastPersisted>PERSIST_CHECK_INTERVAL_IN_MILLISECONDS && !netFlowQueue.isEmpty()){
                         LinkedList<TSDRLogRecord> queue = null;
@@ -173,7 +172,6 @@ public class TSDRNetflowCollectorImpl extends Thread{
             }
         }
     }
-
    /**
      * Store the data into TSDR data store
      * @param queue

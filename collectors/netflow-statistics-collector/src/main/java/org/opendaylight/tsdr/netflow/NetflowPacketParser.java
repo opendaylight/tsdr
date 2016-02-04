@@ -16,11 +16,16 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAt
 /**
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
  * @author <a href="mailto:muhammad.umair@xflowresearch.com">Umair Bhatti</a>
+ *
+ * Modified: Feb 08, 2016
  */
 public class NetflowPacketParser {
 
     private final List<RecordAttributes> recordAttributes = new ArrayList<>(27);
 
+    /*
+     * Constructor just make the header for netflow packet. There could be multiple PDU's of which the header would be same.
+     */
     public NetflowPacketParser(final byte[] buff){
         addValue("version",convert(buff, 0, 2));
         addValue("sysUpTime",convert(buff, 4, 4));
@@ -32,29 +37,35 @@ public class NetflowPacketParser {
         long s_interval = convert(buff[23]);
         s_interval += Long.parseLong(convert(buff, 23, 1));
         addValue("samplingInterval","" + s_interval);
-        addValue("srcAddr",convertIPAddress(new Long(convert(buff, 24, 4)).longValue()));
-        addValue("dstAddr",convertIPAddress(new Long(convert(buff, 28, 4)).longValue()));
-        addValue("nextHop", convert(buff, 32, 4));
-        addValue("input",convert(buff, 36, 2));
-        addValue("output", convert(buff, 38, 2));
-        addValue("dPkts", convert(buff, 40, 4));
-        addValue("dOctets", convert(buff, 44, 4));
-        String first = convert(buff, 48, 4);
+    }
+    /**
+     * function to add netflow format to the packets. The netflow header would be same while the format would be different according to the PDU's.
+     * @param buff - the byte array of data contained in netflow packet.
+     * @param len - the offset in the byte array where the data starts from.
+     */
+    public void addFormat(byte[] buff, int len){
+        addValue("srcAddr",convertIPAddress(new Integer(convert(buff, len+24, 4)).intValue()));
+        addValue("dstAddr",convertIPAddress(new Integer(convert(buff, len+28, 4)).intValue()));
+        addValue("nextHop", convertIPAddress(new Integer(convert(buff, len+32, 4)).intValue()));
+        addValue("input",convert(buff, len+36, 2));
+        addValue("output", convert(buff, len+38, 2));
+        addValue("dPkts", convert(buff, len+40, 4));
+        addValue("dOctets", convert(buff, len+44, 4));
+        String first = convert(buff, len+48, 4);
         addValue("First", first);
-        String last = convert(buff, 52, 4);
+        String last = convert(buff, len+52, 4);
         addValue("Last",last);
-        addValue("srcPort",convert(buff, 56, 2));
-        addValue("dstPort",convert(buff, 58, 2));
-        addValue("tcpFlags",Byte.toString(buff[61]));
-        addValue("protocol",Byte.toString(buff[62]));
-        addValue("tos", Byte.toString(buff[63]));
-        addValue("srcAS",convert(buff, 64, 2));
-        addValue("dstAS",convert(buff, 66, 2));
-        addValue("srcMask",Byte.toString(buff[68]));
-        addValue("dstMask",Byte.toString(buff[69]));
+        addValue("srcPort",convert(buff, len+56, 2));
+        addValue("dstPort",convert(buff, len+58, 2));
+        addValue("tcpFlags",Byte.toString(buff[len+61]));
+        addValue("protocol",Byte.toString(buff[len+62]));
+        addValue("tos", Byte.toString(buff[len+63]));
+        addValue("srcAS",convert(buff, len+64, 2));
+        addValue("dstAS",convert(buff, len+66, 2));
+        addValue("srcMask",Byte.toString(buff[len+68]));
+        addValue("dstMask",Byte.toString(buff[len+69]));
         addValue("flowDuration",new Long(Long.parseLong(last) - Long.parseLong(first)).toString());
     }
-
     public List<RecordAttributes> getRecordAttributes(){
         return this.recordAttributes;
     }
