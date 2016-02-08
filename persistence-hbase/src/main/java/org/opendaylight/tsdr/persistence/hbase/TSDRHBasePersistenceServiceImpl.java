@@ -216,21 +216,24 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
             //Add filter for node id
             String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrMetricKey);
             if(!nodeID.isEmpty()){
-                substringFilterList.add(nodeID);
+                substringFilterList.add("[NID=" + nodeID + "]");
             }
 
             //Add filter for metric name
             String metricName = FormatUtil.getMetriNameFromTSDRKey(tsdrMetricKey);
             if(!metricName.isEmpty()){
-                substringFilterList.add(metricName);
+                substringFilterList.add("[MN=" + metricName + "]");
             }
 
             //Add filter for record keys
             List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrMetricKey);
+            String recKeyString = "[RK=";
             if(!recKeys.isEmpty()){
                 for(RecordKeys recKey:recKeys){
-                    substringFilterList.add(recKey.getKeyValue());
+                    recKeyString = recKeyString + recKey.getKeyName() + ":" + recKey.getKeyValue() + ",";
                 }
+                recKeyString = recKeyString.substring(0,recKeyString.length() -1) + "]";
+                substringFilterList.add(recKeyString);
             }
 
             resultEntities = null;
@@ -241,7 +244,6 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
             return resultRecords;
         }
     }
-
     @Override
     /**
      * Retrieve a list of TSDRLogRecords from HBase data store based on the
@@ -287,15 +289,18 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
             //Add filter for node id
             String nodeID = FormatUtil.getNodeIdFromTSDRKey(tsdrLogKey);
             if(!nodeID.isEmpty()){
-                substringFilterList.add(nodeID);
+                substringFilterList.add("[NID=" + nodeID + "]");
             }
 
             //Add filter for record keys
             List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrLogKey);
+            String recKeyString = "[RK=";
             if(!recKeys.isEmpty()){
                 for(RecordKeys recKey:recKeys){
-                    substringFilterList.add(recKey.getKeyValue());
+                    recKeyString = recKeyString + recKey.getKeyName() + ":" + recKey.getKeyValue() + ",";
                 }
+                recKeyString = recKeyString.substring(0,recKeyString.length() -1) + "]";
+                substringFilterList.add(recKeyString);
             }
 
             resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory, substringFilterList, startTime, endTime);
