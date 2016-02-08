@@ -13,6 +13,7 @@ import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 
@@ -309,15 +310,31 @@ public class CassandraStore {
     }
 
     public void purge(DataCategory category, long retentionTime){
-        String cql1 = "Delete from MetricVal where keyA = ";
+        //Cassandra does not support range delete prior to verison 3.
+        //To overcome, we need to do a "select" and then batch delete one by one.
+        String cql1 = "Select * from MetricVal where keyA = ";
+        String dcql1 = "delete from MetricVal where keyA = ";
         String cql2 = " and keyB = ";
         String cql3 = " and time < "+retentionTime;
+        String dcql3 = " and time =";
+        this.startBatch();
         for(TSDRCacheEntry entry:this.cache.getAll()){
             if(entry.getDataCategory()==category){
                 String cql = cql1 + entry.getMd5ID().getMd5Long1()+cql2+entry.getMd5ID().getMd5Long2()+cql3;
-                session.execute(cql);
+                final ResultSet rs = session.execute(cql);
+                for(Row row:rs.all()){
+                    String deleteCql = dcql1+row.getLong("keyA")+cql2+row.getLong("keyB")+dcql3+row.getLong("time");
+                    batch.add(new SimpleStatement(deleteCql));
+                    if(this.batch.size()>=MAX_BATCH_SIZE){
+                        this.executeBatch();
+                        this.startBatch();
+                    }
+                }
             }
         }
+        if(this.batch.size()>0) {
+            this.executeBatch();
+            this.startBatch();
+        }
     }
-
 }
