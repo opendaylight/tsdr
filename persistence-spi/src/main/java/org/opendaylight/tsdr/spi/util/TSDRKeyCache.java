@@ -246,11 +246,22 @@ public class TSDRKeyCache {
             if(recKeys!=null){
                 boolean fitCriteria = true;
                 for(RecordKeys r:recKeys){
+                    int keyFit = 0;
+                    for(RecordKeys er:e.getRecordKeys()){
+                        if(er.getKeyName().equals(r.getKeyName()) && er.getKeyValue().equals(r.getKeyValue())){
+                            keyFit++;
+                        }
+                    }
+                    if(keyFit==0){
+                        fitCriteria = false;
+                        break;
+                    }
+                    /*
                     if((e.getTsdrKey().indexOf(","+r.getKeyName()+":")==-1 && e.getTsdrKey().indexOf("[RK="+r.getKeyName()+":")==-1) ||
                             (e.getTsdrKey().indexOf(":"+r.getKeyValue()+"]")==-1 && e.getTsdrKey().indexOf(":"+r.getKeyValue()+",")==-1)){
                         fitCriteria = false;
                         break;
-                    }
+                    }*/
                 }
                 if(!fitCriteria){
                     continue;
