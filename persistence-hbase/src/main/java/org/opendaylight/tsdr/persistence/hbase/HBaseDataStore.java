@@ -522,7 +522,6 @@ public class HBaseDataStore  {
                         scan.setFilter(filterList);
                     }else
                     */
-                    scan.setFilter(new PageFilter(TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS));
                     scan.setCaching(TSDRHBaseDataStoreConstants.MAX_QUERY_RECORDS);
                     htable=getConnection(tableName);
                     rs = htable.getScanner(scan);
