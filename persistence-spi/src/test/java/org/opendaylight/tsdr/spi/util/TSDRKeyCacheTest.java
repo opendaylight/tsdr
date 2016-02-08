@@ -30,6 +30,13 @@ public class TSDRKeyCacheTest {
     private static final String TSDR_TEST_KEY2 = "[NID=openflow:11][DC=EXTERNAL][MN=Memory][RK=hello:world,Testing:test]";
     private static final String TSDR_TEST_KEY3 = "[NID=openflow:11][DC=EXTERNAL][MN=Memory][RK=he:world,Testing:test]";
     private static final String TSDR_TEST_KEY4 = "[NID=openflow:11][DC=EXTERNAL][MN=Memory][RK=hello:worl,Testing:test]";
+    private static final String TSDR_TEST_5080_KEY1 = "[NID=openflow:2][DC=QUEUESTATS][MN=TransmittedPackets][RK=Node:openflow:2,NodeConnector:openflow:2:2,Queue:1]";
+    private static final String TSDR_TEST_5080_KEY2 = "[NID=openflow:2][DC=QUEUESTATS][MN=TransmittedPackets][RK=Node:openflow:2,NodeConnector:openflow:2:1,Queue:1]";
+    private static final String KEY_5080 = "[NID=][DC=QUEUESTATS][MN=][RK=Queue:2]";
+    private static final String KEY_5052 = "[NID=openflow:1][DC=][MN=FLOWTABLESTATS][RK=Table:0]";
+    private static final String TSDR_TEST_5052_KEY1 = "[NID=openflow:1][DC=FLOWTABLESTATS][MN=PacketLookup][RK=Node:openflow:1,Table:150]";
+    private static final String TSDR_TEST_5052_KEY2 = "[NID=openflow:1][DC=FLOWTABLESTATS][MN=PacketLookup][RK=Node:openflow:1,Table:160]";
+
     private TSDRKeyCache keyCache = null;
 
     @Before
@@ -244,9 +251,21 @@ public class TSDRKeyCacheTest {
         keyCache.addTSDRCacheEntry(TSDR_TEST_KEY4);
         List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(FormatUtil.KEY_RECORDKEYS+"hello:worl]",0,Long.MAX_VALUE,1000,new TestLogJob());
         Assert.assertEquals(1,list.size());
-        TSDRLogRecord entry = list.get(0);
-        Assert.assertEquals("openflow:11",entry.getNodeID());
-        Assert.assertEquals(DataCategory.EXTERNAL,entry.getTSDRDataCategory());
-        Assert.assertEquals("Testing",entry.getRecordKeys().get(1).getKeyName());
+    }
+
+    @Test
+    public void tesBug5080(){
+        keyCache.addTSDRCacheEntry(TSDR_TEST_5080_KEY1);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_5080_KEY2);
+        List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(KEY_5080,0,Long.MAX_VALUE,1000,new TestLogJob());
+        Assert.assertEquals(0,list.size());
+    }
+
+    @Test
+    public void tesBug5052(){
+        keyCache.addTSDRCacheEntry(TSDR_TEST_5052_KEY1);
+        keyCache.addTSDRCacheEntry(TSDR_TEST_5052_KEY2);
+        List<TSDRLogRecord> list = keyCache.getTSDRLogRecords(KEY_5052,0,Long.MAX_VALUE,1000,new TestLogJob());
+        Assert.assertEquals(0,list.size());
     }
 }
