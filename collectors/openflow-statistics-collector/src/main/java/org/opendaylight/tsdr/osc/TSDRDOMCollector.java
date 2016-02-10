@@ -135,6 +135,7 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
         TSDROSCConfigBuilder b = new TSDROSCConfigBuilder();
         b.setPollingInterval(15000l);
         this.config = b.build();
+        saveConfigData();
         new TSDRInventoryNodesPoller(this);
         new StoringThread();
     }
@@ -611,3 +612,4 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
         return rpc.buildFuture();
     }
 }
+
