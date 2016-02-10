@@ -76,6 +76,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
         TSDRSnmpDataCollectorConfigBuilder b = new TSDRSnmpDataCollectorConfigBuilder();
         b.setPollingInterval(pollingInterval);
         this.config = b.build();
+        saveConfigData();
         new TSDRSNMPInterfacePoller(this);
         new StoringThread();
     }
@@ -357,3 +358,4 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
         return rpc.buildFuture();
     }
 }
+
