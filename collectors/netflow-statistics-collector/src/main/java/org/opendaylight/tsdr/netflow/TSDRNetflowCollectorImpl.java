@@ -115,7 +115,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
             while(running){
                 synchronized(incomingNetFlow) {
                     if (incomingNetFlow.isEmpty()) {
-                        logger.info("No Pkts in queue");
+                        logger.debug("No Pkts in queue");
                         try {
                             incomingNetFlow.wait(INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS);
                         } catch (InterruptedException e) {
@@ -135,7 +135,8 @@ public class TSDRNetflowCollectorImpl extends Thread{
                     int pduCounter = 1;
                     int dataBufferOffset = 0;
                     long currentTimeStamp = System.currentTimeMillis();
-                    while(pduCounter <= totalPDU && dataBufferOffset < (buff.length + FLOW_SIZE_FOR_NETFLOW_PACKET)){
+                    while(pduCounter <= totalPDU && (dataBufferOffset + FLOW_SIZE_FOR_NETFLOW_PACKET)
+                            < (buff.length)){
                         TSDRLogRecordBuilder recordbuilder = new TSDRLogRecordBuilder();
                         NetflowPacketParser parser = new NetflowPacketParser(buff);
                         parser.addFormat(buff, dataBufferOffset);
