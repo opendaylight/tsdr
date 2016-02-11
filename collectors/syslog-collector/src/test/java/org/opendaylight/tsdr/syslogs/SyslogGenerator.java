@@ -58,12 +58,20 @@ public class SyslogGenerator {
         if(args==null){
             //Will add more usages in the future
             System.out.println("Usage: sendSyslog <message> - Send syslog to local host on port 514");
+            System.out.println("       sendSyslog <message> <count> - Send <count> syslog to local host on port 514");
             System.out.println("       sendSyslog <message> <host> <port> - Send syslog to <host> on <port>");
         }
         try {
             if(args.length==1) {
                 SyslogGenerator generator = new SyslogGenerator("127.0.0.1",514);
                 generator.sendSyslog(args[0]);
+            }else
+            if(args.length==2){
+                SyslogGenerator generator = new SyslogGenerator("127.0.0.1",514);
+                for(int i=0;i<Integer.parseInt(args[1]);i++){
+                    generator.sendSyslog(""+i+":"+args[0]);
+                    Thread.sleep(100);
+                }
             }else
             if(args.length==3) {
                 SyslogGenerator generator = new SyslogGenerator(args[1],Integer.parseInt(args[2]));
