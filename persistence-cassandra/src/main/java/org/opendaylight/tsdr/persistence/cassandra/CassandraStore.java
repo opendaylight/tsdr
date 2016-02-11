@@ -310,6 +310,11 @@ public class CassandraStore {
     }
 
     public void purge(DataCategory category, long retentionTime){
+        purgeMetrics(category,retentionTime);
+        purgeLogs(category,retentionTime);
+    }
+
+    private void purgeMetrics(DataCategory category, long retentionTime){
         //Cassandra does not support range delete prior to verison 3.
         //To overcome, we need to do a "select" and then batch delete one by one.
         String cql1 = "Select * from MetricVal where keyA = ";
@@ -324,6 +329,36 @@ public class CassandraStore {
                 final ResultSet rs = session.execute(cql);
                 for(Row row:rs.all()){
                     String deleteCql = dcql1+row.getLong("keyA")+cql2+row.getLong("keyB")+dcql3+row.getLong("time");
+                    batch.add(new SimpleStatement(deleteCql));
+                    if(this.batch.size()>=MAX_BATCH_SIZE){
+                        this.executeBatch();
+                        this.startBatch();
+                    }
+                }
+            }
+        }
+        if(this.batch.size()>0) {
+            this.executeBatch();
+            this.startBatch();
+        }
+    }
+
+    private void purgeLogs(DataCategory category, long retentionTime){
+        //Cassandra does not support range delete prior to verison 3.
+        //To overcome, we need to do a "select" and then batch delete one by one.
+        String cql1 = "Select * from MetricLog where keyA = ";
+        String dcql1 = "delete from MetricLog where keyA = ";
+        String cql2 = " and keyB = ";
+        String cql3 = " and time < "+retentionTime;
+        String dcql3 = " and time = ";
+        String dcql4 = " and xIndex = ";
+        this.startBatch();
+        for(TSDRCacheEntry entry:this.cache.getAll()){
+            if(entry.getDataCategory()==category){
+                String cql = cql1 + entry.getMd5ID().getMd5Long1()+cql2+entry.getMd5ID().getMd5Long2()+cql3;
+                final ResultSet rs = session.execute(cql);
+                for(Row row:rs.all()){
+                    String deleteCql = dcql1+row.getLong("keyA")+cql2+row.getLong("keyB")+dcql3+row.getLong("time")+dcql4+row.getInt("xIndex");
                     batch.add(new SimpleStatement(deleteCql));
                     if(this.batch.size()>=MAX_BATCH_SIZE){
                         this.executeBatch();
