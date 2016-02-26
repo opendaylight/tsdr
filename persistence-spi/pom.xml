@@ -17,8 +17,11 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
-                        <Bundle-Name>org.opendaylight.tsdr.persistence</Bundle-Name>
-
+                        <instructions>
+                            <Export-Package>*</Export-Package>
+                            <!--Import-Package>*</Import-Package-->
+                        </instructions>
+                        <!--Bundle-Name>org.opendaylight.tsdr.persistence</Bundle-Name-->
                     </instructions>
                 </configuration>
             </plugin>

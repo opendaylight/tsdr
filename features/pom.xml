@@ -49,18 +49,10 @@
 
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
-          <artifactId>tsdr-persistence-h2</artifactId>
-          <version>${tsdr.project.version}</version>
-          <type>xml</type>
-          <classifier>config</classifier>
-      </dependency>
-
-
-      <dependency>
-          <groupId>org.opendaylight.tsdr</groupId>
-          <artifactId>tsdr-persistence-h2</artifactId>
+          <artifactId>tsdr-persistence-hsqldb</artifactId>
           <version>${tsdr.project.version}</version>
       </dependency>
+
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-hbase</artifactId>
@@ -161,6 +153,11 @@
           <type>zip</type>
       </dependency>
 
+      <dependency>
+          <groupId>hsqldb</groupId>
+          <artifactId>hsqldb</artifactId>
+          <version>${hsqldb.version}</version>
+      </dependency>
   </dependencies>
 
   <build>
