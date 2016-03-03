@@ -48,7 +48,6 @@ module TSDR {
             enum SNMP_INTERFACES;
         }
     }
-
     typedef AggregationGranularity {
         description
             "Granularity of data aggregation.";
@@ -60,6 +59,16 @@ module TSDR {
             enum WEEKLY;
             enum MONTHLY;
             enum YEARLY;
+        }
+    }
+    typedef AggregationType {
+        description
+            "Aggregation function type.";
+        type enumeration {
+            enum MIN;
+            enum MAX;
+            enum MEAN;
+            enum MEDIAN;
         }
     }
     grouping Attribute{
@@ -215,6 +224,21 @@ module TSDR {
         uses TSDRLog;
     }
 
+    grouping TSDRAggregatedMetric{
+        leaf MetricValue {
+            description
+                "The value of the aggregated metric.";
+            type decimal64{
+                fraction-digits 4;
+            }
+        }
+        leaf TimeStamp {
+            description
+                "The start of the interval containing the aggregated metric.";
+            type int64;
+        }
+    }
+
     rpc storeTSDRMetricRecord {
         description
             "The API to store a list of TSDRMetricRecord.";
@@ -286,6 +310,43 @@ module TSDR {
         output {
             list Metrics {
                 uses TSDRMetric;
+            }
+        }
+    }
+
+    rpc getTSDRAggregatedMetrics{
+       description
+            "Retrieves the list of TSDRRecord with the specified category, start time, and end time, groups the values by the given interval, and aggregates the results using the given aggregation function.";
+        input {
+            leaf TSDRDataCategory {
+                description
+                    "The category of the TSDR data.";
+                type string;
+            }
+            leaf start_time{
+                description
+                    "The start time of the TSDR data.";
+               type int64;
+            }
+            leaf end_time{
+                description
+                    "The end time of the TSDR data.";
+               type int64;
+            }
+            leaf interval{
+                description
+                    "Size of the interval in milliseconds by which the metris will be grouped for aggregation.";
+               type int64;
+            }
+            leaf aggregation{
+                description
+                    "Aggregation function.";
+               type AggregationType;
+            }
+        }
+        output {
+            list AggregatedMetrics {
+                uses TSDRAggregatedMetric;
             }
         }
     }

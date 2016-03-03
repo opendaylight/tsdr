@@ -10,6 +10,7 @@ package org.opendaylight.tsdr.dataquery.rest.nbi;
 import java.util.LinkedList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
@@ -26,6 +27,10 @@ public class TSDRNBIReply {
         dp[1] = Long.parseLong(time);
         dp[0] = value;
         datapoints.add(dp);
+    }
+    @XmlTransient
+    public List<Object[]> getDatapoints() {
+        return datapoints;
     }
     public void setTarget(String target) {
         this.target = target;

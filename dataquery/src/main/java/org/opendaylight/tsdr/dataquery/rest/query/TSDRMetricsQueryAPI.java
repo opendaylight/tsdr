@@ -10,7 +10,6 @@ package org.opendaylight.tsdr.dataquery.rest.query;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -25,8 +24,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
 import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNBIRestAPI;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.AggregationType;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRAggregatedMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRAggregatedMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
@@ -44,11 +47,15 @@ public class TSDRMetricsQueryAPI {
     public Response get(@PathParam("query") String query,
                         @QueryParam("tsdrkey") String tsdrkey,
                         @QueryParam("from") String from,
-                        @QueryParam("until") String until) throws ExecutionException, InterruptedException {
+                        @QueryParam("until") String until,
+                        @QueryParam("interval") Long interval,
+                        @QueryParam("aggregation") String aggregation) throws ExecutionException, InterruptedException {
         TSDRQueryRequest request = new TSDRQueryRequest();
         request.setTsdrkey(tsdrkey);
         request.setFrom(from);
         request.setUntil(until);
+        request.setInterval(interval);
+        request.setAggregation(aggregation);
         return post(null,request);
     }
 
@@ -56,17 +63,33 @@ public class TSDRMetricsQueryAPI {
     @Produces("application/json")
     public Response post(@Context UriInfo info, TSDRQueryRequest request) throws ExecutionException, InterruptedException {
 
-        GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
-        input.setTSDRDataCategory(request.getTsdrkey());
-        input.setStartTime(TSDRNBIRestAPI.getTimeFromString(request.getFrom()));
-        input.setEndTime(TSDRNBIRestAPI.getTimeFromString(request.getUntil()));
+        if (request.getInterval() != null && request.getAggregation() != null) {
+            final GetTSDRAggregatedMetricsInputBuilder input = new GetTSDRAggregatedMetricsInputBuilder();
+            input.setTSDRDataCategory(request.getTsdrkey());
+            input.setStartTime(TSDRNBIRestAPI.getTimeFromString(request.getFrom()));
+            input.setEndTime(TSDRNBIRestAPI.getTimeFromString(request.getUntil()));
+            input.setInterval(request.getInterval());
+            input.setAggregation(AggregationType.valueOf(request.getAggregation()));
 
-        Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
+            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRAggregatedMetrics(input.build());
 
-        List<Metrics> metrics = metric.get().getResult().getMetrics();
-        TSDRMetricsQueryReply reply = new TSDRMetricsQueryReply(metrics);
+            List<AggregatedMetrics> metrics = metric.get().getResult().getAggregatedMetrics();
+            TSDRMetricsQueryReply reply = new TSDRMetricsQueryReply(request.getTsdrkey(), metrics);
 
-        return Response.status(201).entity(toJson(reply)).build();
+            return Response.status(201).entity(toJson(reply)).build();
+        } else {
+            GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
+            input.setTSDRDataCategory(request.getTsdrkey());
+            input.setStartTime(TSDRNBIRestAPI.getTimeFromString(request.getFrom()));
+            input.setEndTime(TSDRNBIRestAPI.getTimeFromString(request.getUntil()));
+
+            Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
+
+            List<Metrics> metrics = metric.get().getResult().getMetrics();
+            TSDRMetricsQueryReply reply = new TSDRMetricsQueryReply(metrics);
+
+            return Response.status(201).entity(toJson(reply)).build();
+        }
     }
 
     public static final String toJson(Object obj){

@@ -22,8 +22,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.AggregationType;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRAggregatedMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRAggregatedMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
@@ -60,30 +64,46 @@ public class TSDRNBIRestAPI {
     public Response post(@Context UriInfo info, TSDRNBIRequest request) throws ExecutionException, InterruptedException {
         final TSDRNBIReply reply = new TSDRNBIReply();
         reply.setTarget(request.getTarget());
-        final GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
-        input.setTSDRDataCategory(request.getTarget());
-        input.setStartTime(getTimeFromString(request.getFrom()));
-        input.setEndTime(getTimeFromString(request.getUntil()));
-        final long maxDataPoints = Long.parseLong(request.getMaxDataPoints());
 
-        Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
-        List<Metrics> metrics = metric.get().getResult().getMetrics();
-        if (metrics == null || metrics.size() == 0) {
+        final long from = getTimeFromString(request.getFrom());
+        final long until = getTimeFromString(request.getUntil());
+        final long maxDataPoints = request.getMaxDataPoints() != null ? Long.parseLong(request.getMaxDataPoints()) : 0;
+
+        if (maxDataPoints < 1) {
+            // Return the points without any aggregation
+            final GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
+            input.setTSDRDataCategory(request.getTarget());
+            input.setStartTime(from);
+            input.setEndTime(until);
+
+            Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRMetrics(input.build());
+            List<Metrics> metrics = metric.get().getResult().getMetrics();
+            if (metrics != null) {
+                for (Metrics m : metrics) {
+                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
+                }
+            }
+        } else {
+            // Average the points
+            final GetTSDRAggregatedMetricsInputBuilder input = new GetTSDRAggregatedMetricsInputBuilder();
+            input.setTSDRDataCategory(request.getTarget());
+            input.setStartTime(from);
+            input.setEndTime(until);
+            input.setInterval(Math.floorDiv(until - from, maxDataPoints) + 1);
+            input.setAggregation(AggregationType.MEAN);
+
+            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRDataqueryModule.tsdrService.getTSDRAggregatedMetrics(input.build());
+            List<AggregatedMetrics> metrics = metric.get().getResult().getAggregatedMetrics();
+            if (metrics != null) {
+                for (AggregatedMetrics m : metrics) {
+                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue() != null ? m.getMetricValue().doubleValue() : Double.NaN);
+                }
+            }
+        }
+
+        if (reply.getDatapoints().size() < 1) {
             return Response.status(201).entity("{}").build();
         }
-        int skip = 1;
-        if (metrics.size() > maxDataPoints) {
-            skip = (int) (metrics.size() / maxDataPoints);
-        }
-        reply.setTarget(request.getTarget());
-        int count = 0;
-        for (Metrics m : metrics) {
-            if (count % skip == 0) {
-                reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
-            }
-            count++;
-        }
-
         return Response.status(201).entity(toJson(new TSDRNBIReply[]{reply})).build();
     }
 

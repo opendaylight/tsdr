@@ -17,6 +17,8 @@ public class TSDRQueryRequest {
     public String tsdrkey=null;
     public String from=null;
     public String until=null;
+    public Long interval=null;
+    public String aggregation=null;
 
     public String getTsdrkey() {
         return tsdrkey;
@@ -40,5 +42,21 @@ public class TSDRQueryRequest {
 
     public void setUntil(String until) {
         this.until = until;
+    }
+
+    public Long getInterval() {
+        return interval;
+    }
+
+    public void setInterval(Long interval) {
+        this.interval = interval;
+    }
+
+    public String getAggregation() {
+        return aggregation;
+    }
+
+    public void setAggregation(String aggregation) {
+        this.aggregation = aggregation;
     }
 }

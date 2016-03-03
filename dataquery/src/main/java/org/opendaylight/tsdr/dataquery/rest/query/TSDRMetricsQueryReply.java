@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
+
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 
@@ -29,6 +31,13 @@ public class TSDRMetricsQueryReply {
         this.recordCount = metricList.size();
         for (Metrics m : metricList) {
             metricRecords.add(new MetricRecord(m));
+        }
+    }
+
+    public TSDRMetricsQueryReply(String tsdrDataCategory, List<AggregatedMetrics> metricList){
+        this.recordCount = metricList.size();
+        for (AggregatedMetrics m : metricList) {
+            metricRecords.add(new MetricRecord(tsdrDataCategory, m));
         }
     }
 
@@ -53,6 +62,16 @@ public class TSDRMetricsQueryReply {
                     recordKeys.add(new MetricRecordKeys(rk));
                 }
             }
+        }
+
+        public MetricRecord(String tsdrDataCategory, AggregatedMetrics mr) {
+            this.metricValue = mr.getMetricValue();
+            Calendar c = Calendar.getInstance();
+            c.setTimeInMillis(mr.getTimeStamp());
+            this.timeStamp = c.getTime().toString();
+            this.tsdrDataCategory = tsdrDataCategory;
+            this.nodeID = null;
+            this.metricName = null;
         }
     }
 

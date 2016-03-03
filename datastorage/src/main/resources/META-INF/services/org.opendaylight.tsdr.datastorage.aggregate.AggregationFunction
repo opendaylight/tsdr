@@ -1,0 +1,4 @@
+org.opendaylight.tsdr.datastorage.aggregate.Max
+org.opendaylight.tsdr.datastorage.aggregate.Mean
+org.opendaylight.tsdr.datastorage.aggregate.Median
+org.opendaylight.tsdr.datastorage.aggregate.Min
