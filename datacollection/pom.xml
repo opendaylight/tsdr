@@ -4,7 +4,7 @@
     <parent>
         <artifactId>tsdr</artifactId>
         <groupId>org.opendaylight.tsdr</groupId>
-        <version>1.0.4-Lithium-SR4</version>
+        <version>1.0.5-SNAPSHOT</version>
     </parent>
     <artifactId>tsdr-datacollection</artifactId>
     <packaging>bundle</packaging>
@@ -61,7 +61,7 @@
                     <dependency>
                         <groupId>org.opendaylight.controller</groupId>
                         <artifactId>yang-jmx-generator-plugin</artifactId>
-                        <version>0.3.4-Lithium-SR4</version>
+                        <version>0.3.5-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
             </plugin>
