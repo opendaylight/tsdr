@@ -23,14 +23,12 @@ import java.util.List;
  */
 public class ListMetricsCommandCompleter implements Completer {
 
-
-
     @Override
     public int complete(String buffer, int cursor, List<String> candidates) {
-            StringsCompleter completer = new StringsCompleter();
-            for(DataCategory c:DataCategory.values()){
-                completer.getStrings().add(c.name());
-            }
-            return completer.complete(buffer, cursor, candidates);
+        StringsCompleter completer = new StringsCompleter();
+        for(DataCategory c:DataCategory.values()){
+            completer.getStrings().add(c.name());
         }
+        return completer.complete(buffer, cursor, candidates);
+    }
 }

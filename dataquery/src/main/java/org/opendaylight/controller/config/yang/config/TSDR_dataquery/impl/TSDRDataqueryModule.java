@@ -10,6 +10,8 @@ package org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl;
 
 import org.opendaylight.controller.sal.binding.api.BindingAwareBroker.RpcRegistration;
 import org.opendaylight.tsdr.dataquery.TSDRNBIServiceImpl;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.TSDRDataqueryImplService;
 import org.slf4j.Logger;
@@ -18,7 +20,8 @@ import org.slf4j.LoggerFactory;
 public class TSDRDataqueryModule extends AbstractTSDRDataqueryModule {
 
     private static final Logger log = LoggerFactory.getLogger(TSDRDataqueryModule.class);
-    public static TSDRService tsdrService = null;
+    public static TsdrMetricDataService metricDataService = null;
+    public static TsdrLogDataService logDataService = null;
     //public static TSDRQueryServiceImpl tsdrQueryServiceImpl;
 
     /**
@@ -66,10 +69,11 @@ public class TSDRDataqueryModule extends AbstractTSDRDataqueryModule {
          * Get the tsdrService from the Registry so the Data Query API can query
          * the TSDR Data Storage Service.
          */
-        tsdrService = this.getRpcRegistryDependency().getRpcService(TSDRService.class);
+        metricDataService = this.getRpcRegistryDependency().getRpcService(TsdrMetricDataService.class);
+        logDataService = this.getRpcRegistryDependency().getRpcService(TsdrLogDataService.class);
         //tsdrQueryServiceImpl = new TSDRQueryServiceImpl(tsdrService, getRpcRegistryDependency());
 
-        final TSDRNBIServiceImpl nbiService = new TSDRNBIServiceImpl(tsdrService, getRpcRegistryDependency());
+        final TSDRNBIServiceImpl nbiService = new TSDRNBIServiceImpl(metricDataService,logDataService, getRpcRegistryDependency());
         final RpcRegistration<TSDRDataqueryImplService> serviceRegistation = getRpcRegistryDependency()
                 .addRpcImplementation(TSDRDataqueryImplService.class, nbiService);
 

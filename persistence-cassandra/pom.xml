@@ -39,8 +39,8 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
+                        <Bundle-Activator>org.opendaylight.tsdr.persistence.cassandra.Activator</Bundle-Activator>
                         <Bundle-Name>org.opendaylight.tsdr.cassandra</Bundle-Name>
-                        <Import-Package>*</Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -81,5 +81,10 @@
         <artifactId>cassandra-driver-core</artifactId>
         <version>${com.datastax.cassandra.version}</version>
      </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.dependencymanager</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

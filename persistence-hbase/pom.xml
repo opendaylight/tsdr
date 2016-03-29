@@ -39,6 +39,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <instructions>
+                        <Bundle-Activator>org.opendaylight.tsdr.persistence.hbase.Activator</Bundle-Activator>
                         <Bundle-Name>org.opendaylight.tsdr.hbase</Bundle-Name>
                     </instructions>
                 </configuration>
@@ -69,5 +70,10 @@
         <groupId>org.mockito</groupId>
         <artifactId>mockito-all</artifactId>
     </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.dependencymanager</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -12,18 +12,15 @@
 
  @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
 
-
+ @author <a href="mailto:saichler@cisco.com">Sharon Aicler</a>
 -->
 
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0">
-             
-    <bean id="tsdrPersistenceService" class="org.opendaylight.tsdr.persistence.hbase.TSDRHBasePersistenceServiceImpl"/>
     <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.0.0">
       <command name="tsdr/list">
-        <action class="org.opendaylight.tsdr.persistence.hbase.command.ListMetricsCommand">
-           <property name="persistenceService" ref="tsdrPersistenceService"/>
+        <action class="org.opendaylight.tsdr.spi.command.ListMetricsCommand">
         </action>
            <completers>
                 <ref component-id="listMetricsCommandCompleter"/>

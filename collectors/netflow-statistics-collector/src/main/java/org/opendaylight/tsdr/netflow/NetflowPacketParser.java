@@ -8,10 +8,11 @@
  */
 package org.opendaylight.tsdr.netflow;
 
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributesBuilder;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributesBuilder;
 
 /**
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>

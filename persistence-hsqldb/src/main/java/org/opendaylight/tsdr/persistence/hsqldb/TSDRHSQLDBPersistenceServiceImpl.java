@@ -11,29 +11,35 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
-import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
-import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
+import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
+import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
+import org.opendaylight.tsdr.spi.persistence.TSDRMetricPersistenceService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-public class TSDRHSQLDBPersistenceServiceImpl implements TsdrPersistenceService{
+public class TSDRHSQLDBPersistenceServiceImpl implements TSDRMetricPersistenceService,TSDRLogPersistenceService, TSDRBinaryPersistenceService{
     private static final Logger LOGGER = LoggerFactory.getLogger(TSDRHSQLDBPersistenceServiceImpl.class);
     private HSQLDBStore store = null;
 
     public TSDRHSQLDBPersistenceServiceImpl(){
-        TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
-        System.out.println("TSDR HSQLDB Data Store was initialized.");
+        store = new HSQLDBStore();
+        LOGGER.info("TSDR HSQLDB Data Store was initialized.");
+    }
+
+    public TSDRHSQLDBPersistenceServiceImpl(HSQLDBStore store){
+        this.store = store;
+        LOGGER.info("TSDR HSQLDB Data Store was initialized.");
     }
 
     @Override
-    public void store(TSDRMetricRecord metricRecord) {
+    public void storeMetric(TSDRMetricRecord metricRecord) {
         try {
             store.store(metricRecord);
         }catch(SQLException e){
@@ -42,7 +48,7 @@ public class TSDRHSQLDBPersistenceServiceImpl implements TsdrPersistenceService{
     }
 
     @Override
-    public void store(TSDRLogRecord logRecord) {
+    public void storeLog(TSDRLogRecord logRecord) {
         try{
             store.store(logRecord);
         }catch(SQLException e){
@@ -51,33 +57,21 @@ public class TSDRHSQLDBPersistenceServiceImpl implements TsdrPersistenceService{
     }
 
     @Override
-    public void store(List<TSDRRecord> metricRecordList) {
-       for(TSDRRecord record:metricRecordList){
-           if(record instanceof TSDRMetricRecord){
-               store((TSDRMetricRecord)record);
-           }else
-           if(record instanceof TSDRLogRecord){
-               store((TSDRLogRecord)record);
-           }
+    public void storeMetric(List<TSDRMetricRecord> metricRecordList) {
+       for(TSDRMetricRecord record:metricRecordList) {
+           storeMetric(record);
        }
     }
 
     @Override
-    public void start(int timeout) {
-        store = new HSQLDBStore();
-    }
-
-    public void start(HSQLDBStore s) {
-        this.store = s;
-    }
-
-    @Override
-    public void stop(int timeout) {
-        store.shutdown();
+    public void storeLog(List<TSDRLogRecord> logRecordList) {
+        for(TSDRLogRecord record:logRecordList) {
+            storeLog(record);
+        }
     }
 
     @Override
-    public void purgeTSDRRecords(DataCategory category, Long retentionTime){
+    public void purge(DataCategory category, long retentionTime){
         LOGGER.info("Execute Purge with Category {} and earlier than {}.",category.name(),new Date(retentionTime));
         try{
             store.purge(category,retentionTime);
@@ -87,7 +81,7 @@ public class TSDRHSQLDBPersistenceServiceImpl implements TsdrPersistenceService{
     }
 
     @Override
-    public void purgeAllTSDRRecords(Long retentionTime){
+    public void purge(long retentionTime){
         for(DataCategory dataCategory:DataCategory.values()){
             try{
                 store.purge(dataCategory,retentionTime);
@@ -115,5 +109,21 @@ public class TSDRHSQLDBPersistenceServiceImpl implements TsdrPersistenceService{
             LOGGER.error("Failed to get log Records",e);
             return null;
         }
+    }
+
+    @Override
+    public List<TSDRBinaryRecord> getTSDRBinaryRecords(String tsdrMetricKey, long startDateTime, long endDateTime) {
+        //@TODO - Add code to retrieve binary data
+        return null;
+    }
+
+    @Override
+    public void storeBinary(TSDRBinaryRecord binaryRecord) {
+        //@TODO - Add code to store binary data
+    }
+
+    @Override
+    public void storeBinary(List<TSDRBinaryRecord> recordList) {
+       //@TODO - Add code to store binary data
     }
 }

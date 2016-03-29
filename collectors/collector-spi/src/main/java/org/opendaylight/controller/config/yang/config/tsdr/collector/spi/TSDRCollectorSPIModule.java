@@ -10,6 +10,8 @@ package org.opendaylight.controller.config.yang.config.tsdr.collector.spi;
 
 import org.opendaylight.controller.sal.binding.api.BindingAwareBroker.RpcRegistration;
 import org.opendaylight.tsdr.collector.spi.CollectorSPIImpl;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.slf4j.Logger;
@@ -32,7 +34,7 @@ public class TSDRCollectorSPIModule extends org.opendaylight.controller.config.y
 
     @Override
     public java.lang.AutoCloseable createInstance() {
-        CollectorSPIImpl service = new CollectorSPIImpl(getRpcRegistryDependency().getRpcService(TSDRService.class));
+        CollectorSPIImpl service = new CollectorSPIImpl(getRpcRegistryDependency().getRpcService(TsdrMetricDataService.class),getRpcRegistryDependency().getRpcService(TsdrLogDataService.class));
         final RpcRegistration<TsdrCollectorSpiService> addRpcImplementation = getRpcRegistryDependency().addRpcImplementation(TsdrCollectorSpiService.class, service);
         logger.info("TSDR Data Collector SPI Mudule initialized");
         return new AutoCloseable() {

@@ -8,6 +8,7 @@
     </parent>
     <artifactId>tsdr-persistence-spi</artifactId>
     <packaging>bundle</packaging>
+
     <build>
         <plugins>
             <plugin>
@@ -18,7 +19,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-Name>org.opendaylight.tsdr.spi</Bundle-Name>
-                        <Export-Package>org.opendaylight.tsdr.spi.*,org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.*</Export-Package>
+                        <Bundle-Activator>org.opendaylight.tsdr.spi.command.Activator</Bundle-Activator>
                     </instructions>
                 </configuration>
             </plugin>
@@ -83,6 +84,11 @@
             <groupId>org.opendaylight.controller</groupId>
             <artifactId>sal-core-api</artifactId>
             <version>${sal.core.api}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.dependencymanager</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

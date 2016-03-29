@@ -30,12 +30,14 @@ import java.util.Map;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRCacheEntry;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,6 +156,15 @@ public class CassandraStore {
                 "value text,"+
                 "PRIMARY KEY (KeyA,KeyB,Time,xIndex))";
         this.session.execute(cql);
+        cql = "CREATE TABLE MetricBlob ("+
+                "KeyA bigint, "+
+                "KeyB bigint, "+
+                "Time bigint, "+
+                "xIndex int,"+
+                "value blob,"+
+                "PRIMARY KEY (KeyA,KeyB,Time,xIndex))";
+        this.session.execute(cql);
+
     }
 
     public void startBatch(){
@@ -207,6 +218,30 @@ public class CassandraStore {
                 value("Time",lr.getTimeStamp()).
                 value("xIndex",lr.getIndex()).
                 value("value",lr.getRecordFullText());
+
+        this.batch.add(st);
+
+        if(this.batch.size()>=MAX_BATCH_SIZE){
+            this.executeBatch();
+            this.startBatch();
+        }
+    }
+
+    public void store(TSDRBinaryRecord lr){
+        //create log key
+        String tsdrKey = FormatUtil.getTSDRBinaryKey(lr);
+        TSDRCacheEntry cacheEntry = cache.getCacheEntry(tsdrKey);
+        //if it does not exist, create it
+        if(cacheEntry==null){
+            cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
+        }
+
+        RegularStatement st = QueryBuilder.insertInto("tsdr","MetricBlob").
+                value("KeyA",cacheEntry.getMd5ID().getMd5Long1()).
+                value("KeyB",cacheEntry.getMd5ID().getMd5Long2()).
+                value("Time",lr.getTimeStamp()).
+                value("xIndex",lr.getIndex()).
+                value("value",lr.getData());
 
         this.batch.add(st);
 
@@ -276,6 +311,36 @@ public class CassandraStore {
         }
     }
 
+    public List<TSDRBinaryRecord> getTSDRBinaryRecords(String tsdrBinaryKey, long startDateTime, long endDateTime, int recordLimit) {
+        TSDRCacheEntry entry = this.cache.getCacheEntry(tsdrBinaryKey);
+        //Exact match was found
+        if(entry!=null){
+            final List<TSDRBinaryRecord> result = new LinkedList<TSDRBinaryRecord>();
+            String cql = "select * from MetricBlob where KeyA=" + entry.getMd5ID().getMd5Long1()
+                    + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>="
+                    + startDateTime + " and Time<=" + endDateTime + " limit "+recordLimit;
+            ResultSet rs = session.execute(cql);
+            for (Row r : rs.all()) {
+                result.add(getTSDRBinaryRecord(r.getLong("Time"), r.getBytes("value").array(), r.getInt("xIndex"), entry));
+            }
+            return result;
+        }else{
+            TSDRKeyCache.TSDRBinaryCollectJob job = new TSDRKeyCache.TSDRBinaryCollectJob() {
+                @Override
+                public void collectBinaryRecords(TSDRCacheEntry entry, long startDateTime, long endDateTime, int recordLimit, List<TSDRBinaryRecord> globalResult) {
+                    String cql = "select * from MetricBlob where KeyA=" + entry.getMd5ID().getMd5Long1()
+                            + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>="
+                            + startDateTime + " and Time<=" + endDateTime + " limit "+(recordLimit-globalResult.size());
+                    ResultSet rs = session.execute(cql);
+                    for (Row r : rs.all()) {
+                        globalResult.add(getTSDRBinaryRecord(r.getLong("Time"), r.getBytes("value").array(), r.getInt("xIndex"), entry));
+                    }
+                }
+            };
+            return this.cache.getTSDRBinaryRecords(tsdrBinaryKey,startDateTime,endDateTime,recordLimit,job);
+        }
+    }
+
     private static final List<RecordKeys> EMPTY_RECORD_KEYS = new ArrayList<>();
     private static final List<RecordAttributes> EMPTY_RECORD_ATTRIBUTES = new ArrayList<>();
 
@@ -290,7 +355,7 @@ public class CassandraStore {
         return rb.build();
     }
 
-    private static final TSDRLogRecord getTSDRLogRecord(long time,String value,int index,TSDRCacheEntry entry){
+    private static final TSDRLogRecord getTSDRLogRecord(long time, String value, int index, TSDRCacheEntry entry){
         TSDRLogRecordBuilder lb = new TSDRLogRecordBuilder();
         lb.setTSDRDataCategory(entry.getDataCategory());
         lb.setTimeStamp(time);
@@ -299,6 +364,18 @@ public class CassandraStore {
         lb.setIndex(index);
         lb.setRecordAttributes(null);
         lb.setRecordFullText(value);
+        return lb.build();
+    }
+
+    private static final TSDRBinaryRecord getTSDRBinaryRecord(long time, byte[] value, int index, TSDRCacheEntry entry){
+        TSDRBinaryRecordBuilder lb = new TSDRBinaryRecordBuilder();
+        lb.setTSDRDataCategory(entry.getDataCategory());
+        lb.setTimeStamp(time);
+        lb.setRecordKeys(FormatUtil.getRecordKeysFromTSDRKey(entry.getTsdrKey()));
+        lb.setNodeID(entry.getNodeID());
+        lb.setIndex(index);
+        lb.setRecordAttributes(null);
+        lb.setData(value);
         return lb.build();
     }
 
@@ -312,6 +389,7 @@ public class CassandraStore {
     public void purge(DataCategory category, long retentionTime){
         purgeMetrics(category,retentionTime);
         purgeLogs(category,retentionTime);
+        purgeBinary(category,retentionTime);
     }
 
     private void purgeMetrics(DataCategory category, long retentionTime){
@@ -348,6 +426,36 @@ public class CassandraStore {
         //To overcome, we need to do a "select" and then batch delete one by one.
         String cql1 = "Select * from MetricLog where keyA = ";
         String dcql1 = "delete from MetricLog where keyA = ";
+        String cql2 = " and keyB = ";
+        String cql3 = " and time < "+retentionTime;
+        String dcql3 = " and time = ";
+        String dcql4 = " and xIndex = ";
+        this.startBatch();
+        for(TSDRCacheEntry entry:this.cache.getAll()){
+            if(entry.getDataCategory()==category){
+                String cql = cql1 + entry.getMd5ID().getMd5Long1()+cql2+entry.getMd5ID().getMd5Long2()+cql3;
+                final ResultSet rs = session.execute(cql);
+                for(Row row:rs.all()){
+                    String deleteCql = dcql1+row.getLong("keyA")+cql2+row.getLong("keyB")+dcql3+row.getLong("time")+dcql4+row.getInt("xIndex");
+                    batch.add(new SimpleStatement(deleteCql));
+                    if(this.batch.size()>=MAX_BATCH_SIZE){
+                        this.executeBatch();
+                        this.startBatch();
+                    }
+                }
+            }
+        }
+        if(this.batch.size()>0) {
+            this.executeBatch();
+            this.startBatch();
+        }
+    }
+
+    private void purgeBinary(DataCategory category, long retentionTime){
+        //Cassandra does not support range delete prior to verison 3.
+        //To overcome, we need to do a "select" and then batch delete one by one.
+        String cql1 = "Select * from MetricBlob where keyA = ";
+        String dcql1 = "delete from MetricBlov where keyA = ";
         String cql2 = " and keyB = ";
         String cql3 = " and time < "+retentionTime;
         String dcql3 = " and time = ";

@@ -1,0 +1,104 @@
+/*
+ * Copyright (c) 2016 Cisco Systems,  Inc. and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module tsdr-log-data {
+    yang-version 1;
+
+    namespace "opendaylight:tsdr:log:data";
+
+    prefix tsdr-log-data;
+    import config { prefix config; revision-date 2013-04-05; }
+    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
+    import rpc-context { prefix rpcx; revision-date 2013-06-17; }
+    import TSDR { prefix TSDR; revision-date 2015-02-19; }
+
+    contact
+      "YuLing Chen <yuling_c@dell.com>, Sharon Aicler <saichler@cisco.com>";
+
+    description
+      "YANG definition of TSDR Data Model.";
+
+    revision "2016-03-25" {
+      description
+        "TSDR Log Data Model.";
+    }
+
+    identity tsdr-log-data {
+        base config:module-type;
+        config:java-name-prefix TSDRLogData;
+    }
+
+    grouping TSDRLog {
+        uses TSDR:TSDRRecord;
+        list RecordAttributes {
+            description
+                "Attributes extracted from the logs for data analysis purpose.";
+            uses TSDR:Attribute;
+        }
+        leaf RecordFullText {
+            description
+                "Full text of the log records collected from the data source.";
+            type string;
+        }
+        leaf TimeStamp{
+            description
+                "Time stamp of the log record when it was collected.";
+            type int64;
+        }
+        leaf Index {
+            description
+                "a running index for the collector as we can get some syslogs in the same mili";
+            type int32;
+        }
+    }
+
+    /*
+    list TSDRLogRecord {
+        description
+            "This data structure is designed for log type of data, such as syslog data.";
+        uses TSDRLog;
+    }*/
+
+    rpc storeTSDRLogRecord {
+        description
+            "The API to store a list of TSDRLogRecord.";
+             input {
+                 list TSDRLogRecord{
+                     uses TSDRLog;
+                 }
+             }
+    }
+
+    rpc getTSDRLogRecords{
+       description
+            "The API to retrieve a list of TSDRRecord with specified category, start time, and end time.";
+
+        input {
+            leaf TSDRDataCategory {
+                description
+                    "The category of the TSDR data.";
+                type string;
+            }
+            leaf start_time{
+                description
+                    "The start time of the TSDR data.";
+               type int64;
+            }
+            leaf end_time{
+                description
+                    "The end time of the TSDR data.";
+               type int64;
+            }
+        }
+
+        output {
+            list logs{
+                uses TSDRLog;
+            }
+         }
+    }
+}

@@ -1,0 +1,97 @@
+/*
+ * Copyright (c) 2016 Cisco Systems,  Inc. and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module tsdr-binary-data {
+    yang-version 1;
+
+    namespace "opendaylight:tsdr:binary:data";
+
+    prefix tsdr-binary-data;
+    import config { prefix config; revision-date 2013-04-05; }
+    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
+    import rpc-context { prefix rpcx; revision-date 2013-06-17; }
+    import TSDR { prefix TSDR; revision-date 2015-02-19; }
+
+    contact
+      "YuLing Chen <yuling_c@dell.com>, Sharon Aicler <saichler@cisco.com>";
+
+    description
+      "YANG definition of TSDR Data Model.";
+
+    revision "2016-03-25" {
+      description
+        "TSDR Binary Data Model.";
+    }
+
+    identity tsdr-binary-data {
+        base config:module-type;
+        config:java-name-prefix TSDRBinaryData;
+    }
+
+    grouping TSDRBinary {
+        uses TSDR:TSDRRecord;
+        list RecordAttributes {
+            description
+                "Attributes extracted from the logs for data analysis purpose.";
+            uses TSDR:Attribute;
+        }
+        leaf data {
+            description
+                "byte array binary data of the object";
+            type binary;
+        }
+        leaf TimeStamp{
+            description
+                "Time stamp of the log record when it was collected.";
+            type int64;
+        }
+        leaf Index {
+            description
+                "a running index for the collector as we can get some syslogs in the same mili";
+            type int32;
+        }
+    }
+
+    rpc storeTSDRBinaryRecord {
+        description
+            "The API to store a list of TSDRBinaryRecord.";
+             input {
+                 list TSDRBinaryRecord{
+                     uses TSDRBinary;
+                 }
+             }
+    }
+
+    rpc getTSDRBinaryRecords{
+       description
+            "The API to retrieve a list of TSDRRecord with specified category, start time, and end time.";
+
+        input {
+            leaf TSDRDataCategory {
+                description
+                    "The category of the TSDR data.";
+                type string;
+            }
+            leaf start_time{
+                description
+                    "The start time of the TSDR data.";
+               type int64;
+            }
+            leaf end_time{
+                description
+                    "The end time of the TSDR data.";
+               type int64;
+            }
+        }
+
+        output {
+            list records{
+                uses TSDRBinary;
+            }
+         }
+    }
+}

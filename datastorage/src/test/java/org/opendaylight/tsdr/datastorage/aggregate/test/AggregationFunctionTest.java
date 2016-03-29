@@ -7,25 +7,20 @@
  */
 package org.opendaylight.tsdr.datastorage.aggregate.test;
 
-import static org.junit.Assert.assertEquals;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import org.junit.Test;
+import org.opendaylight.tsdr.datastorage.aggregate.*;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.MetricsBuilder;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import org.junit.Test;
-import org.opendaylight.tsdr.datastorage.aggregate.AggregationFunction;
-import org.opendaylight.tsdr.datastorage.aggregate.Max;
-import org.opendaylight.tsdr.datastorage.aggregate.Mean;
-import org.opendaylight.tsdr.datastorage.aggregate.Median;
-import org.opendaylight.tsdr.datastorage.aggregate.Min;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.AggregationType;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.Metrics;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdrmetrics.output.MetricsBuilder;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author <a href="mailto:jesse@opennms.org">Jesse White</a>

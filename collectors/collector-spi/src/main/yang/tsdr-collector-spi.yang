@@ -14,6 +14,8 @@ module tsdr-collector-spi {
     import config { prefix config; revision-date 2013-04-05; }
     import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
     import TSDR {prefix TSDR;revision-date "2015-02-19";}
+    import tsdr-metric-data { prefix tsdr-metric-data; revision-date 2016-03-25;}
+    import tsdr-log-data { prefix tsdr-log-data; revision-date 2016-03-25;}
 
     contact
       "Sharon Aicler <saichler@gmail.com>";
@@ -55,7 +57,7 @@ module tsdr-collector-spi {
                       type string;
                  }
                  list TSDRMetricRecord{
-                     uses TSDR:TSDRMetric;
+                     uses tsdr-metric-data:TSDRMetric;
                  }
              }
     }
@@ -67,7 +69,7 @@ module tsdr-collector-spi {
                       type string;
                  }
                  list TSDRLogRecord{
-                     uses TSDR:TSDRLog;
+                     uses tsdr-log-data:TSDRLog;
                  }
              }
     }

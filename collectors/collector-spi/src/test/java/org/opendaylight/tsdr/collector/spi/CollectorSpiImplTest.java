@@ -7,14 +7,12 @@
  */
 package org.opendaylight.tsdr.collector.spi;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
@@ -24,13 +22,18 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
  * Created by saichler on 12/20/15.
  */
 public class CollectorSpiImplTest {
-    private TSDRService tsdrService = Mockito.mock(TSDRService.class);
-    private CollectorSPIImpl impl = new CollectorSPIImpl(tsdrService);
+    private TsdrMetricDataService metricDataService = Mockito.mock(TsdrMetricDataService.class);
+    private TsdrLogDataService logDataService = Mockito.mock(TsdrLogDataService.class);
+    private CollectorSPIImpl impl = new CollectorSPIImpl(metricDataService,logDataService);
 
     @Before
     public void setup(){

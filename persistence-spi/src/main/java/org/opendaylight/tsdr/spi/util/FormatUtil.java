@@ -8,28 +8,24 @@
 
 package org.opendaylight.tsdr.spi.util;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.StringTokenizer;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TSDRLog;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributesBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributesBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter32;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * This class provides formatting related utilities
@@ -112,6 +108,34 @@ public class FormatUtil {
     }
 
     public static String getTSDRLogKey(TSDRLog m){
+        StringBuilder sb = new StringBuilder();
+        sb.append(KEY_NODEID);
+        if(m.getNodeID()!=null)
+            sb.append(m.getNodeID());
+        sb.append("]");
+        sb.append(KEY_CATEGORY);
+        if(m.getTSDRDataCategory()!=null)
+            sb.append(m.getTSDRDataCategory().name());
+        sb.append("]");
+        sb.append(KEY_RECORDKEYS);
+        if(m.getRecordKeys()!=null){
+            boolean isFirst = true;
+            for(RecordKeys rec:m.getRecordKeys()){
+                if(!isFirst)
+                    sb.append(",");
+                if(rec.getKeyName()!=null)
+                    sb.append(rec.getKeyName());
+                sb.append(":");
+                if(rec.getKeyValue()!=null)
+                    sb.append(rec.getKeyValue());
+                isFirst = false;
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    public static String getTSDRBinaryKey(TSDRBinaryRecord m){
         StringBuilder sb = new StringBuilder();
         sb.append(KEY_NODEID);
         if(m.getNodeID()!=null)

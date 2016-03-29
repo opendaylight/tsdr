@@ -7,30 +7,26 @@
  */
 package org.opendaylight.tsdr.persistence.hsqldb;
 
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRCacheEntry;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRLogCollectJob;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRMetricCollectJob;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
@@ -238,7 +234,7 @@ public class HSQLDBStore {
         return rb.build();
     }
 
-    private static final TSDRLogRecord getTSDRLogRecord(long time,String value,int index,TSDRCacheEntry entry){
+    private static final TSDRLogRecord getTSDRLogRecord(long time, String value, int index, TSDRCacheEntry entry){
         TSDRLogRecordBuilder lb = new TSDRLogRecordBuilder();
         lb.setTSDRDataCategory(entry.getDataCategory());
         lb.setTimeStamp(time);

@@ -7,32 +7,28 @@
  */
 package org.opendaylight.tsdr.datastorage.persistence.hbase;
 
-import static org.junit.Assert.*;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import static org.mockito.Mockito.mock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendaylight.tsdr.persistence.hbase.HBaseEntity;
 import org.opendaylight.tsdr.persistence.hbase.HBasePersistenceUtil;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
-import junit.framework.Assert;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 public class HBasePersistenceUtilTest {
     public HBasePersistenceUtil hBasePersistenceUtil = null;
@@ -51,7 +47,7 @@ public class HBasePersistenceUtilTest {
             .setKeyValue("table1").build();
         recordKeys.add(recordKey);
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
-        TSDRMetric tsdrMetric1 =   builder1.setMetricName("PacketsMatched")
+        TSDRMetricRecord tsdrMetric1 =   builder1.setMetricName("PacketsMatched")
                 .setMetricValue(new BigDecimal(Double.parseDouble("20000000")))
                 .setNodeID("node1")
                 .setRecordKeys(recordKeys)
@@ -77,7 +73,7 @@ public class HBasePersistenceUtilTest {
         List<RecordAttributes> value = new ArrayList<RecordAttributes>();
         value.add(mock(RecordAttributes.class));
         value.add(mock(RecordAttributes.class));
-        TSDRLog tsdrLog1 =   builder1.setIndex(1)
+        TSDRLogRecord tsdrLog1 =   builder1.setIndex(1)
             .setRecordFullText("su root failed for lonvick")
             .setNodeID("node1.example.com")
             .setRecordKeys(recordKeys)

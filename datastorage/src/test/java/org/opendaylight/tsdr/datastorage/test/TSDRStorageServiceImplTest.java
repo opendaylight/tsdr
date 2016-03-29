@@ -8,21 +8,7 @@
 
 package org.opendaylight.tsdr.datastorage.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
+import com.google.common.collect.ImmutableMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,29 +18,34 @@ import org.mockito.stubbing.Answer;
 import org.opendaylight.tsdr.datastorage.TSDRMetricsMap;
 import org.opendaylight.tsdr.datastorage.TSDRStorageServiceImpl;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
-import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
-import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.AggregationType;
+import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
+import org.opendaylight.tsdr.spi.persistence.TSDRMetricPersistenceService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.GetTSDRLogRecordsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.*;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRAggregatedMetricsInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRLogRecordsInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRAggregatedMetricsOutput;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.GetTSDRMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeTSDRRecordInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogRecordInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.gettsdraggregatedmetrics.output.AggregatedMetrics;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 
-import com.google.common.collect.ImmutableMap;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 /**
  * Unit Test for TSDR Data Storage Service.
  * * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
@@ -65,16 +56,17 @@ import com.google.common.collect.ImmutableMap;
 public class TSDRStorageServiceImplTest {
 
     public TSDRStorageServiceImpl storageService;
-    public TsdrPersistenceService persistenceService;
+    public TSDRMetricPersistenceService metricPersistenceService;
+    public TSDRLogPersistenceService logPersistenceService;
     public TSDRMetricsMap MetricsMap;
     private static Map<String, List<TSDRRecord>> tableRecordMap;
 
     @Before
     public void setup() {
-        storageService = new TSDRStorageServiceImpl();
-        persistenceService = mock(TsdrPersistenceService.class);
+        metricPersistenceService = mock(TSDRMetricPersistenceService.class);
+        logPersistenceService = mock(TSDRLogPersistenceService.class);
+        storageService = new TSDRStorageServiceImpl(metricPersistenceService,logPersistenceService);
         MetricsMap = new TSDRMetricsMap();
-        TsdrPersistenceServiceUtil.setTsdrPersistenceService(persistenceService);
         tableRecordMap = new HashMap<String, List<TSDRRecord>>();
         Answer answerStore = new Answer<Void>() {
             @Override
@@ -96,10 +88,13 @@ public class TSDRStorageServiceImplTest {
                 return null;
             }
         };
-        doAnswer(answerStore).when(persistenceService).store(any(List.class));
+        doAnswer(answerStore).when(metricPersistenceService).storeMetric(any(List.class));
+        doAnswer(answerStore).when(logPersistenceService).storeLog(any(List.class));
 
-        Mockito.doNothing().when(persistenceService).purgeTSDRRecords(any(DataCategory.class),any(long.class));
-        Mockito.doNothing().when(persistenceService).purgeAllTSDRRecords(any(long.class));
+        Mockito.doNothing().when(metricPersistenceService).purge(any(DataCategory.class),any(long.class));
+        Mockito.doNothing().when(logPersistenceService).purge(any(DataCategory.class),any(long.class));
+        Mockito.doNothing().when(metricPersistenceService).purge(any(long.class));
+        Mockito.doNothing().when(logPersistenceService).purge(any(long.class));
        Answer answerGetMetrics = new Answer() {
             @Override
             public List<?> answer(InvocationOnMock invocation) throws Throwable {
@@ -119,8 +114,8 @@ public class TSDRStorageServiceImplTest {
             }
         };
 
-        doAnswer(answerGetMetrics).when(persistenceService).getTSDRMetricRecords(any(String.class),any(long.class),any(long.class));
-        doAnswer(answerGetMetrics).when(persistenceService).getTSDRLogRecords(any(String.class),any(long.class),any(long.class));
+        doAnswer(answerGetMetrics).when(metricPersistenceService).getTSDRMetricRecords(any(String.class),any(long.class),any(long.class));
+        doAnswer(answerGetMetrics).when(logPersistenceService).getTSDRLogRecords(any(String.class),any(long.class),any(long.class));
 }
 
     @Test
@@ -304,7 +299,8 @@ public class TSDRStorageServiceImplTest {
             storageService.close();
         }catch(Exception ee){}
         storageService = null;
-        persistenceService = null;
+        metricPersistenceService = null;
+        logPersistenceService = null;
         tableRecordMap.clear();
     }
 }

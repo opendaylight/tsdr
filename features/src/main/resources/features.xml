@@ -180,5 +180,6 @@
         <feature version='${project.version}'>odl-tsdr-core</feature>
         <bundle>wrap:mvn:hsqldb/hsqldb/${hsqldb.version}</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-hsqldb/${project.version}</bundle>
+        <configfile finalname="etc/tsdr-persistence-hsqldb.properties">mvn:org.opendaylight.tsdr/${artifactName}-persistence-hsqldb/${project.version}/xml/config</configfile>
     </feature>
 </features>

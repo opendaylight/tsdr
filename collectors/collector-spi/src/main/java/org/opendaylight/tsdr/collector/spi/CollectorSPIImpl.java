@@ -8,24 +8,24 @@
 
 package org.opendaylight.tsdr.collector.spi;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Future;
-
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogRecordInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import com.google.common.util.concurrent.Futures;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.StoreTSDRMetricRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
-import com.google.common.util.concurrent.Futures;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  * This class is being used as a stub to the persistence layer SPI. It purpose is to give a layer
@@ -33,10 +33,13 @@ import com.google.common.util.concurrent.Futures;
  **/
 public class CollectorSPIImpl implements TsdrCollectorSpiService{
 
-    private final TSDRService tsdrService;
+    private TsdrMetricDataService metricDataService =null;
+    private TsdrLogDataService logDataService =null;
 
-    public CollectorSPIImpl(TSDRService _service){
-        this.tsdrService = _service;
+
+    public CollectorSPIImpl(TsdrMetricDataService metricService,TsdrLogDataService logService){
+        this.metricDataService = metricService;
+        this.logDataService = logService;
     }
 
     @Override
@@ -54,7 +57,7 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService{
             records.add(rec.build());
         }
         tsdrServiceInput.setTSDRMetricRecord(records);
-        tsdrService.storeTSDRMetricRecord(tsdrServiceInput.build());
+        metricDataService.storeTSDRMetricRecord(tsdrServiceInput.build());
         return Futures.immediateFuture(RpcResultBuilder.<Void> success().build());
     }
 
@@ -74,7 +77,7 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService{
             records.add(rec.build());
         }
         tsdrServiceInput.setTSDRLogRecord(records);
-        tsdrService.storeTSDRLogRecord(tsdrServiceInput.build());
+        logDataService.storeTSDRLogRecord(tsdrServiceInput.build());
         return Futures.immediateFuture(RpcResultBuilder.<Void> success().build());
     }
 }

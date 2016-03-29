@@ -8,30 +8,28 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
 import org.apache.hadoop.hbase.TableNotFoundException;
-import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
+import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
+import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
+import org.opendaylight.tsdr.spi.persistence.TSDRMetricPersistenceService;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
-import org.opendaylight.tsdr.spi.util.TsdrPersistenceServiceUtil;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TSDRMetric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 
 /**
  * This class provides HBase implementation of TSDRPersistenceService.
@@ -50,7 +48,7 @@ import org.slf4j.LoggerFactory;
  *
  *
  */
-public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService {
+public class TSDRHBasePersistenceServiceImpl  implements TSDRLogPersistenceService,TSDRMetricPersistenceService, TSDRBinaryPersistenceService {
 
     private static final Logger log = LoggerFactory.getLogger(TSDRHBasePersistenceServiceImpl.class);
     public ScheduledFuture future;
@@ -59,10 +57,12 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
      * Constructor.
      */
     public TSDRHBasePersistenceServiceImpl(){
-        TsdrPersistenceServiceUtil.setTsdrPersistenceService(this);
+        log.debug("Entering start(timeout)");
+        //create the HTables used in TSDR.
+        CreateTableTask createTableTask = new CreateTableTask();
+        future = SchedulerService.getInstance().scheduleTask(createTableTask);
+        log.debug("Exiting start(timeout)");
         log.info("TSDR HBase Data Store is initialized.");
-        System.out.println("TSDR HBase Data Store was initialized. ");
-
     }
 
 
@@ -81,12 +81,12 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     public TSDRHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore){
         HBaseDataStoreFactory.setHBaseDataStoreIfAbsent(hbaseDataStore);
      }
-    
+
     /**
      * Store TSDRMetricRecord.
      */
     @Override
-    public void store(TSDRMetricRecord metrics){
+    public void storeMetric(TSDRMetricRecord metrics){
         log.debug("Entering store(TSDRMetricRecord)");
         //convert TSDRRecord to HBaseEntities
         try{
@@ -106,7 +106,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
      * Store a list of TSDRMetricRecord.
     */
     @Override
-    public void store(List<TSDRRecord> recordList){
+    public void storeMetric(List<TSDRMetricRecord> recordList){
         log.debug("Entering store(List<TSDRRecord>)");
 
         //tableName, entityList Map
@@ -150,21 +150,60 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     }
 
     /**
+     * Store a list of TSDRMetricRecord.
+     */
+    @Override
+    public void storeLog(List<TSDRLogRecord> recordList){
+        log.debug("Entering store(List<TSDRRecord>)");
+
+        //tableName, entityList Map
+        Map<String, List<HBaseEntity>> entityListMap = new HashMap<String, List<HBaseEntity>>();
+
+
+        List<HBaseEntity> entityList = new ArrayList<HBaseEntity>();
+        if ( recordList != null && recordList.size() != 0){
+            try{
+                for(TSDRRecord record: recordList){
+                    HBaseEntity entity = null;
+                    if ( record instanceof TSDRMetricRecord){
+                        entity = convertToHBaseEntity((TSDRMetricRecord)record);
+                    }else if ( record instanceof TSDRLogRecord){
+                        entity = convertToHBaseEntity((TSDRLogRecord)record);
+                    }
+                    if ( entity == null){
+                        log.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
+                        return;
+                    }
+                    String tableName = entity.getTableName();
+                    if ( entityListMap.get(tableName) == null){
+                        entityListMap.put(tableName, new ArrayList<HBaseEntity>());
+                    }
+                    entityListMap.get(tableName).add(entity);
+                    entityList.add(entity);
+                }
+                Set<String> keys = entityListMap.keySet();
+                Iterator<String> iter = keys.iterator();
+                while ( iter.hasNext()){
+                    String tableName = iter.next();
+                    HBaseDataStoreFactory.getHBaseDataStore().create(entityListMap.get(tableName));
+
+                }
+
+            } catch(TableNotFoundException e){
+                TriggerTableCreatingTask();
+            }
+        }
+        log.debug("Exiting store(List<TSDRRecord>)");
+    }
+
+    /**
      * Start TSDRHBasePersistenceService.
     }*/
 
-    @Override
-    public void start(int timeout) {
-         log.debug("Entering start(timeout)");
-         //create the HTables used in TSDR.
-         CreateTableTask createTableTask = new CreateTableTask();
-         future = SchedulerService.getInstance().scheduleTask(createTableTask);
-         log.debug("Exiting start(timeout)");
-    }
     /**
      * Stop TSDRHBasePersistenceService.
      */
-    @Override public void stop(int timeout) {
+    public void stop(int timeout) {
        log.debug("Entering stop(timeout)");
         closeConnections();
         log.debug("Exiting stop(timeout)");
@@ -312,7 +351,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     }
 
     @Override
-    public void purgeTSDRRecords(DataCategory category, Long retention_time){
+    public void purge(DataCategory category, long retention_time){
          try{
              HBaseDataStoreFactory.getHBaseDataStore().deleteByTimestamp(category.name(), retention_time);
          }catch ( IOException ioe){
@@ -322,11 +361,11 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
     }
 
     @Override
-    public void purgeAllTSDRRecords(Long retention_time){
+    public void purge(long retention_time){
          DataCategory[] categories = DataCategory.values();
          for ( int i = 0; i < categories.length; i++ ){
             DataCategory category = categories[i];
-            purgeTSDRRecords(category, retention_time);
+            purge(category, retention_time);
          }
          return;
     }
@@ -427,7 +466,7 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
 
 
     @Override
-    public void store(TSDRLogRecord logRecord) {
+    public void storeLog(TSDRLogRecord logRecord) {
         //convert TSDRLogRecord to HBaseEntities
         try{
             HBaseEntity entity = convertToHBaseEntity(logRecord);
@@ -472,4 +511,19 @@ public class TSDRHBasePersistenceServiceImpl  implements TsdrPersistenceService 
         return tsdrLogRecordBuilder.build();
     }
 
+    @Override
+    public void storeBinary(TSDRBinaryRecord binaryRecord) {
+        //@TODO - Add code to support binary store
+    }
+
+    @Override
+    public void storeBinary(List<TSDRBinaryRecord> recordList) {
+        //@TODO - Add code to support binary store
+    }
+
+    @Override
+    public List<TSDRBinaryRecord> getTSDRBinaryRecords(String tsdrBinaryKey, long startTime, long endTime) {
+        //@TODO - Add code to collect binary records
+        return null;
+    }
 }

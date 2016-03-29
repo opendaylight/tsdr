@@ -7,19 +7,17 @@
  */
 package org.opendaylight.tsdr.dataquery;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Future;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogRecordInput;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRLogRecordInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInput;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.StoreTSDRMetricRecordInputBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.StoreTSDRMetricRecordInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.StoreTSDRMetricRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddLogInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddMetricInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.TSDRDataqueryImplService;
@@ -28,17 +26,23 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Future;
+
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
     private static Logger logger = LoggerFactory.getLogger(TSDRNBIServiceImpl.class);
-    private TSDRService tsdrService = null;
+    private TsdrMetricDataService metricDataService =null;
+    private TsdrLogDataService logDataService =null;
     // The reference to the the RPC registry to store the data
     private final RpcProviderRegistry rpcRegistry;
 
-    public TSDRNBIServiceImpl(TSDRService _tsdrService, RpcProviderRegistry _rpcRegistry) {
-        this.tsdrService = _tsdrService;
+    public TSDRNBIServiceImpl(TsdrMetricDataService metricService, TsdrLogDataService logService, RpcProviderRegistry _rpcRegistry) {
+        this.logDataService = logService;
+        this.metricDataService = metricService;
         this.rpcRegistry = _rpcRegistry;
     }
 
@@ -81,19 +85,19 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
 
     // Invoke the storage rpc method
     private void store(StoreTSDRMetricRecordInput input) {
-        if (tsdrService == null) {
-            tsdrService = this.rpcRegistry.getRpcService(TSDRService.class);
+        if (metricDataService == null) {
+            metricDataService = this.rpcRegistry.getRpcService(TsdrMetricDataService.class);
         }
-        tsdrService.storeTSDRMetricRecord(input);
+        metricDataService.storeTSDRMetricRecord(input);
         logger.debug("Data Storage called");
     }
 
     // Invoke the storage rpc method
     private void store(StoreTSDRLogRecordInput input) {
-        if (tsdrService == null) {
-            tsdrService = this.rpcRegistry.getRpcService(TSDRService.class);
+        if (logDataService == null) {
+            logDataService = this.rpcRegistry.getRpcService(TsdrLogDataService.class);
         }
-        tsdrService.storeTSDRLogRecord(input);
+        logDataService.storeTSDRLogRecord(input);
         logger.debug("Data Storage called");
     }
 }

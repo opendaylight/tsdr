@@ -7,24 +7,26 @@
  */
 package org.opendaylight.tsdr.spi.command;
 
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
+import org.opendaylight.tsdr.spi.persistence.TSDRMetricPersistenceService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.opendaylight.tsdr.spi.persistence.TsdrPersistenceService;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
 /**
  * @author saichler@gmail.com
  **/
-public class AbstractListMetricsCommandTest {
+public class ListMetricsCommandTest {
 
     public static TSDRLogRecord createLogRecord(){
         TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
@@ -60,30 +62,22 @@ public class AbstractListMetricsCommandTest {
 
     @Test
     public void test() throws Exception {
-        AbstractListMetricsCommand cmd = new AbstractListMetricsCommand() {
-            @Override
-            protected String listMetrics(List<TSDRMetricRecord> metrics) {
-                return null;
-            }
-
-            @Override
-            protected String listLogs(List<TSDRLogRecord> logs) {
-                return null;
-            }
-        };
+        ListMetricsCommand cmd = new ListMetricsCommand();
         cmd.category = "EXTERNAL";
         cmd.doExecute();
-        TsdrPersistenceService service = Mockito.mock(TsdrPersistenceService.class);
-        cmd.setPersistenceService(service);
+        TSDRMetricPersistenceService metricService = Mockito.mock(TSDRMetricPersistenceService.class);
+        TSDRLogPersistenceService logService = Mockito.mock(TSDRLogPersistenceService.class);
+        ListMetricsCommand.metricService = metricService;
+        ListMetricsCommand.logService = logService;
         cmd.doExecute();
         List<TSDRMetricRecord> metric = new ArrayList<>();
         metric.add(createMetricRecord());
-        Mockito.when(service.getTSDRMetricRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong())).thenReturn(metric);
+        Mockito.when(metricService.getTSDRMetricRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong())).thenReturn(metric);
         cmd.doExecute();
 
         List<TSDRLogRecord> logs = new ArrayList<>();
         logs.add(createLogRecord());
-        Mockito.when(service.getTSDRLogRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong())).thenReturn(logs);
+        Mockito.when(logService.getTSDRLogRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong())).thenReturn(logs);
         cmd.category = DataCategory.LOGRECORDS.name();
         cmd.doExecute();
         cmd.startDateTime = "10/10/2010 22:22:22";

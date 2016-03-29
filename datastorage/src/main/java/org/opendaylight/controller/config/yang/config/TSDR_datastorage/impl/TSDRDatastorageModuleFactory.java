@@ -16,6 +16,22 @@
 * Do not modify this file unless it is present under src/main directory
 */
 package org.opendaylight.controller.config.yang.config.TSDR_datastorage.impl;
-public class TSDRDatastorageModuleFactory extends org.opendaylight.controller.config.yang.config.TSDR_datastorage.impl.AbstractTSDRDatastorageModuleFactory {
 
+import org.opendaylight.controller.config.api.DependencyResolver;
+import org.osgi.framework.BundleContext;
+
+public class TSDRDatastorageModuleFactory extends org.opendaylight.controller.config.yang.config.TSDR_datastorage.impl.AbstractTSDRDatastorageModuleFactory {
+    @Override
+    public TSDRDatastorageModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, TSDRDatastorageModule oldModule, AutoCloseable oldInstance, BundleContext bundleContext) {
+        TSDRDatastorageModule module = super.instantiateModule(instanceName, dependencyResolver, oldModule, oldInstance, bundleContext);
+        module.setBundleContext(bundleContext);
+        return module;
+    }
+
+    @Override
+    public TSDRDatastorageModule instantiateModule(String instanceName, DependencyResolver dependencyResolver, BundleContext bundleContext) {
+        TSDRDatastorageModule module = super.instantiateModule(instanceName, dependencyResolver, bundleContext);
+        module.setBundleContext(bundleContext);
+        return module;
+    }
 }

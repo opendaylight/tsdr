@@ -8,19 +8,8 @@
  */
 package org.opendaylight.tsdr.datastorage.persistence.hbase;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.ScheduledFuture;
-
-import org.apache.hadoop.hbase.TableNotFoundException;
+import jline.internal.ShutdownHooks.Task;
+import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,19 +22,19 @@ import org.opendaylight.tsdr.persistence.hbase.HBaseEntity;
 import org.opendaylight.tsdr.persistence.hbase.TSDRHBasePersistenceServiceImpl;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TSDRLog;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TSDRMetric;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRLog;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRMetric;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecord;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
-import jline.internal.ShutdownHooks.Task;
-import junit.framework.Assert;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -210,10 +199,6 @@ public class TSDRHBasePersistenceServiceImplTest {
            ee.printStackTrace();
        }
     }
-    @Test
-    public void testStart() {
-        storageService.start(10);
-    }
 
     @Test
     public void testTriggerTableCreatingTask() {
@@ -242,9 +227,9 @@ public class TSDRHBasePersistenceServiceImplTest {
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.SYSLOG)
             .setTimeStamp(new Long(timeStamp)).build();
-        storageService.store((TSDRLogRecord)tsdrLog1);
-        storageService.store((TSDRLogRecord) builder1.setRecordFullText(null).build());
-        storageService.store((TSDRLogRecord) builder1.setNodeID(null).build());
+        storageService.storeLog((TSDRLogRecord) tsdrLog1);
+        storageService.storeLog((TSDRLogRecord) builder1.setRecordFullText(null).build());
+        storageService.storeLog((TSDRLogRecord) builder1.setNodeID(null).build());
     }
 
     @Test
@@ -262,10 +247,10 @@ public class TSDRHBasePersistenceServiceImplTest {
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
             .setTimeStamp(new Long(timeStamp)).build();
-        storageService.store((TSDRMetricRecord)tsdrMetric1);
-        storageService.store((TSDRMetricRecord)builder1.setMetricName(null).build());
-        storageService.store((TSDRMetricRecord)builder1.setNodeID(null).build());
-        storageService.store((TSDRMetricRecord)builder1.setMetricValue(null).build());
+        storageService.storeMetric((TSDRMetricRecord) tsdrMetric1);
+        storageService.storeMetric((TSDRMetricRecord)builder1.setMetricName(null).build());
+        storageService.storeMetric((TSDRMetricRecord)builder1.setNodeID(null).build());
+        storageService.storeMetric((TSDRMetricRecord)builder1.setMetricValue(null).build());
     }
 
     @Test
@@ -284,7 +269,7 @@ public class TSDRHBasePersistenceServiceImplTest {
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.SYSLOG)
             .setTimeStamp(new Long(timeStamp)).build();
-        storageService.store((TSDRLogRecord)tsdrLog1);
+        storageService.storeLog((TSDRLogRecord)tsdrLog1);
         result = storageService.getTSDRLogRecords(DataCategory.SYSLOG.name(), 0L, Long.parseLong(timeStamp)).size() == 1;
         result = storageService.getTSDRLogRecords(null, 0L, Long.parseLong(timeStamp)).size() == 0;
         result = storageService.getTSDRLogRecords("nottsdrkey", 0L, Long.parseLong(timeStamp)).size() == 0;
@@ -309,7 +294,7 @@ public class TSDRHBasePersistenceServiceImplTest {
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
             .setTimeStamp(new Long(timeStamp)).build();
-        storageService.store((TSDRMetricRecord)tsdrMetric1);
+        storageService.storeMetric((TSDRMetricRecord)tsdrMetric1);
         result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 1);
         result = ((storageService.getTSDRMetricRecords(null ,0L,Long.parseLong(timeStamp))).size() == 0);
         result = ((storageService.getTSDRMetricRecords("nottsdrkey",0L,Long.parseLong(timeStamp))).size() == 0);
@@ -333,9 +318,9 @@ public class TSDRHBasePersistenceServiceImplTest {
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
             .setTimeStamp(new Long(timeStamp)).build();
-        storageService.store((TSDRMetricRecord)tsdrMetric1);
+        storageService.storeMetric((TSDRMetricRecord)tsdrMetric1);
         result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 1);
-        storageService.purgeTSDRRecords(DataCategory.FLOWTABLESTATS,Long.parseLong(timeStamp));
+        storageService.purge(DataCategory.FLOWTABLESTATS,Long.parseLong(timeStamp));
         result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 0);
         assertTrue(result);
     }
@@ -355,9 +340,9 @@ public class TSDRHBasePersistenceServiceImplTest {
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
             .setTimeStamp(new Long(timeStamp)).build();
-        storageService.store((TSDRMetricRecord)tsdrMetric1);
+        storageService.storeMetric((TSDRMetricRecord)tsdrMetric1);
         result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 1);
-        storageService.purgeAllTSDRRecords(Long.parseLong(timeStamp));
+        storageService.purge(Long.parseLong(timeStamp));
         result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 0);
         assertTrue(result);
     }
@@ -372,40 +357,43 @@ public class TSDRHBasePersistenceServiceImplTest {
             .setKeyValue("table1").build();
         recordKeys.add(recordKey);
         TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
-        TSDRMetric tsdrMetric1 =   builder1.setMetricName("PacketsMatched")
+        TSDRMetricRecord tsdrMetric1 =   builder1.setMetricName("PacketsMatched")
             .setMetricValue(new BigDecimal(Double.parseDouble("20000000")))
             .setNodeID("node1")
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWTABLESTATS)
             .setTimeStamp(new Long(timeStamp)).build();
-        List<TSDRRecord> recordList = new ArrayList<TSDRRecord>();
+        List<TSDRMetricRecord> recordList = new ArrayList<TSDRMetricRecord>();
+        List<TSDRLogRecord> recordListLog = new ArrayList<TSDRLogRecord>();
         recordList.add(tsdrMetric1);
         TSDRLogRecordBuilder builder2 = new TSDRLogRecordBuilder();
-        TSDRLog tsdrLog1 =   builder2.setIndex(1)
+        TSDRLogRecord tsdrLog1 =   builder2.setIndex(1)
                 .setRecordFullText("su root failed for lonvick")
                 .setNodeID("node1.example.com")
                 .setRecordKeys(recordKeys)
                 .setTSDRDataCategory(DataCategory.SYSLOG)
                 .setTimeStamp(new Long(timeStamp)).build();
-        recordList.add(tsdrLog1);
-        storageService.store(recordList);
+
+        recordListLog.add(tsdrLog1);
+        storageService.storeMetric(recordList);
+        storageService.storeLog(recordListLog);
         result = ((storageService.getTSDRMetricRecords(DataCategory.FLOWTABLESTATS.name(),0L,Long.parseLong(timeStamp))).size() == 1);
         assertTrue(result);
-        storageService.store((List<TSDRRecord>)null);
-        List<TSDRRecord> recordList1 = new ArrayList<TSDRRecord>();
-        storageService.store(recordList1);
+        storageService.storeMetric((List<TSDRMetricRecord>)null);
+        List<TSDRLogRecord> recordList1 = new ArrayList<TSDRLogRecord>();
+        storageService.storeLog(recordList1);
         TSDRHBasePersistenceServiceImpl storageService1 = new TSDRHBasePersistenceServiceImpl(hbaseDataStore,future){@Override public HBaseEntity convertToHBaseEntity(TSDRLogRecord logRecord){return null;}};
-        List<TSDRRecord> recordList2 = new ArrayList<TSDRRecord>();
+        List<TSDRLogRecord> recordList2 = new ArrayList<TSDRLogRecord>();
         recordList.add(tsdrMetric1);
         TSDRLogRecordBuilder builder3 = new TSDRLogRecordBuilder();
-        TSDRLog tsdrLog2 =   builder3.setIndex(1)
+        TSDRLogRecord tsdrLog2 =   builder3.setIndex(1)
                 .setRecordFullText("su root failed for lonvick")
                 .setNodeID("node1.example.com")
                 .setRecordKeys(recordKeys)
                 .setTSDRDataCategory(DataCategory.SYSLOG)
                 .setTimeStamp(new Long(timeStamp)).build();
         recordList2.add(tsdrLog2);
-        storageService1.store(recordList2);
+        storageService1.storeLog(recordList2);
     }
 
     @After
