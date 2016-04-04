@@ -8,7 +8,21 @@
 
 package org.opendaylight.tsdr.datastorage.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+
 import com.google.common.collect.ImmutableMap;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +38,11 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.GetTSDR
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.*;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.StoreTSDRMetricRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
@@ -36,16 +54,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 /**
  * Unit Test for TSDR Data Storage Service.
  * * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
@@ -237,7 +245,9 @@ public class TSDRStorageServiceImplTest {
                     .put(0L, 100d)
                     .put(1L, 130d)
                     .put(2L, 100d)
-                    .put(20L, 42d)
+                    .put(3L, 99d)
+                    .put(4L, 101d)
+                    .put(5L, 108d)
                     .build();
         for (Entry<Long, Double> valueAtTimestamp : valuesByTimestamps.entrySet()) {
             List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
@@ -260,25 +270,70 @@ public class TSDRStorageServiceImplTest {
         Future<RpcResult<GetTSDRAggregatedMetricsOutput>> future = storageService.getTSDRAggregatedMetrics(new GetTSDRAggregatedMetricsInputBuilder()
                 .setTSDRDataCategory(GROUP_METRICS_TABLE_NAME)
                 .setStartTime(0L)
-                .setEndTime(99L)
+                .setEndTime(6L)
                 .setAggregation(AggregationType.MEAN)
-                .setInterval(10L)
+                .setInterval(2L)
                 .build());
         List<AggregatedMetrics> metrics = future.get().getResult().getAggregatedMetrics();
 
         // Verify
         double delta = 0.00001;
-        assertEquals(10, metrics.size());
-        assertEquals(110, metrics.get(0).getMetricValue().doubleValue(), delta);
-        assertEquals(null, metrics.get(1).getMetricValue());
-        assertEquals(42, metrics.get(2).getMetricValue().doubleValue(), delta);
+        assertEquals(4, metrics.size());
+        assertEquals(115, metrics.get(0).getMetricValue().doubleValue(), delta);
+        assertEquals(99.5, metrics.get(1).getMetricValue().doubleValue(),delta);
+        assertEquals(104.5, metrics.get(2).getMetricValue().doubleValue(), delta);
         assertEquals(null, metrics.get(3).getMetricValue());
-        assertEquals(null, metrics.get(4).getMetricValue());
-        assertEquals(null, metrics.get(5).getMetricValue());
-        assertEquals(null, metrics.get(6).getMetricValue());
-        assertEquals(null, metrics.get(7).getMetricValue());
-        assertEquals(null, metrics.get(8).getMetricValue());
-        assertEquals(null, metrics.get(9).getMetricValue());
+    }
+
+    @Test
+    public void testGetTSDRAggregatedMetricsNoMean() throws InterruptedException, ExecutionException{
+        // Generate and store metrics
+        final ImmutableMap<Long, Double> valuesByTimestamps =
+                new ImmutableMap.Builder<Long, Double>()
+                        .put(0L, 100d)
+                        .put(1L, 130d)
+                        .put(2L, 100d)
+                        .put(3L, 99d)
+                        .put(4L, 101d)
+                        .put(5L, 108d)
+                        .build();
+        for (Entry<Long, Double> valueAtTimestamp : valuesByTimestamps.entrySet()) {
+            List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
+            List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
+            RecordKeys recordKey1 = new RecordKeysBuilder()
+                    .setKeyName(TSDRConstants.GROUP_KEY_NAME)
+                    .setKeyValue("group1").build();
+            recordKeys.add(recordKey1);
+            TSDRMetricRecordBuilder builder1 = new TSDRMetricRecordBuilder();
+            metricCol.add(builder1.setMetricName("PacketCount")
+                    .setMetricValue(BigDecimal.valueOf(valueAtTimestamp.getValue()))
+                    .setNodeID("node1")
+                    .setRecordKeys(recordKeys)
+                    .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
+                    .setTimeStamp(valueAtTimestamp.getKey()).build());
+            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
+        }
+
+        // Issue the RPC call to gather the aggregated results
+        Future<RpcResult<GetTSDRAggregatedMetricsOutput>> future = storageService.getTSDRAggregatedMetrics(new GetTSDRAggregatedMetricsInputBuilder()
+                .setTSDRDataCategory(GROUP_METRICS_TABLE_NAME)
+                .setStartTime(0L)
+                .setEndTime(20L)
+                .setAggregation(AggregationType.MEAN)
+                .setInterval(1L)
+                .build());
+        List<AggregatedMetrics> metrics = future.get().getResult().getAggregatedMetrics();
+
+        // Verify
+        //output should be exactly as the input above as the Mean was not applied
+        double delta = 0.00001;
+        assertEquals(6, metrics.size());
+        assertEquals(100, metrics.get(0).getMetricValue().doubleValue(), delta);
+        assertEquals(130, metrics.get(1).getMetricValue().doubleValue(),delta);
+        assertEquals(100, metrics.get(2).getMetricValue().doubleValue(),delta);
+        assertEquals(99,  metrics.get(3).getMetricValue().doubleValue(), delta);
+        assertEquals(101, metrics.get(4).getMetricValue().doubleValue(), delta);
+        assertEquals(108, metrics.get(5).getMetricValue().doubleValue(), delta);
     }
 
     private static final String GROUP_METRICS_TABLE_NAME = "GroupMetrics";

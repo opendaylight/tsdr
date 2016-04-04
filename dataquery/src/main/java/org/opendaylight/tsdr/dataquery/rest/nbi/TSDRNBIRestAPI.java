@@ -87,13 +87,14 @@ public class TSDRNBIRestAPI {
             input.setAggregation(AggregationType.MEAN);
 
             Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRDataqueryModule.metricDataService.getTSDRAggregatedMetrics(input.build());
-            if(!metric.get().isSuccessful()){
-                Response.status(503).entity("{}").build();
+            if(metric==null){
+                return Response.status(501).entity("{}").build();
             }
+
             List<AggregatedMetrics> metrics = metric.get().getResult().getAggregatedMetrics();
             if (metrics != null) {
                 for (AggregatedMetrics m : metrics) {
-                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue() != null ? m.getMetricValue().doubleValue() : Double.NaN);
+                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue() != null ? m.getMetricValue().doubleValue() : null);
                 }
             }
         }
