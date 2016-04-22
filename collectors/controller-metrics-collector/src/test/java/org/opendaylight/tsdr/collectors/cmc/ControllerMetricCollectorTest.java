@@ -31,7 +31,6 @@ public class ControllerMetricCollectorTest {
         }
         collector.setSigar(new SigarMock());
         Mockito.when(module.getTSDRCollectorSPIService()).thenReturn(tsdrService);
-        Mockito.when(module.isRunning()).thenReturn(true);
     }
 
     @Test

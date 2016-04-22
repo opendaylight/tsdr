@@ -18,7 +18,7 @@ public class TSDRCMCModule extends org.opendaylight.controller.config.yang.confi
 
     private static final Logger logger = LoggerFactory.getLogger(TSDRCMCModule.class);
     private TsdrCollectorSpiService collectorSPIService = null;
-    boolean running = true;
+    private ControllerMetricCollector collectorImpl = null;
 
     public TSDRCMCModule(org.opendaylight.controller.config.api.ModuleIdentifier identifier, org.opendaylight.controller.config.api.DependencyResolver dependencyResolver) {
         super(identifier, dependencyResolver);
@@ -35,14 +35,14 @@ public class TSDRCMCModule extends org.opendaylight.controller.config.yang.confi
 
     @Override
     public java.lang.AutoCloseable createInstance() {
-        new ControllerMetricCollector(this, getRpcRegistryDependency());
+        collectorImpl = new ControllerMetricCollector(this, getRpcRegistryDependency());
         logger.info("Controller Metrics Collector started!");
         return this;
     }
 
     @Override
     public void close() throws Exception {
-        running = false;
+        collectorImpl.setRunning(false);
         logger.info("Controller Metrics Collector stopped!");
     }
 
@@ -52,9 +52,5 @@ public class TSDRCMCModule extends org.opendaylight.controller.config.yang.confi
             collectorSPIService = getRpcRegistryDependency().getRpcService(TsdrCollectorSpiService.class);
         }
         return this.collectorSPIService;
-    }
-
-    public boolean isRunning() {
-        return running;
     }
 }

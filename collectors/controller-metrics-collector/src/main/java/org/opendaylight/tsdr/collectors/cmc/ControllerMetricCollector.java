@@ -37,6 +37,7 @@ public class ControllerMetricCollector extends Thread{
     private TSDRCMCModule module = null;
     private RpcProviderRegistry rpcRegistry = null;
     private static final String COLLECTOR_CODE_NAME = ControllerMetricCollector.class.getSimpleName();
+    private boolean running  = true;
 
     public ControllerMetricCollector(TSDRCMCModule _module, RpcProviderRegistry _rpcRegistry){
         this.module = _module;
@@ -70,8 +71,12 @@ public class ControllerMetricCollector extends Thread{
         this.sigar = s;
     }
 
+    public void setRunning(boolean b){
+        this.running = b;
+    }
+
     public void run(){
-       while(module.isRunning()){
+       while(running){
            insertMemorySample();
            insertControllerCPUSample();
            insertMachineCPUSample();
