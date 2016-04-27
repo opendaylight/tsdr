@@ -185,7 +185,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.sun.jersey</groupId>
@@ -195,7 +194,6 @@
         <dependency>
             <groupId>com.sun.jersey.jersey-test-framework</groupId>
             <artifactId>jersey-test-framework-inmemory</artifactId>
-            <version>${jersey.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
