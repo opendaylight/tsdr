@@ -12,7 +12,9 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,9 +40,26 @@ public class NetflowPacketParserTest {
     }
     @Test
     public void testConvertIPAddress() {
-        long value = 167772162;
+        //Buff string value can be more than int, so using long to handle.
+        String buffStr = "167772162";
+        long value = new Long(buffStr).longValue();
         String result = parserService.convertIPAddress(value);
         Assert.assertEquals("10.0.0.2", result);
+        //Buff value more than int range
+        buffStr = "2646458435";
+        value = new Long(buffStr).longValue();
+        result = parserService.convertIPAddress(value);
+        Assert.assertEquals("157.189.192.67", result);
+    }
+    @Rule
+    public ExpectedException thrown= ExpectedException.none();
+    @Test
+    public void testConvertIPAddress_Exception() {
+        //Buff string value can be more than int, so to test exception
+        thrown.expect(NumberFormatException.class);
+        String buffStr = "2646458435";
+        int intValue = new Integer(buffStr).intValue();
+        String result = parserService.convertIPAddress(intValue);
     }
     @Test
     public void convertBytetest() {

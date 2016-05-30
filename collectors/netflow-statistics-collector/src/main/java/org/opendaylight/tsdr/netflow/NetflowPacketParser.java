@@ -45,9 +45,9 @@ public class NetflowPacketParser {
      * @param len - the offset in the byte array where the data starts from.
      */
     public void addFormat(byte[] buff, int len){
-        addValue("srcAddr",convertIPAddress(new Integer(convert(buff, len+24, 4)).intValue()));
-        addValue("dstAddr",convertIPAddress(new Integer(convert(buff, len+28, 4)).intValue()));
-        addValue("nextHop", convertIPAddress(new Integer(convert(buff, len+32, 4)).intValue()));
+        addValue("srcAddr",convertIPAddress(new Long(convert(buff, len+24, 4)).longValue()));
+        addValue("dstAddr",convertIPAddress(new Long(convert(buff, len+28, 4)).longValue()));
+        addValue("nextHop",convertIPAddress(new Long(convert(buff, len+32, 4)).longValue()));
         addValue("input",convert(buff, len+36, 2));
         addValue("output", convert(buff, len+38, 2));
         addValue("dPkts", convert(buff, len+40, 4));
