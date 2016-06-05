@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2016 Cisco Inc. and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module tsdr-sflow-statistics-collector {
+
+    yang-version 1;
+    namespace "urn:opendaylight:params:xml:ns:yang:controller:config:tsdr:sflow:statistics:collector";
+    prefix "tsdr-sflow-statistics-collector";
+
+    import config { prefix config; revision-date 2013-04-05; }
+    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
+    contact
+      "YuLing Chen <yulingch@cisco.com>";
+    description
+        "This module contains the base YANG definitions for
+        tsdr-sflow-statistics-collector impl implementation.";
+
+    revision "2016-06-04" {
+        description
+            "Initial revision.";
+    }
+
+    // This is the definition of the service implementation as a module identity.
+    identity tsdr-sflow-statistics-collector {
+            base config:module-type;
+            config:java-name-prefix TSDRSFlowCollector;
+    }
+    container TSDRSFlowConfig{
+       leaf polling-interval{
+          type int64;
+       }
+    }
+    augment "/config:modules/config:module/config:configuration" {
+                case tsdr-sflow-statistics-collector {
+                    when "/config:modules/config:module/config:type = 'tsdr-sflow-statistics-collector'";
+                    container data-broker {
+                        uses config:service-ref {
+                            refine type {
+                                mandatory false;
+                                config:required-identity mdsal:binding-async-data-broker;
+                            }
+                        }
+                    }
+                    container rpc-registry {
+                        uses config:service-ref {
+                            refine type {
+                                mandatory true;
+                                config:required-identity mdsal:binding-rpc-registry;
+                            }
+                        }
+                    }
+                }
+            }
+
+    rpc setPollingInterval  {
+        description
+          "set the polling interval of the collector";
+        input {
+            leaf interval {
+              type int64;
+              description "interval";
+            }
+        }
+    }
+}

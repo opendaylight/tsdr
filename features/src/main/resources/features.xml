@@ -59,6 +59,12 @@
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-netflow-statistics-collector/${project.version}</bundle>
         <configfile finalname="${config.configfile.directory}/156-tsdr-netflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-netflow-statistics-collector/${project.version}/xml/config</configfile>
     </feature>
+    <!-- sFlow collector -->
+    <feature name='odl-tsdr-sflow-statistics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: sFlow Statistics Collector'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <bundle>mvn:org.opendaylight.tsdr/${artifactName}-sflow-statistics-collector/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/156-tsdr-sflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/${artifactName}-sflow-statistics-collector/${project.version}/xml/config</configfile>
+    </feature>
 
     <!-- Controller metrics collector -->
     <feature name='odl-tsdr-controller-metrics-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Controller Metrics Collector'>
