@@ -24,7 +24,7 @@ public class TSDRMetricRecordSerializer implements ISerializer{
         ba.setCurrentAttributeName("MetricName");
         ba.getEncoder().encodeString(element.getMetricName(), ba);
         ba.setCurrentAttributeName("MetricValue");
-        ba.getEncoder().encodeObject(element.getMetricValue(), ba, org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64.class);
+        ba.getEncoder().encodeObject(element.getMetricValue(), ba, org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter64.class);
         ba.setCurrentAttributeName("TimeStamp");
         ba.getEncoder().encodeInt64(element.getTimeStamp(), ba);
         ba.setCurrentAttributeName("NodeID");
@@ -46,7 +46,7 @@ public class TSDRMetricRecordSerializer implements ISerializer{
         ba.setCurrentAttributeName("MetricName");
         builder.setMetricName(ba.getEncoder().decodeString(ba));
         ba.setCurrentAttributeName("MetricValue");
-        builder.setMetricValue((org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64)ba.getEncoder().decodeObject(ba));
+        builder.setMetricValue((org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter64)ba.getEncoder().decodeObject(ba));
         ba.setCurrentAttributeName("TimeStamp");
         builder.setTimeStamp(ba.getEncoder().decodeInt64(ba));
         ba.setCurrentAttributeName("NodeID");

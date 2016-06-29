@@ -19,8 +19,8 @@
         <features.test.version>1.7.0-SNAPSHOT</features.test.version>
         <hbase.version>0.94.15</hbase.version>
         <hadoop.version>1.2.0</hadoop.version>
-        <ietf-inet-types.version>2010.09.24.9-SNAPSHOT</ietf-inet-types.version>
-        <ietf-yang-types.version>2010.09.24.9-SNAPSHOT</ietf-yang-types.version>
+        <ietf-inet-types.version>1.1.0-SNAPSHOT</ietf-inet-types.version>
+        <ietf-yang-types.version>2013.07.15.9-SNAPSHOT</ietf-yang-types.version>
         <java.version.source>1.7</java.version.source>
         <java.version.target>1.7</java.version.target>
         <jmxGeneratorPath>src/main/yang-gen-config</jmxGeneratorPath>
