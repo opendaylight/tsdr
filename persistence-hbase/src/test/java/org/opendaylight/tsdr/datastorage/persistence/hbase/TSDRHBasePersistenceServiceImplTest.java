@@ -55,7 +55,7 @@ import static org.mockito.Mockito.mock;
 /**
  * Unit Test for HBase data store under TSDR.
  * * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
- * <p/>
+ *
  * Created: Apr 27, 2015
  *
  * Revision: Dec 5, 2015
