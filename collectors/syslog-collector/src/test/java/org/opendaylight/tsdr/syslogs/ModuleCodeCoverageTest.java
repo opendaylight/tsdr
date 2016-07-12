@@ -5,6 +5,7 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
+
 package org.opendaylight.tsdr.syslogs;
 
 import java.lang.reflect.Field;
@@ -23,6 +24,7 @@ import org.opendaylight.controller.config.spi.Module;
 import org.opendaylight.controller.config.yang.config.tsdr_syslog_collector.AbstractTSDRSyslogModuleFactory;
 import org.opendaylight.controller.config.yang.config.tsdr_syslog_collector.TSDRSyslogModule;
 import org.opendaylight.controller.config.yang.config.tsdr_syslog_collector.TSDRSyslogModuleFactory;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -41,8 +43,14 @@ public class ModuleCodeCoverageTest {
         setupModuleWithMocks(module1,"X");
         setupModuleWithMocks(module2,"X");
         setupModuleWithMocks(module3,"Y");
+        module1.setUdpport(1514);
+        module1.setTcpport(6514);
+        module1.setCoreThreadpoolSize(5);
+        module1.setKeepAliveTime(10);
+        module1.setQueueSize(10);
+        module1.setMaxThreadpoolSize(10);
         AutoCloseable c = module1.createInstance();
-        module1.getDataBroker();
+        module1.getBindingAwareBroker();
         module1.equals(new TSDRSyslogModule(null,null));
         module1.customValidation();
         module1.canReuseInstance(module2);
@@ -68,7 +76,7 @@ public class ModuleCodeCoverageTest {
         }
 
         module1.setRpcRegistry(null);
-        module1.setDataBroker(null);
+        module1.setBindingAwareBroker(null);
         try{
             c.close();
         }catch(Exception e){
@@ -158,6 +166,7 @@ public class ModuleCodeCoverageTest {
     public static final void setupModuleWithMocks(Object obj,String factoryName){
         try {
             org.opendaylight.controller.sal.binding.api.RpcProviderRegistry rpcProviderRegistry = Mockito.mock(org.opendaylight.controller.sal.binding.api.RpcProviderRegistry.class);
+            org.opendaylight.controller.sal.binding.api.BindingAwareBroker bindingAwareBroker = Mockito.mock(org.opendaylight.controller.sal.binding.api.BindingAwareBroker.class);
             DependencyResolver dpr = Mockito.mock(DependencyResolver.class);
             javax.management.ObjectName dataBroker = Mockito.mock(javax.management.ObjectName.class);
             javax.management.ObjectName rpcRegistry = Mockito.mock(javax.management.ObjectName.class);
@@ -169,6 +178,11 @@ public class ModuleCodeCoverageTest {
             Field f =findField("rpcRegistryDependency",obj.getClass());
             if(f!=null) {
                 f.set(obj, rpcProviderRegistry);
+            }
+
+            f =findField("bindingAwareBrokerDependency",obj.getClass());
+            if(f!=null) {
+                f.set(obj, bindingAwareBroker);
             }
 
             f =findField("identifier",obj.getClass());

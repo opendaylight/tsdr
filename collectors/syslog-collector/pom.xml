@@ -139,5 +139,10 @@
                 <artifactId>junit</artifactId>
                 <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>${io.netty4.version}</version>
+        </dependency>
     </dependencies>
 </project>

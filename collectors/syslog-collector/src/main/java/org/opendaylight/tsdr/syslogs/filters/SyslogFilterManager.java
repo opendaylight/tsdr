@@ -7,25 +7,29 @@
  */
 package org.opendaylight.tsdr.syslogs.filters;
 
-import java.net.DatagramPacket;
+
 import java.util.HashMap;
 import java.util.Map;
 
+import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 public class SyslogFilterManager {
+    private final static Logger LOGGER = LoggerFactory.getLogger(SyslogFilterManager.class);
     private Map<String,SyslogFilter[]> filters = new HashMap<String,SyslogFilter[]>();
     public SyslogFilterManager(){
         filters.put("*",new SyslogFilter[]{new PersistAllSyslogFilter()});
     }
 
-    public TSDRLogRecord applyFilters(DatagramPacket packet){
-        if(packet!=null){
-            String syslogString = new String(packet.getData()).trim();
-            String packetHostAddress = packet.getAddress().getHostAddress();
+    public TSDRLogRecord applyFilters(Message message){
+        if(message!=null){
+            String syslogString = message.getContent().trim();
+            String packetHostAddress = message.getHostname();
             String syslogOriginator = null;
             int index1 = syslogString.indexOf("Original Address");
             int index2 = syslogString.indexOf("=",index1);

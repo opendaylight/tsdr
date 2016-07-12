@@ -7,13 +7,6 @@
  */
 package org.opendaylight.tsdr.syslogs;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,9 +14,19 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.opendaylight.controller.sal.binding.api.BindingAwareBroker;
+import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -32,17 +35,27 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 public class TSDRSyslogCollectorImplPort514Test {
     private DatagramSocket socket = null;
     private TsdrCollectorSpiService spiService = Mockito.mock(TsdrCollectorSpiService.class);
-    private TSDRSyslogCollectorImpl impl = new TSDRSyslogCollectorImpl(spiService);
+    private TSDRSyslogCollectorImpl impl = null;
+    private SyslogDatastoreManager manager = Mockito.mock(SyslogDatastoreManager.class);
+    private BindingAwareBroker.ProviderContext session = Mockito.mock(BindingAwareBroker.ProviderContext.class);
     private final List<TSDRLogRecord> storedRecords = new ArrayList<>();
     private int numberOfTests=0;
     private boolean testPortIsValid = false;
 
     @Before
-    public void setup() throws SocketException {
+    public void before() throws SocketException {
         numberOfTests++;
         if(socket==null){
             //Arbitrary port
             socket = new DatagramSocket(23319);
+            impl = new TSDRSyslogCollectorImpl(spiService);
+            impl.setManager(manager);
+            impl.setCoreThreadPoolSize(2);
+            impl.setKeepAliveTime(1000);
+            impl.setQueueSize(1000);
+            impl.setMaxThreadPoolSize(4);
+            impl.onSessionInitiated(session);
+
             Mockito.when(spiService.insertTSDRLogRecord(Mockito.any(InsertTSDRLogRecordInput.class))).thenAnswer(new Answer<Void>() {
                 @Override
                 public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
@@ -54,10 +67,11 @@ public class TSDRSyslogCollectorImplPort514Test {
         }
     }
 
-    public void sendSysLog(String message) throws IOException {
+    public void sendSysLog(String message) throws IOException, InterruptedException {
         byte[] data = message.getBytes();
-        DatagramPacket packet = new DatagramPacket(data,data.length, InetAddress.getByName("127.0.0.1"),impl.getSelectedPort());
+        DatagramPacket packet = new DatagramPacket(data,data.length, InetAddress.getByName("127.0.0.1"),impl.getUdpPort());
         socket.send(packet);
+        Thread.sleep(250);
     }
 
     @Test
