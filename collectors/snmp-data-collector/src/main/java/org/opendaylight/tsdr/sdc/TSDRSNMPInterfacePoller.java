@@ -13,7 +13,7 @@ import org.opendaylight.tsdr.spi.util.DataEncrypter;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import java.util.Dictionary;
-import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev100924.Ipv4Address;
+import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev130715.Ipv4Address;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  * @author Prajaya Talwar(prajaya.talwar@tcs.com)

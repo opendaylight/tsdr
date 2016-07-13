@@ -10,7 +10,7 @@ import java.math.BigInteger;
 
 import org.datasand.codec.EncodeDataContainer;
 import org.datasand.codec.ISerializer;
-import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev100924.Counter64;
+import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter64;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
