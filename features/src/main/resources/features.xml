@@ -95,6 +95,7 @@
         <feature version='${yangtools.version}'>odl-yangtools-common</feature>
         <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
         <feature version='${model.flow.statistics}'>odl-openflowplugin-nsf-model</feature>
+        <bundle>mvn:org.apache.felix/org.apache.felix.dependencymanager/4.3.0</bundle>
         <bundle>mvn:com.google.code.gson/gson/${gson.version}</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-persistence-spi/${project.version}</bundle>
         <bundle>mvn:org.opendaylight.tsdr/${artifactName}-collector-spi/${project.version}</bundle>

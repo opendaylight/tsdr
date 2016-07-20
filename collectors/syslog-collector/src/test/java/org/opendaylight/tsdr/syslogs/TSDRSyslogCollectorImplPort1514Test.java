@@ -7,13 +7,6 @@
  */
 package org.opendaylight.tsdr.syslogs;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,6 +17,14 @@ import org.mockito.stubbing.Answer;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -36,6 +37,7 @@ public class TSDRSyslogCollectorImplPort1514Test {
     private TSDRSyslogCollectorImpl impl = null;
     private final List<TSDRLogRecord> storedRecords = new ArrayList<>();
     private int numberOfTests=0;
+    private boolean testedPortValide = false;
 
     @Before
     public void setup() throws SocketException {
@@ -43,6 +45,7 @@ public class TSDRSyslogCollectorImplPort1514Test {
         if(socket==null){
             try{
                 socket2 = new DatagramSocket(TSDRSyslogCollectorImpl.SYSLOG_PORT);
+                testedPortValide = true;
             }catch(Exception e){
                 /*Dont care*/
             }
@@ -61,6 +64,9 @@ public class TSDRSyslogCollectorImplPort1514Test {
     }
 
     public void sendSysLog(String message) throws IOException {
+        if(!testedPortValide){
+            return;
+        }
         byte[] data = message.getBytes();
         DatagramPacket packet = new DatagramPacket(data,data.length, InetAddress.getByName("127.0.0.1"),impl.getSelectedPort());
         socket.send(packet);
@@ -68,6 +74,9 @@ public class TSDRSyslogCollectorImplPort1514Test {
 
     @Test
     public void testSingleSyslog() throws IOException, InterruptedException {
+        if(!testedPortValide){
+            return;
+        }
         this.storedRecords.clear();
         sendSysLog("Hello");
         sendSysLog("World");
@@ -80,6 +89,9 @@ public class TSDRSyslogCollectorImplPort1514Test {
 
     @After
     public void tearDown(){
+        if(!testedPortValide){
+            return;
+        }
         if(numberOfTests==1){
             impl.close();
             this.socket.close();
