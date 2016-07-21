@@ -35,13 +35,14 @@ public class TSDRSyslogCollectorImplPort514Test {
     private TSDRSyslogCollectorImpl impl = new TSDRSyslogCollectorImpl(spiService);
     private final List<TSDRLogRecord> storedRecords = new ArrayList<>();
     private int numberOfTests=0;
+    private boolean testPortIsValid = false;
 
     @Before
     public void setup() throws SocketException {
         numberOfTests++;
         if(socket==null){
             //Arbitrary port
-            socket = new DatagramSocket(23312);
+            socket = new DatagramSocket(23319);
             Mockito.when(spiService.insertTSDRLogRecord(Mockito.any(InsertTSDRLogRecordInput.class))).thenAnswer(new Answer<Void>() {
                 @Override
                 public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
