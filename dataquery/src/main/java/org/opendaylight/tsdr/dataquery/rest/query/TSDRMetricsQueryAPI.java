@@ -39,13 +39,13 @@ public class TSDRMetricsQueryAPI {
                         @QueryParam("tsdrkey") String tsdrkey,
                         @QueryParam("from") String from,
                         @QueryParam("until") String until,
-                        @QueryParam("interval") Long interval,
+                        @QueryParam("maxDataPoints") String maxDataPoints,
                         @QueryParam("aggregation") String aggregation) throws ExecutionException, InterruptedException {
         TSDRQueryRequest request = new TSDRQueryRequest();
         request.setTsdrkey(tsdrkey);
         request.setFrom(from);
         request.setUntil(until);
-        request.setInterval(interval);
+        request.setMaxDataPoints(maxDataPoints);
         request.setAggregation(aggregation);
         return post(null,request);
     }
@@ -54,12 +54,15 @@ public class TSDRMetricsQueryAPI {
     @Produces("application/json")
     public Response post(@Context UriInfo info, TSDRQueryRequest request) throws ExecutionException, InterruptedException {
 
-        if (request.getInterval() != null && request.getAggregation() != null) {
+        if (request.getMaxDataPoints() != null && request.getAggregation() != null) {
+            final long from = TSDRNBIRestAPI.getTimeFromString(request.getFrom());
+            final long until = TSDRNBIRestAPI.getTimeFromString(request.getUntil());
+            final long maxDataPoints = request.getMaxDataPoints() != null ? Long.parseLong(request.getMaxDataPoints()) : 0;
             final GetTSDRAggregatedMetricsInputBuilder input = new GetTSDRAggregatedMetricsInputBuilder();
             input.setTSDRDataCategory(request.getTsdrkey());
             input.setStartTime(TSDRNBIRestAPI.getTimeFromString(request.getFrom()));
             input.setEndTime(TSDRNBIRestAPI.getTimeFromString(request.getUntil()));
-            input.setInterval(request.getInterval());
+            input.setInterval(Math.floorDiv(until - from, maxDataPoints) + 1);
             input.setAggregation(AggregationType.valueOf(request.getAggregation()));
 
             Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRDataqueryModule.metricDataService.getTSDRAggregatedMetrics(input.build());

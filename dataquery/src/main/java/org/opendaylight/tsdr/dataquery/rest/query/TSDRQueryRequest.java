@@ -17,7 +17,7 @@ public class TSDRQueryRequest {
     public String tsdrkey=null;
     public String from=null;
     public String until=null;
-    public Long interval=null;
+    public String maxDataPoints=null;
     public String aggregation=null;
 
     public String getTsdrkey() {
@@ -44,12 +44,12 @@ public class TSDRQueryRequest {
         this.until = until;
     }
 
-    public Long getInterval() {
-        return interval;
+    public String getMaxDataPoints() {
+        return maxDataPoints;
     }
 
-    public void setInterval(Long interval) {
-        this.interval = interval;
+    public void setMaxDataPoints(String maxDataPoints) {
+        this.maxDataPoints = maxDataPoints;
     }
 
     public String getAggregation() {
