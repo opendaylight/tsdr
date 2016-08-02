@@ -22,14 +22,14 @@ import org.slf4j.LoggerFactory;
  * Unit tests for Netflow data parser
  * @author Muhammad Umair(muhammad.umair@xflowresearch.com)
  * Created: Dec 30, 2015
- * Modified: Feb 08, 2016
+ * Modified: Aug 02, 2016
 **/
 
 public class NetflowPacketParserTest {
     public NetflowPacketParser parserService;
+    public byte[] buff = new byte[1000];
     @Before
     public void setup(){
-        byte[] buff = new byte[100];
         parserService = new NetflowPacketParser(buff);
         Assert.assertNotNull(parserService);
     }
@@ -43,28 +43,28 @@ public class NetflowPacketParserTest {
         //Buff string value can be more than int, so using long to handle.
         String buffStr = "167772162";
         long value = new Long(buffStr).longValue();
-        String result = parserService.convertIPAddress(value);
+        String result = NetflowPacketParser.convertIPAddress(value);
         Assert.assertEquals("10.0.0.2", result);
         //Buff value more than int range
         buffStr = "2646458435";
         value = new Long(buffStr).longValue();
-        result = parserService.convertIPAddress(value);
+        result = NetflowPacketParser.convertIPAddress(value);
         Assert.assertEquals("157.189.192.67", result);
     }
     @Rule
-    public ExpectedException thrown= ExpectedException.none();
+    public ExpectedException thrown = ExpectedException.none();
     @Test
     public void testConvertIPAddress_Exception() {
         //Buff string value can be more than int, so to test exception
         thrown.expect(NumberFormatException.class);
         String buffStr = "2646458435";
         int intValue = new Integer(buffStr).intValue();
-        String result = parserService.convertIPAddress(intValue);
+        String result = NetflowPacketParser.convertIPAddress(intValue);
     }
     @Test
     public void convertBytetest() {
         byte value = 100;
-        long result = parserService.convert(value);
+        long result = NetflowPacketParser.convert(value);
         Assert.assertEquals(36, result);
     }
     @Test
@@ -74,9 +74,14 @@ public class NetflowPacketParserTest {
         parserService.addValue(name, value);
     }
     @Test
+    public void fillFlowSetTemplateMapTest(){
+        parserService.fillFlowSetTemplateMap(buff, 100, 10);
+        Assert.assertNotEquals(NetflowPacketParser.getTemplate(), null);
+    }
+    @Test
     public void convertByteArrayTest(){
         byte[] b = "[B@19dbc5c".getBytes();
-        String result = parserService.convert(b, 5, 4);
+        String result = NetflowPacketParser.convert(b, 5, 4);
         Assert.assertEquals("1684169525", result);
     }
     @Test

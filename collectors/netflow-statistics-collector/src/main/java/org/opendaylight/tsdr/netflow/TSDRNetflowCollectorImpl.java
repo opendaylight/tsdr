@@ -9,8 +9,11 @@
 package org.opendaylight.tsdr.netflow;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -32,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:saichler@xgmail.com">Sharon Aicler</a>
  *
  * Created: December 1, 2015
- * Modified: Feb 8, 2016
+ * Modified: Aug 02, 2016
  */
 public class TSDRNetflowCollectorImpl extends Thread{
 
@@ -42,7 +45,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
     private static final Logger logger = LoggerFactory.getLogger(TSDRNetflowCollectorImpl.class);
     private static byte packetsCountForTests = 0; //Just to test the counts of packet for test
     private final TsdrCollectorSpiService collectorSPIService;
-    private final DatagramSocket socket;
+    private DatagramSocket socket;
     private boolean running = true;
     private final LinkedList<DatagramPacket> incomingNetFlow = new LinkedList<>();
     private long lastPersisted = System.currentTimeMillis();
@@ -57,7 +60,14 @@ public class TSDRNetflowCollectorImpl extends Thread{
         this.setDaemon(true);
         logRecordIndex = 0;
         this.collectorSPIService = _collectorSPIService;
-        this.socket = new DatagramSocket(2055);
+        try{
+            this.socket = new DatagramSocket(2055);
+        }catch(Exception e){
+            logger.error("Collector service already running. Failed to bind it again on Port 2055.");
+            //Collector service already running, just passing the code for testing purpose.
+            //this.socket = new DatagramSocket();
+          shutdown();
+        }
         this.start();
         new NetFlowProcessor();
     }
@@ -103,11 +113,18 @@ public class TSDRNetflowCollectorImpl extends Thread{
     }
 
     private class NetFlowProcessor extends Thread{
+        private TSDRLogRecordBuilder recordbuilder;
         public NetFlowProcessor(){
             super("TSDR NetFlow Processor");
             this.setDaemon(true);
             this.start();
             logger.debug("NetFlow Processor thread initialized");
+        }
+        public long getIncomingNetflowSize(){
+            return incomingNetFlow.size();
+        }
+        public byte getPacketCount(){
+            return packetsCountForTests;
         }
         public void run(){
             DatagramPacket packet = null;
@@ -122,44 +139,82 @@ public class TSDRNetflowCollectorImpl extends Thread{
                             logger.error("Interrupted while waiting on incoming queue", e);
                         }
                     }
-
                     if (!incomingNetFlow.isEmpty()) {
                         packet = incomingNetFlow.removeFirst();
                     }
                 }
-                if(packet!=null){
+                if(packet != null){
                     logger.debug("Pkts found");
                     byte[] buff = packet.getData();
                     String srcIp = packet.getAddress().getHostAddress().trim();
-                    int totalPDU = new Integer(NetflowPacketParser.convert(buff, 2, 2)).intValue();
-                    int pduCounter = 1;
-                    int dataBufferOffset = 0;
+                    int netFlowVersion = new Integer(NetflowPacketParser.convert(buff, 0, 2)).intValue();
                     long currentTimeStamp = System.currentTimeMillis();
-                    while(pduCounter <= totalPDU && (dataBufferOffset + FLOW_SIZE_FOR_NETFLOW_PACKET)
-                            < (buff.length)){
-                        TSDRLogRecordBuilder recordbuilder = new TSDRLogRecordBuilder();
-                        NetflowPacketParser parser = new NetflowPacketParser(buff);
-                        parser.addFormat(buff, dataBufferOffset);
-                        dataBufferOffset += FLOW_SIZE_FOR_NETFLOW_PACKET;
-                        /*Fill up the RecordBuilder object*/
-                        recordbuilder.setNodeID(srcIp);
-                        recordbuilder.setTimeStamp(currentTimeStamp);
-                        recordbuilder.setIndex(pduCounter);
-                        recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
-                        recordbuilder.setRecordFullText(parser.toString());
-                        if(logger.isDebugEnabled()) {
-                            logger.debug(parser.toString());
+                    if(netFlowVersion == 9){
+                        int flowCount = new Integer(NetflowPacketParser.convert(buff, 2, 2)).intValue();
+                        int flowCounter = 1;
+                        int dataBufferOffset = 20;
+                        int flowsetid = Integer.parseInt(NetflowPacketParser.convert(buff, dataBufferOffset, 2));
+                        int flowsetLength = Integer.parseInt(NetflowPacketParser.convert(buff, dataBufferOffset + 2, 2));
+                        if(flowsetid == 0){
+                            dataBufferOffset += 4;
+                            NetflowPacketParser.fillFlowSetTemplateMap(buff, dataBufferOffset, flowCount);
+                            dataBufferOffset += flowsetLength;
+                            flowsetid = Integer.parseInt(NetflowPacketParser.convert(buff, dataBufferOffset, 2));
+                            flowsetLength = Integer.parseInt(NetflowPacketParser.convert(buff, dataBufferOffset + 2, 2));
+                            dataBufferOffset += 4;
                         }
-                        recordbuilder.setRecordAttributes(parser.getRecordAttributes());
-                        TSDRLogRecord logRecord =  recordbuilder.build();
-                        if(logRecord!=null){
-                            netFlowQueue.add(logRecord);
+                        int packetLength = (flowsetLength - 4) / flowCount;
+                        while(flowCounter <= flowCount && (dataBufferOffset + packetLength) < buff.length){
+                            recordbuilder = new TSDRLogRecordBuilder();
+                            NetflowPacketParser parser = new NetflowPacketParser(buff);
+                            parser.addFormat(buff, dataBufferOffset);
+                            /*Fill up the RecordBuilder object*/
+                            recordbuilder.setNodeID(srcIp);
+                            recordbuilder.setTimeStamp(currentTimeStamp);
+                            recordbuilder.setIndex(flowCounter);
+                            recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
+                            recordbuilder.setRecordFullText(parser.toString());
+                            logger.info(parser.toString());
+                            if(logger.isDebugEnabled()) {
+                                logger.debug(parser.toString());
+                            }
+                            recordbuilder.setRecordAttributes(parser.getRecordAttributes());
+                            TSDRLogRecord logRecord =  recordbuilder.build();
+                            if(logRecord!=null){
+                                netFlowQueue.add(logRecord);
+                            }
+                            dataBufferOffset += packetLength;
+                            flowCounter += 1;
                         }
-                        pduCounter += 1;
+                    }else{
+                        int flowCount = new Integer(NetflowPacketParser.convert(buff, 2, 2)).intValue();
+                        int flowCounter = 1;
+                        int dataBufferOffset = 0;
+                        while(flowCounter <= flowCount && (dataBufferOffset + FLOW_SIZE_FOR_NETFLOW_PACKET) < buff.length){
+                            recordbuilder = new TSDRLogRecordBuilder();
+                            NetflowPacketParser parser = new NetflowPacketParser(buff);
+                            parser.addFormat(buff, dataBufferOffset);
+                            dataBufferOffset += FLOW_SIZE_FOR_NETFLOW_PACKET;
+                            /*Fill up the RecordBuilder object*/
+                            recordbuilder.setNodeID(srcIp);
+                            recordbuilder.setTimeStamp(currentTimeStamp);
+                            recordbuilder.setIndex(flowCounter);
+                            recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
+                            recordbuilder.setRecordFullText(parser.toString());
+                            if(logger.isDebugEnabled()){
+                                logger.debug(parser.toString());
+                            }
+                            recordbuilder.setRecordAttributes(parser.getRecordAttributes());
+                            TSDRLogRecord logRecord =  recordbuilder.build();
+                            if(logRecord!=null){
+                                netFlowQueue.add(logRecord);
+                            }
+                            flowCounter += 1;
+                        }
                     }
-                    if(System.currentTimeMillis()-lastPersisted>PERSIST_CHECK_INTERVAL_IN_MILLISECONDS && !netFlowQueue.isEmpty()){
+                    if(System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS && !netFlowQueue.isEmpty() && packet != null){ 
                         LinkedList<TSDRLogRecord> queue = null;
-                        if(System.currentTimeMillis()-lastPersisted>PERSIST_CHECK_INTERVAL_IN_MILLISECONDS && !netFlowQueue.isEmpty()){
+                        if(System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS && !netFlowQueue.isEmpty()){
                             lastPersisted = System.currentTimeMillis();
                             queue = netFlowQueue;
                             netFlowQueue = new LinkedList<TSDRLogRecord>();
@@ -176,7 +231,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
    /**
      * Store the data into TSDR data store
      * @param queue
-     */
+    */
     private void store(List<TSDRLogRecord> queue){
         InsertTSDRLogRecordInputBuilder input = new InsertTSDRLogRecordInputBuilder();
         input.setTSDRLogRecord(queue);
