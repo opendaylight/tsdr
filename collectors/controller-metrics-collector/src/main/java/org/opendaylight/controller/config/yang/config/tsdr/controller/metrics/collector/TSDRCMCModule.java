@@ -9,6 +9,7 @@
 package org.opendaylight.controller.config.yang.config.tsdr.controller.metrics.collector;
 
 import org.opendaylight.tsdr.collectors.cmc.ControllerMetricCollector;
+import org.opendaylight.tsdr.collectors.cmc.CpuDataCollector;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,14 +36,14 @@ public class TSDRCMCModule extends org.opendaylight.controller.config.yang.confi
 
     @Override
     public java.lang.AutoCloseable createInstance() {
-        collectorImpl = new ControllerMetricCollector(this, getRpcRegistryDependency());
+        collectorImpl = new ControllerMetricCollector(this, CpuDataCollector.getCpuDataCollector());
         logger.info("Controller Metrics Collector started!");
         return this;
     }
 
     @Override
     public void close() throws Exception {
-        collectorImpl.setRunning(false);
+        collectorImpl.interrupt();
         logger.info("Controller Metrics Collector stopped!");
     }
 
