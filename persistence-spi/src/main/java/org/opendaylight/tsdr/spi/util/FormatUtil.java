@@ -201,9 +201,15 @@ public class FormatUtil {
         return tsdrKey.substring(index1+KEY_CATEGORY.length(),index2);
     }
 
-    public final static long getTimeStampFromTSDRKey(String tsdrKey){
+    public final static Long getTimeStampFromTSDRKey(String tsdrKey){
         int index1 = tsdrKey.indexOf(KEY_TIMESTAMP);
+        if(index1==-1){
+            return null;
+        }
         int index2 = tsdrKey.indexOf("]",index1);
+        if(index2==-1){
+            return null;
+        }
         return Long.parseLong(tsdrKey.substring(index1+KEY_TIMESTAMP.length(),index2));
     }
 

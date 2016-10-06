@@ -1,0 +1,23 @@
+{
+  "dynamic_templates": [
+    {
+      "strings": {
+        "match": "*",
+        "match_mapping_type": "string",
+        "mapping": {
+          "type": "string",
+          "doc_values": true,
+          "index": "not_analyzed"
+        }
+      }
+    }
+  ],
+  "_all": {
+    "enabled": false
+  },
+  "properties": {
+    "TimeStamp": {
+      "type": "date"
+    }
+  }
+}

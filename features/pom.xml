@@ -282,6 +282,11 @@
           <artifactId>hadoop-core</artifactId>
           <version>${hadoop.version}</version>
         </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-persistence-elasticsearch</artifactId>
+          <version>${project.version}</version>
+      </dependency>
         <dependency>
           <groupId>com.google.protobuf</groupId>
           <artifactId>protobuf-java</artifactId>

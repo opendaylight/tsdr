@@ -47,6 +47,7 @@
         <yang-jmx-generator.version>0.6.0-SNAPSHOT</yang-jmx-generator.version>
         <hsqldb.version>1.8.0.10</hsqldb.version>
         <gson.version>2.5</gson.version>
+        <jest.version>2.0.3</jest.version>
     </properties>
 
   <scm>
@@ -257,6 +258,7 @@
     -->
     <module>persistence-cassandra</module>
     <module>persistence-hsqldb</module>
+    <module>persistence-elasticsearch</module>
     <module>datastorage</module>
     <module>dataquery</module>
     <module>datapurge</module>
