@@ -4,7 +4,7 @@
     <parent>
         <artifactId>tsdr</artifactId>
         <groupId>org.opendaylight.tsdr</groupId>
-        <version>1.2.1-SNAPSHOT</version>
+        <version>1.2.1-Boron-SR1</version>
     </parent>
     <artifactId>features-tsdr</artifactId>
     <packaging>jar</packaging>
@@ -327,7 +327,7 @@
           <groupId>org.opendaylight.snmp</groupId>
           <artifactId>features-snmp</artifactId>
           <classifier>features</classifier>
-          <version>1.2.1-SNAPSHOT</version>
+          <version>1.2.1-Boron-SR1</version>
           <type>xml</type>
       </dependency>
         <!-- test the features.xml -->
@@ -351,26 +351,26 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>${artifactName}-snmp-data-collector</artifactId>
-          <version>1.2.1-SNAPSHOT</version>
+          <version>1.2.1-Boron-SR1</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>${artifactName}-snmp-data-collector</artifactId>
           <classifier>config</classifier>
-          <version>1.2.1-SNAPSHOT</version>
+          <version>1.2.1-Boron-SR1</version>
           <type>xml</type>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>${artifactName}-snmp-data-collector</artifactId>
           <classifier>config1</classifier>
-          <version>1.2.1-SNAPSHOT</version>
+          <version>1.2.1-Boron-SR1</version>
           <type>cfg</type>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.snmp</groupId>
           <artifactId>snmp</artifactId>
-          <version>1.2.1-SNAPSHOT</version>
+          <version>1.2.1-Boron-SR1</version>
       </dependency>
       <dependency>
           <groupId>org.apache.servicemix.bundles</groupId>
