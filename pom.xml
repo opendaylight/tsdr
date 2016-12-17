@@ -16,27 +16,23 @@
     <properties>
         <guava.old.version>16.0.1</guava.old.version>
         <config.version>0.6.0-SNAPSHOT</config.version>
-        <config.configfile.directory>etc/opendaylight/karaf</config.configfile.directory>
         <features.test.version>1.8.0-SNAPSHOT</features.test.version>
         <hbase.version>0.94.15</hbase.version>
         <hadoop.version>1.2.0</hadoop.version>
         <ietf-inet-types.version>1.2.0-SNAPSHOT</ietf-inet-types.version>
         <ietf-yang-types.version>2013.07.15.10-SNAPSHOT</ietf-yang-types.version>
         <jmxGeneratorPath>src/main/yang-gen-config</jmxGeneratorPath>
-        <l2switch.version>0.5.0-SNAPSHOT</l2switch.version>
         <mdsal.version>1.5.0-SNAPSHOT</mdsal.version>
         <mdsal.model.version>0.10.0-SNAPSHOT</mdsal.model.version>
         <model.version>1.8.0-SNAPSHOT</model.version>
         <model.flow.statistics>0.4.0-SNAPSHOT</model.flow.statistics>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <protobuf.version>2.4.1</protobuf.version>
-        <restconf.version>1.5.0-SNAPSHOT</restconf.version>
         <salGeneratorPath>src/main/yang-gen-sal</salGeneratorPath>
         <sal.binding.config>1.5.0-SNAPSHOT</sal.binding.config>
         <sal.core.api>1.5.0-SNAPSHOT</sal.core.api>
         <yangtools.version>1.1.0-SNAPSHOT</yangtools.version>
         <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
-        <karaf.distro.empty.version>1.8.0-SNAPSHOT</karaf.distro.empty.version>
         <!--
         <hibernate.jpa.api.version>1.0.0.Final</hibernate.jpa.api.version>
         <hibernate.entity.manager.version>4.3.6.Final</hibernate.entity.manager.version>
