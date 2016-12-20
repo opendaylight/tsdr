@@ -26,6 +26,7 @@
         <mdsal.model.version>0.10.0-SNAPSHOT</mdsal.model.version>
         <model.version>1.8.0-SNAPSHOT</model.version>
         <model.flow.statistics>0.4.0-SNAPSHOT</model.flow.statistics>
+        <aaa.version>0.5.0-SNAPSHOT</aaa.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <protobuf.version>2.4.1</protobuf.version>
         <salGeneratorPath>src/main/yang-gen-sal</salGeneratorPath>
@@ -269,6 +270,7 @@
     <module>collectors/collector-spi</module>
     <module>collectors/snmp-data-collector</module>
     <module>collectors/syslog-collector</module>
+    <module>collectors/restconf-collector</module>
     <module>features</module>
   </modules>
 </project>

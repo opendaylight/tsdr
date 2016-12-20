@@ -81,7 +81,7 @@ public class ListMetricsCommand extends OsgiCommandSupport {
             return null;
         }
         DataCategory dataCategory = DataCategory.valueOf(category);
-        if((dataCategory== DataCategory.NETFLOW || dataCategory==DataCategory.SYSLOG || dataCategory==DataCategory.LOGRECORDS) && logService!=null){
+        if((dataCategory== DataCategory.NETFLOW || dataCategory==DataCategory.SYSLOG || dataCategory==DataCategory.LOGRECORDS || dataCategory==DataCategory.RESTCONF) && logService!=null){
             List<TSDRLogRecord> logs = logService.getTSDRLogRecords(category, startDate, endDate);
             if (logs == null || logs.isEmpty()) {
                 System.out.println("No data of this category in the specified time range. ");

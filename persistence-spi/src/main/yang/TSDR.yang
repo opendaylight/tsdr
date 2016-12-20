@@ -47,6 +47,7 @@ module TSDR {
             enum SYSLOG;
             enum NETFLOW;
             enum SNMP_INTERFACES;
+            enum RESTCONF;
         }
     }
 

@@ -92,6 +92,16 @@
         <configfile finalname="${config.configfile.directory}/154-tsdr-syslog-collector-config.xml">mvn:org.opendaylight.tsdr/tsdr-syslog-collector/${project.version}/xml/config</configfile>
     </feature>
 
+    <!-- Restconf collector -->
+    <feature name='odl-tsdr-restconf-collector' version='${project.version}' description='OpenDaylight :: TSDR :: Restconf Collector'>
+        <feature version='${project.version}'>odl-tsdr-core</feature>
+        <feature version='${mdsal.version}'>odl-restconf-all</feature>
+        <feature version='${aaa.version}'>odl-aaa-authn</feature>
+        <bundle>mvn:org.opendaylight.tsdr/tsdr-restconf-collector/${project.version}</bundle>
+        <configfile finalname="${config.configfile.directory}/156-tsdr-restconf-collector-config.xml">mvn:org.opendaylight.tsdr/tsdr-restconf-collector/${project.version}/xml/config</configfile>
+        <configfile finalname="etc/tsdr.restconf.collector.cfg">mvn:org.opendaylight.tsdr/tsdr-restconf-collector/${project.version}/cfg/config1</configfile>
+    </feature>
+
    <!-- TSDR core services -->
     <feature name='odl-tsdr-core' version='${project.version}' description='OpenDaylight :: TSDR :: Core'>
         <feature version='${yangtools.version}'>odl-yangtools-common</feature>
