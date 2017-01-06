@@ -9,8 +9,6 @@ package org.opendaylight.tsdr.spi.util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,25 +20,19 @@ import org.slf4j.LoggerFactory;
 public class MD5ID {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MD5ID.class);
-    private static MessageDigest md = null;
-    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-    private static final WriteLock writeLock = lock.writeLock();
+    private static final MessageDigest MD;
+    static {
+        try {
+            MD = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new ExceptionInInitializerError("Could not initialize MD5 Algorithm");
+        }
+    }
 
     private final long md5Long1;
     private final long md5Long2;
     private byte[] hashByteArray = null;
 
-    static {
-        if (md == null) {
-            if (md == null) {
-                try {
-                    md = MessageDigest.getInstance("MD5");
-                } catch (NoSuchAlgorithmException e) {
-                    throw new ExceptionInInitializerError("Could not initialize MD5 Algorithm");
-                }
-            }
-        }
-    }
 
     private MD5ID(long md5long1, long md5long2) {
         this.md5Long1 = md5long1;
@@ -55,12 +47,8 @@ public class MD5ID {
     private MD5ID(byte byteArray[],boolean alreadyHashed) {
 
         if(!alreadyHashed) {
-            try {
-                writeLock.lock();
-                md.update(byteArray);
-                hashByteArray = md.digest();
-            } finally {
-                writeLock.unlock();
+            synchronized (MD5ID.class) {
+                hashByteArray = MD.digest(byteArray);
             }
         }else{
             hashByteArray = byteArray;
