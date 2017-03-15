@@ -354,7 +354,7 @@
           <groupId>org.opendaylight.snmp</groupId>
           <artifactId>features-snmp</artifactId>
           <classifier>features</classifier>
-          <version>1.3.0-SNAPSHOT</version>
+          <version>${project.version}</version>
           <type>xml</type>
       </dependency>
       <dependency>
@@ -364,21 +364,40 @@
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-restconf-collector</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-restconf-collector</artifactId>
+          <classifier>config</classifier>
+          <version>${project.version}</version>
+          <type>xml</type>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-restconf-collector</artifactId>
+          <classifier>config1</classifier>
+          <version>${project.version}</version>
+          <type>cfg</type>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-snmp-data-collector</artifactId>
-          <version>1.3.0-SNAPSHOT</version>
+          <version>${project.version}</version>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-snmp-data-collector</artifactId>
           <classifier>config</classifier>
-          <version>1.3.0-SNAPSHOT</version>
+          <version>${project.version}</version>
           <type>xml</type>
       </dependency>
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-snmp-data-collector</artifactId>
           <classifier>config1</classifier>
-          <version>1.3.0-SNAPSHOT</version>
+          <version>${project.version}</version>
           <type>cfg</type>
       </dependency>
       <dependency>
