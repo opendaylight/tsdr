@@ -4,7 +4,7 @@
     <parent>
         <artifactId>tsdr</artifactId>
         <groupId>org.opendaylight.tsdr</groupId>
-        <version>1.2.3-SNAPSHOT</version>
+        <version>1.2.4-SNAPSHOT</version>
         <relativePath>../..</relativePath>
     </parent>
     <artifactId>tsdr-external-collector-service</artifactId>
@@ -62,7 +62,7 @@
                     <dependency>
                         <groupId>org.opendaylight.controller</groupId>
                         <artifactId>yang-jmx-generator-plugin</artifactId>
-                        <version>0.5.3-SNAPSHOT</version>
+                        <version>0.5.4-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -94,7 +94,7 @@
     <dependency>
         <groupId>org.datasand</groupId>
             <artifactId>datasand-serialization</artifactId>
-            <version>0.2.3-SNAPSHOT</version>
+            <version>0.2.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
