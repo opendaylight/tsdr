@@ -21,13 +21,13 @@
                 <configuration>
                     <instructions>
                         <Import-Package>
-                            *,
                             com.sun.jersey.spi.container.servlet,
                             org.eclipse.jetty.servlets;version="[8.1,10)",
                             org.opendaylight.aaa.shiro.filters,
                             org.opendaylight.aaa.shiro.realm,
                             org.opendaylight.aaa.shiro.web.env,
-                            org.apache.shiro.web.env
+                            org.apache.shiro.web.env,
+                            *
                         </Import-Package>
                         <Web-ContextPath>/tsdr</Web-ContextPath>
                     </instructions>
@@ -124,15 +124,6 @@
             <groupId>org.opendaylight.controller</groupId>
             <artifactId>sal-common-util</artifactId>
             <version>${mdsal.version}</version>
-        </dependency>
-        <dependency>
-           <groupId>org.eclipse.tycho</groupId>
-           <artifactId>org.eclipse.osgi</artifactId>
-        </dependency>
-        <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <scope>test</scope>
         </dependency>
         <dependency>
                 <groupId>org.mockito</groupId>

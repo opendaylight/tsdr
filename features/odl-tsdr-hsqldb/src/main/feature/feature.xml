@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="odl-tsdr-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0">
+    <!-- TSDR HSQL DataStore -->
+    <feature name="odl-tsdr-hsqldb" version="${project.version}" >
+  <configfile finalname="/etc/tsdr-persistence-hsqldb.properties">mvn:org.opendaylight.tsdr/tsdr-persistence-hsqldb/${project.version}/xml/config</configfile>
+    </feature>
+</features>

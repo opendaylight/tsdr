@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="odl-tsdr-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
+    <!-- OpenFlow collector -->
+    <feature name='odl-tsdr-controller-metrics-collector' version='${project.version}' description="OpenDaylight :: TSDR :: Controller Metrics  Collector">
+    <configfile finalname="${config.configfile.directory}/154-tsdr-controller-metrics-collector-config.xml">mvn:org.opendaylight.tsdr/tsdr-controller-metrics-collector/${project.version}/xml/config</configfile>
+    </feature>
+</features>
