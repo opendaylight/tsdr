@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.opendaylight.odlparent</groupId>
+        <artifactId>single-feature-parent</artifactId>
+        <version>1.9.0-SNAPSHOT</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>org.opendaylight.tsdr</groupId>
+    <artifactId>odl-tsdr-openflow-statistics-collector</artifactId>
+    <version>1.4.0-SNAPSHOT</version>
+    <packaging>feature</packaging>
+
+    <name>ODL :: tsdr :: openflowcollector</name>
+    <properties>
+          <l2switch.version>0.6.0-SNAPSHOT</l2switch.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+        <!-- To replace with  the actual version of l2swith -->
+            <dependency>
+                <groupId>org.opendaylight.l2switch</groupId>
+                <artifactId>l2switch-artifacts</artifactId>
+                <version>${l2switch.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>tsdr-artifacts</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- TSDR dependencies -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-core</artifactId>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.opendaylight.tsdr</groupId>
+            <artifactId>tsdr-openflow-statistics-collector</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opendaylight.tsdr</groupId>
+            <artifactId>tsdr-openflow-statistics-collector</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>config</classifier>
+        </dependency>
+
+        <!-- ODL dependencies -->
+        <dependency>
+            <groupId>org.opendaylight.l2switch</groupId>
+            <artifactId>odl-l2switch-switch</artifactId>
+            <classifier>features</classifier>
+            <version>${l2switch.version}</version>
+            <type>xml</type>
+        </dependency>
+    </dependencies>
+</project>

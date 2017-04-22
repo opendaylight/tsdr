@@ -29,21 +29,79 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>odl-tsdr-model</artifactId>
+            <artifactId>odl-tsdr-core</artifactId>
             <version>${project.version}</version>
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>odl-tsdr-model-rest</artifactId>
+            <artifactId>odl-tsdr-hsqldb</artifactId>
             <version>${project.version}</version>
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>odl-tsdr-all</artifactId>
+            <artifactId>odl-tsdr-cassandra</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-hbaseclient</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+<!--
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-hbase</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+-->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-elasticsearch</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-syslog-collector</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-openflow-statistics-collector</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-netflow-statistics-collector</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-restconf-collector</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-hsqldb-all</artifactId>
             <version>${project.version}</version>
             <type>xml</type>
             <classifier>features</classifier>

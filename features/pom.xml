@@ -18,11 +18,20 @@
     <packaging>pom</packaging>
 
     <modules>
+      <module>odl-hbaseclient</module>
+      <module>odl-tsdr-core</module>
+      <module>odl-tsdr-openflow-statistics-collector</module>
+      <module>odl-tsdr-elasticsearch</module>
+      <module>odl-tsdr-netflow-statistics-collector</module>
+      <module>odl-tsdr-syslog-collector</module>
+      <module>odl-tsdr-restconf-collector</module>
+      <module>odl-tsdr-controller-metrics-collector</module>
+      <module>odl-tsdr-cassandra</module>
+      <module>odl-tsdr-hsqldb</module>
+      <module>odl-tsdr-hsqldb-all</module>
+      <module>odl-tsdr-hbase</module>
       <module>features-tsdr</module>
-      <module>features4-tsdr</module> <!--  karaf 4 -->
-      <module>odl-tsdr-all</module>   <!--  karaf 4 -->
-      <module>odl-tsdr-model</module> <!--  karaf 4 -->
-      <module>odl-tsdr-model-rest</module> <!--  karaf 4 -->
+      <module>features4-tsdr</module>
     </modules>
 </project>
 

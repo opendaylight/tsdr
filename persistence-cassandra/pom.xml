@@ -87,7 +87,6 @@
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.dependencymanager</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

@@ -9,6 +9,7 @@
     </parent>
     <artifactId>tsdr-restconf-collector</artifactId>
     <packaging>bundle</packaging>
+    <name>ODL :: tsdr :: ${project.artifactId}</name>
     <properties>
         <yang.jmx.generator.plugin.version>0.7.0-SNAPSHOT</yang.jmx.generator.plugin.version>
         <javax.servlet.api.version>3.0.1</javax.servlet.api.version>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="odl-tsdr-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
+    <!-- TSDR core modules -->
+    <feature name='odl-tsdr-core' version='${project.version}' description="OpenDaylight :: TSDR :: Core">
+  <configfile finalname="${config.configfile.directory}/145-TSDR-collector-spi-config.xml">mvn:org.opendaylight.tsdr/tsdr-collector-spi/${project.version}/xml/config</configfile>
+  <configfile finalname="${config.configfile.directory}/150-TSDR-datastorage-config.xml">mvn:org.opendaylight.tsdr/tsdr-datastorage/${project.version}/xml/config</configfile>
+ <configfile finalname="${config.configfile.directory}/152-TSDR-datapurge-config.xml">mvn:org.opendaylight.tsdr/tsdr-datapurge/${project.version}/xml/config</configfile>
+  <configfile finalname="etc/tsdr.data.purge.cfg">mvn:org.opendaylight.tsdr/tsdr-datapurge/${project.version}/cfg/config1</configfile>
+  <configfile finalname="${config.configfile.directory}/155-TSDR-dataquery-config.xml">mvn:org.opendaylight.tsdr/tsdr-dataquery/${project.version}/xml/config</configfile>
+    </feature>
+</features>

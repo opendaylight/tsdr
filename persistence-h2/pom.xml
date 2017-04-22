@@ -51,6 +51,8 @@
                                 org.hibernate.proxy,
                                 javassist.util.proxy,
                                 javax.persistence,
+                                org.apache.karaf.shell.commands;version="[3.0.0,4.1)",
+                                org.apache.karaf.shell.console;version="[3.0.0,4.1)",
                                 *
 
                             </ImportPackage>
@@ -72,12 +74,13 @@
             <version>${project.version}</version>
         </dependency>
 
-
+<!--
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>
             <artifactId>org.apache.karaf.shell.console</artifactId>
             <version>${karaf.shell.command.version}</version>
         </dependency>
+-->
 
         <dependency>
             <groupId>org.hibernate.javax.persistence</groupId>

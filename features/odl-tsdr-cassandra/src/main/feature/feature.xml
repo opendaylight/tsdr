@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="odl-tsdr-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
+    <!-- Cassandra persistence data store -->
+    <feature name='odl-tsdr-cassandra' version='${project.version}' description="OpenDaylight :: TSDR :: Cassandra Persistence">
+    <configfile finalname="etc/tsdr-persistence-cassandra.properties">mvn:org.opendaylight.tsdr/tsdr-persistence-cassandra/${project.version}/xml/config</configfile>
+    </feature>
+</features>

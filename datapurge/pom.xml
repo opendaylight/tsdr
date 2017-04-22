@@ -104,16 +104,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.karaf.shell</groupId>
-            <artifactId>org.apache.karaf.shell.console</artifactId>
-            <version> ${karaf.shell.command.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.karaf.shell</groupId>
-            <artifactId>org.apache.karaf.shell.commands</artifactId>
-            <version> ${karaf.shell.command.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
             <artifactId>tsdr-persistence-spi</artifactId>
             <version>${project.version}</version>
@@ -156,7 +146,6 @@
     <dependency>
         <groupId>org.apache.felix</groupId>
         <artifactId>org.apache.felix.dependencymanager</artifactId>
-        <scope>provided</scope>
     </dependency>
     </dependencies>
 </project>

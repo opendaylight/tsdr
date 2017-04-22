@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-Copyright © 2017 Red Hat, Inc. and others.
-
-This program and the accompanying materials are made available under the
-terms of the Eclipse Public License v1.0 which accompanies this distribution,
-and is available at http://www.eclipse.org/legal/epl-v10.html
--->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -19,26 +12,19 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
     </parent>
 
     <groupId>org.opendaylight.tsdr</groupId>
-    <artifactId>odl-tsdr-model</artifactId>
+    <artifactId>odl-tsdr-hsqldb</artifactId>
     <version>1.4.0-SNAPSHOT</version>
     <packaging>feature</packaging>
     <!-- <name> formatting is used by autorelease to parse and notify projects on
          build failure. Please do not modify this unless you have a good reason. -->
-    <name>ODL :: tsdr :: ${project.artifactId}</name>
+    <name>ODL :: tsdr :: HSQLDB</name>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.opendaylight.mdsal.model</groupId>
-                <artifactId>mdsal-model-artifacts</artifactId>
-                <version>0.11.0-SNAPSHOT</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.opendaylight.controller</groupId>
-                <artifactId>mdsal-artifacts</artifactId>
-                <version>1.6.0-SNAPSHOT</version>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>tsdr-artifacts</artifactId>
+                <version>${project.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -46,15 +32,24 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
     </dependencyManagement>
 
     <dependencies>
+        <!-- TSDR dependencies -->
         <dependency>
-            <groupId>org.opendaylight.mdsal.model</groupId>
-            <artifactId>odl-mdsal-models</artifactId>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-core</artifactId>
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
         <dependency>
-            <groupId>org.opendaylight.controller.model</groupId>
-            <artifactId>model-inventory</artifactId>
-        </dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-persistence-hsqldb</artifactId>
+          <version>${project.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-persistence-hsqldb</artifactId>
+          <version>${project.version}</version>
+          <type>xml</type>
+          <classifier>config</classifier>
+      </dependency>
     </dependencies>
 </project>

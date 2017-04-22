@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.opendaylight.odlparent</groupId>
+        <artifactId>single-feature-parent</artifactId>
+        <version>1.9.0-SNAPSHOT</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>org.opendaylight.tsdr</groupId>
+    <artifactId>odl-tsdr-hbase</artifactId>
+    <version>1.4.0-SNAPSHOT</version>
+    <packaging>feature</packaging>
+
+    <name>ODL :: tsdr :: hbase</name>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>tsdr-artifacts</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- TSDR Dependencies -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-tsdr-core</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>odl-hbaseclient</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>features</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.opendaylight.tsdr</groupId>
+            <artifactId>tsdr-persistence-hbase</artifactId>
+            <version>${project.version}</version>
+            <exclusions>
+                <!-- This is provided by odl-hbaseclient -->
+                <exclusion>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.opendaylight.tsdr</groupId>
+            <artifactId>tsdr-persistence-hbase</artifactId>
+            <version>${project.version}</version>
+            <type>xml</type>
+            <classifier>config</classifier>
+            <exclusions>
+                <!-- This is provided by odl-hbaseclient -->
+                <exclusion>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+</dependencies>
+</project>

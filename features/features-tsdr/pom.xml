@@ -24,6 +24,7 @@
     <protobuf.version>2.4.1</protobuf.version>
     <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
     <sigar.version>1.6.4</sigar.version>
+    <felix.version>4.3.0</felix.version>
     <hadoop.version>1.2.0</hadoop.version>
     <hsqldb.version>1.8.0.10</hsqldb.version>
     <gson.version>2.5</gson.version>
@@ -132,6 +133,7 @@
           <classifier>config</classifier>
       </dependency>
 
+<!--
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-snmp-data-collector</artifactId>
@@ -145,6 +147,7 @@
           <classifier>config</classifier>
       </dependency>
 
+-->
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-openflow-statistics-collector</artifactId>
@@ -379,6 +382,7 @@
           <version>${project.version}</version>
           <type>cfg</type>
       </dependency>
+<!--
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-snmp-data-collector</artifactId>
@@ -403,6 +407,7 @@
           <artifactId>snmp</artifactId>
           <version>1.4.0-SNAPSHOT</version>
       </dependency>
+-->
       <dependency>
           <groupId>org.apache.servicemix.bundles</groupId>
           <artifactId>org.apache.servicemix.bundles.snmp4j</artifactId>
@@ -421,7 +426,7 @@
       <dependency>
           <groupId>org.apache.felix</groupId>
           <artifactId>org.apache.felix.dependencymanager</artifactId>
-          <scope>provided</scope>
+          <version>${felix.version}</version>
       </dependency>
   </dependencies>
 

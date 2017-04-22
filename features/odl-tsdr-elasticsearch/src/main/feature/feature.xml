@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="odl-odl-sdni-aggregator-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
+    <!-- ElasticSearch persistence data store -->
+    <feature name='odl-tsdr-elasticsearch' version='${project.version}' description="OpenDaylight :: TSDR :: ElasticSearch Persistence">
+    <configfile finalname="etc/tsdr-persistence-elasticsearch.properties">mvn:org.opendaylight.tsdr/tsdr-persistence-elasticsearch/${project.version}/properties/config</configfile>
+    <configfile finalname="etc/tsdr-persistence-elasticsearch_metric_mapping.json">mvn:org.opendaylight.tsdr/tsdr-persistence-elasticsearch/${project.version}/json/metric_config</configfile>
+    <configfile finalname="etc/tsdr-persistence-elasticsearch_log_mapping.json">mvn:org.opendaylight.tsdr/tsdr-persistence-elasticsearch/${project.version}/json/log_config</configfile>
+    <configfile finalname="etc/tsdr-persistence-elasticsearch_binary_mapping.json">mvn:org.opendaylight.tsdr/tsdr-persistence-elasticsearch/${project.version}/json/binary_config</configfile>
+    </feature>
+</features>

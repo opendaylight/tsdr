@@ -16,6 +16,7 @@
     <properties>
         <guava.old.version>16.0.1</guava.old.version>
         <config.version>0.7.0-SNAPSHOT</config.version>
+        <felix.version>4.3.0</felix.version>
         <features.test.version>1.9.0-SNAPSHOT</features.test.version>
         <hbase.version>0.94.15</hbase.version>
         <hadoop.version>1.2.0</hadoop.version>
@@ -24,7 +25,7 @@
         <jmxGeneratorPath>src/main/yang-gen-config</jmxGeneratorPath>
         <mdsal.version>1.6.0-SNAPSHOT</mdsal.version>
         <mdsal.model.version>0.11.0-SNAPSHOT</mdsal.model.version>
-        <model.version>1.9.0-SNAPSHOT</model.version>
+        <mdsal.common.version>2.3.0-SNAPSHOT</mdsal.common.version>
         <model.flow.statistics>0.5.0-SNAPSHOT</model.flow.statistics>
         <aaa.version>0.6.0-SNAPSHOT</aaa.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -33,7 +34,9 @@
         <sal.binding.config>1.6.0-SNAPSHOT</sal.binding.config>
         <sal.core.api>1.6.0-SNAPSHOT</sal.core.api>
         <yangtools.version>1.2.0-SNAPSHOT</yangtools.version>
+<!--
         <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
+-->
         <!--
         <hibernate.jpa.api.version>1.0.0.Final</hibernate.jpa.api.version>
         <hibernate.entity.manager.version>4.3.6.Final</hibernate.entity.manager.version>
@@ -78,14 +81,14 @@
       <dependency>
         <groupId>org.opendaylight.mdsal</groupId>
         <artifactId>mdsal-artifacts</artifactId>
-        <version>2.3.0-SNAPSHOT</version>
+        <version>${mdsal.common.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.opendaylight.mdsal.model</groupId>
         <artifactId>mdsal-model-artifacts</artifactId>
-        <version>0.11.0-SNAPSHOT</version>
+        <version>${mdsal.model.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -253,10 +256,8 @@
     <module>configuration</module>
     -->
     <module>persistence-spi</module>
+    <module>artifacts</module>
     <module>persistence-hbase</module>
-    <!--
-    <module>persistence-h2</module>
-    -->
     <module>persistence-cassandra</module>
     <module>persistence-hsqldb</module>
     <module>persistence-elasticsearch</module>
