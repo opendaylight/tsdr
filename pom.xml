@@ -269,7 +269,9 @@
     <module>collectors/sflow-statistics-collector</module>
     <module>collectors/controller-metrics-collector</module>
     <module>collectors/collector-spi</module>
+<!--
     <module>collectors/snmp-data-collector</module>
+-->
     <module>collectors/syslog-collector</module>
     <module>collectors/restconf-collector</module>
     <module>features</module>
