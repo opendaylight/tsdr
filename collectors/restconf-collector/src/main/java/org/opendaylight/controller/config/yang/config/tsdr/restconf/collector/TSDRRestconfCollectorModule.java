@@ -117,15 +117,14 @@ public class TSDRRestconfCollectorModule extends
      */
     private void registerFilter() {
         try {
-            ServiceReference configurationAdminReference = bundleContext
-                .getServiceReference(ConfigurationAdmin.class.getName());
+            ServiceReference<ConfigurationAdmin> configurationAdminReference = bundleContext
+                .getServiceReference(ConfigurationAdmin.class);
 
             if (configurationAdminReference != null) {
-                ConfigurationAdmin confAdmin
-                    = (ConfigurationAdmin) bundleContext.getService(configurationAdminReference);
+                ConfigurationAdmin confAdmin = bundleContext.getService(configurationAdminReference);
 
                 filterChainConfiguration = confAdmin.getConfiguration(FILTER_CHAIN_PID);
-                Dictionary properties = filterChainConfiguration.getProperties();
+                Dictionary<String, Object> properties = filterChainConfiguration.getProperties();
 
                 String customFilterList = (String)properties.get(FILTER_LIST_PROPERTY);
 
@@ -166,7 +165,7 @@ public class TSDRRestconfCollectorModule extends
      */
     private void unregisterFilter() {
         try {
-            Dictionary properties = filterChainConfiguration.getProperties();
+            Dictionary<String, Object> properties = filterChainConfiguration.getProperties();
             String customFilterList = (String)properties.get(FILTER_LIST_PROPERTY);
 
             if (customFilterList != null) {

@@ -5,7 +5,7 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.datacollection;
+package org.opendaylight.tsdr.restconf.collector;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -28,8 +28,6 @@ import org.opendaylight.controller.config.spi.Module;
 import org.opendaylight.controller.config.yang.config.tsdr.restconf.collector.AbstractTSDRRestconfCollectorModuleFactory;
 import org.opendaylight.controller.config.yang.config.tsdr.restconf.collector.TSDRRestconfCollectorModule;
 import org.opendaylight.controller.config.yang.config.tsdr.restconf.collector.TSDRRestconfCollectorModuleFactory;
-import org.opendaylight.tsdr.restconf.collector.TSDRRestconfCollectorFilter;
-import org.opendaylight.tsdr.restconf.collector.TSDRRestconfCollectorLogger;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
@@ -53,7 +51,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testRegisterFilterWhenOtherFiltersExistButTSDRFilterDoesNot() throws IOException {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module,"X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, String> properties = new Hashtable<>();
         properties.put("customFilterList", "randomFilter");
         Configuration filterChainConfiguration = prepareModuleForFilterRegistration(module, properties);
         module.createInstance();
@@ -74,7 +72,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testRegisterFilterWhenTSDRFilterExists() throws IOException {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module,"X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, String> properties = new Hashtable<>();
         properties.put("customFilterList", "randomFilter1," + TSDRRestconfCollectorFilter.class.getName()
             + ",randomFilter2");
         Configuration filterChainConfiguration = prepareModuleForFilterRegistration(module, properties);
@@ -96,7 +94,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testRegisterFilterWhenNoFiltersExist() throws IOException {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module,"X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, String> properties = new Hashtable<>();
         properties.put("customFilterList", "");
         Configuration filterChainConfiguration = prepareModuleForFilterRegistration(module, properties);
         module.createInstance();
@@ -116,7 +114,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testRegisterFilterWhenCustomFilterListDoesntExist() throws IOException {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module,"X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, String> properties = new Hashtable<>();
 
         Configuration filterChainConfiguration = prepareModuleForFilterRegistration(module, properties);
         module.createInstance();
@@ -136,7 +134,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testRegisterFilterWhenConfigurationAdminDoesNotExist() throws IOException {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module, "X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, String> properties = new Hashtable<>();
         Configuration filterChainConfiguration = prepareModuleForFilterRegistration(module, properties, false);
         module.createInstance();
 
@@ -151,7 +149,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testUnregisterFilterWhenFilterExistsWithOtherFilters() throws Exception {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module,"X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, Object> properties = new Hashtable<>();
         properties.put("customFilterList", "randomFilter1," + TSDRRestconfCollectorFilter.class.getName()
             + ",randomFilter2");
 
@@ -179,7 +177,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testUnregisterFilterWhenFilterExistsAlone() throws Exception {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module,"X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, Object> properties = new Hashtable<>();
         properties.put("customFilterList", TSDRRestconfCollectorFilter.class.getName());
 
         Configuration filterChainConfiguration = prepareModuleForFilterRegistration(module, properties);
@@ -206,7 +204,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testUnregisterFilterWhenCustomFilterListDoesntExist() throws Exception {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module,"X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, Object> properties = new Hashtable<>();
 
         Configuration filterChainConfiguration = prepareModuleForFilterRegistration(module, properties);
         module.createInstance();
@@ -230,7 +228,7 @@ public class TSDRRestconfCollectorModuleTest {
     public void testUnregisterFilterWhenFilterDoesntExist() throws Exception {
         TSDRRestconfCollectorModule module = new TSDRRestconfCollectorModule(null,null);
         setupModuleWithMocks(module,"X");
-        Dictionary<String, String> properties = new Hashtable<String, String>();
+        Dictionary<String, Object> properties = new Hashtable<>();
 
         Configuration filterChainConfiguration = prepareModuleForFilterRegistration(module, properties);
         module.createInstance();
@@ -298,42 +296,42 @@ public class TSDRRestconfCollectorModuleTest {
             }
 
             @Override
-            public Module createModule(String instanceName, DependencyResolver dependencyResolver,
-                BundleContext bundleContext) {
+            public Module createModule(final String instanceName, final DependencyResolver dependencyResolver,
+                final BundleContext bundleContext) {
 
                 return super.createModule(instanceName, dependencyResolver, bundleContext);
             }
 
             @Override
-            public Module createModule(String instanceName, DependencyResolver dependencyResolver,
-                DynamicMBeanWithInstance old, BundleContext bundleContext) throws Exception {
+            public Module createModule(final String instanceName, final DependencyResolver dependencyResolver,
+                final DynamicMBeanWithInstance old, final BundleContext bundleContext) throws Exception {
 
                 return super.createModule(instanceName, dependencyResolver, old, bundleContext);
             }
 
             @Override
-            public TSDRRestconfCollectorModule instantiateModule(String instanceName,
-                DependencyResolver dependencyResolver, TSDRRestconfCollectorModule oldModule, AutoCloseable oldInstance,
-                BundleContext bundleContext) {
+            public TSDRRestconfCollectorModule instantiateModule(final String instanceName,
+                final DependencyResolver dependencyResolver, final TSDRRestconfCollectorModule oldModule, final AutoCloseable oldInstance,
+                final BundleContext bundleContext) {
 
                 return super.instantiateModule(instanceName, dependencyResolver, oldModule, oldInstance, bundleContext);
             }
 
             @Override
-            public TSDRRestconfCollectorModule instantiateModule(String instanceName,
-                DependencyResolver dependencyResolver, BundleContext bundleContext) {
+            public TSDRRestconfCollectorModule instantiateModule(final String instanceName,
+                final DependencyResolver dependencyResolver, final BundleContext bundleContext) {
 
                 return super.instantiateModule(instanceName, dependencyResolver, bundleContext);
             }
 
             @Override
-            public TSDRRestconfCollectorModule handleChangedClass(DynamicMBeanWithInstance old) throws Exception {
+            public TSDRRestconfCollectorModule handleChangedClass(final DynamicMBeanWithInstance old) throws Exception {
                 return super.handleChangedClass(old);
             }
 
             @Override
             public Set<TSDRRestconfCollectorModule> getDefaultModules(
-                DependencyResolverFactory dependencyResolverFactory, BundleContext bundleContext) {
+                final DependencyResolverFactory dependencyResolverFactory, final BundleContext bundleContext) {
 
                 return super.getDefaultModules(dependencyResolverFactory, bundleContext);
             }
@@ -370,7 +368,7 @@ public class TSDRRestconfCollectorModuleTest {
 
     }
 
-    public void executeResolveDependencies(Object module) throws NoSuchMethodException, InvocationTargetException,
+    public void executeResolveDependencies(final Object module) throws NoSuchMethodException, InvocationTargetException,
         IllegalAccessException {
 
         Method methods[] = module.getClass().getSuperclass().getDeclaredMethods();
@@ -388,7 +386,7 @@ public class TSDRRestconfCollectorModuleTest {
      * @param obj the module to be set up
      * @param factoryName the name of the module
      */
-    public static final void setupModuleWithMocks(Object obj,String factoryName) {
+    public static final void setupModuleWithMocks(final Object obj,final String factoryName) {
         try {
             org.opendaylight.controller.sal.binding.api.RpcProviderRegistry rpcProviderRegistry
                 = Mockito.mock(org.opendaylight.controller.sal.binding.api.RpcProviderRegistry.class);
@@ -425,7 +423,7 @@ public class TSDRRestconfCollectorModuleTest {
         }
     }
 
-    public static final Field findField(String name, Class clz) {
+    public static final Field findField(final String name, final Class clz) {
         Field[] fields = clz.getDeclaredFields();
         for (Field f: fields) {
             if (f.getName().equals(name)) {
@@ -449,10 +447,10 @@ public class TSDRRestconfCollectorModuleTest {
      * @param isConfigurationAdminInstalled when set to false, the configuration admin will be null
      * @return the configuration object of the filter chain, could be used to check if its update method is called
      */
-    private Configuration prepareModuleForFilterRegistration(TSDRRestconfCollectorModule module, Dictionary properties,
-        boolean isConfigurationAdminInstalled) throws IOException {
+    private Configuration prepareModuleForFilterRegistration(final TSDRRestconfCollectorModule module, final Dictionary properties,
+        final boolean isConfigurationAdminInstalled) throws IOException {
 
-        ServiceReference configurationAdminServiceReference = null;
+        ServiceReference<ConfigurationAdmin> configurationAdminServiceReference = null;
         if (isConfigurationAdminInstalled) {
             configurationAdminServiceReference = Mockito.mock(ServiceReference.class);
         }
@@ -465,7 +463,7 @@ public class TSDRRestconfCollectorModuleTest {
             .thenReturn(filterChainConfiguration);
 
         BundleContext bundleContext = Mockito.mock(BundleContext.class);
-        Mockito.when(bundleContext.getServiceReference(ConfigurationAdmin.class.getName()))
+        Mockito.when(bundleContext.getServiceReference(ConfigurationAdmin.class))
             .thenReturn(configurationAdminServiceReference);
         Mockito.when(bundleContext.getService(configurationAdminServiceReference)).thenReturn(configurationAdmin);
 
@@ -483,7 +481,7 @@ public class TSDRRestconfCollectorModuleTest {
      * @param properties the properties that we want the module to find when querying the filterchain configuration
      * @return the configuration object of the filter chain, could be used to check if its update method is called
      */
-    private Configuration prepareModuleForFilterRegistration(TSDRRestconfCollectorModule module, Dictionary properties)
+    private Configuration prepareModuleForFilterRegistration(final TSDRRestconfCollectorModule module, final Dictionary properties)
         throws IOException {
 
         return prepareModuleForFilterRegistration(module, properties, true);

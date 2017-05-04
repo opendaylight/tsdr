@@ -13,8 +13,6 @@
     <properties>
         <yang.jmx.generator.plugin.version>0.6.0-SNAPSHOT</yang.jmx.generator.plugin.version>
         <javax.servlet.api.version>3.0.1</javax.servlet.api.version>
-        <org.osgi.core.version>4.3.0</org.osgi.core.version>
-        <org.osgi.compendium.version>1.4.0</org.osgi.compendium.version>
     </properties>
     <build>
         <plugins>
@@ -110,13 +108,7 @@
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>${org.osgi.core.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
             <artifactId>org.osgi.compendium</artifactId>
-            <version>${org.osgi.compendium.version}</version>
         </dependency>
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
