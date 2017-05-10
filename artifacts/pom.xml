@@ -211,6 +211,13 @@
           <type>xml</type>
           <classifier>config</classifier>
       </dependency>
+      <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-persistence-elasticsearch</artifactId>
+          <version>${project.version}</version>
+          <type>xml</type>
+          <classifier>config</classifier>
+      </dependency>
 
       <!-- TSDR Features -->
       <dependency>
