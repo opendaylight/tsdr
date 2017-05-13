@@ -371,8 +371,8 @@ public class DataCollectionTest {
                 .augmentation(NodeGroupStatistics.class);
         handler.handleData(nodeID, id, buildNodeGroupStatistics());
     }
-    @Test
-    public void testNodeConnectorStatisticsChangeHandler(){
+    /*@Test
+   public void testNodeConnectorStatisticsChangeHandler(){
         NodeConnectorStatisticsChangeHandler handler = new NodeConnectorStatisticsChangeHandler(collector);
         Node node = nodes.getNode().get(0);
         InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
@@ -384,7 +384,7 @@ public class DataCollectionTest {
                 .augmentation(
                         FlowCapableNodeConnectorStatisticsData.class);
         handler.handleData(nodeID, id, buildFlowCapableNodeConnectorStatisticsData());
-    }
+    }*/
     @Test
     public void testFlowCapableNodeConnectorQueueStatisticsDataHandler(){
         FlowCapableNodeConnectorQueueStatisticsDataHandler handler = new FlowCapableNodeConnectorQueueStatisticsDataHandler(collector);
