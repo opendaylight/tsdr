@@ -4,7 +4,7 @@
    <parent>
      <groupId>org.opendaylight.odlparent</groupId>
      <artifactId>odlparent</artifactId>
-     <version>1.8.1-SNAPSHOT</version>
+     <version>1.8.1-Carbon</version>
      <relativePath/>
    </parent>
 
@@ -12,30 +12,30 @@
   <packaging>pom</packaging>
   <groupId>org.opendaylight.tsdr</groupId>
   <artifactId>tsdr</artifactId>
-  <version>1.3.1-SNAPSHOT</version>
+  <version>1.3.1-Carbon</version>
     <properties>
         <guava.old.version>16.0.1</guava.old.version>
-        <config.version>0.6.1-SNAPSHOT</config.version>
+        <config.version>0.6.1-Carbon</config.version>
 <!--
         <felix.version>4.3.0</felix.version>
 -->
-        <features.test.version>1.8.1-SNAPSHOT</features.test.version>
+        <features.test.version>1.8.1-Carbon</features.test.version>
         <hbase.version>0.94.15</hbase.version>
         <hadoop.version>1.2.0</hadoop.version>
-        <ietf-inet-types.version>1.2.1-SNAPSHOT</ietf-inet-types.version>
-        <ietf-yang-types.version>2013.07.15.10.1-SNAPSHOT</ietf-yang-types.version>
+        <ietf-inet-types.version>1.2.1-Carbon</ietf-inet-types.version>
+        <ietf-yang-types.version>2013.07.15.10.1-Carbon</ietf-yang-types.version>
         <jmxGeneratorPath>src/main/yang-gen-config</jmxGeneratorPath>
-        <mdsal.version>1.5.1-SNAPSHOT</mdsal.version>
-        <mdsal.model.version>0.10.1-SNAPSHOT</mdsal.model.version>
-        <mdsal.common.version>2.2.1-SNAPSHOT</mdsal.common.version>
-        <model.flow.statistics>0.4.1-SNAPSHOT</model.flow.statistics>
-        <aaa.version>0.5.1-SNAPSHOT</aaa.version>
+        <mdsal.version>1.5.1-Carbon</mdsal.version>
+        <mdsal.model.version>0.10.1-Carbon</mdsal.model.version>
+        <mdsal.common.version>2.2.1-Carbon</mdsal.common.version>
+        <model.flow.statistics>0.4.1-Carbon</model.flow.statistics>
+        <aaa.version>0.5.1-Carbon</aaa.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <protobuf.version>2.4.1</protobuf.version>
         <salGeneratorPath>src/main/yang-gen-sal</salGeneratorPath>
-        <sal.binding.config>1.5.1-SNAPSHOT</sal.binding.config>
-        <sal.core.api>1.5.1-SNAPSHOT</sal.core.api>
-        <yangtools.version>1.1.1-SNAPSHOT</yangtools.version>
+        <sal.binding.config>1.5.1-Carbon</sal.binding.config>
+        <sal.core.api>1.5.1-Carbon</sal.core.api>
+        <yangtools.version>1.1.1-Carbon</yangtools.version>
 <!--
         <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
 -->
@@ -50,7 +50,7 @@
         <io.netty4.version>4.0.33.Final</io.netty4.version>
         <com.datastax.cassandra.version>2.1.2</com.datastax.cassandra.version>
         <sigar.version>1.6.4</sigar.version>
-        <yang-jmx-generator.version>0.6.1-SNAPSHOT</yang-jmx-generator.version>
+        <yang-jmx-generator.version>0.6.1-Carbon</yang-jmx-generator.version>
         <hsqldb.version>1.8.0.10</hsqldb.version>
         <gson.version>2.5</gson.version>
         <jest.version>2.0.3</jest.version>
