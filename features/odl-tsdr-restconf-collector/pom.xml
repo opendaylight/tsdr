@@ -7,19 +7,19 @@
     <parent>
         <groupId>org.opendaylight.odlparent</groupId>
         <artifactId>single-feature-parent</artifactId>
-        <version>1.8.1-SNAPSHOT</version>
+        <version>1.8.2-SNAPSHOT</version>
         <relativePath/>
     </parent>
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-restconf-collector</artifactId>
-    <version>1.3.1-SNAPSHOT</version>
+    <version>1.3.2-SNAPSHOT</version>
     <packaging>feature</packaging>
 
     <name>ODL :: tsdr :: restconfcollector</name>
     <properties>
-          <aaa.version>0.5.1-SNAPSHOT</aaa.version>
-          <restconf.version>1.5.1-SNAPSHOT</restconf.version>
+          <aaa.version>0.5.2-SNAPSHOT</aaa.version>
+          <restconf.version>1.5.2-SNAPSHOT</restconf.version>
     </properties>
 
     <dependencyManagement>
