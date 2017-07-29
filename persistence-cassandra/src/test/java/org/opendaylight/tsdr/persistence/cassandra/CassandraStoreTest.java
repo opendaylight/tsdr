@@ -7,11 +7,16 @@
  */
 package org.opendaylight.tsdr.persistence.cassandra;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import org.junit.*;
+import java.io.File;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
@@ -22,10 +27,11 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
-import java.io.File;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 /**
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
@@ -42,11 +48,13 @@ public class CassandraStoreTest {
     @Before
     public void before(){
         store = new CassandraStore(session,cluster);
+       // Mockito.when(queryBuilder.(Mockito.any(Session.class),Mockito.any(Cluster.class))).thenReturn(queryBuilder);
         Mockito.when(session.execute(Mockito.anyString())).thenReturn(resultSet);
         Mockito.when(resultSet.all()).thenReturn(rows);
         Mockito.when(row.getString("KeyPath")).thenReturn(FormatUtil.getTSDRMetricKey(createMetricRecord()));
         Mockito.when(row.getDouble("value")).thenReturn(11d);
         Mockito.when(row.getString("value")).thenReturn(createLogRecord().getRecordFullText());
+        Mockito.when(session.getCluster()).thenReturn(cluster);
         store.startBatch();
         if(rows.isEmpty()){
             rows.add(row);

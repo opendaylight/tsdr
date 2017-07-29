@@ -7,16 +7,6 @@
  */
 package org.opendaylight.tsdr.persistence.cassandra;
 
-import com.datastax.driver.core.BatchStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,6 +17,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRCacheEntry;
@@ -41,6 +32,17 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.BatchStatement;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
@@ -188,7 +190,6 @@ public class CassandraStore {
         if(cacheEntry==null){
             cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
         }
-
         RegularStatement st = QueryBuilder.insertInto("tsdr","MetricVal").
                 value("KeyA",cacheEntry.getMd5ID().getMd5Long1()).
                 value("KeyB",cacheEntry.getMd5ID().getMd5Long2()).
@@ -211,7 +212,6 @@ public class CassandraStore {
         if(cacheEntry==null){
             cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
         }
-
         RegularStatement st = QueryBuilder.insertInto("tsdr","MetricLog").
                 value("KeyA",cacheEntry.getMd5ID().getMd5Long1()).
                 value("KeyB",cacheEntry.getMd5ID().getMd5Long2()).
@@ -235,7 +235,6 @@ public class CassandraStore {
         if(cacheEntry==null){
             cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
         }
-
         RegularStatement st = QueryBuilder.insertInto("tsdr","MetricBlob").
                 value("KeyA",cacheEntry.getMd5ID().getMd5Long1()).
                 value("KeyB",cacheEntry.getMd5ID().getMd5Long2()).
@@ -407,7 +406,11 @@ public class CassandraStore {
                 final ResultSet rs = session.execute(cql);
                 for(Row row:rs.all()){
                     String deleteCql = dcql1+row.getLong("keyA")+cql2+row.getLong("keyB")+dcql3+row.getLong("time");
-                    batch.add(new SimpleStatement(deleteCql));
+                    try {
+                        batch.add((Statement)(new SimpleStatement(deleteCql)));
+                    }catch(Exception e) {
+                        log.error("Error creating simpleStatement", e);
+                    }
                     if(this.batch.size()>=MAX_BATCH_SIZE){
                         this.executeBatch();
                         this.startBatch();
@@ -437,7 +440,6 @@ public class CassandraStore {
                 final ResultSet rs = session.execute(cql);
                 for(Row row:rs.all()){
                     String deleteCql = dcql1+row.getLong("keyA")+cql2+row.getLong("keyB")+dcql3+row.getLong("time")+dcql4+row.getInt("xIndex");
-                    batch.add(new SimpleStatement(deleteCql));
                     if(this.batch.size()>=MAX_BATCH_SIZE){
                         this.executeBatch();
                         this.startBatch();
@@ -467,7 +469,11 @@ public class CassandraStore {
                 final ResultSet rs = session.execute(cql);
                 for(Row row:rs.all()){
                     String deleteCql = dcql1+row.getLong("keyA")+cql2+row.getLong("keyB")+dcql3+row.getLong("time")+dcql4+row.getInt("xIndex");
-                    batch.add(new SimpleStatement(deleteCql));
+                    try{
+                        batch.add((Statement)(new SimpleStatement(deleteCql)));
+                    }catch(Exception e){
+                        log.error("Error creating simpleStatement", e);
+                    }
                     if(this.batch.size()>=MAX_BATCH_SIZE){
                         this.executeBatch();
                         this.startBatch();

@@ -18,8 +18,10 @@
   <properties>
     <com.codahale.metrics.version>3.0.2</com.codahale.metrics.version>
     <io.netty.version>3.9.0.Final</io.netty.version>
+<!--
     <guava.old.version>16.0.1</guava.old.version>
-    <com.datastax.cassandra.version>2.1.2</com.datastax.cassandra.version>
+-->
+    <com.datastax.cassandra.version>2.2.0-rc3</com.datastax.cassandra.version>
     <hbase.version>0.94.15</hbase.version>
     <protobuf.version>2.4.1</protobuf.version>
     <karaf.shell.command.version>3.0.1</karaf.shell.command.version>
