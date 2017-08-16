@@ -11,8 +11,6 @@ module tsdr-collector-spi {
     namespace "urn:opendaylight:params:xml:ns:yang:controller:config:tsdr:collector:spi";
     prefix "tsdr-collector-spi";
 
-    import config { prefix config; revision-date 2013-04-05; }
-    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
     import TSDR {prefix TSDR;revision-date "2015-02-19";}
     import tsdr-metric-data { prefix tsdr-metric-data; revision-date 2016-03-25;}
     import tsdr-log-data { prefix tsdr-log-data; revision-date 2016-03-25;}
@@ -27,27 +25,6 @@ module tsdr-collector-spi {
         description
             "Initial revision.";
     }
-
-    // This is the definition of the service implementation as a module identity.
-    identity tsdr-collector-spi {
-            base config:module-type;
-            config:java-name-prefix TSDRCollectorSPI;
-    }
-    container tsdr-collector-spi-container {
-    }
-    augment "/config:modules/config:module/config:configuration" {
-                case tsdr-collector-spi {
-                    when "/config:modules/config:module/config:type = 'tsdr-collector-spi'";
-                    container rpc-registry {
-                        uses config:service-ref {
-                            refine type {
-                                mandatory true;
-                                config:required-identity mdsal:binding-rpc-registry;
-                            }
-                        }
-                    }
-                }
-            }
 
     rpc insertTSDRMetricRecord {
         description

@@ -11,9 +11,6 @@ module TSDR-dataquery-impl {
   namespace "urn:opendaylight:params:xml:ns:yang:controller:config:TSDR-dataquery:impl";
   prefix "TSDR-dataquery-impl";
 
-    import config { prefix config; revision-date 2013-04-05; }
-    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
-    import rpc-context { prefix rpcx; revision-date 2013-06-17; }
     import tsdr-metric-data { prefix tsdr-metric-data; revision-date 2016-03-25;}
     import tsdr-log-data { prefix tsdr-log-data; revision-date 2016-03-25;}
 
@@ -26,46 +23,6 @@ module TSDR-dataquery-impl {
     revision "2015-02-19" {
         description
             "Initial revision.";
-    }
-    // This is the definition of the service implementation as a module identity.
-    identity TSDR-dataquery-impl {
-            base config:module-type;
-            config:java-name-prefix TSDRDataquery;
-    }
-
-    // Augments the 'configuration' choice node under modules/module.
-    // We consume the three main services, RPCs, DataStore, and Notifications
-    augment "/config:modules/config:module/config:configuration" {
-        case TSDR-dataquery-impl {
-            when "/config:modules/config:module/config:type = 'TSDR-dataquery-impl'";
-
-            container rpc-registry {
-                uses config:service-ref {
-                    refine type {
-                        mandatory true;
-                        config:required-identity mdsal:binding-rpc-registry;
-                    }
-                }
-            }
-
-          container notification-service {
-              uses config:service-ref {
-                    refine type {
-                        mandatory true;
-                        config:required-identity mdsal:binding-notification-service;
-                    }
-                }
-            }
-
-            container data-broker {
-                uses config:service-ref {
-                    refine type {
-                        mandatory false;
-                        config:required-identity mdsal:binding-async-data-broker;
-                    }
-                }
-            }
-        }
     }
 
     rpc addMetric {

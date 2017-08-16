@@ -31,36 +31,6 @@
                     </instructions>
                 </configuration>
             </plugin>
-             <plugin>
-                 <groupId>org.opendaylight.yangtools</groupId>
-                 <artifactId>yang-maven-plugin</artifactId>
-                 <version>${yangtools.version}</version>
-                 <executions>
-                     <execution>
-                         <goals>
-                            <goal>generate-sources</goal>
-                         </goals>
-                         <configuration>
-                           <yangFilesRootDir>src/main/yang</yangFilesRootDir>
-                           <codeGenerators>
-                              <generator>
-                                  <codeGeneratorClass>org.opendaylight.mdsal.binding.maven.api.gen.plugin.CodeGeneratorImpl</codeGeneratorClass>
-                                  <outputBaseDir>${salGeneratorPath}</outputBaseDir>
-                              </generator>
-                             </codeGenerators>
-                             <inspectDependencies>true</inspectDependencies>
-                          </configuration>
-                        </execution>
-                 </executions>
-                 <dependencies>
-                     <dependency>
-                          <groupId>org.opendaylight.mdsal</groupId>
-                          <artifactId>maven-sal-api-gen-plugin</artifactId>
-                          <version>${mdsal.model.version}</version>
-                          <type>jar</type>
-                     </dependency>
-                 </dependencies>
-             </plugin>
         </plugins>
     </build>
     <dependencies>
@@ -95,17 +65,14 @@
         <dependency>
             <groupId>org.opendaylight.yangtools</groupId>
             <artifactId>yang-common</artifactId>
-            <version>${yangtools.version}</version>
         </dependency>
         <dependency>
             <groupId>org.opendaylight.controller</groupId>
             <artifactId>sal-binding-config</artifactId>
-            <version>${sal.binding.config}</version>
         </dependency>
         <dependency>
             <groupId>org.opendaylight.controller</groupId>
             <artifactId>sal-core-api</artifactId>
-            <version>${sal.core.api}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.felix</groupId>

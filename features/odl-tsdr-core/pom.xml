@@ -23,13 +23,7 @@
         <mdsal.model.version>0.11.0-SNAPSHOT</mdsal.model.version>
         <mdsal.common.version>2.3.0-SNAPSHOT</mdsal.common.version>
         <restconf.version>1.6.0-SNAPSHOT</restconf.version>
-        <gson.version>2.5</gson.version>
-        <config.version>0.7.0-SNAPSHOT</config.version>
         <controller.mdsal.version>1.6.0-SNAPSHOT</controller.mdsal.version>
-        <yangtools.version>1.2.0-SNAPSHOT</yangtools.version>
-        <felix.version>4.3.0</felix.version>
-        <bouncycastle.version>1.57</bouncycastle.version>
-
     </properties>
  
 
@@ -58,13 +52,6 @@
                 <version>${controller.mdsal.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.opendaylight.controller</groupId>
-                <artifactId>config-artifacts</artifactId>
-                <version>${config.version}</version>
-               <type>pom</type>
-               <scope>import</scope>
             </dependency>
 
             <!-- ODL-MDSAL-ARTIFACTS -->
@@ -97,23 +84,12 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- yangtools -->
-        <dependency>
-            <groupId>org.opendaylight.yangtools</groupId>
-            <artifactId>odl-yangtools-common</artifactId>
-            <version>${yangtools.version}</version>
-            <type>xml</type>
-            <classifier>features</classifier>
-            <scope>runtime</scope>
-        </dependency>
-
         <!-- Controller -->
         <dependency>
             <groupId>org.opendaylight.controller</groupId>
             <artifactId>odl-mdsal-broker</artifactId>
             <type>xml</type>
             <classifier>features</classifier>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- MDSAL MODEL -->
@@ -123,7 +99,6 @@
             <version>${mdsal.model.version}</version>
             <type>xml</type>
             <classifier>features</classifier>
-            <scope>runtime</scope>
         </dependency>
 
          <!-- Openflow plugin -->
@@ -133,19 +108,7 @@
             <version>${openflowplugin.version}</version>
             <classifier>features</classifier>
             <type>xml</type>
-            <scope>runtime</scope>
         </dependency>
-        <dependency>
-             <groupId>org.opendaylight.mdsal.model</groupId>
-            <artifactId>ietf-inet-types-2013-07-15</artifactId>
-            <version>1.3.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opendaylight.mdsal.model</groupId>
-            <artifactId>ietf-yang-types-20130715</artifactId>
-        </dependency>
-
-
         <!-- restconf -->
         <dependency>
             <groupId>org.opendaylight.netconf</groupId>
@@ -154,13 +117,6 @@
             <classifier>features</classifier>
             <type>xml</type>
         </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk15on</artifactId>
-            <version>${bouncycastle.version}</version>
-        </dependency>
-
-
         <!-- TSDR dependencies -->
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -187,41 +143,12 @@
             <artifactId>tsdr-dataquery</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- TSDR config file -->
-        <dependency>
-          <groupId>org.opendaylight.tsdr</groupId>
-          <artifactId>tsdr-collector-spi</artifactId>
-          <version>${project.version}</version>
-          <type>xml</type>
-          <classifier>config</classifier>
-      </dependency>
-        <dependency>
-            <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-datastorage</artifactId>
-            <version>${project.version}</version>
-            <type>xml</type>
-            <classifier>config</classifier>
-        </dependency>
-        <dependency>
-            <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-datapurge</artifactId>
-            <version>${project.version}</version>
-            <type>xml</type>
-            <classifier>config</classifier>
-        </dependency>
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
             <artifactId>tsdr-datapurge</artifactId>
             <version>${project.version}</version>
             <type>cfg</type>
             <classifier>config1</classifier>
-        </dependency>
-        <dependency>
-          <groupId>org.opendaylight.tsdr</groupId>
-          <artifactId>tsdr-dataquery</artifactId>
-          <version>${project.version}</version>
-          <type>xml</type>
-          <classifier>config</classifier>
         </dependency>
     </dependencies>
 </project>

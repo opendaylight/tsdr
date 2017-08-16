@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0"
+           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+    odl:use-default-for-reference-types="true" odl:restart-dependents-on-updates="true">
+
+  <cm:property-placeholder persistent-id="tsdr.data.purge" update-strategy="none">
+    <cm:default-properties>
+      <cm:property name="data_purge_enabled" value="false"/>
+      <cm:property name="data_purge_time" value="23:59:59"/>
+      <cm:property name="data_purge_interval_in_minutes" value="1440"/>
+      <cm:property name="retention_time_in_hours" value="168"/>
+    </cm:default-properties>
+  </cm:property-placeholder>
+
+  <reference id="rpcProvider" interface="org.opendaylight.controller.sal.binding.api.RpcProviderRegistry"/>
+
+  <bean id="purgingScheduler" class="org.opendaylight.tsdr.datapurge.PurgingScheduler"
+      init-method="schedule" destroy-method="cancelScheduledTask">
+    <argument ref="rpcProvider"/>
+    <argument value="${data_purge_enabled}"/>
+    <argument value="${data_purge_interval_in_minutes}"/>
+    <argument value="${data_purge_time}"/>
+    <argument value="${retention_time_in_hours}"/>
+  </bean>
+</blueprint>

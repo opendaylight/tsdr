@@ -38,7 +38,7 @@ public class TSDRNBIServiceImplTest {
 
     @Test
     public void testAddMetricsWithServiceInInput(){
-        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService,rpcRegistry);
+        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService);
         AddMetricInputBuilder input = new AddMetricInputBuilder();
         input.setMetricName("Test");
         input.setMetricValue(new BigDecimal(10));
@@ -52,7 +52,7 @@ public class TSDRNBIServiceImplTest {
 
     @Test
     public void testAddMetricsWithoutServiceInInput(){
-        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService,rpcRegistry);
+        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService);
         AddMetricInputBuilder input = new AddMetricInputBuilder();
         input.setMetricName("Test");
         input.setMetricValue(new BigDecimal(10));
@@ -66,7 +66,7 @@ public class TSDRNBIServiceImplTest {
 
     @Test
     public void testAddLogsWithServiceInInput(){
-        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService,rpcRegistry);
+        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService);
         AddLogInputBuilder input = new AddLogInputBuilder();
         input.setRecordFullText("Test");
         input.setNodeID("Test");
@@ -79,7 +79,7 @@ public class TSDRNBIServiceImplTest {
 
     @Test
     public void testAddLogsWithoutServiceInInput(){
-        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService,rpcRegistry);
+        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService);
         AddLogInputBuilder input = new AddLogInputBuilder();
         input.setRecordFullText("Test");
         input.setNodeID("Test");

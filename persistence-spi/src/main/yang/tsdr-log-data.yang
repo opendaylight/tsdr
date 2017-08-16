@@ -11,9 +11,6 @@ module tsdr-log-data {
     namespace "opendaylight:tsdr:log:data";
 
     prefix tsdr-log-data;
-    import config { prefix config; revision-date 2013-04-05; }
-    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
-    import rpc-context { prefix rpcx; revision-date 2013-06-17; }
     import TSDR { prefix TSDR; revision-date 2015-02-19; }
 
     contact
@@ -25,11 +22,6 @@ module tsdr-log-data {
     revision "2016-03-25" {
       description
         "TSDR Log Data Model.";
-    }
-
-    identity tsdr-log-data {
-        base config:module-type;
-        config:java-name-prefix TSDRLogData;
     }
 
     grouping TSDRLog {

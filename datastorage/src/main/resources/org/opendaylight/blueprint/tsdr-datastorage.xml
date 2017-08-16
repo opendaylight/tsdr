@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0"
+    odl:use-default-for-reference-types="true">
+
+  <reference id="metricPersistenceService" interface="org.opendaylight.tsdr.spi.persistence.TSDRMetricPersistenceService"
+      availability="optional"/>
+  <reference id="logPersistenceService" interface="org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService"
+      availability="optional"/>
+  <reference id="binaryPersistenceService" interface="org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService"
+      availability="optional"/>
+
+  <bean id="storageService" class="org.opendaylight.tsdr.datastorage.TSDRStorageServiceImpl"
+      destroy-method="close">
+    <argument ref="metricPersistenceService"/>
+    <argument ref="logPersistenceService"/>
+    <argument ref="binaryPersistenceService"/>
+  </bean>
+
+  <odl:rpc-implementation ref="storageService"/>
+</blueprint>

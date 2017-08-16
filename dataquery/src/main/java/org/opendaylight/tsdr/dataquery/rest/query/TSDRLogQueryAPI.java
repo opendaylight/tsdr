@@ -9,7 +9,19 @@ package org.opendaylight.tsdr.dataquery.rest.query;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import org.opendaylight.tsdr.dataquery.TSDRNBIServiceImpl;
 import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNBIRestAPI;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.GetTSDRLogRecordsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.GetTSDRLogRecordsOutput;
@@ -17,14 +29,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.gettsdr
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
@@ -55,7 +59,7 @@ public class TSDRLogQueryAPI {
         input.setStartTime(TSDRNBIRestAPI.getTimeFromString(request.getFrom()));
         input.setEndTime(TSDRNBIRestAPI.getTimeFromString(request.getUntil()));
 
-        Future<RpcResult<GetTSDRLogRecordsOutput>> metric = TSDRDataqueryModule.logDataService.getTSDRLogRecords(input.build());
+        Future<RpcResult<GetTSDRLogRecordsOutput>> metric = TSDRNBIServiceImpl.logDataService().getTSDRLogRecords(input.build());
 
         if(!metric.get().isSuccessful()){
             Response.status(503).entity("{}").build();

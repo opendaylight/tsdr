@@ -13,10 +13,16 @@ import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.LowLevelAppDescriptor;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
 import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNBIRestAPI;
 import org.opendaylight.tsdr.dataquery.rest.query.TSDRLogQueryAPI;
 import org.opendaylight.tsdr.dataquery.rest.query.TSDRMetricsQueryAPI;
@@ -28,7 +34,13 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.gettsdr
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.gettsdrlogrecords.output.LogsBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributesBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.*;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsOutputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetricsBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
@@ -37,14 +49,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yangtools.yang.common.RpcResult;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
@@ -115,17 +119,16 @@ public class TSDRQueryAndNBITest extends JerseyTest{
     @Override
     protected AppDescriptor configure() {
         config = new QueryResourceConfig();
-        TSDRDataqueryModule.metricDataService = Mockito.mock(TsdrMetricDataService.class);
-        TSDRDataqueryModule.logDataService = Mockito.mock(TsdrLogDataService.class);
+        new TSDRNBIServiceImpl(Mockito.mock(TsdrMetricDataService.class), Mockito.mock(TsdrLogDataService.class));
         Future<RpcResult<GetTSDRMetricsOutput>> metric = Mockito.mock(Future.class);
         Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metricAggregated = Mockito.mock(Future.class);
         Future<RpcResult<GetTSDRLogRecordsOutput>> metric2 = Mockito.mock(Future.class);
         RpcResult<GetTSDRMetricsOutput> rpcResult = Mockito.mock(RpcResult.class);
         RpcResult<GetTSDRAggregatedMetricsOutput> rpcResultAggregated = Mockito.mock(RpcResult.class);
         RpcResult<GetTSDRLogRecordsOutput> rpcResult2 = Mockito.mock(RpcResult.class);
-        Mockito.when(TSDRDataqueryModule.metricDataService.getTSDRMetrics(Mockito.any(GetTSDRMetricsInput.class))).thenReturn(metric);
-        Mockito.when(TSDRDataqueryModule.metricDataService.getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class))).thenReturn(metricAggregated);
-        Mockito.when(TSDRDataqueryModule.logDataService.getTSDRLogRecords(Mockito.any(GetTSDRLogRecordsInput.class))).thenReturn(metric2);
+        Mockito.when(TSDRNBIServiceImpl.metricDataService().getTSDRMetrics(Mockito.any(GetTSDRMetricsInput.class))).thenReturn(metric);
+        Mockito.when(TSDRNBIServiceImpl.metricDataService().getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class))).thenReturn(metricAggregated);
+        Mockito.when(TSDRNBIServiceImpl.logDataService().getTSDRLogRecords(Mockito.any(GetTSDRLogRecordsInput.class))).thenReturn(metric2);
         try {
             Mockito.when(metric.get()).thenReturn(rpcResult);
             Mockito.when(metricAggregated.get()).thenReturn(rpcResultAggregated);
@@ -175,10 +178,10 @@ public class TSDRQueryAndNBITest extends JerseyTest{
 
     @Test
     public void testNBIEmptyResponseForMetrics() throws InterruptedException, ExecutionException{
-        TSDRDataqueryModule.metricDataService = Mockito.mock(TsdrMetricDataService.class);
+        new TSDRNBIServiceImpl(Mockito.mock(TsdrMetricDataService.class), Mockito.mock(TsdrLogDataService.class));
         Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = Mockito.mock(Future.class);
         RpcResult<GetTSDRAggregatedMetricsOutput> rpcResult = Mockito.mock(RpcResult.class);
-        Mockito.when(TSDRDataqueryModule.metricDataService.getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class))).thenReturn(metric);
+        Mockito.when(TSDRNBIServiceImpl.metricDataService().getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class))).thenReturn(metric);
         Mockito.when(metric.get()).thenReturn(rpcResult);
         Mockito.when(rpcResult.getResult()).thenReturn(createAggregatedMetricRecords(true));
 
@@ -211,6 +214,7 @@ public class TSDRQueryAndNBITest extends JerseyTest{
     }
 
     private class QueryResourceConfig extends DefaultResourceConfig {
+        @Override
         public Set<Object> getSingletons() {
             HashSet<Object> set = new HashSet<>(1);
             TSDRMetricsQueryAPI qapi = new TSDRMetricsQueryAPI();

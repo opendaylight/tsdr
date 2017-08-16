@@ -9,22 +9,30 @@ package org.opendaylight.tsdr.dataquery.rest.query;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import org.opendaylight.tsdr.dataquery.TSDRNBIServiceImpl;
 import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNBIRestAPI;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.*;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
@@ -65,7 +73,7 @@ public class TSDRMetricsQueryAPI {
             input.setInterval(Math.floorDiv(until - from, maxDataPoints) + 1);
             input.setAggregation(AggregationType.valueOf(request.getAggregation()));
 
-            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRDataqueryModule.metricDataService.getTSDRAggregatedMetrics(input.build());
+            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRNBIServiceImpl.metricDataService().getTSDRAggregatedMetrics(input.build());
 
             if(!metric.get().isSuccessful()){
                 Response.status(503).entity("{}").build();
@@ -81,7 +89,7 @@ public class TSDRMetricsQueryAPI {
             input.setStartTime(TSDRNBIRestAPI.getTimeFromString(request.getFrom()));
             input.setEndTime(TSDRNBIRestAPI.getTimeFromString(request.getUntil()));
 
-            Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.metricDataService.getTSDRMetrics(input.build());
+            Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRNBIServiceImpl.metricDataService().getTSDRMetrics(input.build());
 
             if(!metric.get().isSuccessful()){
                 Response.status(503).entity("{}").build();

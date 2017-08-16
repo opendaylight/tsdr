@@ -7,7 +7,9 @@
  */
 package org.opendaylight.tsdr.dataquery;
 
-import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Future;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
@@ -26,24 +28,26 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Future;
-
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
     private static Logger logger = LoggerFactory.getLogger(TSDRNBIServiceImpl.class);
-    private TsdrMetricDataService metricDataService =null;
-    private TsdrLogDataService logDataService =null;
+    private static TsdrMetricDataService metricDataService;
+    private static TsdrLogDataService logDataService;
     // The reference to the the RPC registry to store the data
-    private final RpcProviderRegistry rpcRegistry;
 
-    public TSDRNBIServiceImpl(TsdrMetricDataService metricService, TsdrLogDataService logService, RpcProviderRegistry _rpcRegistry) {
-        this.logDataService = logService;
-        this.metricDataService = metricService;
-        this.rpcRegistry = _rpcRegistry;
+    public TSDRNBIServiceImpl(TsdrMetricDataService metricService, TsdrLogDataService logService) {
+        logDataService = logService;
+        metricDataService = metricService;
+    }
+
+    public static TsdrMetricDataService metricDataService() {
+        return metricDataService;
+    }
+
+    public static TsdrLogDataService logDataService() {
+        return logDataService;
     }
 
     @Override
@@ -85,18 +89,12 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
 
     // Invoke the storage rpc method
     private void store(StoreTSDRMetricRecordInput input) {
-        if (metricDataService == null) {
-            metricDataService = this.rpcRegistry.getRpcService(TsdrMetricDataService.class);
-        }
         metricDataService.storeTSDRMetricRecord(input);
         logger.debug("Data Storage called");
     }
 
     // Invoke the storage rpc method
     private void store(StoreTSDRLogRecordInput input) {
-        if (logDataService == null) {
-            logDataService = this.rpcRegistry.getRpcService(TsdrLogDataService.class);
-        }
         logDataService.storeTSDRLogRecord(input);
         logger.debug("Data Storage called");
     }

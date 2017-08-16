@@ -12,9 +12,6 @@ module tsdr-metric-data {
     namespace "opendaylight:tsdr:metric:data";
 
     prefix tsdr-metric-data;
-    import config { prefix config; revision-date 2013-04-05; }
-    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
-    import rpc-context { prefix rpcx; revision-date 2013-06-17; }
     import TSDR { prefix TSDR; revision-date 2015-02-19; }
 
     contact
@@ -26,11 +23,6 @@ module tsdr-metric-data {
     revision "2016-03-25" {
       description
         "TSDR Metric Data Model.";
-    }
-
-    identity tsdr-metric-data {
-        base config:module-type;
-        config:java-name-prefix TSDRMetricData;
     }
 
     typedef AggregationGranularity {

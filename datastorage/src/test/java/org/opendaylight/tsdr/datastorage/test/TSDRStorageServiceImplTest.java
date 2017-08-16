@@ -27,7 +27,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.opendaylight.tsdr.datastorage.TSDRMetricsMap;
 import org.opendaylight.tsdr.datastorage.TSDRStorageServiceImpl;
@@ -73,28 +72,25 @@ public class TSDRStorageServiceImplTest {
     public void setup() {
         metricPersistenceService = mock(TSDRMetricPersistenceService.class);
         logPersistenceService = mock(TSDRLogPersistenceService.class);
-        storageService = new TSDRStorageServiceImpl(metricPersistenceService,logPersistenceService);
+        storageService = new TSDRStorageServiceImpl(metricPersistenceService,logPersistenceService, null);
         MetricsMap = new TSDRMetricsMap();
-        tableRecordMap = new HashMap<String, List<TSDRRecord>>();
-        Answer answerStore = new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Object[] arguments = invocation.getArguments();
-                String tableName = null;
-                if (arguments != null && arguments.length > 0 && arguments[0] != null) {
-                    List<TSDRRecord> recordCol = (List<TSDRRecord>)arguments[0];
-                    for(TSDRRecord record: recordCol){
-                        tableName = getTableNameFrom(record.getTSDRDataCategory());
-                        if(!tableRecordMap.containsKey(tableName)){
-                            tableRecordMap.put(tableName, new ArrayList<TSDRRecord>());
-                        }
-                        List<TSDRRecord> existingRecordCol = tableRecordMap.get(tableName);
-                        System.out.println("Creating record " + record + " under table " + tableName);
-                        existingRecordCol.add(record);
+        tableRecordMap = new HashMap<>();
+        Answer answerStore = invocation -> {
+            Object[] arguments = invocation.getArguments();
+            String tableName = null;
+            if (arguments != null && arguments.length > 0 && arguments[0] != null) {
+                List<TSDRRecord> recordCol = (List<TSDRRecord>)arguments[0];
+                for(TSDRRecord record: recordCol){
+                    tableName = getTableNameFrom(record.getTSDRDataCategory());
+                    if(!tableRecordMap.containsKey(tableName)){
+                        tableRecordMap.put(tableName, new ArrayList<TSDRRecord>());
                     }
+                    List<TSDRRecord> existingRecordCol = tableRecordMap.get(tableName);
+                    System.out.println("Creating record " + record + " under table " + tableName);
+                    existingRecordCol.add(record);
                 }
-                return null;
             }
+            return null;
         };
         doAnswer(answerStore).when(metricPersistenceService).storeMetric(any(List.class));
         doAnswer(answerStore).when(logPersistenceService).storeLog(any(List.class));
@@ -103,24 +99,21 @@ public class TSDRStorageServiceImplTest {
         Mockito.doNothing().when(logPersistenceService).purge(any(DataCategory.class),any(long.class));
         Mockito.doNothing().when(metricPersistenceService).purge(any(long.class));
         Mockito.doNothing().when(logPersistenceService).purge(any(long.class));
-       Answer answerGetMetrics = new Answer() {
-            @Override
-            public List<?> answer(InvocationOnMock invocation) throws Throwable {
-                Object[] arguments = invocation.getArguments();
-                List<TSDRRecord> recordCol = new ArrayList<TSDRRecord>();
-                if (arguments != null && arguments.length > 0 && arguments[0] != null) {
-                    String tableName = (String)arguments[0];
-                    System.out.println("Retrieving metrics from table name " + tableName + " records:"+tableRecordMap);
-                    List<TSDRRecord> allRecordCol = tableRecordMap.get(tableName);
-                    System.out.println(allRecordCol);
-                    for(TSDRRecord record: allRecordCol){
-                            recordCol.add(record);
-                    }
-                }
-                System.out.println("Get metrics of size " + recordCol.size() + ", records:" + recordCol);
-                return recordCol;
+       Answer answerGetMetrics = invocation -> {
+        Object[] arguments = invocation.getArguments();
+        List<TSDRRecord> recordCol = new ArrayList<>();
+        if (arguments != null && arguments.length > 0 && arguments[0] != null) {
+            String tableName = (String)arguments[0];
+            System.out.println("Retrieving metrics from table name " + tableName + " records:"+tableRecordMap);
+            List<TSDRRecord> allRecordCol = tableRecordMap.get(tableName);
+            System.out.println(allRecordCol);
+            for(TSDRRecord record: allRecordCol){
+                    recordCol.add(record);
             }
-        };
+        }
+        System.out.println("Get metrics of size " + recordCol.size() + ", records:" + recordCol);
+        return recordCol;
+    };
 
         doAnswer(answerGetMetrics).when(metricPersistenceService).getTSDRMetricRecords(any(String.class),any(long.class),any(long.class));
         doAnswer(answerGetMetrics).when(logPersistenceService).getTSDRLogRecords(any(String.class),any(long.class),any(long.class));
@@ -128,16 +121,16 @@ public class TSDRStorageServiceImplTest {
 
     @Test
     public void testpurgeAllTSDRRecord(){
-        String timeStamp = (new Long((new Date()).getTime())).toString();
+        String timeStamp = new Long(new Date().getTime()).toString();
           storageService.purgeAllTSDRRecord(new PurgeAllTSDRRecordInputBuilder().setRetentionTime(new Long(timeStamp)).build());
           storageService.purgeAllTSDRRecord(new PurgeAllTSDRRecordInputBuilder().setRetentionTime(null).build());
     }
 
     @Test
     public void teststoreTSDRLogRecord() {
-           List<TSDRLogRecord> metricCol = new ArrayList<TSDRLogRecord>();
-           String timeStamp = (new Long((new Date()).getTime())).toString();
-           List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
+           List<TSDRLogRecord> metricCol = new ArrayList<>();
+           String timeStamp = new Long(new Date().getTime()).toString();
+           List<RecordKeys> recordKeys = new ArrayList<>();
            RecordKeys recordKey1 = new RecordKeysBuilder()
                    .setKeyName(DataCategory.SYSLOG.name())
                    .setKeyValue("log1").build();
@@ -156,9 +149,9 @@ public class TSDRStorageServiceImplTest {
     @Test
     public void testgetTSDRLogRecord() {
            Date startDate = new Date();
-           List<TSDRLogRecord> metricCol = new ArrayList<TSDRLogRecord>();
-           String timeStamp = (new Long((new Date()).getTime())).toString();
-           List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
+           List<TSDRLogRecord> metricCol = new ArrayList<>();
+           String timeStamp = new Long(new Date().getTime()).toString();
+           List<RecordKeys> recordKeys = new ArrayList<>();
            RecordKeys recordKey1 = new RecordKeysBuilder()
                    .setKeyName(DataCategory.SYSLOG.name())
                    .setKeyValue("log1").build();
@@ -182,7 +175,7 @@ public class TSDRStorageServiceImplTest {
 
     @Test
     public void testpurgeTSDRRecord(){
-        String timeStamp = (new Long((new Date()).getTime())).toString();
+        String timeStamp = new Long(new Date().getTime()).toString();
             storageService.purgeTSDRRecord(new PurgeTSDRRecordInputBuilder()
              .setTSDRDataCategory(DataCategory.SYSLOG)
              .setRetentionTime(new Long(timeStamp)).build());
@@ -193,9 +186,9 @@ public class TSDRStorageServiceImplTest {
 
     @Test
     public void teststoreTSDRMetricRecord(){
-        List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
-        String timeStamp = (new Long((new Date()).getTime())).toString();
-        List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
+        List<TSDRMetricRecord> metricCol = new ArrayList<>();
+        String timeStamp = new Long(new Date().getTime()).toString();
+        List<RecordKeys> recordKeys = new ArrayList<>();
         RecordKeys recordKey1 = new RecordKeysBuilder()
             .setKeyName(TSDRConstants.GROUP_KEY_NAME)
             .setKeyValue("group1").build();
@@ -214,9 +207,9 @@ public class TSDRStorageServiceImplTest {
     @Test
     public void testgetTSDRMetricRecord(){
         Date startDate = new Date();
-        List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
-        String timeStamp = (new Long((new Date()).getTime())).toString();
-        List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
+        List<TSDRMetricRecord> metricCol = new ArrayList<>();
+        String timeStamp = new Long(new Date().getTime()).toString();
+        List<RecordKeys> recordKeys = new ArrayList<>();
         RecordKeys recordKey1 = new RecordKeysBuilder()
             .setKeyName(TSDRConstants.GROUP_KEY_NAME)
             .setKeyValue("group1").build();
@@ -250,8 +243,8 @@ public class TSDRStorageServiceImplTest {
                     .put(5L, 108d)
                     .build();
         for (Entry<Long, Double> valueAtTimestamp : valuesByTimestamps.entrySet()) {
-            List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
-            List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
+            List<TSDRMetricRecord> metricCol = new ArrayList<>();
+            List<RecordKeys> recordKeys = new ArrayList<>();
             RecordKeys recordKey1 = new RecordKeysBuilder()
                 .setKeyName(TSDRConstants.GROUP_KEY_NAME)
                 .setKeyValue("group1").build();
@@ -298,8 +291,8 @@ public class TSDRStorageServiceImplTest {
                         .put(5L, 108d)
                         .build();
         for (Entry<Long, Double> valueAtTimestamp : valuesByTimestamps.entrySet()) {
-            List<TSDRMetricRecord> metricCol = new ArrayList<TSDRMetricRecord>();
-            List<RecordKeys> recordKeys = new ArrayList<RecordKeys>();
+            List<TSDRMetricRecord> metricCol = new ArrayList<>();
+            List<RecordKeys> recordKeys = new ArrayList<>();
             RecordKeys recordKey1 = new RecordKeysBuilder()
                     .setKeyName(TSDRConstants.GROUP_KEY_NAME)
                     .setKeyValue("group1").build();
@@ -343,7 +336,7 @@ public class TSDRStorageServiceImplTest {
         if ( datacategory == DataCategory.FLOWGROUPSTATS){
             return GROUP_METRICS_TABLE_NAME;
         }else if (datacategory == DataCategory.SYSLOG){
-        	return SYS_LOG_TABLE_NAME;
+            return SYS_LOG_TABLE_NAME;
         }
         return "";
     }

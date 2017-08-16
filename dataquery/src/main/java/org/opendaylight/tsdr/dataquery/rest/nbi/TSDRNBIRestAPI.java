@@ -8,21 +8,29 @@
 package org.opendaylight.tsdr.dataquery.rest.nbi;
 
 import com.google.gson.Gson;
-import org.opendaylight.controller.config.yang.config.TSDR_dataquery.impl.TSDRDataqueryModule;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.*;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import org.opendaylight.tsdr.dataquery.TSDRNBIServiceImpl;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
@@ -67,7 +75,7 @@ public class TSDRNBIRestAPI {
             input.setStartTime(from);
             input.setEndTime(until);
 
-            Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRDataqueryModule.metricDataService.getTSDRMetrics(input.build());
+            Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRNBIServiceImpl.metricDataService().getTSDRMetrics(input.build());
             if(!metric.get().isSuccessful()){
                 Response.status(503).entity("{}").build();
             }
@@ -86,7 +94,7 @@ public class TSDRNBIRestAPI {
             input.setInterval(Math.floorDiv(until - from, maxDataPoints) + 1);
             input.setAggregation(AggregationType.MEAN);
 
-            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRDataqueryModule.metricDataService.getTSDRAggregatedMetrics(input.build());
+            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRNBIServiceImpl.metricDataService().getTSDRAggregatedMetrics(input.build());
             if(metric==null){
                 return Response.status(501).entity("{}").build();
             }
@@ -106,27 +114,28 @@ public class TSDRNBIRestAPI {
     }
 
     public static long getTimeFromString(String t) {
-        if (t == null)
+        if (t == null) {
             return System.currentTimeMillis();
+        }
         int index1 = t.indexOf("-");
         if (index1 != -1) {
             int index2 = t.indexOf("min");
             if (index2 != -1) {
                 int min = Integer.parseInt(t.substring(index1 + 1, index2)
                         .trim());
-                return System.currentTimeMillis() - (min * 60000);
+                return System.currentTimeMillis() - min * 60000;
             }
             index2 = t.indexOf("h");
             if (index2 != -1) {
                 int h = Integer
                         .parseInt(t.substring(index1 + 1, index2).trim());
-                return System.currentTimeMillis() - (h * 3600000);
+                return System.currentTimeMillis() - h * 3600000;
             }
             index2 = t.indexOf("d");
             if (index2 != -1) {
                 int d = Integer
                         .parseInt(t.substring(index1 + 1, index2).trim());
-                return System.currentTimeMillis() - (d * 86400000);
+                return System.currentTimeMillis() - d * 86400000;
             }
         } else if (t.equals("now")) {
             return System.currentTimeMillis();

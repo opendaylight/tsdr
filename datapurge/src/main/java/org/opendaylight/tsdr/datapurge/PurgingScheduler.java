@@ -11,7 +11,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.slf4j.Logger;
@@ -25,41 +24,29 @@ import org.slf4j.LoggerFactory;
  * Created: Dec 31rst, 2015
  */
 public class PurgingScheduler {
-    private static PurgingScheduler instance = null;
-    private static final Logger log = LoggerFactory
-            .getLogger(PurgingScheduler.class);
-    private RpcProviderRegistry rpcRegistry;
-    private ScheduledFuture future = null;
+    private static final Logger log = LoggerFactory.getLogger(PurgingScheduler.class);
+
+    private ScheduledFuture<?> future = null;
     private PurgeDataTask purgedatatask;
-    private static final int DEFULT_INTERVAL = 24 * 60; /* Default one day */
-    private static final String DEFAULT_PURGE_TIME = "23:59:59";
-    private static final int DEFAULT_RETENTION_TIME_IN_HOURS = 7 * 24 ;//Default 7 Days
     private boolean isEnabled = false;
-    private int purgingInterval = DEFULT_INTERVAL;
-    private String purgingTime = DEFAULT_PURGE_TIME;
-    private int retentionTime = DEFAULT_RETENTION_TIME_IN_HOURS;
+    private final int purgingInterval;
+    private final String purgingTime;
+    private final int retentionTime;
+    private final RpcProviderRegistry rpcRegistry;
 
-    public static PurgingScheduler getInstance(){
-        if(instance == null){
-            instance = new PurgingScheduler();
-        }
-        return instance;
-    }
-
-    private PurgingScheduler(){
-       super();
-    }
-
-    private String getPropertyVal(String property, String default_val) {
-        String property_val = TSDRDataPurgeConfig.getInstance().getProperty(
-                property);
-        return ((property_val == null) ? default_val : property_val);
+    public PurgingScheduler(RpcProviderRegistry rpcRegistry, boolean isEnabled, int purgingInterval,
+            String purgingTime, int retentionTime) {
+        this.rpcRegistry = rpcRegistry;
+        this.isEnabled = isEnabled;
+        this.purgingInterval = purgingInterval;
+        this.purgingTime = purgingTime;
+        this.retentionTime = retentionTime;
     }
 
     /**
      * Schedule the Purging Task according to the properites.
      */
-    public void schedulePurgingTask(){
+    private void schedulePurgingTask(){
         if (!isEnabled) {
             return;
         }
@@ -86,17 +73,7 @@ public class PurgingScheduler {
         return;
 
     }
-    /**
-     * Set the instance variables with properties being loaded from configuration.
-     */
-    public void loadProperties(){
-        this.isEnabled = Boolean.parseBoolean(getPropertyVal("data_purge_enabled", "false"));
-        this.purgingTime = getPropertyVal("data_purge_time", DEFAULT_PURGE_TIME);
-        this.purgingInterval = Integer.valueOf(getPropertyVal(
-                "data_purge_interval_in_minutes", Integer.toString(DEFULT_INTERVAL)));
-        this.retentionTime = Integer.valueOf(getPropertyVal(
-                "retention_time_in_hours", Integer.toString(DEFAULT_RETENTION_TIME_IN_HOURS)));
-    }
+
     /**
      * Reschedule the purging task when the properties are changed from the configuration file.
      */
@@ -121,42 +98,22 @@ public class PurgingScheduler {
      *         - false if the scheduled task is null.
      */
     public boolean isRunning(){
-        return(this.future != null);
+        return this.future != null;
     }
 
     public boolean isEnabled() {
         return isEnabled;
     }
 
-    public void setEnabled(boolean isEnabled) {
-        this.isEnabled = isEnabled;
-    }
-
     public int getPurgingInterval() {
         return purgingInterval;
-    }
-
-    public void setPurgingInterval(int purgingInterval) {
-        this.purgingInterval = purgingInterval;
     }
 
     public String getPurgingTime() {
         return purgingTime;
     }
 
-    public void setPurgingTime(String purgingTime) {
-        this.purgingTime = purgingTime;
-    }
-
     public int getRetentionTime() {
         return retentionTime;
-    }
-
-    public void setRetentionTime(int retentionTime) {
-        this.retentionTime = retentionTime;
-    }
-    
-    public void setRpcRegistry(RpcProviderRegistry rpcRegistry) {
-        this.rpcRegistry = rpcRegistry;
     }
 }

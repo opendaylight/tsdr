@@ -2,12 +2,5 @@
 <features name="odl-tsdr-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0">
     <!-- TSDR HSQL DataStore -->
     <feature name="odl-tsdr-hsqldb-all" version="${project.version}" >
-  <configfile finalname="/etc/tsdr-persistence-hsqldb.properties">mvn:org.opendaylight.tsdr/tsdr-persistence-hsqldb/${project.version}/xml/config</configfile>
-  <configfile finalname="${config.configfile.directory}/151-tsdr-openflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/tsdr-openflow-statistics-collector/${project.version}/xml/config</configfile>
-   <configfile finalname="${config.configfile.directory}/145-TSDR-collector-spi-config.xml">mvn:org.opendaylight.tsdr/tsdr-collector-spi/${project.version}/xml/config</configfile>
-  <configfile finalname="${config.configfile.directory}/150-TSDR-datastorage-config.xml">mvn:org.opendaylight.tsdr/tsdr-datastorage/${project.version}/xml/config</configfile>
- <configfile finalname="${config.configfile.directory}/152-TSDR-datapurge-config.xml">mvn:org.opendaylight.tsdr/tsdr-datapurge/${project.version}/xml/config</configfile>
-  <configfile finalname="etc/tsdr.data.purge.cfg">mvn:org.opendaylight.tsdr/tsdr-datapurge/${project.version}/cfg/config1</configfile>
-  <configfile finalname="${config.configfile.directory}/155-TSDR-dataquery-config.xml">mvn:org.opendaylight.tsdr/tsdr-dataquery/${project.version}/xml/config</configfile>
     </feature>
 </features>

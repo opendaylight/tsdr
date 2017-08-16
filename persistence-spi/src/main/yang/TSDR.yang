@@ -12,9 +12,6 @@ module TSDR {
     namespace "opendaylight:TSDR";
 
     prefix TSDR;
-    import config { prefix config; revision-date 2013-04-05; }
-    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
-    import rpc-context { prefix rpcx; revision-date 2013-06-17; }
 
     contact
       "YuLing Chen <yuling_c@dell.com>, Sharon Aicler <saichler@cisco.com>";
@@ -25,11 +22,6 @@ module TSDR {
     revision "2015-02-19" {
       description
         "TSDR Data Model.";
-    }
-
-    identity TSDR {
-        base config:module-type;
-        config:java-name-prefix TSDR;
     }
 
     typedef  DataCategory {
