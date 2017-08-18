@@ -1,5 +1,7 @@
 # Maven
 target/
+target-ide/
+.checkstyle
 
 # OpenDaylight
 yang-gen-sal/

@@ -30,10 +30,7 @@
       <module>odl-tsdr-hsqldb</module>
       <module>odl-tsdr-hsqldb-all</module>
       <module>odl-tsdr-hbase</module>
-      <!--
       <module>features-tsdr</module>
-      -->
-      <module>features4-tsdr</module>
     </modules>
 </project>
 
