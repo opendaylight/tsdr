@@ -7,19 +7,6 @@
  */
 package org.opendaylight.tsdr.syslogs;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.opendaylight.controller.sal.binding.api.BindingAwareBroker;
-import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -27,6 +14,15 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
 
 
 /**
@@ -35,11 +31,10 @@ import java.util.List;
 public class TSDRSyslogCollectorImplPort1514Test {
     private DatagramSocket socket = null;
     private DatagramSocket socket2 = null;
-    private TsdrCollectorSpiService spiService = Mockito.mock(TsdrCollectorSpiService.class);
+    private final TsdrCollectorSpiService spiService = Mockito.mock(TsdrCollectorSpiService.class);
     private TSDRSyslogCollectorImpl impl = null;
     private final List<TSDRLogRecord> storedRecords = new ArrayList<>();
-    private SyslogDatastoreManager manager = Mockito.mock(SyslogDatastoreManager.class);
-    private BindingAwareBroker.ProviderContext session = Mockito.mock(BindingAwareBroker.ProviderContext.class);
+    private final SyslogDatastoreManager manager = Mockito.mock(SyslogDatastoreManager.class);
     private int numberOfTests=0;
 
     @Before
@@ -51,22 +46,14 @@ public class TSDRSyslogCollectorImplPort1514Test {
             }catch(Exception e){
                 /*Dont care*/
             }
-            impl = new TSDRSyslogCollectorImpl(spiService);
-            impl.setManager(manager);
-            impl.setCoreThreadPoolSize(2);
-            impl.setKeepAliveTime(1000);
-            impl.setQueueSize(1000);
-            impl.setMaxThreadPoolSize(4);
-            impl.onSessionInitiated(session);
+            impl = new TSDRSyslogCollectorImpl(spiService, manager);
+            impl.init();
             //Arbitrary port.
             socket = new DatagramSocket(23312);
-            Mockito.when(spiService.insertTSDRLogRecord(Mockito.any(InsertTSDRLogRecordInput.class))).thenAnswer(new Answer<Void>() {
-                @Override
-                public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-                    InsertTSDRLogRecordInput input = (InsertTSDRLogRecordInput) invocationOnMock.getArguments()[0];
-                    storedRecords.addAll(input.getTSDRLogRecord());
-                    return null;
-                }
+            Mockito.when(spiService.insertTSDRLogRecord(Mockito.any(InsertTSDRLogRecordInput.class))).thenAnswer(invocationOnMock -> {
+                InsertTSDRLogRecordInput input = (InsertTSDRLogRecordInput) invocationOnMock.getArguments()[0];
+                storedRecords.addAll(input.getTSDRLogRecord());
+                return null;
             });
         }
     }

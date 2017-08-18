@@ -7,10 +7,11 @@
  */
 package org.opendaylight.tsdr.osc;
 
+import com.google.common.base.Optional;
+import com.google.common.util.concurrent.CheckedFuture;
 import java.io.File;
 import java.io.PrintStream;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,13 +19,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
-
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
-import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.osc.handlers.FlowCapableNodeConnectorQueueStatisticsDataHandler;
 import org.opendaylight.tsdr.osc.handlers.FlowStatisticsDataHandler;
 import org.opendaylight.tsdr.osc.handlers.NodeConnectorStatisticsChangeHandler;
@@ -33,7 +32,6 @@ import org.opendaylight.tsdr.osc.handlers.NodeMeterStatisticsChangeHandler;
 import org.opendaylight.tsdr.osc.handlers.NodeTableStatisticsChangeHandler;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
-import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter64;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.FlowCapableNode;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.FlowCapableNodeConnector;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.meters.Meter;
@@ -66,9 +64,6 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
-import com.google.common.util.concurrent.CheckedFuture;
-
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
@@ -78,12 +73,12 @@ import com.google.common.util.concurrent.CheckedFuture;
  * the data broker and every 30 seconds persists the data to the TSDR data
  * storage
  */
-public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService {
+public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService, AutoCloseable {
     // A reference to the data broker
     private DataBroker dataBroker = null;
     // A map representing the instance identifier of the metric collection to
     // the place in the cached builder collection array
-    private Map<InstanceIdentifier<?>, ContainerIndex> id2Index = new ConcurrentHashMap<InstanceIdentifier<?>, ContainerIndex>();
+    private final Map<InstanceIdentifier<?>, ContainerIndex> id2Index = new ConcurrentHashMap<>();
     // An array of BuilderContainer, a builder container is a collection of
     // metric builders that serves as a cache
     // so we won't need to instantiate and set all the static meta data of the
@@ -96,9 +91,7 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
     private TSDRMetricRecordBuilderContainer[] containers = new TSDRMetricRecordBuilderContainer[0];
     // Is the collector running, an indication to stop the thresds if it is
     // closed
-    private boolean running = true;
-    // The reference to the the RPC registry to store the data
-    private RpcProviderRegistry rpcRegistry = null;
+    private volatile boolean running = true;
     // Logger reference
     private static final Logger logger = LoggerFactory
             .getLogger(TSDRDOMCollector.class);
@@ -106,18 +99,18 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
     // karaf log
     private static boolean logToExternalFile = false;
     // collectors
-    private Map<Class<? extends DataObject>, TSDRBaseDataHandler> handlers = new ConcurrentHashMap<>();
-    private Map<InstanceIdentifier<Node>, Set<InstanceIdentifier<?>>> nodeID2SubIDs = new ConcurrentHashMap<>();
+    private final Map<Class<? extends DataObject>, TSDRBaseDataHandler> handlers = new ConcurrentHashMap<>();
+    private final Map<InstanceIdentifier<Node>, Set<InstanceIdentifier<?>>> nodeID2SubIDs = new ConcurrentHashMap<>();
     private TSDROSCConfig config = null;
     protected Object pollerSyncObject = new Object();
     private TsdrCollectorSpiService collectorSPIService = null;
-    private static final String COLLECTOR_CODE_NAME = TSDRDOMCollector.class.getSimpleName();
 
-    public TSDRDOMCollector(DataBroker _dataBroker,
-            RpcProviderRegistry _rpcRegistry) {
-        log("TSDR DOM Collector Started", INFO);
-        this.dataBroker = _dataBroker;
-        this.rpcRegistry = _rpcRegistry;
+    public TSDRDOMCollector(DataBroker dataBroker, TsdrCollectorSpiService collectorSPIService) {
+        this.dataBroker = dataBroker;
+        this.collectorSPIService = collectorSPIService;
+    }
+
+    public void init() {
         // initialize handlers
         handlers.put(FlowCapableNodeConnectorQueueStatisticsData.class,
                 new FlowCapableNodeConnectorQueueStatisticsDataHandler(this));
@@ -138,6 +131,8 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
         saveConfigData();
         new TSDRInventoryNodesPoller(this);
         new StoringThread();
+
+        log("TSDR DOM Collector initialized", INFO);
     }
 
     public void loadConfigData() {
@@ -181,7 +176,8 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
         return this.config;
     }
 
-    public void shutdown() {
+    @Override
+    public void close() {
         this.running = false;
         synchronized(TSDRDOMCollector.this.pollerSyncObject){
             TSDRDOMCollector.this.pollerSyncObject.notifyAll();
@@ -214,7 +210,7 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
                 id2Index.put(id, new ContainerIndex(containers.length));
                 Set<InstanceIdentifier<?>> nodeIDs = nodeID2SubIDs.get(nodeID);
                 if (nodeIDs == null) {
-                    nodeIDs = new HashSet<InstanceIdentifier<?>>();
+                    nodeIDs = new HashSet<>();
                     nodeID2SubIDs.put(nodeID, nodeIDs);
                 }
                 nodeIDs.add(id);
@@ -281,8 +277,9 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
     public void handle(InstanceIdentifier<Node> nodeID,
             InstanceIdentifier<?> id, DataObject dataObject,
             Class<? extends DataObject> cls) {
-        if (dataObject == null)
+        if (dataObject == null) {
             return;
+        }
         TSDRBaseDataHandler c = handlers.get(cls);
         if (c == null) {
             log("Error, can't find collector for " + cls.getSimpleName(), ERROR);
@@ -451,6 +448,7 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
             log("Storing Thread Started", INFO);
         }
 
+        @Override
         public void run() {
             while (running) {
                 synchronized (TSDRDOMCollector.this) {
@@ -470,11 +468,10 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
                     }
                 }
                 try {
-                    for (int i = 0; i < containers.length; i++) {
+                    for (TSDRMetricRecordBuilderContainer bc : containers) {
                         try {
                             InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
                             List<TSDRMetricRecord> list = new LinkedList<>();
-                            TSDRMetricRecordBuilderContainer bc = containers[i];
                             for (TSDRMetricRecordBuilder builder : bc.getBuilders()) {
                                 list.add(builder.build());
                             }
@@ -499,20 +496,8 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
 
     // Invoke the storage rpc method
     private void store(InsertTSDRMetricRecordInput input) {
-        if(this.collectorSPIService==null){
-            this.collectorSPIService = this.rpcRegistry
-                .getRpcService(TsdrCollectorSpiService.class);
-        }
         this.collectorSPIService.insertTSDRMetricRecord(input);
         log("Data Storage called", DEBUG);
-    }
-
-    public TsdrCollectorSpiService getTSDRService(){
-        if(this.collectorSPIService==null){
-            this.collectorSPIService = this.rpcRegistry
-                .getRpcService(TsdrCollectorSpiService.class);
-        }
-        return this.collectorSPIService;
     }
 
     // For debugging, enable the ability to output to a different file to avoid
@@ -575,8 +560,9 @@ public class TSDRDOMCollector implements TsdrOpenflowStatisticsCollectorService 
     public void removeAllNodeBuilders(InstanceIdentifier<Node> nodeID) {
         synchronized (id2Index) {
             Set<InstanceIdentifier<?>> subIDs = nodeID2SubIDs.get(nodeID);
-            if (subIDs == null)
+            if (subIDs == null) {
                 return;
+            }
             for (InstanceIdentifier<?> subID : subIDs) {
                 removeBuilderContailer(subID);
             }

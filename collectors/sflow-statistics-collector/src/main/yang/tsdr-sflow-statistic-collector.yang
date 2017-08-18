@@ -11,8 +11,6 @@ module tsdr-sflow-statistics-collector {
     namespace "urn:opendaylight:params:xml:ns:yang:controller:config:tsdr:sflow:statistics:collector";
     prefix "tsdr-sflow-statistics-collector";
 
-    import config { prefix config; revision-date 2013-04-05; }
-    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
     contact
       "YuLing Chen <yulingch@cisco.com>";
     description
@@ -24,37 +22,11 @@ module tsdr-sflow-statistics-collector {
             "Initial revision.";
     }
 
-    // This is the definition of the service implementation as a module identity.
-    identity tsdr-sflow-statistics-collector {
-            base config:module-type;
-            config:java-name-prefix TSDRSFlowCollector;
-    }
     container TSDRSFlowConfig{
        leaf polling-interval{
           type int64;
        }
     }
-    augment "/config:modules/config:module/config:configuration" {
-                case tsdr-sflow-statistics-collector {
-                    when "/config:modules/config:module/config:type = 'tsdr-sflow-statistics-collector'";
-                    container data-broker {
-                        uses config:service-ref {
-                            refine type {
-                                mandatory false;
-                                config:required-identity mdsal:binding-async-data-broker;
-                            }
-                        }
-                    }
-                    container rpc-registry {
-                        uses config:service-ref {
-                            refine type {
-                                mandatory true;
-                                config:required-identity mdsal:binding-rpc-registry;
-                            }
-                        }
-                    }
-                }
-            }
 
     rpc setPollingInterval  {
         description

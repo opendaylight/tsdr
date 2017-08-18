@@ -4,7 +4,5 @@
     xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
     <!-- OpenFlow collector -->
     <feature name='odl-tsdr-openflow-statistics-collector' version='${project.version}' description="OpenDaylight :: TSDR :: Openflow Statistics Collector">
-    <configfile finalname="${config.configfile.directory}/151-tsdr-openflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/tsdr-openflow-statistics-collector/${project.version}/xml/config</configfile>
-
     </feature>
 </features>

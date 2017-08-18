@@ -9,20 +9,6 @@
 
 package org.opendaylight.tsdr.syslogs;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
-import org.opendaylight.controller.sal.binding.api.BindingAwareBroker;
-import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -30,6 +16,15 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.opendaylight.controller.md.sal.binding.api.DataBroker;
+import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
 
 /**
  * This is the udp messages sending and receving
@@ -41,11 +36,10 @@ import java.util.List;
  */
 public class TSDRSyslogCollectorImplUDPTest {
     private DatagramSocket socket = null;
-    private TsdrCollectorSpiService spiService = Mockito.mock(TsdrCollectorSpiService.class);
-    private DataBroker dataBroker = Mockito.mock(DataBroker.class);
-    private SyslogDatastoreManager manager = Mockito.mock(SyslogDatastoreManager.class);
-    private BindingAwareBroker.ProviderContext session = Mockito.mock(BindingAwareBroker.ProviderContext.class);
-    private TSDRSyslogCollectorImpl impl = new TSDRSyslogCollectorImpl(spiService);
+    private final TsdrCollectorSpiService spiService = Mockito.mock(TsdrCollectorSpiService.class);
+    private final DataBroker dataBroker = Mockito.mock(DataBroker.class);
+    private final SyslogDatastoreManager manager = Mockito.mock(SyslogDatastoreManager.class);
+    private final TSDRSyslogCollectorImpl impl = new TSDRSyslogCollectorImpl(spiService, manager);
     private final List<TSDRLogRecord> storedRecords = new ArrayList<>();
     private int numberOfTests = 0;
 
@@ -54,23 +48,18 @@ public class TSDRSyslogCollectorImplUDPTest {
         System.out.println("Please make sure ports 6514, 514 and 1234 on your machine are available before the test.");
         impl.setUdpPort(1514);
         impl.setTcpPort(6514);
-        Mockito.when(session.getSALService(DataBroker.class)).thenReturn(dataBroker);
 
         numberOfTests++;
         if (socket == null) {
             //Arbitrary port
             socket = new DatagramSocket(1234);
-            impl.setManager(manager);
-            impl.onSessionInitiated(session);
+            impl.init();
             System.out.println(impl.tcpServer.getProtocol() + " server is listening: " + impl.getTcpPort());
             System.out.println(impl.udpServer.getProtocol() + " server is listening: " + impl.getUdpPort());
-            Mockito.when(spiService.insertTSDRLogRecord(Mockito.any(InsertTSDRLogRecordInput.class))).thenAnswer(new Answer<Void>() {
-                @Override
-                public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-                    InsertTSDRLogRecordInput input = (InsertTSDRLogRecordInput) invocationOnMock.getArguments()[0];
-                    storedRecords.addAll(input.getTSDRLogRecord());
-                    return null;
-                }
+            Mockito.when(spiService.insertTSDRLogRecord(Mockito.any(InsertTSDRLogRecordInput.class))).thenAnswer(invocationOnMock -> {
+                InsertTSDRLogRecordInput input = (InsertTSDRLogRecordInput) invocationOnMock.getArguments()[0];
+                storedRecords.addAll(input.getTSDRLogRecord());
+                return null;
             });
         }
     }

@@ -54,13 +54,6 @@
             <artifactId>tsdr-openflow-statistics-collector</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-openflow-statistics-collector</artifactId>
-            <version>${project.version}</version>
-            <type>xml</type>
-            <classifier>config</classifier>
-        </dependency>
 
         <!-- ODL dependencies -->
         <dependency>

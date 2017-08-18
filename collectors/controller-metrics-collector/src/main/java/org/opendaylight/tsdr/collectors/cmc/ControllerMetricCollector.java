@@ -7,39 +7,52 @@
  */
 package org.opendaylight.tsdr.collectors.cmc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.math.BigDecimal;
-
-import org.opendaylight.controller.config.yang.config.tsdr.controller.metrics.collector.TSDRCMCModule;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-public class ControllerMetricCollector extends Thread {
+public class ControllerMetricCollector extends Thread implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(ControllerMetricCollector.class);
 
     private static final String COLLECTOR_CODE_NAME = ControllerMetricCollector.class.getSimpleName();
 
     private final Optional<CpuDataCollector> cpuDataCollector;
-    private final TSDRCMCModule module;
+    private final TsdrCollectorSpiService collectorSPIService;
 
-    public ControllerMetricCollector(final TSDRCMCModule module, final Optional<CpuDataCollector> cpuDataCollector) {
-        this.module = module;
+    public ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService) {
+        this(collectorSPIService, CpuDataCollector.getCpuDataCollector());
+    }
+
+    public ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService,
+            final Optional<CpuDataCollector> cpuDataCollector) {
+        this.collectorSPIService = collectorSPIService;
         this.cpuDataCollector = cpuDataCollector;
 
         this.setDaemon(true);
+    }
+
+    public void init() {
         this.start();
+        logger.info("Controller Metrics Collector started");
+    }
+
+    @Override
+    public void close() {
+        interrupt();
+        logger.info("Controller Metrics Collector closed");
     }
 
     @Override
@@ -95,7 +108,7 @@ public class ControllerMetricCollector extends Thread {
         list.add(b.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
-        module.getTSDRCollectorSPIService().insertTSDRMetricRecord(input.build());
+        collectorSPIService.insertTSDRMetricRecord(input.build());
     }
 
     protected void insertControllerCPUSample() {
@@ -117,7 +130,7 @@ public class ControllerMetricCollector extends Thread {
         list.add(b.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
-        module.getTSDRCollectorSPIService().insertTSDRMetricRecord(input.build());
+        collectorSPIService.insertTSDRMetricRecord(input.build());
     }
 
     protected void insertMachineCPUSample() {
@@ -139,6 +152,6 @@ public class ControllerMetricCollector extends Thread {
         list.add(b.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
-        module.getTSDRCollectorSPIService().insertTSDRMetricRecord(input.build());
+        collectorSPIService.insertTSDRMetricRecord(input.build());
     }
 }

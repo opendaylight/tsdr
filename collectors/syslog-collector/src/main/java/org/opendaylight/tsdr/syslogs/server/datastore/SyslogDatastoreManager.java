@@ -11,28 +11,59 @@ package org.opendaylight.tsdr.syslogs.server.datastore;
 
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.CheckedFuture;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.*;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcherBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.TsdrSyslogCollectorService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.RegisteredSyslogFilter;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.RegisteredSyslogFilterBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.registered.syslog.filter.RegisteredFilterEntity;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.registered.syslog.filter.RegisteredFilterEntityBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.*;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.*;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilter;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilterBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilterKey;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogListener;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogListenerBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogListenerKey;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.FilterEntity;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.FilterEntityBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.Listener;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.ListenerBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.ListenerKey;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This SyslogDatastoreManager handles the initialization of the data
@@ -44,8 +75,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 
 
-public class SyslogDatastoreManager implements TsdrSyslogCollectorService {
-    private static SyslogDatastoreManager INSTANCE;
+public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(TsdrSyslogCollectorService.class);
     private static AtomicInteger messageID = new AtomicInteger(0);
     private final ThreadPoolExecutor threadPool;
@@ -57,15 +87,20 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService {
         this.db = null;
         this.threadPool = new ThreadPoolExecutor(coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(queueSize));
         this.threadPool.prestartAllCoreThreads();
-    }
 
-    public static SyslogDatastoreManager getInstance() {
-        return INSTANCE;
+        LOG.info("SyslogDatastoreManager created: coreThreadPoolSize: {}, maxThreadpoolSize: {}, keepAliveTime: {}, queueSize: {}",
+                coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
     }
 
     public static SyslogDatastoreManager getInstance(int coreThreadPoolSize, int maxThreadpoolSize, long keepAliveTime, int queueSize) {
-        INSTANCE = new SyslogDatastoreManager(coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
-        return INSTANCE;
+        return new SyslogDatastoreManager(coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
+    }
+
+    @Override
+    public void close() {
+        threadPool.shutdown();
+
+        LOG.info("SyslogDatastoreManager closed");
     }
 
     public void setDataBroker(DataBroker db) {
@@ -80,7 +115,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService {
 
     public void execute(String ipaddress, Message message) {
         int mid = SyslogDatastoreManager.messageID.addAndGet(1);
-        INSTANCE.threadPool.execute(new WorkerThread(mid, ipaddress, message));
+        threadPool.execute(new WorkerThread(mid, ipaddress, message));
     }
 
     private void initializeDataTree() {
@@ -108,7 +143,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService {
                 .setCoreThreadNumber(threadPool.getCorePoolSize())
                 .setMaxThreadNumber(threadPool.getMaximumPoolSize())
                 .setCurrentAliveThreadNumber(threadPool.getPoolSize())
-                .setKeepAliveTime((int) (currentThreadpoolKeepAliveTime))
+                .setKeepAliveTime((int) currentThreadpoolKeepAliveTime)
                 .setQueueRemainingCapacity(currentThreadpoolQueueRemainingCapacity)
                 .setQueueUsedCapacity(currentThreadpoolQueueSize)
                 .build();
@@ -190,7 +225,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService {
                     .build();
             return RpcResultBuilder.success(output).buildFuture();
              }
-        if (optional.isPresent() && !(optional.get().getSyslogFilter().isEmpty())) {
+        if (optional.isPresent() && !optional.get().getSyslogFilter().isEmpty()) {
 
             LOG.info("reading filter success");
 
@@ -327,7 +362,9 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService {
         }
 
         public List<SyslogFilter> getFilters() {
-            if(db==null) return null;
+            if(db==null) {
+                return null;
+            }
             ReadTransaction transaction = db.newReadOnlyTransaction();
             InstanceIdentifier<SyslogDispatcher> iid =
                     InstanceIdentifier.create(SyslogDispatcher.class);
@@ -349,7 +386,9 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService {
         }
 
         private List<Listener> getListenerList(String filterID) {
-            if(db==null) return null;
+            if(db==null) {
+                return null;
+            }
             ReadTransaction transaction = db.newReadOnlyTransaction();
             InstanceIdentifier<SyslogFilter> iid = InstanceIdentifier.create(SyslogDispatcher.class)
                     .child(SyslogFilter.class, new SyslogFilterKey(filterID));
@@ -370,7 +409,9 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService {
         }
 
         private void update(List<Listener> nodes) {
-            if(db==null) return;
+            if(db==null) {
+                return;
+            }
             WriteTransaction transaction = db.newWriteOnlyTransaction();
             InstanceIdentifier<SyslogDispatcher> baseIID = InstanceIdentifier.create(SyslogDispatcher.class);
             for (Listener node : nodes) {

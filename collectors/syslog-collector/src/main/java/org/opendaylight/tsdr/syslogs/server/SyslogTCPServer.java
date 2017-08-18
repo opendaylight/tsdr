@@ -19,13 +19,13 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
-import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.tsdr.syslogs.server.decoder.MessageHandler;
-
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.opendaylight.controller.md.sal.binding.api.DataBroker;
+import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
+import org.opendaylight.tsdr.syslogs.server.decoder.Message;
+import org.opendaylight.tsdr.syslogs.server.decoder.MessageHandler;
 
 /**
  * This is the TCP server using io.netty to start
@@ -36,21 +36,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
 public class SyslogTCPServer implements SyslogServer {
-    private AtomicInteger port;
+    private final AtomicInteger port;
     private final ServerBootstrap b;
     private final EventLoopGroup[] groups;
-    private AtomicBoolean status;
+    private final AtomicBoolean status;
     private DataBroker db;
     StringDecoder stringDecoder = null;
     MessageHandler messageHandler = null;
 
-    public SyslogTCPServer(List<Message> messages) {
+    public SyslogTCPServer(List<Message> messages, SyslogDatastoreManager manager) {
         port = new AtomicInteger(-1);
         b = new ServerBootstrap();
         groups = new EventLoopGroup[]{new NioEventLoopGroup(), new NioEventLoopGroup()};
         status = new AtomicBoolean(false);
         stringDecoder = new StringDecoder();
-        messageHandler = new MessageHandler(messages);
+        messageHandler = new MessageHandler(messages, manager);
         b.group(groups[0], groups[1])
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -94,8 +94,9 @@ public class SyslogTCPServer implements SyslogServer {
     public void setPort(int port) throws Exception {
         if (isRunning()) {
             throw new Exception("TCP Server is running at port: " + port + ".");
-        } else
+        } else {
             this.port.set(port);
+        }
     }
 
     @Override

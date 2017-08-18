@@ -12,7 +12,6 @@ import java.net.DatagramSocket;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.opendaylight.controller.sal.binding.api.BindingAwareBroker;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 
 
@@ -37,18 +36,14 @@ public class TSDRSyslogCollectorImplNoPortAvailableTest {
             /*Don't care */
         }
         SyslogDatastoreManager manager = Mockito.mock(SyslogDatastoreManager.class);
-        BindingAwareBroker.ProviderContext session = Mockito.mock(BindingAwareBroker.ProviderContext.class);
-        TSDRSyslogCollectorImpl impl = new  TSDRSyslogCollectorImpl(null);
-        impl.setManager(manager);
-        impl.setCoreThreadPoolSize(2);
-        impl.setKeepAliveTime(1000);
-        impl.setQueueSize(1000);
-        impl.setMaxThreadPoolSize(4);
-        impl.onSessionInitiated(session);
+        TSDRSyslogCollectorImpl impl = new  TSDRSyslogCollectorImpl(null, manager);
+        impl.init();
         Assert.assertTrue(!impl.isRunning());
-        if(socket1!=null)
+        if(socket1!=null) {
             socket1.close();
-        if(socket2!=null)
+        }
+        if(socket2!=null) {
             socket2.close();
+        }
     }
 }

@@ -13,15 +13,15 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
+import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.tsdr.syslogs.server.decoder.UDPMessageHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This is the UDP server using io.netty to start
@@ -32,21 +32,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
 public class SyslogUDPServer implements SyslogServer {
-    private AtomicInteger port;
+    private final AtomicInteger port;
     private final Bootstrap b;
     private final EventLoopGroup group;
-    private AtomicBoolean status;
+    private final AtomicBoolean status;
     private DataBroker db;
     private final UDPMessageHandler udpMessageHandler;
     private final static Logger LOGGER = LoggerFactory.getLogger(SyslogUDPServer.class);
 
 
-    public SyslogUDPServer(List<Message> incomingSyslogs) {
+    public SyslogUDPServer(List<Message> incomingSyslogs, SyslogDatastoreManager manager) {
         port = new AtomicInteger(-1);
         b = new Bootstrap();
         group = new NioEventLoopGroup();
         status = new AtomicBoolean(false);
-        udpMessageHandler = new UDPMessageHandler(incomingSyslogs);
+        udpMessageHandler = new UDPMessageHandler(incomingSyslogs, manager);
         b.group(group)
                 .channel(NioDatagramChannel.class)
                 .handler(udpMessageHandler);

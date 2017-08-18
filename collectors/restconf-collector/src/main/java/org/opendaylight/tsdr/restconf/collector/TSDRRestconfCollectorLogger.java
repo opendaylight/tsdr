@@ -8,11 +8,13 @@
 
 package org.opendaylight.tsdr.restconf.collector;
 
-import java.lang.invoke.MethodHandles;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.Supplier;
+import javax.annotation.concurrent.GuardedBy;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
@@ -30,7 +32,7 @@ import org.slf4j.LoggerFactory;
  *         Created: Dec 16th, 2016
  *
  */
-public class TSDRRestconfCollectorLogger extends TimerTask {
+public class TSDRRestconfCollectorLogger extends TimerTask implements AutoCloseable {
 
     /**
      * a reference to the collector SPI service.
@@ -50,47 +52,39 @@ public class TSDRRestconfCollectorLogger extends TimerTask {
     /**
      * The queue in which the data is cached before persisting.
      */
-    private LinkedList<TSDRLogRecord> queue = new LinkedList<TSDRLogRecord>();
+    @GuardedBy("queueMutex")
+    private final LinkedList<TSDRLogRecord> queue = new LinkedList<>();
 
     /**
      * A mutex used for locking the queue to prevent race conditions between multiple threads.
      */
-    private Object queueMutex = new Object();
+    private final Object queueMutex = new Object();
 
     /**
      * The index of the current record, useful to distinguish records are received in the same milli-second
      * it is incremented for each record received, and then zeroed again after the data is persisted.
      */
+    @GuardedBy("queueMutex")
     private int currentIndex = 0;
-
-    /**
-     * used to inform the run method that the module has shutdown, which will cancel the scheduled timer task.
-     * This variable is used because it is best to cancel the timer from within the run method:
-     * https://docs.oracle.com/javase/7/docs/api/java/util/TimerTask.html#cancel()
-     */
-    private boolean hasShutDown = false;
 
     /**
      * the timer instance.
      */
     private Timer timer;
 
+    private final Supplier<Timer> timerSupplier;
+
     /**
      * the logger of the class.
      */
-    private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRRestconfCollectorLogger.class);
 
     /**
      * the constructor is private because we are following the singleton pattern.
-     * it is called once an instance is created. It initialized the queue, and schedules the timer task
-     * @param timer the timer instance
+     * it is called once an instance is created.
      */
-    private TSDRRestconfCollectorLogger(Timer timer) {
-        queue = new LinkedList<TSDRLogRecord>();
-
-        this.timer = timer;
-
-        this.timer.schedule(this, PERSIST_CHECK_INTERVAL_IN_MILLISECONDS, PERSIST_CHECK_INTERVAL_IN_MILLISECONDS);
+    private TSDRRestconfCollectorLogger(Supplier<Timer> timerSupplier) {
+        this.timerSupplier = timerSupplier;
     }
 
     /**
@@ -98,18 +92,19 @@ public class TSDRRestconfCollectorLogger extends TimerTask {
      * @return the instance of the singleton
      */
     public static TSDRRestconfCollectorLogger getInstance() {
-        return getInstance(new Timer());
+        return getInstance(Timer::new);
     }
 
     /**
      * retrieves the instance of the class, and creates a new one if no instance exists.
      * Only call this version of the function when testing. It is useful if you want to mock the timer
-     * @param timer the timer instance
+     * @param timerSupplier the supplier of timer instances
      * @return the instance of the singleton
      */
-    public static TSDRRestconfCollectorLogger getInstance(Timer timer) {
+    @VisibleForTesting
+    public static synchronized TSDRRestconfCollectorLogger getInstance(Supplier<Timer> timerSupplier) {
         if (INSTANCE == null) {
-            INSTANCE = new TSDRRestconfCollectorLogger(timer);
+            INSTANCE = new TSDRRestconfCollectorLogger(timerSupplier);
         }
         return INSTANCE;
     }
@@ -118,8 +113,30 @@ public class TSDRRestconfCollectorLogger extends TimerTask {
      * only call this method in testing to do mocking.
      * @param instance the instance of the class
      */
-    public static void setInstance(TSDRRestconfCollectorLogger instance) {
+    @VisibleForTesting
+    static void setInstance(TSDRRestconfCollectorLogger instance) {
         INSTANCE = instance;
+    }
+
+    public void init() {
+        this.timer = timerSupplier.get();
+
+        this.timer.schedule(this, PERSIST_CHECK_INTERVAL_IN_MILLISECONDS, PERSIST_CHECK_INTERVAL_IN_MILLISECONDS);
+
+        LOG.info("Restconf collector logger initialized");
+    }
+
+    @Override
+    public void close() {
+        run();
+
+        if (this.timer != null) {
+            this.cancel();
+            this.timer.cancel();
+            this.timer.purge();
+        }
+
+        LOG.info("Restconf collector logger closed");
     }
 
     /**
@@ -173,14 +190,6 @@ public class TSDRRestconfCollectorLogger extends TimerTask {
     }
 
     /**
-     * called when the module is about to shut down, it sets hasShutDown to true, which will inform the run method,
-     * which will consequently cancel the timer task.
-     */
-    public void shutDown() {
-        this.hasShutDown = true;
-    }
-
-    /**
      * called automatically by the timer each time a period of PERSIST_CHECK_INTERVAL_IN_MILLISECONDS has passed.
      * It copies the cached queue into another queue, then clears the queue and the currentIndex.
      * Then, it checks if that new queue has data, if it has data, it gets persisted.
@@ -190,7 +199,7 @@ public class TSDRRestconfCollectorLogger extends TimerTask {
      */
     @Override
     public void run() {
-        LinkedList<TSDRLogRecord> tempQueue = new LinkedList<TSDRLogRecord>();
+        LinkedList<TSDRLogRecord> tempQueue = new LinkedList<>();
         synchronized (queueMutex) {
             tempQueue.addAll(queue);
             queue.clear();
@@ -198,14 +207,6 @@ public class TSDRRestconfCollectorLogger extends TimerTask {
         }
         if (tempQueue.size() != 0) {
             store(tempQueue);
-        }
-
-        // Calling the cancel function from inside run guarantees that the timer
-        // will definitely stop
-        if (this.hasShutDown) {
-            this.cancel();
-            this.timer.cancel();
-            this.timer.purge();
         }
     }
 }

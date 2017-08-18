@@ -14,11 +14,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.util.CharsetUtil;
+import java.util.List;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 /**
  * This UDP message handler handles the incoming messages,
@@ -31,13 +30,14 @@ import java.util.List;
  */
 @ChannelHandler.Sharable
 public class UDPMessageHandler extends SimpleChannelInboundHandler<DatagramPacket> {
-    private SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance();
+    private final SyslogDatastoreManager manager;
     private final List<Message> incomingSyslogs;
     private static final Logger LOG = LoggerFactory.getLogger(UDPMessageHandler.class);
 
-    public UDPMessageHandler(List<Message> incomingSyslogs) {
+    public UDPMessageHandler(List<Message> incomingSyslogs, SyslogDatastoreManager manager) {
         super();
         this.incomingSyslogs = incomingSyslogs;
+        this.manager = manager;
     }
 
     @Override
@@ -47,9 +47,9 @@ public class UDPMessageHandler extends SimpleChannelInboundHandler<DatagramPacke
         String ipaddress = msg.sender().getAddress().getHostAddress();
         MessageDecoder decoder = new MessageDecoder();
         Message message;
-        if (MessageDecoder.matches(s))
+        if (MessageDecoder.matches(s)) {
             message = MessageDecoder.decode(s);
-        else {
+        } else {
             message = new Message.MessageBuilder().create()
                     .content(s)
                     .hostname(ipaddress)

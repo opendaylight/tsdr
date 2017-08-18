@@ -50,12 +50,5 @@
             <artifactId>tsdr-syslog-collector</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-syslog-collector</artifactId>
-            <version>${project.version}</version>
-            <type>xml</type>
-            <classifier>config</classifier>
-        </dependency>
     </dependencies>
 </project>

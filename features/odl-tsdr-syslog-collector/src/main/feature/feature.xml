@@ -8,6 +8,5 @@
     xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
     <!-- Syslog Data Collector -->
     <feature name='odl-tsdr-syslog-collector' version='${project.version}' description="OpenDaylight :: TSDR :: Syslog Collector">
-      <configfile finalname="${config.configfile.directory}/154-tsdr-syslog-collector-config.xml">mvn:org.opendaylight.tsdr/tsdr-syslog-collector/${project.version}/xml/config</configfile>
     </feature>
 </features>

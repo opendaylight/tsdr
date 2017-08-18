@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.restconf.collector;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Dictionary;
@@ -44,7 +45,7 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
     /**
      * The cached values of the configurations.
      */
-    private Dictionary<String, String> configurations = new Hashtable<>();
+    private final Dictionary<String, String> configurations = new Hashtable<>();
 
     /**
      * The logger of the class.
@@ -84,7 +85,7 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
      * returns the instance of the singleton.
      * @return the instance of the class. If the instance was null, a new instance is created
      */
-    public static TSDRRestconfCollectorConfig getInstance() {
+    public static synchronized TSDRRestconfCollectorConfig getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new TSDRRestconfCollectorConfig();
         }
@@ -95,6 +96,7 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
      * only call this method in testing to do mocking.
      * @param instance the instance of the class
      */
+    @VisibleForTesting
     public static void setInstance(TSDRRestconfCollectorConfig instance) {
         INSTANCE = instance;
     }
@@ -148,6 +150,8 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
             }
             configurations.put("CONTENT_TO_LOG", content);
 
+            log.info("TSDRRestconfCollectorConfig updated with {}", configurations);
+
         } else {
 
             log.error("The configuration properties are either empty or non-existent will use default values of: "
@@ -168,7 +172,7 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
      * @return the value of the property
      */
     public String getProperty(String name) {
-        return (String)this.configurations.get(name);
+        return this.configurations.get(name);
     }
 
     /**

@@ -5,8 +5,6 @@
 
     <!-- RestConf collector -->
     <feature name='odl-tsdr-restconf-collector' version='${project.version}' description="OpenDaylight :: TSDR :: Restconf Collector">
-  <configfile finalname="${config.configfile.directory}/156-tsdr-restconf-collector-config.xml">mvn:org.opendaylight.tsdr/tsdr-restconf-collector/${project.version}/xml/config</configfile>
         <configfile finalname="etc/tsdr.restconf.collector.cfg">mvn:org.opendaylight.tsdr/tsdr-restconf-collector/${project.version}/cfg/config1</configfile>
-
     </feature>
 </features>

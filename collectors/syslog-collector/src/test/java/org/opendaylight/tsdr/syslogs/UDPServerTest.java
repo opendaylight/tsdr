@@ -9,15 +9,15 @@
 
 package org.opendaylight.tsdr.syslogs;
 
+import java.util.LinkedList;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendaylight.tsdr.syslogs.server.SyslogUDPServer;
+import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * This is the test for UDP Server.
@@ -25,9 +25,9 @@ import java.util.List;
  * @author Kun Chen(kunch@tethrnet.com)
  */
 public class UDPServerTest {
-    private List<Message> messageList = new  LinkedList<>();
-    private SyslogUDPServer server = new SyslogUDPServer(messageList);
-
+    private final List<Message> messageList = new  LinkedList<>();
+    private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(1, 10, 10, 10);
+    private final SyslogUDPServer server = new SyslogUDPServer(messageList, manager);
 
     @Before
     public void setUp() throws InterruptedException {
@@ -58,5 +58,6 @@ public class UDPServerTest {
     @After
     public void tearDown() throws InterruptedException {
         server.stopServer();
+        manager.close();
     }
 }

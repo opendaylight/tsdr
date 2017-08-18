@@ -4,6 +4,5 @@
     xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
     <!-- NetFlow collector -->
     <feature name='odl-tsdr-netflow-statistics-collector' version='${project.version}' description="OpenDaylight :: TSDR :: Netflow Statistics Collector">
-    <configfile finalname="${config.configfile.directory}/156-tsdr-netflow-statistics-collector-config.xml">mvn:org.opendaylight.tsdr/tsdr-netflow-statistics-collector/${project.version}/xml/config</configfile>
     </feature>
 </features>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0"
+       odl:use-default-for-reference-types="true" odl:restart-dependents-on-updates="true">
+
+  <reference id="dataBroker" interface="org.opendaylight.controller.md.sal.binding.api.DataBroker"/>
+
+  <odl:clustered-app-config id="syslogCollectorConfig"
+      binding-class="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig"/>
+
+  <bean id="syslogDatastoreManager" class="org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager"
+      factory-method="getInstance" destroy-method="close">
+    <argument>
+      <bean factory-ref="syslogCollectorConfig" factory-method="getCoreThreadpoolSize"/>
+    </argument>
+    <argument>
+      <bean factory-ref="syslogCollectorConfig" factory-method="getMaxThreadpoolSize"/>
+    </argument>
+    <argument>
+      <bean factory-ref="syslogCollectorConfig" factory-method="getKeepAliveTime"/>
+    </argument>
+    <argument>
+      <bean factory-ref="syslogCollectorConfig" factory-method="getQueueSize"/>
+    </argument>
+    <property name="dataBroker" ref="dataBroker"/>
+  </bean>
+
+  <odl:rpc-implementation ref="syslogDatastoreManager"/>
+
+  <odl:rpc-service id="tsdrCollectorSpiService"
+      interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
+
+  <bean id="syslogCollectorImpl" class="org.opendaylight.tsdr.syslogs.TSDRSyslogCollectorImpl"
+      init-method = "init" destroy-method="close">
+    <argument ref="tsdrCollectorSpiService"/>
+    <argument ref="syslogDatastoreManager"/>
+    <property name="udpPort">
+      <bean factory-ref="syslogCollectorConfig" factory-method="getUdpport"/>
+    </property>
+    <property name="tcpPort">
+      <bean factory-ref="syslogCollectorConfig" factory-method="getTcpport"/>
+    </property>
+  </bean>
+
+</blueprint>

@@ -12,8 +12,6 @@ module tsdr-syslog-collector {
     namespace "urn:opendaylight:params:xml:ns:yang:controller:config:tsdr-syslog-collector";
     prefix "tsdr-syslog-collector";
 
-    import config { prefix config; revision-date 2013-04-05; }
-    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
     contact
       "Sharon Aicler <saichler@gmail.com>";
     description
@@ -25,243 +23,233 @@ module tsdr-syslog-collector {
             "Initial revision.";
     }
 
-    // This is the definition of the service implementation as a module identity.
-    identity tsdr-syslog-collector {
-            base config:module-type;
-            config:java-name-prefix TSDRSyslog;
+    container syslog-collector-config {
+        leaf udpport {
+            type uint16;
+            default 514;
+        }
+
+        leaf tcpport {
+            type uint16;
+            default 6514;
+        }
+
+        leaf core-threadpool-size {
+            type uint16;
+            default 5;
+        }
+
+        leaf max-threadpool-size {
+            type uint16;
+            default 10;
+        }
+
+        leaf keep-alive-time {
+            type uint16;
+            default 10;
+        }
+
+        leaf queue-size {
+            type uint16;
+            default 20;
+        }
     }
-    augment "/config:modules/config:module/config:configuration" {
-                case tsdr-syslog-collector {
-                    when "/config:modules/config:module/config:type = 'tsdr-syslog-collector'";
-                    container binding-aware-broker {
-                        uses config:service-ref {
-                            refine type {
-                                mandatory false;
-                                config:required-identity mdsal:binding-broker-osgi-registry;
-                            }
-                        }
-                    }
-                    container rpc-registry {
-                        uses config:service-ref {
-                            refine type {
-                                mandatory true;
-                                config:required-identity mdsal:binding-rpc-registry;
-                            }
-                        }
-                    }
-                    leaf udpport {
-                        type uint16;
-                    }
-                    leaf tcpport {
-                        type uint16;
-                    }
-                    leaf core-threadpool-size{
-                        type uint16;
-                    }leaf max-threadpool-size{
-                        type uint16;
-                    }leaf keep-alive-time{
-                        type uint16;
-                    }leaf queue-size{
-                        type uint16;
-                    }
-                }
+
+    typedef severity-id {
+        type uint16 {
+            range 0..7;
+        }
+        description "Severity from 0 to 7";
     }
-      typedef severity-id {
-            type uint16 {
-                range 0..7;
-            }
-            description "Severity from 0 to 7";
+
+    typedef facility-id {
+        type uint16 {
+            range 0..23;
         }
+        description "Facility from 0 to 23";
+    }
 
-        typedef facility-id {
-            type uint16 {
-                range 0..23;
-            }
-            description "Facility from 0 to 23";
+    grouping meta-filter {
+        leaf severity {
+            type severity-id;
         }
-
-        grouping meta-filter {
-            leaf severity {
-                type severity-id;
-            }
-            leaf facility {
-                type facility-id;
-            }
-            leaf sid {
-                type string;
-                default ".*";
-                description "Messageid of syslog";
-            }
-            leaf host {
-                type string;
-                default ".*";
-                description "Hostname of syslog";
-            }
-            leaf application {
-                type string;
-                default ".*";
-                description "Application name of syslog";
-            }
-            leaf pid{
-                type string;
-                default ".*";
-                description "Processid of syslog";
-            }
-            leaf content {
-                type string;
-                default ".*";
-                description "Content Body of syslog";
-            }
-
+        leaf facility {
+            type facility-id;
         }
+        leaf sid {
+            type string;
+            default ".*";
+            description "Messageid of syslog";
+        }
+        leaf host {
+            type string;
+            default ".*";
+            description "Hostname of syslog";
+        }
+        leaf application {
+            type string;
+            default ".*";
+            description "Application name of syslog";
+        }
+        leaf pid {
+            type string;
+            default ".*";
+            description "Processid of syslog";
+        }
+        leaf content {
+            type string;
+            default ".*";
+            description "Content Body of syslog";
+        }
+    }
 
-         rpc register-filter {
-            description "register a specific severity, return a listener id to listen.";
-            input {
-                uses meta-filter;
-                leaf callback-url{
-                       type string;
-                       description "The callback URL of your app.";
-                }
+    rpc register-filter {
+        description "register a specific severity, return a listener id to listen.";
+        input {
+            uses meta-filter;
+            leaf callback-url {
+                type string;
+                description "The callback URL of your app.";
             }
-            output {
-                leaf listener-id {
-                    type string;
-                    description "The listener ID for data change listener.";
-                }
+        }
+        output {
+            leaf listener-id {
+                type string;
+                description "The listener ID for data change listener.";
             }
-         }
+        }
+    }
 
-         rpc show-register-filter {
-                 description "show registered filter";
-                    output {
-                          leaf result{
-                              type string;
-                              description "the result of show-register-filter RPC.";
-                          }
-                          list registered-syslog-filter {
+    rpc show-register-filter {
+        description "show registered filter";
+        output {
+            leaf result {
+                type string;
+                description "the result of show-register-filter RPC.";
+            }
+            list registered-syslog-filter {
 
-                                          key "filter-id";
-                                          leaf filter-id {
-                                              type string;
-                                              description "the unique ID of each registered filter.";
-                                          }
-                                          leaf callback-url{
-                                              type string;
-                                              description "The callback URL of your app.";
-                                          }
-                                          container registered-filter-entity {
-                                              uses meta-filter;
-                                          }
-                          }
-                    }
-                }
-
-         rpc delete-registered-filter{
-                 description "delete registered filter";
-                   input {
-                                 leaf filter-id{
-                                     type string;
-                                     description "the filter with the input filterID will be deleted.";
-                                 }
-                             }
-                   output {
-                                 leaf result {
-                                     type string;
-                                     description "RPC result.";
-                                 }
-                             }
-         }
-
-         rpc show-threadpool-configuration{
-                   output{
-                              leaf queue-remaining-capacity{
-                                    type uint16;
-                                    description "the remaining capacity of the task queue.";
-                              }
-                              leaf queue-used-capacity{
-                                    type uint16;
-                                    description "the used capacity of the task queue.";
-                              }
-                              leaf keep-alive-time{
-                                    type uint16;
-                                    description "maximum time that excess idle threads will wait for new tasks before terminating.Time Unit:Second.";
-                              }
-                              leaf current-alive-thread-number{
-                                    type uint16;
-                                    description "current alive thread in the threadpool.";
-                              }
-                              leaf core-thread-number{
-                                    type uint16;
-                                    description "the number of threads to keep in the pool, even if they are idle.";
-                              }
-                              leaf Max-thread-number{
-                                    type uint16;
-                                    description "the maximum number of threads to allow in the pool.";
-                              }
-
-
-                          }
-         }
-
-         rpc config-threadpool{
-                   input{
-                            leaf core-thread-number{
-                                    type uint16;
-                                    description "config the number of the core thread of the threadpool.";
-                            }
-                            leaf max-thread-number{
-                                    type uint16;
-                                    description "config the number of the max thread of the threadpool.";
-                            }
-                            leaf keep-alive-time{
-                                    type uint16;
-                                    description "config the keep alive time.";
-                            }
-                        }
-
-                   output{
-                           leaf result{
-                              type string;
-                              description "RPC result.";
-                           }
-                   }
-         }
-
-      container syslog-dispatcher {
-            list syslog-filter {
-                config true;
                 key "filter-id";
                 leaf filter-id {
                     type string;
-                    description "the unique ID of registered filter.";
+                    description "the unique ID of each registered filter.";
                 }
-                container filter-entity {
+                leaf callback-url {
+                    type string;
+                    description "The callback URL of your app.";
+                }
+                container registered-filter-entity {
                     uses meta-filter;
                 }
-                leaf callback-url{
-                     type string;
-                     description "callback URL of your app.";
-                }
-                list listener {
-                    key "listener-id";
-                    leaf listener-id {
-                        type string;
-                        description "the unique ID of each listener node.";
-                    }
-                }
             }
-            list syslog-listener {
-                config false;
+        }
+    }
+
+    rpc delete-registered-filter {
+        description "delete registered filter";
+        input {
+            leaf filter-id {
+                type string;
+                description "the filter with the input filterID will be deleted.";
+            }
+        }
+        output {
+            leaf result {
+                type string;
+                description "RPC result.";
+            }
+        }
+    }
+
+    rpc show-threadpool-configuration {
+        output {
+            leaf queue-remaining-capacity {
+                type uint16;
+                description "the remaining capacity of the task queue.";
+            }
+            leaf queue-used-capacity {
+                type uint16;
+                description "the used capacity of the task queue.";
+            }
+            leaf keep-alive-time {
+                type uint16;
+                description "maximum time that excess idle threads will wait for new tasks
+                                before terminating.Time Unit:Second.";
+            }
+            leaf current-alive-thread-number {
+                type uint16;
+                description "current alive thread in the threadpool.";
+            }
+            leaf core-thread-number {
+                type uint16;
+                description "the number of threads to keep in the pool, even if they are idle.";
+            }
+            leaf Max-thread-number {
+                type uint16;
+                description "the maximum number of threads to allow in the pool.";
+            }
+        }
+    }
+
+    rpc config-threadpool {
+        input {
+            leaf core-thread-number {
+                type uint16;
+                description "config the number of the core thread of the threadpool.";
+            }
+            leaf max-thread-number {
+                type uint16;
+                description "config the number of the max thread of the threadpool.";
+            }
+            leaf keep-alive-time {
+                type uint16;
+                description "config the keep alive time.";
+            }
+        }
+
+        output {
+            leaf result {
+                type string;
+                description "RPC result.";
+            }
+        }
+    }
+
+    container syslog-dispatcher {
+        list syslog-filter {
+            config true;
+            key "filter-id";
+            leaf filter-id {
+                type string;
+                description "the unique ID of registered filter.";
+            }
+            container filter-entity {
+                uses meta-filter;
+            }
+            leaf callback-url {
+                type string;
+                description "callback URL of your app.";
+            }
+            list listener {
                 key "listener-id";
                 leaf listener-id {
                     type string;
                     description "the unique ID of each listener node.";
                 }
-                leaf syslog-message {
-                    type string;
-                    description "the message match certain filter will be installed here.";
-                }
             }
         }
+        list syslog-listener {
+            config false;
+            key "listener-id";
+            leaf listener-id {
+                type string;
+                description "the unique ID of each listener node.";
+            }
+            leaf syslog-message {
+                type string;
+                description "the message match certain filter will be installed here.";
+            }
+        }
+    }
+
 }

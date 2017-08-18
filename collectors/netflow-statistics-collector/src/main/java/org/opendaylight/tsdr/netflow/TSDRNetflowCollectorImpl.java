@@ -8,15 +8,18 @@
  */
 package org.opendaylight.tsdr.netflow;
 
+import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
-
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.concurrent.GuardedBy;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
@@ -37,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * Created: December 1, 2015
  * Modified: Aug 02, 2016
  */
-public class TSDRNetflowCollectorImpl extends Thread{
+public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
 
     private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 5000;
     private static final long INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS = 2000;
@@ -46,90 +49,109 @@ public class TSDRNetflowCollectorImpl extends Thread{
     private static byte packetsCountForTests = 0; //Just to test the counts of packet for test
     private final TsdrCollectorSpiService collectorSPIService;
     private DatagramSocket socket;
-    private boolean running = true;
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    @GuardedBy("incomingNetFlow")
     private final LinkedList<DatagramPacket> incomingNetFlow = new LinkedList<>();
-    private long lastPersisted = System.currentTimeMillis();
-    private long lastTimeStamp = System.currentTimeMillis();
-    private int logRecordIndex = 0;
+
     /**
      * Constructor
      * @param _collectorSPIService
      */
-    public TSDRNetflowCollectorImpl(TsdrCollectorSpiService _collectorSPIService) throws IOException{
+    public TSDRNetflowCollectorImpl(TsdrCollectorSpiService _collectorSPIService) {
         super("TSDR NetFlow Listener");
         this.setDaemon(true);
-        logRecordIndex = 0;
         this.collectorSPIService = _collectorSPIService;
-        try{
-            this.socket = new DatagramSocket(2055);
-        }catch(Exception e){
-            logger.error("Collector service already running. Failed to bind it again on Port 2055.");
-            //Collector service already running, just passing the code for testing purpose.
-            //this.socket = new DatagramSocket();
-          shutdown();
-        }
-        this.start();
-        new NetFlowProcessor();
     }
+
     public long getIncomingNetflowSize(){
         return incomingNetFlow.size();
     }
+
     public byte getPacketCount(){
         return packetsCountForTests;
     }
+
+    public void init() {
+        BindException lastEx = null;
+        Stopwatch sw = Stopwatch.createStarted();
+        while (sw.elapsed(TimeUnit.SECONDS) <= 30) {
+            try {
+                this.socket = new DatagramSocket(2055);
+                this.start();
+                new NetFlowProcessor();
+                logger.info("TSDRNetflowCollectorImpl initialized");
+                return;
+            } catch (BindException e) {
+                // Address already in use - retry
+                Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+            } catch (SocketException e) {
+                logger.error("Error creating DatagramSocket on port 2055.", e);
+                close();
+                return;
+            }
+        }
+
+        logger.error("Collector service already running. Failed to bind it again on Port 2055.", lastEx);
+        close();
+    }
+
+    @Override
     public void run(){
         if(this.socket==null || this.socket.isClosed()){
-            shutdown();
+            close();
         }else {
-            while (running) {
+            while (running.get()) {
                 byte data[] = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(data, data.length);
                 try {
                     socket.receive(packet);
                     handleNetFlow(packet);
                 } catch (IOException e) {
-                    logger.error("Error while handleling netflow packets.", e);
-                    shutdown();
+                    if (!socket.isClosed()) {
+                        logger.error("Error while handleling netflow packets.", e);
+                    }
+                    close();
                 }
             }
         }
     }
-    public void shutdown(){
-        running = false;
-        if(socket!=null){
-            socket.close();
-        }
-        synchronized(incomingNetFlow){
-            incomingNetFlow.notifyAll();
+
+    @Override
+    public void close(){
+        if (running.compareAndSet(true, false)) {
+            if(socket!=null){
+                socket.close();
+            }
+            synchronized(incomingNetFlow){
+                incomingNetFlow.notifyAll();
+            }
         }
     }
 
     public void handleNetFlow(DatagramPacket packet){
         synchronized(incomingNetFlow){
             incomingNetFlow.add(packet);
-            packetsCountForTests = (byte) (((int)packetsCountForTests) + 1);
+            packetsCountForTests = (byte) (packetsCountForTests + 1);
             incomingNetFlow.notifyAll();
         }
     }
 
     private class NetFlowProcessor extends Thread{
         private TSDRLogRecordBuilder recordbuilder;
-        public NetFlowProcessor(){
+
+        NetFlowProcessor(){
             super("TSDR NetFlow Processor");
             this.setDaemon(true);
             this.start();
             logger.debug("NetFlow Processor thread initialized");
         }
-        public long getIncomingNetflowSize(){
-            return incomingNetFlow.size();
-        }
-        public byte getPacketCount(){
-            return packetsCountForTests;
-        }
+
+        @Override
         public void run(){
             DatagramPacket packet = null;
-            LinkedList<TSDRLogRecord> netFlowQueue = new LinkedList<TSDRLogRecord>();
-            while(running){
+            LinkedList<TSDRLogRecord> netFlowQueue = new LinkedList<>();
+            long lastPersisted = System.currentTimeMillis();
+            while(running.get()){
                 synchronized(incomingNetFlow) {
                     if (incomingNetFlow.isEmpty()) {
                         logger.debug("No Pkts in queue");
@@ -164,7 +186,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
                             dataBufferOffset += 4;
                         }
                         int packetLength = (flowsetLength - 4) / flowCount;
-                        while(flowCounter <= flowCount && (dataBufferOffset + packetLength) < buff.length){
+                        while(flowCounter <= flowCount && dataBufferOffset + packetLength < buff.length){
                             recordbuilder = new TSDRLogRecordBuilder();
                             NetflowPacketParser parser = new NetflowPacketParser(buff);
                             parser.addFormat(buff, dataBufferOffset);
@@ -174,7 +196,6 @@ public class TSDRNetflowCollectorImpl extends Thread{
                             recordbuilder.setIndex(flowCounter);
                             recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
                             recordbuilder.setRecordFullText(parser.toString());
-                            logger.info(parser.toString());
                             if(logger.isDebugEnabled()) {
                                 logger.debug(parser.toString());
                             }
@@ -190,7 +211,7 @@ public class TSDRNetflowCollectorImpl extends Thread{
                         int flowCount = new Integer(NetflowPacketParser.convert(buff, 2, 2)).intValue();
                         int flowCounter = 1;
                         int dataBufferOffset = 0;
-                        while(flowCounter <= flowCount && (dataBufferOffset + FLOW_SIZE_FOR_NETFLOW_PACKET) < buff.length){
+                        while(flowCounter <= flowCount && dataBufferOffset + FLOW_SIZE_FOR_NETFLOW_PACKET < buff.length){
                             recordbuilder = new TSDRLogRecordBuilder();
                             NetflowPacketParser parser = new NetflowPacketParser(buff);
                             parser.addFormat(buff, dataBufferOffset);
@@ -212,12 +233,12 @@ public class TSDRNetflowCollectorImpl extends Thread{
                             flowCounter += 1;
                         }
                     }
-                    if(System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS && !netFlowQueue.isEmpty() && packet != null){ 
+                    if(System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS && !netFlowQueue.isEmpty() && packet != null){
                         LinkedList<TSDRLogRecord> queue = null;
                         if(System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS && !netFlowQueue.isEmpty()){
                             lastPersisted = System.currentTimeMillis();
                             queue = netFlowQueue;
-                            netFlowQueue = new LinkedList<TSDRLogRecord>();
+                            netFlowQueue = new LinkedList<>();
                         }
                         if(queue!=null){
                             store(queue);

@@ -10,11 +10,12 @@ package org.opendaylight.tsdr.datacollection;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.base.Optional;
+import com.google.common.util.concurrent.CheckedFuture;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,11 +23,9 @@ import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
-import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.osc.TSDRDOMCollector;
 import org.opendaylight.tsdr.osc.handlers.FlowCapableNodeConnectorQueueStatisticsDataHandler;
 import org.opendaylight.tsdr.osc.handlers.FlowStatisticsDataHandler;
-import org.opendaylight.tsdr.osc.handlers.NodeConnectorStatisticsChangeHandler;
 import org.opendaylight.tsdr.osc.handlers.NodeGroupStatisticsChangeHandler;
 import org.opendaylight.tsdr.osc.handlers.NodeMeterStatisticsChangeHandler;
 import org.opendaylight.tsdr.osc.handlers.NodeTableStatisticsChangeHandler;
@@ -82,6 +81,7 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.meter.statistics.rev131111.
 import org.opendaylight.yang.gen.v1.urn.opendaylight.meter.types.rev130918.MeterId;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.model.statistics.types.rev130925.node.connector.statistics.BytesBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.model.statistics.types.rev130925.node.connector.statistics.PacketsBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.FlowCapableNodeConnectorStatisticsData;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.FlowCapableNodeConnectorStatisticsDataBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.flow.capable.node.connector.statistics.FlowCapableNodeConnectorStatistics;
@@ -92,21 +92,17 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.queue.statistics.rev131216.
 import org.opendaylight.yang.gen.v1.urn.opendaylight.queue.statistics.rev131216.flow.capable.node.connector.queue.statistics.FlowCapableNodeConnectorQueueStatisticsBuilder;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 
-import com.google.common.base.Optional;
-import com.google.common.util.concurrent.CheckedFuture;
-
 public class DataCollectionTest {
     private DataBroker dataBroker = null;
-    private RpcProviderRegistry rpcRegistry = null;
+    private final TsdrCollectorSpiService collectorSPIService = mock(TsdrCollectorSpiService.class);
     private ReadOnlyTransaction readTransaction = null;
     private Nodes nodes = null;
-    private CheckedFuture<Optional<Nodes>, ReadFailedException> checkedFuture = mock(CheckedFuture.class);
-    private Optional<Nodes> optional = mock(Optional.class);
+    private final CheckedFuture<Optional<Nodes>, ReadFailedException> checkedFuture = mock(CheckedFuture.class);
+    private final Optional<Nodes> optional = mock(Optional.class);
     private TSDRDOMCollector collector = null;
     @Before
     public void before(){
         dataBroker = mock(DataBroker.class);
-        rpcRegistry = mock(RpcProviderRegistry.class);
         readTransaction = mock(ReadOnlyTransaction.class);
         when(dataBroker.newReadOnlyTransaction()).thenReturn(readTransaction);
         InstanceIdentifier<Nodes> id = InstanceIdentifier.create(Nodes.class);
@@ -119,7 +115,7 @@ public class DataCollectionTest {
             e.printStackTrace();
         }
         when(optional.get()).thenReturn(nodes);
-        collector = new TSDRDOMCollector(this.dataBroker, rpcRegistry);
+        collector = new TSDRDOMCollector(this.dataBroker, collectorSPIService);
     }
     @After
     public void after(){
@@ -128,11 +124,11 @@ public class DataCollectionTest {
                     Nodes.class).child(Node.class, node.getKey());
             collector.removeAllNodeBuilders(nodeID);
         }
-        collector.shutdown();
+        collector.close();
     }
     private Nodes buildNodes(){
         NodesBuilder nb = new NodesBuilder();
-        List<Node> nodeList = new ArrayList<Node>(2);
+        List<Node> nodeList = new ArrayList<>(2);
         nodeList.add(buildNode("openflow:1"));
         nodeList.add(buildNode("openflow:2"));
         nb.setNode(nodeList);
@@ -142,7 +138,7 @@ public class DataCollectionTest {
         NodeBuilder nb = new NodeBuilder();
         nb.setId(new NodeId(id));
         nb.setKey(new NodeKey(nb.getId()));
-        List<NodeConnector> cList = new ArrayList<NodeConnector>();
+        List<NodeConnector> cList = new ArrayList<>();
         cList.add(buildNodeConnector(id+":1"));
         cList.add(buildNodeConnector(id+":2"));
         nb.setNodeConnector(cList);

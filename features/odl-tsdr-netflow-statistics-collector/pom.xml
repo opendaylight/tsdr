@@ -19,7 +19,6 @@
     <name>ODL :: tsdr :: netflow statistics collector</name>
     <properties>
           <mdsal.version>1.6.0-SNAPSHOT</mdsal.version>
-          <config.version>0.7.0-SNAPSHOT</config.version>
           <l2switch.version>0.6.0-SNAPSHOT</l2switch.version>
     </properties>
 
@@ -57,13 +56,6 @@
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-netflow-statistics-collector</artifactId>
           <version>${project.version}</version>
-      </dependency>
-      <dependency>
-          <groupId>org.opendaylight.tsdr</groupId>
-          <artifactId>tsdr-netflow-statistics-collector</artifactId>
-          <version>${project.version}</version>
-          <type>xml</type>
-          <classifier>config</classifier>
       </dependency>
       <!-- ODL dependencies -->
       <dependency>

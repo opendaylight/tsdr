@@ -8,9 +8,10 @@
  */
 package org.opendaylight.tsdr.syslogs;
 
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
+import java.net.DatagramSocket;
+import java.util.LinkedList;
+import java.util.List;
 import org.opendaylight.controller.sal.binding.api.BindingAwareBroker;
-import org.opendaylight.controller.sal.binding.api.BindingAwareProvider;
 import org.opendaylight.tsdr.syslogs.filters.SyslogFilterManager;
 import org.opendaylight.tsdr.syslogs.server.SyslogTCPServer;
 import org.opendaylight.tsdr.syslogs.server.SyslogUDPServer;
@@ -23,10 +24,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.DatagramSocket;
-import java.util.LinkedList;
-import java.util.List;
-
 /**
  * This Class start both TCP and UDP servers
  * to receive syslog messages and claim how
@@ -35,7 +32,7 @@ import java.util.List;
  * @author Sharon Aicler(saichler@gmail.com)
  * @author Kun Chen(kunch@tethrnet.com)
  **/
-public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
+public class TSDRSyslogCollectorImpl {
     public static final int UDP_PORT = 514;
     public static final int TCP_PORT = 6514;
     public static final long QUEUE_WAIT_INTERVAL = 2000;
@@ -45,21 +42,16 @@ public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
     SyslogUDPServer udpServer;
 
     private TsdrCollectorSpiService collectorSPIService = null;
-    private boolean running = true;
-    private Logger logger = LoggerFactory.getLogger(TSDRSyslogCollectorImpl.class);
-    private List<TSDRLogRecord> syslogQueue = new LinkedList<TSDRLogRecord>();
-    private final List<Message> messageList = new LinkedList<Message>();
-    private SyslogFilterManager filterManager = new SyslogFilterManager();
+    private volatile boolean running = true;
+    private final Logger logger = LoggerFactory.getLogger(TSDRSyslogCollectorImpl.class);
+    private List<TSDRLogRecord> syslogQueue = new LinkedList<>();
+    private final List<Message> messageList = new LinkedList<>();
+    private final SyslogFilterManager filterManager = new SyslogFilterManager();
     private long lastPersisted = System.currentTimeMillis();
     private int udpPort = UDP_PORT;
     private int tcpPort = TCP_PORT;
-    private int coreThreadPoolSize = 5;
-    private int maxThreadPoolSize = 10;
-    private long keepAliveTime = 10L;
-    private int queueSize = 10;
 
-    private DataBroker dataBroker;
-    private SyslogDatastoreManager manager;
+    private final SyslogDatastoreManager manager;
     private BindingAwareBroker.RpcRegistration<TsdrSyslogCollectorService> syslogsvrService;
 
     @Override
@@ -72,10 +64,9 @@ public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
      *
      * @param _collectorSPIService invoke collector SPI service to implement tsdr data insertion
      */
-    public TSDRSyslogCollectorImpl(TsdrCollectorSpiService _collectorSPIService) {
+    public TSDRSyslogCollectorImpl(TsdrCollectorSpiService _collectorSPIService, SyslogDatastoreManager manager) {
         this.collectorSPIService = _collectorSPIService;
-        this.manager = SyslogDatastoreManager.getInstance(coreThreadPoolSize, maxThreadPoolSize, keepAliveTime, queueSize);
-        new SyslogProcessor().start();
+        this.manager = manager;
     }
 
     public void setUdpPort(int udpPort) {
@@ -86,60 +77,26 @@ public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
         this.tcpPort = tcpPort;
     }
 
-    public void setCoreThreadPoolSize(int coreThreadPoolSize) {
-        this.coreThreadPoolSize = coreThreadPoolSize;
-    }
-
-    public void setKeepAliveTime(long keepAliveTime) {
-        this.keepAliveTime = keepAliveTime;
-    }
-
-    public void setMaxThreadPoolSize(int maxThreadPoolSize) {
-        this.maxThreadPoolSize = maxThreadPoolSize;
-    }
-
-    public void setQueueSize(int queueSize) {
-        this.queueSize = queueSize;
-    }
-
-    public void setManager(SyslogDatastoreManager manager) {
-        this.manager = manager;
-    }
-
     public boolean isRunning() {
         return this.running;
     }
 
-
-    /**
-     * initiated when the data binding broker is registered
-     * in TSDRSyslogModule
-     *
-     * @param session binding aware broker's provider context
-     */
-    @Override
-    public void onSessionInitiated(BindingAwareBroker.ProviderContext session) {
-        this.dataBroker = session.getSALService(DataBroker.class);
-
-        manager.setDataBroker(dataBroker);
-        logger.info("Datastore Manager Setup Done");
-        this.syslogsvrService = session.addRpcImplementation(TsdrSyslogCollectorService.class, manager);
-        logger.info("Register SyslogsvrService to Session.");
+    public void init() {
+        new SyslogProcessor().start();
 
         logger.info("Syslog Collector Session Initiated");
 
         //Start TCP syslog server
         logger.info("Start TCP server");
         try {
-            tcpServer = new SyslogTCPServer(this.messageList);
+            tcpServer = new SyslogTCPServer(this.messageList, this.manager);
             tcpServer.setPort(tcpPort);
             tcpServer.startServer();
-            logger.info("TCP server started at port: " + tcpPort + ".");
+            logger.info("TCP server started at port: {}", tcpPort);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error("Error starting TCP srver on port {}", tcpPort, e);
             this.close();
         }
-
 
         //Test If port is available
         boolean udpPortAvailable = false;
@@ -149,7 +106,7 @@ public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
             socket = null;
             udpPortAvailable = true;
         } catch (Exception e) {
-            logger.error("Port " + udpPort + " is not available for UDP, trying backup...");
+            logger.error("Port {} is not available for UDP, trying backup...", udpPort, e);
             try {
                 udpPort += 1000;
                 DatagramSocket socket = new DatagramSocket(udpPort);
@@ -158,7 +115,7 @@ public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
                 udpPortAvailable = true;
             } catch (Exception err) {
                 this.close();
-                logger.error("Port " + udpPort + " is not available, not starting servers!");
+                logger.error("Port {} is not available, not starting servers!", udpPort, e);
             }
         }
 
@@ -166,12 +123,12 @@ public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
             //Start UDP syslog server
             logger.info("Start UDP server");
             try {
-                udpServer = new SyslogUDPServer(messageList);
+                udpServer = new SyslogUDPServer(messageList, this.manager);
                 udpServer.setPort(udpPort);
                 udpServer.startServer();
-                logger.info("UDP server started at port: " + udpPort + ".");
+                logger.info("UDP server started at port {}", udpPort);
             } catch (Exception e) {
-                logger.error("Failed to start UDP server on port " + udpPort, e);
+                logger.error("Failed to start UDP server on port {}", udpPort, e);
             }
         }
     }
@@ -179,10 +136,12 @@ public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
     public void close() {
         running = false;
         try {
-            if (tcpServer != null)
+            if (tcpServer != null) {
                 tcpServer.stopServer();
-            if (udpServer != null)
+            }
+            if (udpServer != null) {
                 udpServer.stopServer();
+            }
         } catch (InterruptedException e) {
             logger.error(e.getMessage());
         }
@@ -195,6 +154,7 @@ public class TSDRSyslogCollectorImpl implements BindingAwareProvider {
             this.setDaemon(true);
         }
 
+        @Override
         public void run() {
             Message message = null;
             while (running) {

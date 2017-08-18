@@ -11,10 +11,9 @@ package org.opendaylight.tsdr.syslogs.server.decoder;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
-
 import java.net.InetSocketAddress;
 import java.util.List;
+import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 
 /**
  * This TCP message handler handles the coming messages,
@@ -26,12 +25,13 @@ import java.util.List;
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
 public class MessageHandler extends SimpleChannelInboundHandler<String> {
-    private SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance();
+    private final SyslogDatastoreManager manager;
     private final List<Message> incomingSyslogs;
 
-    public MessageHandler(List<Message> incomingSyslogs) {
+    public MessageHandler(List<Message> incomingSyslogs, SyslogDatastoreManager manager) {
         super();
         this.incomingSyslogs = incomingSyslogs;
+        this.manager = manager;
     }
 
     @Override

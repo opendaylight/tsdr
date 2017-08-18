@@ -51,10 +51,12 @@ public class TSDRRestconfCollectorLoggerTest {
     public void setup() throws Exception {
         timer = Mockito.mock(Timer.class);
 
-        loggerObject = TSDRRestconfCollectorLogger.getInstance(timer);
+        loggerObject = TSDRRestconfCollectorLogger.getInstance(() -> timer);
 
         tsdrCollectorSpiService = Mockito.mock(TsdrCollectorSpiService.class);
         loggerObject.setTsdrCollectorSpiService(tsdrCollectorSpiService);
+
+        loggerObject.init();
     }
 
     /**
@@ -116,16 +118,16 @@ public class TSDRRestconfCollectorLoggerTest {
     @Test
     public void getInstanceTest() {
 
-        TSDRRestconfCollectorLogger oldInstance = TSDRRestconfCollectorLogger.getInstance(timer);
+        TSDRRestconfCollectorLogger oldInstance = TSDRRestconfCollectorLogger.getInstance(() -> timer);
 
         TSDRRestconfCollectorLogger.setInstance(null);
 
-        TSDRRestconfCollectorLogger newInstance = TSDRRestconfCollectorLogger.getInstance(timer);
+        TSDRRestconfCollectorLogger newInstance = TSDRRestconfCollectorLogger.getInstance(() -> timer);
 
         // Assert that a new instance has actually been created
         Assert.assertNotSame(oldInstance, newInstance);
 
-        TSDRRestconfCollectorLogger sameInstance = TSDRRestconfCollectorLogger.getInstance(timer);
+        TSDRRestconfCollectorLogger sameInstance = TSDRRestconfCollectorLogger.getInstance(() -> timer);
 
         // Assert that the same old instance was used
         Assert.assertSame(newInstance, sameInstance);
@@ -136,7 +138,7 @@ public class TSDRRestconfCollectorLoggerTest {
      */
     @Test
     public void shutDownTest() {
-        loggerObject.shutDown();
+        loggerObject.close();
         loggerObject.run();
 
         Mockito.verify(timer).cancel();

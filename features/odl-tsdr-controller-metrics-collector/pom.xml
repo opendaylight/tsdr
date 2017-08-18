@@ -45,13 +45,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-controller-metrics-collector</artifactId>
-            <version>${project.version}</version>
-            <type>xml</type>
-            <classifier>config</classifier>
-        </dependency>
-        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
 <!--
