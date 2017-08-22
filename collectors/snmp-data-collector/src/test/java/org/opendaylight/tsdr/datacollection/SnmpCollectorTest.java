@@ -9,10 +9,22 @@
 
 package org.opendaylight.tsdr.datacollection;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.google.common.base.Optional;
+import com.google.common.util.concurrent.CheckedFuture;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.binding.api.ReadWriteTransaction;
@@ -20,6 +32,8 @@ import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
+import org.opendaylight.tsdr.sdc.SNMPDataCollector;
+import org.opendaylight.tsdr.sdc.TSDRSNMPConfig;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev130715.Ipv4Address;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter32;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Gauge32;
@@ -28,63 +42,19 @@ import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.smiv2._if.mib.re
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.smiv2._if.mib.rev000614.interfaces.group.IfEntry.IfAdminStatus;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.smiv2._if.mib.rev000614.interfaces.group.IfEntry.IfOperStatus;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.smiv2._if.mib.rev000614.interfaces.group.IfEntryBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.*;
-import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
-import org.opendaylight.yangtools.yang.common.RpcResult;
-import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
-import org.snmp4j.PDU;
-import org.snmp4j.Snmp;
-import org.snmp4j.Target;
-import org.snmp4j.event.ResponseEvent;
-import org.snmp4j.event.ResponseListener;
-import org.snmp4j.smi.Integer32;
-import org.snmp4j.smi.OID;
-import org.snmp4j.smi.OctetString;
-import org.snmp4j.smi.UdpAddress;
-import org.snmp4j.smi.Variable;
-import org.snmp4j.smi.VariableBinding;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.net.Inet4Address;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.smiv2.snmpv2.tc.rev990401.DisplayString;
-import org.opendaylight.snmp.plugin.internal.MibTable;
-import org.opendaylight.snmp.plugin.internal.SNMPImpl;
-import org.opendaylight.tsdr.sdc.SNMPDataCollector;
-import org.opendaylight.tsdr.sdc.TSDRSNMPConfig;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
-import org.opendaylight.yangtools.yang.common.RpcResult;
-import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev130715.Ipv4Address;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.SetPollingIntervalInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfigBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TsdrSnmpDataCollectorService;
-
-import com.google.common.base.Optional;
-import com.google.common.util.concurrent.CheckedFuture;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.SnmpGetOutput;
+import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
+import org.opendaylight.yangtools.yang.common.RpcResult;
+import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
+import org.snmp4j.Snmp;
 
 /**
  * @author Trapti Khandelwal(trapti.khandelwal@tcs.com)
@@ -100,22 +70,19 @@ public class SnmpCollectorTest {
     private ReadOnlyTransaction readTransaction = null;
     private WriteTransaction writeTransaction =null;
     private TSDRSnmpDataCollectorConfig collectorConfig = null;
-    private CheckedFuture<Optional<TSDRSnmpDataCollectorConfig>, ReadFailedException> checkedFuture = mock(CheckedFuture.class);
+    private final CheckedFuture<Optional<TSDRSnmpDataCollectorConfig>, ReadFailedException> checkedFuture = mock(CheckedFuture.class);
     private static Future<RpcResult<SnmpGetOutput>> futureSnmpGetOutput = null;
     private DataBroker dataBroker = null;
-    private RpcProviderRegistry rpcRegistry = null;
     private InstanceIdentifier<TSDRSnmpDataCollectorConfig> id= null;
     private SNMPDataCollector collector = null;
     private TSDRSNMPConfig tsdrSnmpConfigObj = null;
-    private Ipv4Address ip=new Ipv4Address("127.0.0.1");
-    private Optional<TSDRSnmpDataCollectorConfig> optional = mock(Optional.class);
-    private List<TSDRMetricRecord> tsdrMetricRecordList = new LinkedList<>();
+    private final Ipv4Address ip=new Ipv4Address("127.0.0.1");
+    private final Optional<TSDRSnmpDataCollectorConfig> optional = mock(Optional.class);
+    private final List<TSDRMetricRecord> tsdrMetricRecordList = new LinkedList<>();
 
     @Before
     public void setUp() throws IOException {
-        tsdrSnmpConfigObj=TSDRSNMPConfig.getInstance();  
-        rpcRegistry = mock(RpcProviderRegistry.class);
-        when(rpcRegistry.addRpcImplementation(eq(TsdrSnmpDataCollectorService.class), any(TsdrSnmpDataCollectorService.class))).thenReturn(null);
+        tsdrSnmpConfigObj=TSDRSNMPConfig.getInstance();
         dataBroker = mock(DataBroker.class);
         readTransaction = mock(ReadOnlyTransaction.class);
         writeTransaction = mock (ReadWriteTransaction.class);
@@ -134,7 +101,7 @@ public class SnmpCollectorTest {
         }
         when(optional.get()).thenReturn(collectorConfig);
         mockSnmp = mock(Snmp.class);
-        collector = new SNMPDataCollector(this.dataBroker, rpcRegistry);
+        collector = new SNMPDataCollector(this.dataBroker, mock(TsdrCollectorSpiService.class));
     }
 
     private TSDRSnmpDataCollectorConfig buildNodes(){
@@ -186,8 +153,8 @@ public class SnmpCollectorTest {
     }
 
     @Test
-    public void testShutdown() throws Exception {
-        collector.shutdown();
+    public void testClose() throws Exception {
+        collector.close();
     }
 
     @Test
