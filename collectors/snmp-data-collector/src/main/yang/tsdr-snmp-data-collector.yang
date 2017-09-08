@@ -17,8 +17,6 @@ module tsdr-snmp-data-collector {
     import IF-MIB {
         prefix if-mib;
     }
-    import config { prefix config; revision-date 2013-04-05; }
-    import opendaylight-md-sal-binding { prefix mdsal; revision-date 2013-10-28; }
     contact
       "Trapti Khandelwal <trapti.khandelwal@tcs.com>";
     description
@@ -28,12 +26,6 @@ module tsdr-snmp-data-collector {
     revision "2015-10-13" {
         description
             "Initial revision.";
-    }
-
-    // This is the definition of the service implementation as a module identity.
-    identity tsdr-snmp-data-collector {
-            base config:module-type;
-            config:java-name-prefix TSDRSnmpDataCollector;
     }
 
     container TSDRSnmpDataCollectorConfig{
@@ -62,28 +54,6 @@ module tsdr-snmp-data-collector {
             enum ifAdminStatus;
         }
     }
-
-    augment "/config:modules/config:module/config:configuration" {
-                case tsdr-snmp-data-collector {
-                    when "/config:modules/config:module/config:type = 'tsdr-snmp-data-collector'";
-                    container data-broker {
-                        uses config:service-ref {
-                            refine type {
-                                mandatory false;
-                                config:required-identity mdsal:binding-async-data-broker;
-                            }
-                        }
-                    }
-                    container rpc-registry {
-                        uses config:service-ref {
-                            refine type {
-                                mandatory true;
-                                config:required-identity mdsal:binding-rpc-registry;
-                            }
-                        }
-                    }
-                }
-            }
 
     rpc setPollingInterval  {
         description

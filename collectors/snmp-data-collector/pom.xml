@@ -17,14 +17,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>${bundle.plugin.version}</version>
                 <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Export-Package>org.opendaylight.controller.config.yang.config.TSDR_snmp-data-collector.impl</Export-Package>
-                        <Import-Package>*</Import-Package>
-                    </instructions>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -38,11 +31,6 @@
                         <phase>package</phase>
                         <configuration>
                             <artifacts>
-                                <artifact>
-                                    <file>${project.build.directory}/classes/configuration/initial/155-tsdr-snmp-data-collector-config.xml</file>
-                                    <type>xml</type>
-                                    <classifier>config</classifier>
-                                </artifact>
                                 <artifact>
                                     <file>${project.build.directory}/classes/configuration/initial/tsdr.snmp.cfg</file>
                                     <type>cfg</type>
@@ -70,14 +58,6 @@
             <groupId>org.apache.servicemix.bundles</groupId>
             <artifactId>org.apache.servicemix.bundles.snmp4j</artifactId>
             <version>2.3.4_1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.opendaylight.controller</groupId>
-            <artifactId>config-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.opendaylight.controller</groupId>
-            <artifactId>sal-binding-config</artifactId>
         </dependency>
         <dependency>
             <groupId>org.opendaylight.controller</groupId>

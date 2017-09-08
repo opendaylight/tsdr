@@ -9,6 +9,7 @@
 
 package org.opendaylight.tsdr.sdc;
 
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -28,7 +29,7 @@ public class TSDRSNMPConfig implements ManagedService {
      * So array of String is to hold multiple values against single key.
      * eg credentials=[127.0.0.1,public],[127.0.0.1,public]
     */
-    private Dictionary<String, String[]> configurations = new Hashtable<>();
+    private final Dictionary<String, String[]> configurations = new Hashtable<>();
     public static final String P_CREDENTIALS = "credentials";
     private static final Logger log = LoggerFactory
             .getLogger(TSDRSNMPConfig.class);
@@ -44,12 +45,17 @@ public class TSDRSNMPConfig implements ManagedService {
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
         if (properties != null && !properties.isEmpty()) {
+            StringBuilder builder = new StringBuilder("{");
             Enumeration<String> k = properties.keys();
             while (k.hasMoreElements()) {
                 String key = k.nextElement();
                 String[] list = ((String) properties.get(key)).replace("[", "").replace("]", "").split(",");
+                builder.append(key).append('=').append(Arrays.toString(list)).append(',');
                 configurations.put(key, list);
             }
+
+            builder.append('}');
+            log.info("TSDRSNMPConfig updated to {}", builder);
         }
     }
 

@@ -11,7 +11,6 @@ package org.opendaylight.tsdr.sdc;
 
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.CheckedFuture;
-
 import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
-import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.snmp.plugin.internal.SNMPImpl;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
@@ -55,30 +53,32 @@ import org.slf4j.LoggerFactory;
  * @author Trapti Khandelwal(trapti.khandelwal@tcs.com)
  * @author Razi Ahmed(ahmed.razi@tcs.com)
  **/
-public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
+public class SNMPDataCollector implements TsdrSnmpDataCollectorService, AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(SNMPDataCollector.class);
-    private boolean running = true;
+    private volatile boolean running = true;
     // The reference to the the RPC registry to store the data
     private final DataBroker dataBroker;
-    private final RpcProviderRegistry rpcRegistry;
     private TSDRSnmpDataCollectorConfig config = null;
     protected Object pollerSyncObject = new Object();
-    private TsdrCollectorSpiService collectorSPIService = null;
+    private final TsdrCollectorSpiService collectorSPIService;
     private static final String COLLECTOR_CODE_NAME = SNMPDataCollector.class.getSimpleName();
     private static final long pollingInterval=300000l;
     private List<TSDRMetricRecord> tsdrMetricRecordList = new LinkedList<>();
 
-    public SNMPDataCollector(DataBroker dataBroker,RpcProviderRegistry rpcRegistry) {
-        log("TSDR SNMP Collector Started", INFO);
+    public SNMPDataCollector(DataBroker dataBroker, TsdrCollectorSpiService collectorSPIService) {
         this.dataBroker = dataBroker;
-        this.rpcRegistry = rpcRegistry;
+        this.collectorSPIService = collectorSPIService;
+    }
 
+    public void init() {
         TSDRSnmpDataCollectorConfigBuilder b = new TSDRSnmpDataCollectorConfigBuilder();
         b.setPollingInterval(pollingInterval);
         this.config = b.build();
         saveConfigData();
         new TSDRSNMPInterfacePoller(this);
         new StoringThread();
+
+        log("TSDR SNMP Collector initialized", INFO);
     }
 
     public void loadConfigData() {
@@ -107,15 +107,13 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
 
     public RpcResult<GetInterfacesOutput> loadGetInterfacesData(Ipv4Address ip, String community) {
         // fetch data from getInterfaces
-        RpcResult<GetInterfacesOutput> result = null;
-        SNMPImpl snmpImpl = new SNMPImpl(rpcRegistry);
-        try
+        try (SNMPImpl snmpImpl = new SNMPImpl())
         {
             GetInterfacesInputBuilder input = new GetInterfacesInputBuilder();
             input.setCommunity(community);
             input.setIpAddress(ip);
             Future<RpcResult<GetInterfacesOutput>> resultFuture = snmpImpl.getInterfaces(input.build());
-            result = resultFuture.get();
+            RpcResult<GetInterfacesOutput> result = resultFuture.get();
             result.isSuccessful();
 
             return result;
@@ -136,7 +134,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
                 b.setMetricName(snmpMetric.name());
                 b.setTSDRDataCategory(DataCategory.SNMPINTERFACES);
                 b.setNodeID(ip.getValue().toString());
-                ArrayList<RecordKeys> list =new ArrayList<RecordKeys>(3);
+                ArrayList<RecordKeys> list =new ArrayList<>(3);
 
                 RecordKeysBuilder recordKeyB = new RecordKeysBuilder();
                 recordKeyB.setKeyName("ifIndex");
@@ -229,7 +227,8 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
         return this.config;
     }
 
-    public void shutdown() {
+    @Override
+    public void close() {
         this.running = false;
         synchronized(SNMPDataCollector.this.pollerSyncObject){
             SNMPDataCollector.this.pollerSyncObject.notifyAll();
@@ -252,6 +251,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
             log("SNMP Storing Thread Started", INFO);
         }
 
+        @Override
         public void run() {
             while (running) {
                 synchronized (SNMPDataCollector.this) {
@@ -297,19 +297,11 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService {
     }
     // Invoke the storage rpc method
     private void store(InsertTSDRMetricRecordInput input) {
-        if(this.collectorSPIService==null){
-            this.collectorSPIService = this.rpcRegistry
-                    .getRpcService(TsdrCollectorSpiService.class);
-        }
         this.collectorSPIService.insertTSDRMetricRecord(input);
         log("Data Storage Called from SNMP Collector", DEBUG);
     }
 
     public TsdrCollectorSpiService getTSDRService(){
-        if(this.collectorSPIService==null){
-            this.collectorSPIService = this.rpcRegistry
-                    .getRpcService(TsdrCollectorSpiService.class);
-        }
         return this.collectorSPIService;
     }
 
