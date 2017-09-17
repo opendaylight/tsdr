@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.datapurge;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.concurrent.ScheduledFuture;
@@ -15,16 +16,15 @@ import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * PurgeScheduler schedules Purging task based on the parameters
  * in the purging configuration file.
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
- *
- * Created: Dec 31rst, 2015
  */
 public class PurgingScheduler {
-    private static final Logger log = LoggerFactory.getLogger(PurgingScheduler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PurgingScheduler.class);
 
     private ScheduledFuture<?> future = null;
     private PurgeDataTask purgedatatask;
@@ -34,8 +34,8 @@ public class PurgingScheduler {
     private final int retentionTime;
     private final RpcProviderRegistry rpcRegistry;
 
-    public PurgingScheduler(RpcProviderRegistry rpcRegistry, boolean isEnabled, int purgingInterval,
-            String purgingTime, int retentionTime) {
+    public PurgingScheduler(RpcProviderRegistry rpcRegistry, boolean isEnabled, int purgingInterval, String purgingTime,
+                            int retentionTime) {
         this.rpcRegistry = rpcRegistry;
         this.isEnabled = isEnabled;
         this.purgingInterval = purgingInterval;
@@ -46,7 +46,7 @@ public class PurgingScheduler {
     /**
      * Schedule the Purging Task according to the properites.
      */
-    private void schedulePurgingTask(){
+    private void schedulePurgingTask() {
         if (!isEnabled) {
             return;
         }
@@ -60,44 +60,44 @@ public class PurgingScheduler {
             cal.set(Calendar.YEAR, year);
             cal.set(Calendar.MONTH, month);
             cal.set(Calendar.DAY_OF_MONTH, day);
-        } catch (Exception e) {
-            log.error("Exception while parsing purge time", e);
+        } catch (ParseException e) {
+            LOG.error("Exception while parsing purge time", e);
         }
 
-        long first_time = cal.getTime().getTime() - System.currentTimeMillis();
+        long firstTime = cal.getTime().getTime() - System.currentTimeMillis();
         purgedatatask = new PurgeDataTask(rpcRegistry);
         purgedatatask.setRetentionTimeinHours(this.retentionTime);
-        this.future = SchedulerService.getInstance().scheduleTaskAtFixedRate(
-                purgedatatask, TimeUnit.MILLISECONDS.toSeconds(first_time),
-                TimeUnit.MINUTES.toSeconds(purgingInterval));
-        return;
-
+        this.future = SchedulerService.getInstance()
+                .scheduleTaskAtFixedRate(purgedatatask, TimeUnit.MILLISECONDS.toSeconds(firstTime),
+                                         TimeUnit.MINUTES.toSeconds(purgingInterval));
     }
 
     /**
      * Reschedule the purging task when the properties are changed from the configuration file.
      */
-    public void schedule(){
-        if (this.future != null){
+    public void schedule() {
+        if (this.future != null) {
             future.cancel(true);
         }
         schedulePurgingTask();
     }
+
     /**
-     * Cancel the scheduled purging task
+     * Cancel the scheduled purging task.
      */
-    public void cancelScheduledTask(){
-        if (this.future != null){
+    public void cancelScheduledTask() {
+        if (this.future != null) {
             future.cancel(true);
             future = null;
         }
     }
-    /**Return if the Purging task is currently running
+
+    /**
+     * Return if the Purging task is currently running.
      *
-     * @return - true if the scheduled task is not null.
-     *         - false if the scheduled task is null.
+     * @return - true if the scheduled task is not null, false if the scheduled task is null.
      */
-    public boolean isRunning(){
+    public boolean isRunning() {
         return this.future != null;
     }
 

@@ -7,12 +7,11 @@
  */
 package org.opendaylight.tsdr.datapurge.test;
 /**
-*
-*
-* @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
-*
-* Created: January 1, 2016
-*/
+ * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
+ * <p>
+ * Created: January 1, 2016
+ */
+
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -29,7 +28,7 @@ public class PurgeSchedulerTest {
      * Test the reSchedule() method.
      */
     @Test
-    public void testSchedule(){
+    public void testSchedule() {
         purgingScheduler.schedule();
         assertTrue(purgingScheduler.isRunning());
     }
@@ -38,37 +37,41 @@ public class PurgeSchedulerTest {
      * Test the cancelScheduledTask() method.
      */
     @Test
-    public void testCancelScheduledTask(){
+    public void testCancelScheduledTask() {
         purgingScheduler.schedule();
         purgingScheduler.cancelScheduledTask();
         assertTrue(!purgingScheduler.isRunning());
     }
+
     /**
      * Test the isEnabled() method.
      */
     @Test
-    public void testGetIsEnabled(){
+    public void testGetIsEnabled() {
         assertTrue(purgingScheduler.isEnabled());
     }
+
     /**
      * Test the getRetentionTime() method.
      */
     @Test
-    public void testGetRetentionTime(){
-        assertTrue(purgingScheduler.getRetentionTime()==7 * 24);
+    public void testGetRetentionTime() {
+        assertTrue(purgingScheduler.getRetentionTime() == 7 * 24);
     }
+
     /**
      * Test the getPurgingTime() method.
      */
     @Test
-    public void testGetPurgingTime(){
+    public void testGetPurgingTime() {
         assertTrue(purgingScheduler.getPurgingTime().equals("23:59:59"));
     }
+
     /**
      * Test the getPurgingInterval() method.
      */
     @Test
-    public void testGetPurgingInterval(){
+    public void testGetPurgingInterval() {
         assertTrue(purgingScheduler.getPurgingInterval() == 1440);
     }
 
