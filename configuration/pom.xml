@@ -4,7 +4,7 @@
     <parent>
         <artifactId>tsdr</artifactId>
         <groupId>org.opendaylight.tsdr</groupId>
-        <version>1.3.2-SNAPSHOT</version>
+        <version>1.3.3-SNAPSHOT</version>
         <relativePath>../.</relativePath>
     </parent>
     <artifactId>tsdr-configuration</artifactId>
