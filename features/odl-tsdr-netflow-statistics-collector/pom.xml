@@ -7,19 +7,18 @@
     <parent>
         <groupId>org.opendaylight.odlparent</groupId>
         <artifactId>single-feature-parent</artifactId>
-        <version>2.0.4</version>
+        <version>2.0.5</version>
         <relativePath/>
     </parent>
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-netflow-statistics-collector</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>1.5.0-SNAPSHOT</version>
     <packaging>feature</packaging>
 
     <name>ODL :: tsdr :: netflow statistics collector</name>
     <properties>
-          <mdsal.version>1.6.0-SNAPSHOT</mdsal.version>
-          <l2switch.version>0.6.0-SNAPSHOT</l2switch.version>
+          <l2switch.version>0.7.0-SNAPSHOT</l2switch.version>
     </properties>
 
  <dependencyManagement>

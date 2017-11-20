@@ -13,13 +13,13 @@
     <parent>
       <groupId>org.opendaylight.odlparent</groupId>
       <artifactId>odlparent-lite</artifactId>
-      <version>1.9.0</version>
+      <version>2.0.5</version>
       <relativePath/>
     </parent>
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>tsdr-artifacts</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>1.5.0-SNAPSHOT</version>
     <name>ODL :: tsdr :: ${project.artifactId}</name>
     <packaging>pom</packaging>
 
@@ -27,79 +27,81 @@
         <dependencies>
         <!-- TSDR modules -->
         <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-datastorage</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-datastorage</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-datapurge</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-datapurge</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-persistence-spi</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-persistence-spi</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-dataquery</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-dataquery</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-collector-spi</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-collector-spi</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-persistence-hsqldb</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-persistence-hsqldb</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-persistence-cassandra</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-persistence-cassandra</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-persistence-hbase</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-persistence-hbase</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-persistence-elasticsearch</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-persistence-elasticsearch</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-persistence-elasticsearch</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-persistence-elasticsearch</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-controller-metrics-collector</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-controller-metrics-collector</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-netflow-statisctics-collector</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-netflow-statisctics-collector</artifactId>
+            <version>${project.version}</version>
         </dependency>
             <dependency>
 	    <groupId>${project.groupId}</groupId>
 	    <artifactId>tsdr-openflow-statisctics-collector</artifactId>
 	    <version>${project.version}</version>
         </dependency>
+<!--
             <dependency>
 	    <groupId>${project.groupId}</groupId>
 	    <artifactId>tsdr-syslog-collector</artifactId>
 	    <version>${project.version}</version>
         </dependency>
+-->
             <dependency>
-	    <groupId>${project.groupId}</groupId>
-	    <artifactId>tsdr-restconf-collector</artifactId>
-	    <version>${project.version}</version>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-restconf-collector</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <!-- TSDR Configuration -->
         <!-- TSDR Core -->
@@ -154,6 +156,7 @@
           <version>${project.version}</version>
           <type>cfg</type>
         </dependency>
+<!--
         <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-syslog-collector</artifactId>
@@ -161,6 +164,7 @@
           <type>xml</type>
           <classifier>config</classifier>
         </dependency>
+-->
         <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-netflow-statistics-collector</artifactId>
@@ -182,6 +186,7 @@
           <type>xml</type>
           <classifier>config</classifier>
        </dependency>
+<!--
        <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-syslog-collector</artifactId>
@@ -189,6 +194,7 @@
           <type>xml</type>
           <classifier>config</classifier>
        </dependency>
+-->
        <!-- TSDR datastores -->
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
@@ -229,13 +235,6 @@
       </dependency>
       <dependency>
         <groupId>${project.groupId}</groupId>
-        <artifactId>features4-tsdr</artifactId>
-        <version>${project.version}</version>
-        <classifier>features</classifier>
-        <type>xml</type>
-      </dependency>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
         <artifactId>odl-tsdr-core</artifactId>
         <version>${project.version}</version>
         <classifier>features</classifier>
@@ -244,6 +243,13 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>odl-tsdr-hsqldb</artifactId>
+        <version>${project.version}</version>
+        <classifier>features</classifier>
+        <type>xml</type>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>odl-tsdr-hsqldb-all</artifactId>
         <version>${project.version}</version>
         <classifier>features</classifier>
         <type>xml</type>
@@ -290,6 +296,7 @@
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
+<!--
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>odl-tsdr-syslog-collector</artifactId>
@@ -297,8 +304,8 @@
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
+-->
    </dependencies>
  </dependencyManagement>
-
 </project>
 

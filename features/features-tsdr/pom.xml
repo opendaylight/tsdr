@@ -14,17 +14,29 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
     <parent>
         <groupId>org.opendaylight.odlparent</groupId>
         <artifactId>feature-repo-parent</artifactId>
-        <version>2.0.4</version>
+        <version>2.0.5</version>
         <relativePath/>
     </parent>
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>features-tsdr</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>1.5.0-SNAPSHOT</version>
     <packaging>feature</packaging>
     <!-- <name> formatting is used by autorelease to parse and notify projects on
          build failure. Please do not modify this unless you have a good reason. -->
     <name>ODL :: tsdr :: ${project.artifactId}</name>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.opendaylight.tsdr</groupId>
+                <artifactId>tsdr-artifacts</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
 
     <dependencies>
         <dependency>
@@ -55,7 +67,6 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
-<!--
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>odl-tsdr-hbase</artifactId>
@@ -63,7 +74,6 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
--->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>odl-tsdr-elasticsearch</artifactId>
@@ -71,6 +81,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
+<!--
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>odl-tsdr-syslog-collector</artifactId>
@@ -78,6 +89,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
+-->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>odl-tsdr-openflow-statistics-collector</artifactId>

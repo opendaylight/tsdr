@@ -2,11 +2,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>tsdr</artifactId>
+        <artifactId>tsdr-parent</artifactId>
         <groupId>org.opendaylight.tsdr</groupId>
-        <version>1.4.0-SNAPSHOT</version>
-    <relativePath>../..</relativePath>
+        <version>1.5.0-SNAPSHOT</version>
+        <relativePath>../../parent</relativePath>
     </parent>
+
     <artifactId>tsdr-snmp-data-collector</artifactId>
     <packaging>bundle</packaging>
     <!-- <name> formatting is used by autorelease to parse and notify projects on
@@ -52,7 +53,7 @@
          <dependency>
             <groupId>org.opendaylight.snmp</groupId>
             <artifactId>snmp</artifactId>
-            <version>1.4.0-SNAPSHOT</version>
+            <version>${snmp.version}</version>
         </dependency>
          <dependency>
             <groupId>org.apache.servicemix.bundles</groupId>
