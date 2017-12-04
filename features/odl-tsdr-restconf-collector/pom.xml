@@ -81,7 +81,7 @@
       </dependency>
       <dependency>
           <groupId>org.opendaylight.aaa</groupId>
-          <artifactId>odl-aaa-authn</artifactId>
+          <artifactId>features-aaa</artifactId>
           <classifier>features</classifier>
           <version>${aaa.version}</version>
           <type>xml</type>
