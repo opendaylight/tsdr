@@ -7,14 +7,13 @@
  */
 package org.opendaylight.tsdr.collectors.cmc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SunCpuDataCollector extends CpuDataCollector {
 
@@ -78,13 +77,13 @@ public class SunCpuDataCollector extends CpuDataCollector {
     @Override
     public Optional<Double> getControllerCpu() {
         if (!procCpuMethod.isPresent()) {
-            LOG.error("Tried to get controller CPU from Sun OS MBean's getProcessCpuLoad() method but it is not present! (this should not happen)");
+            LOG.error("Tried to get controller CPU from Sun OS MBean's getProcessCpuLoad() method but it is not "
+                    + "present! (this should not happen)");
             return Optional.empty();
         }
 
         try {
-            final double controllerCpu = (double) procCpuMethod.get().invoke(ManagementFactory.getOperatingSystemMXBean());
-            return Optional.of(controllerCpu);
+            return Optional.of((Double)procCpuMethod.get().invoke(ManagementFactory.getOperatingSystemMXBean()));
         } catch (final IllegalAccessException | InvocationTargetException e) {
             LOG.warn("Got exception while getting controller CPU usage from Sun OS MBean", e);
         }
@@ -95,14 +94,14 @@ public class SunCpuDataCollector extends CpuDataCollector {
     @Override
     public Optional<Double> getMachineCpu() {
         if (!machineCpuMethod.isPresent()) {
-            LOG.error("Tried to get machine CPU from Sun OS MBean's getSystemCpuLoad() method but it is not present! (this should not happen)");
+            LOG.error("Tried to get machine CPU from Sun OS MBean's getSystemCpuLoad() method but it is not present! "
+                    + "(this should not happen)");
             return Optional.empty();
         }
 
         try {
-            final double machineCpu = (double) machineCpuMethod.get().invoke(ManagementFactory.getOperatingSystemMXBean());
-            return Optional.of(machineCpu);
-        } catch (final IllegalAccessException | InvocationTargetException e) {
+            return Optional.of((Double)machineCpuMethod.get().invoke(ManagementFactory.getOperatingSystemMXBean()));
+        } catch (IllegalAccessException | InvocationTargetException e) {
             LOG.warn("Got exception while getting controller CPU usage from Sun OS MBean", e);
         }
 

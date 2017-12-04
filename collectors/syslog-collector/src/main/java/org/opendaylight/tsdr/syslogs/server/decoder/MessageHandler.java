@@ -12,7 +12,7 @@ package org.opendaylight.tsdr.syslogs.server.decoder;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import java.net.InetSocketAddress;
-import java.util.List;
+import java.util.Deque;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 
 /**
@@ -26,9 +26,9 @@ import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
  */
 public class MessageHandler extends SimpleChannelInboundHandler<String> {
     private final SyslogDatastoreManager manager;
-    private final List<Message> incomingSyslogs;
+    private final Deque<Message> incomingSyslogs;
 
-    public MessageHandler(List<Message> incomingSyslogs, SyslogDatastoreManager manager) {
+    public MessageHandler(Deque<Message> incomingSyslogs, SyslogDatastoreManager manager) {
         super();
         this.incomingSyslogs = incomingSyslogs;
         this.manager = manager;
@@ -42,8 +42,9 @@ public class MessageHandler extends SimpleChannelInboundHandler<String> {
                 .hostname(ipaddress)
                 .content(msg)
                 .build();
-        incomingSyslogs.add(message);
+
         synchronized (incomingSyslogs) {
+            incomingSyslogs.add(message);
             incomingSyslogs.notifyAll();
         }
         manager.execute(ipaddress, message);

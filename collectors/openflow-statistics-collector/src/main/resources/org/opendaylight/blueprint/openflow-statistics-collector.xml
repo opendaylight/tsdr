@@ -8,11 +8,11 @@
   <odl:rpc-service id="tsdrCollectorSpiService"
       interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
 
-  <bean id="TSDRDOMCollector" class="org.opendaylight.tsdr.osc.TSDRDOMCollector"
+  <bean id="tSDROpenflowCollector" class="org.opendaylight.tsdr.osc.TSDROpenflowCollector"
       init-method = "init" destroy-method="close">
     <argument ref="dataBroker"/>
     <argument ref="tsdrCollectorSpiService"/>
   </bean>
 
-  <odl:rpc-implementation ref="TSDRDOMCollector"/>
+  <odl:rpc-implementation ref="tSDROpenflowCollector"/>
 </blueprint>

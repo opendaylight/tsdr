@@ -8,18 +8,20 @@
   <odl:rpc-service id="tsdrCollectorSpiService"
       interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
 
+<bean id="SNMPConfig" class="org.opendaylight.tsdr.sdc.SNMPConfig"/>
+
   <bean id="SNMPDataCollector" class="org.opendaylight.tsdr.sdc.SNMPDataCollector"
       init-method = "init" destroy-method="close">
     <argument ref="dataBroker"/>
     <argument ref="tsdrCollectorSpiService"/>
+    <argument ref="SNMPConfig"/>
   </bean>
 
   <odl:rpc-implementation ref="SNMPDataCollector"/>
 
-  <service id="configManagedService" interface="org.osgi.service.cm.ManagedService">
+  <service ref="SNMPConfig" interface="org.osgi.service.cm.ManagedService">
     <service-properties>
       <entry key="service.pid" value="tsdr.snmp"/>
     </service-properties>
-    <bean class="org.opendaylight.tsdr.sdc.TSDRSNMPConfig" factory-method="getInstance"/>
   </service>
 </blueprint>

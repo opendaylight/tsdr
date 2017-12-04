@@ -19,30 +19,22 @@ package org.opendaylight.tsdr.syslogs.server;
  */
 public interface SyslogServer {
     /**
-     * Start the syslog server
+     * Start the syslog server.
      */
-    void startServer() throws InterruptedException;
+    void startServer(int port) throws InterruptedException;
 
     /**
-     * Stop the syslog server
+     * Stop the syslog server.
      */
     void stopServer() throws InterruptedException;
 
     /**
-     * Check if the syslog server is running
+     * Check if the syslog server is running.
      */
     boolean isRunning();
 
     /**
-     * Set the port of syslog server
-     *
-     * @param port
-     * @throws Exception when the server is running
-     */
-    void setPort(int port) throws Exception;
-
-    /**
-     * get the protocol used for syslog server
+     * Get the protocol used for syslog server.
      */
     String getProtocol();
 }

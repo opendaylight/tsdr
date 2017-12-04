@@ -9,40 +9,40 @@ package org.opendaylight.tsdr.syslogs;
 
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.net.SocketException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 
-
-/**
- * @author Sharon Aicler(saichler@gmail.com)
- **/
 public class TSDRSyslogCollectorImplNoPortAvailableTest {
+    static final int UDP_PORT = 514;
 
     @Test
     public void testFailToBindToPorts() throws IOException, InterruptedException {
         DatagramSocket socket1 = null;
         DatagramSocket socket2 = null;
-        //Just make sure the ports are occupied
-        try{
-            socket1 = new DatagramSocket(TSDRSyslogCollectorImpl.UDP_PORT);
-        }catch(Exception e){
-            /*Don't care */
+
+        // Just make sure the ports are occupied
+        try {
+            socket1 = new DatagramSocket(UDP_PORT);
+        } catch (SocketException e) {
+            /* Don't care */
         }
-        try{
-            socket2 = new DatagramSocket(TSDRSyslogCollectorImpl.UDP_PORT+1000);
-        }catch(Exception e) {
-            /*Don't care */
+        try {
+            socket2 = new DatagramSocket(UDP_PORT + 1000);
+        } catch (SocketException e) {
+            /* Don't care */
         }
+
         SyslogDatastoreManager manager = Mockito.mock(SyslogDatastoreManager.class);
-        TSDRSyslogCollectorImpl impl = new  TSDRSyslogCollectorImpl(null, manager);
+        TSDRSyslogCollectorImpl impl = new TSDRSyslogCollectorImpl(null, manager, UDP_PORT, 6514);
         impl.init();
         Assert.assertTrue(!impl.isRunning());
-        if(socket1!=null) {
+        if (socket1 != null) {
             socket1.close();
         }
-        if(socket2!=null) {
+        if (socket2 != null) {
             socket2.close();
         }
     }

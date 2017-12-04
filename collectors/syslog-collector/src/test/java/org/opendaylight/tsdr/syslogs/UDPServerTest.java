@@ -9,12 +9,16 @@
 
 package org.opendaylight.tsdr.syslogs;
 
+import static org.mockito.Mockito.mock;
+
+import java.io.IOException;
+import java.util.Deque;
 import java.util.LinkedList;
-import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.tsdr.syslogs.server.SyslogUDPServer;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
@@ -25,39 +29,31 @@ import org.opendaylight.tsdr.syslogs.server.decoder.Message;
  * @author Kun Chen(kunch@tethrnet.com)
  */
 public class UDPServerTest {
-    private final List<Message> messageList = new  LinkedList<>();
-    private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(1, 10, 10, 10);
+    private final Deque<Message> messageList = new LinkedList<>();
+    private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(
+            mock(DataBroker.class), 1, 10, 10, 10);
     private final SyslogUDPServer server = new SyslogUDPServer(messageList, manager);
 
     @Before
     public void setUp() throws InterruptedException {
-        try {
-            server.setPort(8989);
-            server.startServer();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println("UDP Server starts at port 8989.");
-    }
-
-    @Test
-    public void testMessageHandle() throws InterruptedException {
-        Assert.assertTrue(server.isRunning());
-        Assert.assertEquals("UDP",server.getProtocol());
-
-        try {
-            SyslogGenerator generator = new SyslogGenerator("localhost",8989);
-            generator.sendSyslog("This is a test message.",4);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Thread.sleep(10000);
-        Assert.assertEquals(4,messageList.size());
+        server.startServer(8989);
     }
 
     @After
     public void tearDown() throws InterruptedException {
         server.stopServer();
         manager.close();
+    }
+
+    @Test
+    public void testMessageHandle() throws InterruptedException, IOException {
+        Assert.assertTrue(server.isRunning());
+        Assert.assertEquals("UDP",server.getProtocol());
+
+        SyslogGenerator generator = new SyslogGenerator("localhost",8989);
+        generator.sendSyslog("This is a test message.",4);
+
+        Thread.sleep(10000);
+        Assert.assertEquals(4,messageList.size());
     }
 }

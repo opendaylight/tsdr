@@ -10,6 +10,7 @@
 
   <bean id="syslogDatastoreManager" class="org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager"
       factory-method="getInstance" destroy-method="close">
+    <argument ref="dataBroker"/>
     <argument>
       <bean factory-ref="syslogCollectorConfig" factory-method="getCoreThreadpoolSize"/>
     </argument>
@@ -22,7 +23,6 @@
     <argument>
       <bean factory-ref="syslogCollectorConfig" factory-method="getQueueSize"/>
     </argument>
-    <property name="dataBroker" ref="dataBroker"/>
   </bean>
 
   <odl:rpc-implementation ref="syslogDatastoreManager"/>
@@ -34,12 +34,12 @@
       init-method = "init" destroy-method="close">
     <argument ref="tsdrCollectorSpiService"/>
     <argument ref="syslogDatastoreManager"/>
-    <property name="udpPort">
+    <argument>
       <bean factory-ref="syslogCollectorConfig" factory-method="getUdpport"/>
-    </property>
-    <property name="tcpPort">
+    </argument>
+    <argument>
       <bean factory-ref="syslogCollectorConfig" factory-method="getTcpport"/>
-    </property>
+    </argument>
   </bean>
 
 </blueprint>

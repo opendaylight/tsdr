@@ -9,7 +9,15 @@
 
 package org.opendaylight.tsdr.syslogs;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.util.concurrent.CheckedFuture;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,17 +26,10 @@ import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.TransactionCommitFailedException;
 import org.opendaylight.tsdr.syslogs.server.datastore.RegisteredListener;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.*;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterInputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterOutput;
 import org.opendaylight.yangtools.yang.common.RpcResult;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * This is the test of DatastoreDeleteRegistedFilter.
@@ -36,26 +37,26 @@ import static org.mockito.Mockito.when;
  */
 public class DatastoreDeleteRegistedFilterTest {
 
-    private int coreThreadPoolSize = 5;
-    private int maxThreadPoolSize = 10;
-    private long keepAliveTime = 10L;
-    private int queueSize = 10;
-    private SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(coreThreadPoolSize, maxThreadPoolSize, keepAliveTime, queueSize);
-    private DataBroker dataBroker = mock(DataBroker.class);
-    private WriteTransaction writeTransaction = mock(WriteTransaction.class);
-    private CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
-    private Map<String, String> registerMap = new HashMap<>();
-    private Map<String, RegisteredListener> listenerMap = new HashMap<>();
-    private RegisteredListener newRegisteredListener = mock(RegisteredListener.class);
-    private String filterID = UUID.randomUUID().toString();
-    private String listenerID = UUID.randomUUID().toString();
+    private final int coreThreadPoolSize = 5;
+    private final int maxThreadPoolSize = 10;
+    private final long keepAliveTime = 10L;
+    private final int queueSize = 10;
+    private final DataBroker dataBroker = mock(DataBroker.class);
+    private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(dataBroker, coreThreadPoolSize,
+            maxThreadPoolSize, keepAliveTime, queueSize);
+    private final WriteTransaction writeTransaction = mock(WriteTransaction.class);
+    private final CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
+    private final Map<String, String> registerMap = new HashMap<>();
+    private final Map<String, RegisteredListener> listenerMap = new HashMap<>();
+    private final RegisteredListener newRegisteredListener = mock(RegisteredListener.class);
+    private final String filterID = UUID.randomUUID().toString();
+    private final String listenerID = UUID.randomUUID().toString();
     private DeleteRegisteredFilterInput input;
 
     @Before
     public void mockSetUp() {
         when(dataBroker.newWriteOnlyTransaction()).thenReturn(writeTransaction);
         when(writeTransaction.submit()).thenReturn(checkedFuture);
-        manager.setDataBroker(dataBroker);
         input = new DeleteRegisteredFilterInputBuilder()
                 .setFilterId(filterID)
                 .build();
@@ -68,34 +69,22 @@ public class DatastoreDeleteRegistedFilterTest {
     }
 
     @Test
-    public void testDeleteRegistedFilterWithCloseRegistrationException() {
+    public void testDeleteRegistedFilterWithCloseRegistrationException()
+            throws InterruptedException, ExecutionException {
 
         when(newRegisteredListener.close()).thenReturn(false);
-        Future<RpcResult<DeleteRegisteredFilterOutput>> future =manager.deleteRegisteredFilter(input);
+        Future<RpcResult<DeleteRegisteredFilterOutput>> future = manager.deleteRegisteredFilter(input);
 
-        try {
-            Assert.assertEquals("listener registration close failed",future.get().getResult().getResult());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        Assert.assertEquals("listener registration close failed", future.get().getResult().getResult());
     }
 
     @Test
-    public void testDeleteRegistedFilterSuccessful() {
+    public void testDeleteRegistedFilterSuccessful() throws InterruptedException, ExecutionException  {
 
         when(newRegisteredListener.close()).thenReturn(true);
 
-        Future<RpcResult<DeleteRegisteredFilterOutput>> future =manager.deleteRegisteredFilter(input);
+        Future<RpcResult<DeleteRegisteredFilterOutput>> future = manager.deleteRegisteredFilter(input);
 
-        try {
-            Assert.assertEquals("filter delete successfully",future.get().getResult().getResult());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        Assert.assertEquals("filter delete successfully", future.get().getResult().getResult());
     }
-
 }

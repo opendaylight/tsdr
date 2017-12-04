@@ -7,16 +7,13 @@
  */
 package org.opendaylight.tsdr.osc.handlers;
 
-import java.math.BigInteger;
 import java.util.List;
-
 import org.opendaylight.tsdr.osc.TSDRBaseDataHandler;
-import org.opendaylight.tsdr.osc.TSDRDOMCollector;
 import org.opendaylight.tsdr.osc.TSDRMetricRecordBuilderContainer;
+import org.opendaylight.tsdr.osc.TSDROpenflowCollector;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
-import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter64;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.group.statistics.rev131111.NodeGroupStatistics;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.group.statistics.rev131111.group.statistics.GroupStatistics;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.Node;
@@ -25,28 +22,27 @@ import org.opendaylight.yangtools.yang.binding.DataObject;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 
 /**
+ * Handles NodeGroupStatistics data type.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
-/*
- * A handler for the NodeGroupStatistics data type
  */
 public class NodeGroupStatisticsChangeHandler extends TSDRBaseDataHandler {
-    public NodeGroupStatisticsChangeHandler(TSDRDOMCollector _collector) {
-        super(_collector);
+    public NodeGroupStatisticsChangeHandler(TSDROpenflowCollector collector) {
+        super(collector);
     }
 
     @Override
     public void handleData(InstanceIdentifier<Node> nodeID, InstanceIdentifier<?> id, DataObject dataObject) {
         NodeGroupStatistics stData = (NodeGroupStatistics) dataObject;
         GroupStatistics gs = stData.getGroupStatistics();
-        if(gs==null){
+        if (gs == null) {
             //no data yet, ignore
             return;
         }
         TSDRMetricRecordBuilderContainer bc = getCollector()
                 .getTSDRMetricRecordBuilderContainer(id);
         if (bc != null) {
-            TSDRMetricRecordBuilder builder[] = bc.getBuilders();
+            TSDRMetricRecordBuilder[] builder = bc.getBuilders();
             long timeStamp = getTimeStamp();
             builder[0].setMetricValue(FormatUtil.toMetricValue(gs.getRefCount()));
             builder[0].setTimeStamp(timeStamp);

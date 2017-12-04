@@ -14,7 +14,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.util.CharsetUtil;
-import java.util.List;
+import java.util.Deque;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,33 +30,33 @@ import org.slf4j.LoggerFactory;
  */
 @ChannelHandler.Sharable
 public class UDPMessageHandler extends SimpleChannelInboundHandler<DatagramPacket> {
-    private final SyslogDatastoreManager manager;
-    private final List<Message> incomingSyslogs;
     private static final Logger LOG = LoggerFactory.getLogger(UDPMessageHandler.class);
 
-    public UDPMessageHandler(List<Message> incomingSyslogs, SyslogDatastoreManager manager) {
-        super();
+    private final SyslogDatastoreManager manager;
+    private final Deque<Message> incomingSyslogs;
+
+    public UDPMessageHandler(Deque<Message> incomingSyslogs, SyslogDatastoreManager manager) {
         this.incomingSyslogs = incomingSyslogs;
         this.manager = manager;
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket msg) throws Exception {
-        String s = msg.content().toString(CharsetUtil.UTF_8);
-        LOG.trace("UDP Syslog Received {}", s);
+        String str = msg.content().toString(CharsetUtil.UTF_8);
+        LOG.trace("UDP Syslog Received {}", str);
         String ipaddress = msg.sender().getAddress().getHostAddress();
-        MessageDecoder decoder = new MessageDecoder();
         Message message;
-        if (MessageDecoder.matches(s)) {
-            message = MessageDecoder.decode(s);
+        if (MessageDecoder.matches(str)) {
+            message = MessageDecoder.decode(str);
         } else {
-            message = new Message.MessageBuilder().create()
-                    .content(s)
+            message = Message.MessageBuilder.create()
+                    .content(str)
                     .hostname(ipaddress)
                     .build();
         }
-        incomingSyslogs.add(message);
+
         synchronized (incomingSyslogs) {
+            incomingSyslogs.add(message);
             incomingSyslogs.notifyAll();
         }
         manager.execute(ipaddress, message);

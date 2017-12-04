@@ -11,7 +11,6 @@ package org.opendaylight.tsdr.syslogs;
 
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
@@ -45,20 +44,6 @@ public class RegisteredListenerTest {
 
     @Before
     public void mockSetUp() {
-    }
-
-    @Test
-    public void testCloseWithException() {
-        RegisteredListener registeredListener = new RegisteredListener(dataBroker,"123","http://localhost:9001/server");
-
-        doReturn(listener).when(dataBroker).registerDataTreeChangeListener(new DataTreeIdentifier<>(
-                LogicalDatastoreType.OPERATIONAL, iid), registeredListener);
-        RuntimeException closeException = mock(RuntimeException.class);
-        doThrow(closeException).when(listener).close();
-
-        registeredListener.listen();
-
-        Assert.assertEquals(false,registeredListener.close());
     }
 
     @Test

@@ -12,7 +12,6 @@ package org.opendaylight.tsdr.syslogs.server.decoder;
 /**
  * Format of Syslog
  * &lt;PRI&gt;SEQ NO:HostName:Timestamp:Application[ProcessID]:%Facility-Severity-MNEMONIC:description
- *
  * Represents a Syslog content as defined by RFC 5424.
  * See http://tools.ietf.org/html/rfc5424#section-6.
  *
@@ -68,7 +67,8 @@ public class Message {
     private final String processId;
     private final String content;
 
-    private Message(Facility facility, Severity severity, String sequenceId, String timestamp, String hostname, String applicationName, String processId, String content) {
+    private Message(Facility facility, Severity severity, String sequenceId, String timestamp, String hostname,
+            String applicationName, String processId, String content) {
         this.facility = facility;
         this.severity = severity;
         this.sequenceId = sequenceId;
@@ -112,18 +112,12 @@ public class Message {
         return content;
     }
 
+
     @Override
     public String toString() {
-        return "Message{" +
-                "facility=" + facility +
-                ", severity=" + severity +
-                ", sequenceId='" + sequenceId + '\'' +
-                ", timestamp='" + timestamp + '\'' +
-                ", hostname='" + hostname + '\'' +
-                ", applicationName='" + applicationName + '\'' +
-                ", processId='" + processId + '\'' +
-                ", content='" + content + '\'' +
-                '}';
+        return "Message [facility=" + facility + ", severity=" + severity + ", sequenceId=" + sequenceId
+                + ", timestamp=" + timestamp + ", hostname=" + hostname + ", applicationName=" + applicationName
+                + ", processId=" + processId + ", content=" + content + "]";
     }
 
     public static class MessageBuilder {
@@ -181,7 +175,8 @@ public class Message {
         }
 
         public Message build() {
-            return new Message(facility, severity, sequenceId, timestamp, hostname, applicationName, processId, content);
+            return new Message(facility, severity, sequenceId, timestamp, hostname, applicationName, processId,
+                    content);
         }
     }
 }

@@ -9,8 +9,14 @@
 
 package org.opendaylight.tsdr.syslogs;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.CheckedFuture;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +26,6 @@ import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.controller.md.sal.common.api.data.TransactionCommitFailedException;
-import org.opendaylight.tsdr.syslogs.server.datastore.MessageFilter;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
@@ -33,27 +38,21 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.ListenerBuilder;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * This is the test of DatastoreWorkerThread.
  * @author Wei Lai(weilai@tetthrnet.com)
  */
 public class DatastoreWorkerThreadTest {
-    private int coreThreadPoolSize = 5;
-    private int maxThreadPoolSize = 10;
-    private long keepAliveTime = 10L;
-    private int queueSize = 10;
-    private SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(coreThreadPoolSize, maxThreadPoolSize, keepAliveTime, queueSize);
-    private DataBroker dataBroker = mock(DataBroker.class);
-    private WriteTransaction writeTransaction = mock(WriteTransaction.class);
-    private CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
-    private Message message = Message.MessageBuilder.create()
+    private final int coreThreadPoolSize = 5;
+    private final int maxThreadPoolSize = 10;
+    private final long keepAliveTime = 10L;
+    private final int queueSize = 10;
+    private final DataBroker dataBroker = mock(DataBroker.class);
+    private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(dataBroker, coreThreadPoolSize,
+            maxThreadPoolSize, keepAliveTime, queueSize);
+    private final WriteTransaction writeTransaction = mock(WriteTransaction.class);
+    private final CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
+    private final Message message = Message.MessageBuilder.create()
             .applicationName(".*")
             .facility(null)
             .hostname(".*")
@@ -62,14 +61,14 @@ public class DatastoreWorkerThreadTest {
             .sequenceId(".*")
             .content("cisco")
             .build();
-    private ReadOnlyTransaction readOnlyTransaction = mock(ReadOnlyTransaction.class);
-    private CheckedFuture<Optional<SyslogDispatcher>, ReadFailedException> readFuture = mock(CheckedFuture.class);;
-    private SyslogDispatcher syslogDispatcher = mock(SyslogDispatcher.class);
-    private List<SyslogFilter> syslogFilters = new ArrayList<>();
-    private Optional<SyslogDispatcher> optional = Optional.of(syslogDispatcher);
+    private final ReadOnlyTransaction readOnlyTransaction = mock(ReadOnlyTransaction.class);
+    private final CheckedFuture<Optional<SyslogDispatcher>, ReadFailedException> readFuture =
+            mock(CheckedFuture.class);
+    private final SyslogDispatcher syslogDispatcher = mock(SyslogDispatcher.class);
+    private final List<SyslogFilter> syslogFilters = new ArrayList<>();
+    private final Optional<SyslogDispatcher> optional = Optional.of(syslogDispatcher);
 
-    private ReadFailedException readFailedException = mock(ReadFailedException.class);
-    private FilterEntity filterEntity = new FilterEntityBuilder()
+    private final FilterEntity filterEntity = new FilterEntityBuilder()
             .setContent("cisco")
             .setApplication(".*")
             .setFacility(null)
@@ -79,14 +78,13 @@ public class DatastoreWorkerThreadTest {
             .setSid(".*")
             .build();
 
-    private MessageFilter messageFilter = mock(MessageFilter.class);
-    private CheckedFuture<Optional<SyslogFilter>, ReadFailedException> checkedReadFilterFuture = mock(CheckedFuture.class);
+    private final CheckedFuture<Optional<SyslogFilter>, ReadFailedException> checkedReadFilterFuture =
+            mock(CheckedFuture.class);
 
     @Before
     public void mockSetUp() {
         when(dataBroker.newWriteOnlyTransaction()).thenReturn(writeTransaction);
         when(writeTransaction.submit()).thenReturn(checkedFuture);
-        manager.setDataBroker(dataBroker);
         when(dataBroker.newReadOnlyTransaction()).thenReturn(readOnlyTransaction);
         InstanceIdentifier<SyslogDispatcher> iid =
                 InstanceIdentifier.create(SyslogDispatcher.class);
@@ -95,23 +93,15 @@ public class DatastoreWorkerThreadTest {
 
 
     }
+
     @Test
-    public void testWorkerThreadGetFilterswithReadFailedException() throws IllegalAccessException, InstantiationException {
-
-        try {
-            when(readFuture.checkedGet()).thenThrow(readFailedException);
-        } catch (ReadFailedException e) {
-            e.printStackTrace();
-        }
+    public void testWorkerThreadGetFilterswithReadFailedException() throws InterruptedException, ExecutionException {
+        when(readFuture.get()).thenThrow(new ExecutionException("mock", new ReadFailedException("mock")));
         manager.execute("10.0.0.1",message);
-
-
     }
 
-
-
     @Test
-    public void testWorkerThread() {
+    public void testWorkerThread() throws InterruptedException, ExecutionException {
         Listener listener = new ListenerBuilder().setListenerId("321").build();
         List<Listener> listeners = new ArrayList<>();
         listeners.add(listener);
@@ -126,26 +116,14 @@ public class DatastoreWorkerThreadTest {
                 .child(SyslogFilter.class, new SyslogFilterKey(syslogFilter.getFilterId()));
 
 
-        when(readOnlyTransaction.read(LogicalDatastoreType.CONFIGURATION,iid) ).thenReturn(checkedReadFilterFuture);
+        when(readOnlyTransaction.read(LogicalDatastoreType.CONFIGURATION,iid)).thenReturn(checkedReadFilterFuture);
         Optional<SyslogFilter> syslogFilterOptional = Optional.of(syslogFilter);
-        try {
-            when(readFuture.checkedGet()).thenReturn(optional);
-        } catch (ReadFailedException e) {
-            e.printStackTrace();
-        }
+        when(readFuture.get()).thenReturn(optional);
 
-        try {
-            when(checkedReadFilterFuture.checkedGet()).thenReturn(syslogFilterOptional);
-        } catch (ReadFailedException e) {
-            e.printStackTrace();
-        }
-
-
+        when(checkedReadFilterFuture.get()).thenReturn(syslogFilterOptional);
 
         manager.execute("10.0.0.1",message);
 
         Assert.assertEquals("321",syslogFilterOptional.get().getListener().get(0).getListenerId());
-
     }
-
 }

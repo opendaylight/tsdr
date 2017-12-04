@@ -9,24 +9,24 @@
 
 package org.opendaylight.tsdr.syslogs.server.datastore;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
-import com.google.common.util.concurrent.CheckedFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
-import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolOutput;
@@ -42,7 +42,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcherBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.TsdrSyslogCollectorService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.RegisteredSyslogFilter;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.RegisteredSyslogFilterBuilder;
@@ -73,27 +72,28 @@ import org.slf4j.LoggerFactory;
  * @author Wei Lai(weilai@tethrnet.com)
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
-
-
 public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(TsdrSyslogCollectorService.class);
-    private static AtomicInteger messageID = new AtomicInteger(0);
-    private final ThreadPoolExecutor threadPool;
-    private DataBroker db;
-    private Map<String, String> registerMap = new HashMap<>();
-    private Map<String, RegisteredListener> listenerMap = new HashMap<>();
 
-    private SyslogDatastoreManager(int coreThreadPoolSize, int maxThreadpoolSize, long keepAliveTime, int queueSize) {
-        this.db = null;
-        this.threadPool = new ThreadPoolExecutor(coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(queueSize));
+    private final ThreadPoolExecutor threadPool;
+    private final DataBroker dataBroker;
+    private final Map<String, String> registerMap = new ConcurrentHashMap<>();
+    private final Map<String, RegisteredListener> listenerMap = new ConcurrentHashMap<>();
+
+    private SyslogDatastoreManager(DataBroker dataBroker, int coreThreadPoolSize, int maxThreadpoolSize,
+            long keepAliveTime, int queueSize) {
+        this.dataBroker = Objects.requireNonNull(dataBroker);
+        this.threadPool = new ThreadPoolExecutor(coreThreadPoolSize, maxThreadpoolSize, keepAliveTime,
+                TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(queueSize));
         this.threadPool.prestartAllCoreThreads();
 
-        LOG.info("SyslogDatastoreManager created: coreThreadPoolSize: {}, maxThreadpoolSize: {}, keepAliveTime: {}, queueSize: {}",
-                coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
+        LOG.info("SyslogDatastoreManager created: coreThreadPoolSize: {}, maxThreadpoolSize: {}, keepAliveTime: {}, "
+            + "queueSize: {}", coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
     }
 
-    public static SyslogDatastoreManager getInstance(int coreThreadPoolSize, int maxThreadpoolSize, long keepAliveTime, int queueSize) {
-        return new SyslogDatastoreManager(coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
+    public static SyslogDatastoreManager getInstance(DataBroker dataBroker, int coreThreadPoolSize,
+            int maxThreadpoolSize, long keepAliveTime, int queueSize) {
+        return new SyslogDatastoreManager(dataBroker, coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
     }
 
     @Override
@@ -103,29 +103,8 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         LOG.info("SyslogDatastoreManager closed");
     }
 
-    public void setDataBroker(DataBroker db) {
-        if (this.db == null) {
-            this.db = db;
-            this.initializeDataTree();
-
-        } else {
-            LOG.warn("Syslog DataStore Manager has been set! Ignore new databroker");
-        }
-    }
-
     public void execute(String ipaddress, Message message) {
-        int mid = SyslogDatastoreManager.messageID.addAndGet(1);
-        threadPool.execute(new WorkerThread(mid, ipaddress, message));
-    }
-
-    private void initializeDataTree() {
-        LOG.info("Preparing to initialize the greeting registry");
-        WriteTransaction transaction = db.newWriteOnlyTransaction();
-        InstanceIdentifier<SyslogDispatcher> iid = InstanceIdentifier.create(SyslogDispatcher.class);
-        SyslogDispatcher dispatcher = new SyslogDispatcherBuilder().build();
-        transaction.put(LogicalDatastoreType.CONFIGURATION, iid, dispatcher);
-        transaction.put(LogicalDatastoreType.OPERATIONAL, iid, dispatcher);
-        transaction.submit();
+        threadPool.execute(new WorkerThread(dataBroker, message));
     }
 
     @Override
@@ -157,7 +136,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         String listenerID = registerMap.get(input.getFilterId());
         RegisteredListener registeredListener = listenerMap.get(listenerID);
         boolean closeResult = registeredListener.close();
-        if (!closeResult){
+        if (!closeResult) {
             LOG.error("listener registration close failed");
             DeleteRegisteredFilterOutput output = new DeleteRegisteredFilterOutputBuilder()
                     .setResult("listener registration close failed")
@@ -169,7 +148,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
                 InstanceIdentifier.create(SyslogDispatcher.class)
                         .child(SyslogListener.class, new SyslogListenerKey(listenerID));
 
-        WriteTransaction deleteTransaction = db.newWriteOnlyTransaction();
+        WriteTransaction deleteTransaction = dataBroker.newWriteOnlyTransaction();
         InstanceIdentifier<SyslogFilter> filterIID = InstanceIdentifier.create(SyslogDispatcher.class)
                 .child(SyslogFilter.class, new SyslogFilterKey(input.getFilterId()));
         deleteTransaction.delete(LogicalDatastoreType.CONFIGURATION, filterIID);
@@ -177,8 +156,8 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
 
         try {
             deleteTransaction.submit().get();
-        } catch (Exception e) {
-            LOG.info("filter delete failed");
+        } catch (InterruptedException | ExecutionException e) {
+            LOG.error("filter delete failed");
             DeleteRegisteredFilterOutput output = new DeleteRegisteredFilterOutputBuilder()
                     .setResult("filter delete failed")
                     .build();
@@ -191,40 +170,44 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         return RpcResultBuilder.success(output).buildFuture();
     }
 
+    @VisibleForTesting
     public Map<String, String> getRegisterMap() {
         return registerMap;
     }
 
+    @VisibleForTesting
     public void setRegisterMap(Map<String, String> registerMap) {
-        this.registerMap = registerMap;
+        this.registerMap.putAll(registerMap);
     }
 
+    @VisibleForTesting
     public Map<String, RegisteredListener> getListenerMap() {
         return listenerMap;
     }
 
+    @VisibleForTesting
     public void setListenerMap(Map<String, RegisteredListener> listenerMap) {
-        this.listenerMap = listenerMap;
+        this.listenerMap.putAll(listenerMap);
     }
 
     @Override
     public Future<RpcResult<ShowRegisterFilterOutput>> showRegisterFilter() {
 
-        ReadTransaction transaction = db.newReadOnlyTransaction();
+        ReadTransaction transaction = dataBroker.newReadOnlyTransaction();
         InstanceIdentifier<SyslogDispatcher> iid =
                 InstanceIdentifier.create(SyslogDispatcher.class);
-        CheckedFuture<Optional<SyslogDispatcher>, ReadFailedException> future =
-                transaction.read(LogicalDatastoreType.CONFIGURATION, iid);
-        Optional<SyslogDispatcher> optional = Optional.absent();
+        ListenableFuture<Optional<SyslogDispatcher>> future = transaction.read(LogicalDatastoreType.CONFIGURATION, iid);
+        Optional<SyslogDispatcher> optional;
         try {
-            optional = future.checkedGet();
-        } catch (ReadFailedException e) {
+            optional = future.get();
+        } catch (InterruptedException | ExecutionException e) {
             LOG.warn("Reading Filter failed");
             ShowRegisterFilterOutput output = new ShowRegisterFilterOutputBuilder()
                     .setResult("Reading Filter failed")
                     .build();
             return RpcResultBuilder.success(output).buildFuture();
-             }
+        }
+
         if (optional.isPresent() && !optional.get().getSyslogFilter().isEmpty()) {
 
             LOG.info("reading filter success");
@@ -293,7 +276,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
 
         LOG.info("Received a new Register");
         String url = input.getCallbackUrl();
-        WriteTransaction transaction = db.newWriteOnlyTransaction();
+        WriteTransaction transaction = dataBroker.newWriteOnlyTransaction();
         String filterID = UUID.randomUUID().toString();
         String listenerUUID = UUID.randomUUID().toString();
 
@@ -334,10 +317,9 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
             LOG.error(e.getMessage());
         }
 
-        RegisterFilterOutput output = new RegisterFilterOutputBuilder()
-                .setListenerId(listenerUUID).build();
+        final RegisterFilterOutput output = new RegisterFilterOutputBuilder().setListenerId(listenerUUID).build();
 
-        RegisteredListener newRrgisteredListener = new RegisteredListener(db, listenerUUID, url);
+        RegisteredListener newRrgisteredListener = new RegisteredListener(dataBroker, listenerUUID, url);
 
         registerMap.put(filterID, listenerUUID);
         listenerMap.put(listenerUUID, newRrgisteredListener);
@@ -349,31 +331,28 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         return RpcResultBuilder.success(output).buildFuture();
     }
 
-
-    class WorkerThread implements Runnable {
-        private final int mid;
-        private final String ipaddr;
+    private static class WorkerThread implements Runnable {
+        private final DataBroker dataBroker;
         private final Message message;
 
-        public WorkerThread(int mid, String ipaddr, Message message) {
-            this.mid = mid;
-            this.ipaddr = ipaddr;
+        WorkerThread(DataBroker dataBroker, Message message) {
+            this.dataBroker = dataBroker;
             this.message = message;
         }
 
         public List<SyslogFilter> getFilters() {
-            if(db==null) {
+            if (dataBroker == null) {
                 return null;
             }
-            ReadTransaction transaction = db.newReadOnlyTransaction();
+            ReadTransaction transaction = dataBroker.newReadOnlyTransaction();
             InstanceIdentifier<SyslogDispatcher> iid =
                     InstanceIdentifier.create(SyslogDispatcher.class);
-            CheckedFuture<Optional<SyslogDispatcher>, ReadFailedException> future =
+            ListenableFuture<Optional<SyslogDispatcher>> future =
                     transaction.read(LogicalDatastoreType.CONFIGURATION, iid);
             Optional<SyslogDispatcher> optional = Optional.absent();
             try {
-                optional = future.checkedGet();
-            } catch (ReadFailedException e) {
+                optional = future.get();
+            } catch (InterruptedException | ExecutionException e) {
                 LOG.warn("Reading Filter failed:", e);
                 return null;
             }
@@ -386,18 +365,18 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         }
 
         private List<Listener> getListenerList(String filterID) {
-            if(db==null) {
+            if (dataBroker == null) {
                 return null;
             }
-            ReadTransaction transaction = db.newReadOnlyTransaction();
+            ReadTransaction transaction = dataBroker.newReadOnlyTransaction();
             InstanceIdentifier<SyslogFilter> iid = InstanceIdentifier.create(SyslogDispatcher.class)
                     .child(SyslogFilter.class, new SyslogFilterKey(filterID));
-            CheckedFuture<Optional<SyslogFilter>, ReadFailedException> future =
+            ListenableFuture<Optional<SyslogFilter>> future =
                     transaction.read(LogicalDatastoreType.CONFIGURATION, iid);
             Optional<SyslogFilter> optional = Optional.absent();
             try {
-                optional = future.checkedGet();
-            } catch (ReadFailedException e) {
+                optional = future.get();
+            } catch (InterruptedException | ExecutionException e) {
                 LOG.warn("Reading Listener failed:", e);
             }
             if (optional.isPresent()) {
@@ -409,10 +388,10 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         }
 
         private void update(List<Listener> nodes) {
-            if(db==null) {
+            if (dataBroker == null) {
                 return;
             }
-            WriteTransaction transaction = db.newWriteOnlyTransaction();
+            WriteTransaction transaction = dataBroker.newWriteOnlyTransaction();
             InstanceIdentifier<SyslogDispatcher> baseIID = InstanceIdentifier.create(SyslogDispatcher.class);
             for (Listener node : nodes) {
                 String listenerUUID = node.getListenerId();

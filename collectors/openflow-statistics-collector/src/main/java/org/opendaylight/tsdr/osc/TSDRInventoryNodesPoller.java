@@ -7,87 +7,103 @@
  */
 package org.opendaylight.tsdr.osc;
 
+import com.google.common.base.Optional;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
+import java.util.concurrent.ExecutionException;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.Nodes;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.Node;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
+ * Polls the inventory every 15 seconds and determines if there are nodes added/removed.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
-// The inventory nodes poller is polling the inventory every 15 seconds and
-// determinate if there are nodes added/removed
-public class TSDRInventoryNodesPoller extends Thread {
-    // List of nodes already registered on
-    private Set<InstanceIdentifier<Node>> knownNodes = new HashSet<>();
-    // The collector
-    private TSDRDOMCollector collector = null;
+ */
+public class TSDRInventoryNodesPoller extends Thread implements AutoCloseable {
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRInventoryNodesPoller.class);
 
-    public TSDRInventoryNodesPoller(TSDRDOMCollector _collector) {
+    // The collector
+    private final TSDROpenflowCollector collector;
+
+    private final Object shutdownSync = new Object();
+
+    public TSDRInventoryNodesPoller(TSDROpenflowCollector collector) {
         super("TSDR Inventory Nodes Poller");
-        this.collector = _collector;
+        this.collector = collector;
         this.setDaemon(true);
-        _collector.loadConfigData();
-        this.start();
+        collector.loadConfigData();
     }
 
+    @Override
     public void run() {
+        // List of nodes already registered on
+        Set<InstanceIdentifier<Node>> knownNodes = new HashSet<>();
+
         while (collector.isRunning()) {
-            InstanceIdentifier<Nodes> id = InstanceIdentifier.builder(
-                    Nodes.class).build();
-            ReadOnlyTransaction read = collector.getDataBroker()
-                    .newReadOnlyTransaction();
+            InstanceIdentifier<Nodes> id = InstanceIdentifier.builder(Nodes.class).build();
+            ReadOnlyTransaction readTx = collector.getDataBroker().newReadOnlyTransaction();
             try {
-                Nodes nodes = read.read(LogicalDatastoreType.OPERATIONAL, id)
-                        .get().get();
-                Set<InstanceIdentifier<Node>> nodeSet = new HashSet<>();
-                for (Node n : nodes.getNode()) {
-                    InstanceIdentifier<Node> nodeID = id.child(Node.class,
-                            n.getKey());
-                    nodeSet.add(nodeID);
-                    collector.collectStatistics(n);
-                }
-                // Register on added nodes
-                for (InstanceIdentifier<Node> nodeID : nodeSet) {
-                    knownNodes.add(nodeID);
-                    // The registration won't register on those nodes that
-                    // already have a registration in place
-                    // collector.registerOnStatistics(nodeID);
-                }
-                // unregister on removed nodes
-                for (Iterator<InstanceIdentifier<Node>> iter = knownNodes
-                        .iterator(); iter.hasNext();) {
-                    InstanceIdentifier<Node> nodeID = iter.next();
-                    if (!nodeSet.contains(nodeID)) {
-                        iter.remove();
-                        collector.removeAllNodeBuilders(nodeID);
+                Optional<Nodes> optional = readTx.read(LogicalDatastoreType.OPERATIONAL, id).get();
+                if (optional.isPresent()) {
+                    Nodes nodes = optional.get();
+                    Set<InstanceIdentifier<Node>> nodeSet = new HashSet<>();
+                    for (Node n : nodes.getNode()) {
+                        InstanceIdentifier<Node> nodeID = id.child(Node.class, n.getKey());
+                        nodeSet.add(nodeID);
+                        collector.collectStatistics(n);
+                    }
+                    // Register on added nodes
+                    for (InstanceIdentifier<Node> nodeID : nodeSet) {
+                        knownNodes.add(nodeID);
+                        // The registration won't register on those nodes that
+                        // already have a registration in place
+                        // collector.registerOnStatistics(nodeID);
+                    }
+                    // unregister on removed nodes
+                    for (Iterator<InstanceIdentifier<Node>> iter = knownNodes.iterator(); iter.hasNext();) {
+                        InstanceIdentifier<Node> nodeID = iter.next();
+                        if (!nodeSet.contains(nodeID)) {
+                            iter.remove();
+                            collector.removeAllNodeBuilders(nodeID);
+                        }
                     }
                 }
-            } catch (Exception err) {
-                TSDRDOMCollector.log("No Nodes are available",
-                        TSDRDOMCollector.INFO);
+            } catch (InterruptedException | ExecutionException e) {
+                LOG.error("Error reading inventory", e);
             } finally {
-                read.close();
+                readTx.close();
             }
-            synchronized(this.collector){
+
+            synchronized (this.collector) {
                 this.collector.notifyAll();
             }
+
             //This object is only for the time when we shutdown so we want to break the waiting time
-            synchronized(this.collector.pollerSyncObject){
+            synchronized (shutdownSync) {
                 try {
-                    this.collector.pollerSyncObject.wait(this.collector.getConfigData().getPollingInterval());
-                } catch (InterruptedException err) {
-                    TSDRDOMCollector.log(
-                            "Unknown error when sleeping in TSDR poller",
-                            TSDRDOMCollector.ERROR);
+                    if (collector.isRunning()) {
+                        shutdownSync.wait(this.collector.getConfigData().getPollingInterval());
+                    }
+                } catch (InterruptedException e) {
+                    LOG.debug("Interrupted when sleeping in TSDR poller", e);
+                    Thread.currentThread().interrupt();
                 }
             }
+
             this.collector.loadConfigData();
+        }
+    }
+
+    @Override
+    public void close() {
+        synchronized (shutdownSync) {
+            shutdownSync.notifyAll();
         }
     }
 }

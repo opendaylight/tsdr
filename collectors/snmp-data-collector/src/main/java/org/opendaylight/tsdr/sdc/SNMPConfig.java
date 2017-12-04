@@ -17,45 +17,42 @@ import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
- * Created by saichler@gmail.com on 12/2/15.
+ * Maintains SNMP configuration.
+ *
  * @author Trapti Khandelwal(trapti.khandelwal@tcs.com)
  * @author Razi Ahmed(ahmed.razi@tcs.com)
  */
-public class TSDRSNMPConfig implements ManagedService {
-
-    private static TSDRSNMPConfig instance = new TSDRSNMPConfig();
-    /*There is multiple values against single key i.e  host and community_string.
-     * So array of String is to hold multiple values against single key.
-     * eg credentials=[127.0.0.1,public],[127.0.0.1,public]
-    */
-    private final Dictionary<String, String[]> configurations = new Hashtable<>();
+public class SNMPConfig implements ManagedService {
+    private static final Logger LOG = LoggerFactory.getLogger(SNMPConfig.class);
     public static final String P_CREDENTIALS = "credentials";
-    private static final Logger log = LoggerFactory
-            .getLogger(TSDRSNMPConfig.class);
 
-    private TSDRSNMPConfig() {
+    /*
+     * There is multiple values against single key i.e host and
+     * community_string. So array of String is to hold multiple values against
+     * single key. eg credentials=[127.0.0.1,public],[127.0.0.1,public]
+     */
+    private final Dictionary<String, String[]> configurations = new Hashtable<>();
+
+    public SNMPConfig() {
         configurations.put(P_CREDENTIALS, new String[]{"127.0.0.1","public"});
-    }
-
-    public static TSDRSNMPConfig getInstance() {
-        return instance;
     }
 
     @Override
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
         if (properties != null && !properties.isEmpty()) {
             StringBuilder builder = new StringBuilder("{");
-            Enumeration<String> k = properties.keys();
-            while (k.hasMoreElements()) {
-                String key = k.nextElement();
+            Enumeration<String> keys = properties.keys();
+            while (keys.hasMoreElements()) {
+                String key = keys.nextElement();
                 String[] list = ((String) properties.get(key)).replace("[", "").replace("]", "").split(",");
                 builder.append(key).append('=').append(Arrays.toString(list)).append(',');
                 configurations.put(key, list);
             }
 
             builder.append('}');
-            log.info("TSDRSNMPConfig updated to {}", builder);
+            LOG.info("TSDRSNMPConfig updated to {}", builder);
         }
     }
 
@@ -63,7 +60,7 @@ public class TSDRSNMPConfig implements ManagedService {
         return this.configurations;
     }
 
-    public Object getConfig(String name){
+    public Object getConfig(String name) {
         return this.configurations.get(name);
     }
 }

@@ -10,11 +10,15 @@ package org.opendaylight.tsdr.syslogs.filters;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecordBuilder;
+
 /**
+ * Implementation of SyslogFilter that persists.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
-public class PersistAllSyslogFilter implements SyslogFilter{
+ */
+public class PersistAllSyslogFilter implements SyslogFilter {
     private int index = 0;
+
     @Override
     public boolean match(String syslog) {
         return true;

@@ -65,7 +65,7 @@ public class TSDRRestconfCollectorConfigurator implements AutoCloseable {
     public void close() {
         unregisterFilter();
 
-        if( serviceRegistration != null) {
+        if (serviceRegistration != null) {
             serviceRegistration.unregister();
             serviceRegistration = null;
         }

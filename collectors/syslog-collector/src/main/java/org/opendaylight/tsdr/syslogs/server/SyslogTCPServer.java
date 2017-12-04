@@ -19,10 +19,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
-import java.util.List;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.tsdr.syslogs.server.decoder.MessageHandler;
@@ -36,28 +34,26 @@ import org.opendaylight.tsdr.syslogs.server.decoder.MessageHandler;
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
 public class SyslogTCPServer implements SyslogServer {
-    private final AtomicInteger port;
-    private final ServerBootstrap b;
+    private final ServerBootstrap serverBootstrap;
     private final EventLoopGroup[] groups;
     private final AtomicBoolean status;
-    private DataBroker db;
-    StringDecoder stringDecoder = null;
-    MessageHandler messageHandler = null;
+    private final StringDecoder stringDecoder;
+    private final MessageHandler messageHandler;
 
-    public SyslogTCPServer(List<Message> messages, SyslogDatastoreManager manager) {
-        port = new AtomicInteger(-1);
-        b = new ServerBootstrap();
+    public SyslogTCPServer(Deque<Message> messages, SyslogDatastoreManager manager) {
+        serverBootstrap = new ServerBootstrap();
         groups = new EventLoopGroup[]{new NioEventLoopGroup(), new NioEventLoopGroup()};
         status = new AtomicBoolean(false);
         stringDecoder = new StringDecoder();
         messageHandler = new MessageHandler(messages, manager);
-        b.group(groups[0], groups[1])
+        serverBootstrap.group(groups[0], groups[1])
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         final ChannelPipeline pipeline = socketChannel.pipeline();
-                        pipeline.addLast("framer", new DelimiterBasedFrameDecoder(64 * 1024, Delimiters.lineDelimiter()));
+                        pipeline.addLast("framer", new DelimiterBasedFrameDecoder(64 * 1024,
+                                Delimiters.lineDelimiter()));
                         pipeline.addLast("stringer", stringDecoder);
                         pipeline.addLast("handler", messageHandler);
                     }
@@ -68,12 +64,10 @@ public class SyslogTCPServer implements SyslogServer {
      * setIncomingSyslogs() here is to pass the message list
      * to handler for and then return back to TSDRSyslogCollectorImpl
      * for being interted into TSDR database.
-     *
-     * @throws InterruptedException
      */
     @Override
-    public void startServer() throws InterruptedException {
-        b.bind(port.get()).sync();
+    public void startServer(int port) throws InterruptedException {
+        serverBootstrap.bind(port).sync();
         status.set(true);
     }
 
@@ -88,15 +82,6 @@ public class SyslogTCPServer implements SyslogServer {
     @Override
     public boolean isRunning() {
         return status.get();
-    }
-
-    @Override
-    public void setPort(int port) throws Exception {
-        if (isRunning()) {
-            throw new Exception("TCP Server is running at port: " + port + ".");
-        } else {
-            this.port.set(port);
-        }
     }
 
     @Override

@@ -7,6 +7,10 @@
  */
 package org.opendaylight.tsdr.collector.spi;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -22,72 +26,65 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
+ * Unit tests for CollectorSpiImpl.
+ *
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
- * Created by saichler on 12/20/15.
  */
 public class CollectorSpiImplTest {
-    private TsdrMetricDataService metricDataService = Mockito.mock(TsdrMetricDataService.class);
-    private TsdrLogDataService logDataService = Mockito.mock(TsdrLogDataService.class);
-    private CollectorSPIImpl impl = new CollectorSPIImpl(metricDataService,logDataService);
+    private final TsdrMetricDataService metricDataService = Mockito.mock(TsdrMetricDataService.class);
+    private final TsdrLogDataService logDataService = Mockito.mock(TsdrLogDataService.class);
+    private final CollectorSPIImpl impl = new CollectorSPIImpl(metricDataService,logDataService);
 
     @Before
     public void setup(){
 
     }
 
-    private static List<TSDRMetricRecord> createTSDRMetricRecordList(){
-        List<TSDRMetricRecord> result = new ArrayList<>();
-        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
-        b.setTSDRDataCategory(DataCategory.EXTERNAL);
-        b.setTimeStamp(System.currentTimeMillis());
-        RecordKeysBuilder rb = new RecordKeysBuilder();
-        rb.setKeyName("Test");
-        rb.setKeyValue("Test");
-        List<RecordKeys> rList = new ArrayList<>();
-        rList.add(rb.build());
-        b.setRecordKeys(rList);
-        b.setNodeID("TestNode");
-        b.setMetricName("Test Metric");
-        b.setMetricValue(new BigDecimal(123));
-        result.add(b.build());
-        return result;
+    private static List<TSDRMetricRecord> createTSDRMetricRecordList() {
+        TSDRMetricRecordBuilder recBuilder = new TSDRMetricRecordBuilder();
+        recBuilder.setTSDRDataCategory(DataCategory.EXTERNAL);
+        recBuilder.setTimeStamp(System.currentTimeMillis());
+        RecordKeysBuilder keysBuilder = new RecordKeysBuilder();
+        keysBuilder.setKeyName("Test");
+        keysBuilder.setKeyValue("Test");
+        List<RecordKeys> recList = new ArrayList<>();
+        recList.add(keysBuilder.build());
+        recBuilder.setRecordKeys(recList);
+        recBuilder.setNodeID("TestNode");
+        recBuilder.setMetricName("Test Metric");
+        recBuilder.setMetricValue(new BigDecimal(123));
+        return Collections.singletonList(recBuilder.build());
     }
 
-    private static List<TSDRLogRecord> createTSDRLogRecordList(){
-        List<TSDRLogRecord> result = new ArrayList<>();
-        TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
-        b.setTSDRDataCategory(DataCategory.EXTERNAL);
-        b.setTimeStamp(System.currentTimeMillis());
-        RecordKeysBuilder rb = new RecordKeysBuilder();
-        rb.setKeyName("Test");
-        rb.setKeyValue("Test");
-        List<RecordKeys> rList = new ArrayList<>();
-        rList.add(rb.build());
-        b.setRecordKeys(rList);
-        b.setNodeID("TestNode");
-        b.setRecordFullText("Syslog test");
-        result.add(b.build());
-        return result;
+    private static List<TSDRLogRecord> createTSDRLogRecordList() {
+        TSDRLogRecordBuilder recBuilder = new TSDRLogRecordBuilder();
+        recBuilder.setTSDRDataCategory(DataCategory.EXTERNAL);
+        recBuilder.setTimeStamp(System.currentTimeMillis());
+        RecordKeysBuilder keysBuilder = new RecordKeysBuilder();
+        keysBuilder.setKeyName("Test");
+        keysBuilder.setKeyValue("Test");
+        List<RecordKeys> recList = new ArrayList<>();
+        recList.add(keysBuilder.build());
+        recBuilder.setRecordKeys(recList);
+        recBuilder.setNodeID("TestNode");
+        recBuilder.setRecordFullText("Syslog test");
+        return Collections.singletonList(recBuilder.build());
     }
 
     @Test
-    public void testInsertTSDRMetricRecord(){
-        InsertTSDRMetricRecordInputBuilder b = new InsertTSDRMetricRecordInputBuilder();
-        b.setCollectorCodeName("Test");
-        b.setTSDRMetricRecord(createTSDRMetricRecordList());
-        impl.insertTSDRMetricRecord(b.build());
+    public void testInsertTSDRMetricRecord() {
+        InsertTSDRMetricRecordInputBuilder builder = new InsertTSDRMetricRecordInputBuilder();
+        builder.setCollectorCodeName("Test");
+        builder.setTSDRMetricRecord(createTSDRMetricRecordList());
+        impl.insertTSDRMetricRecord(builder.build());
     }
 
     @Test
-    public void testInsertTSDRLogRecord(){
-        InsertTSDRLogRecordInputBuilder b = new InsertTSDRLogRecordInputBuilder();
-        b.setCollectorCodeName("Test");
-        b.setTSDRLogRecord(createTSDRLogRecordList());
-        impl.insertTSDRLogRecord(b.build());
+    public void testInsertTSDRLogRecord() {
+        InsertTSDRLogRecordInputBuilder builder = new InsertTSDRLogRecordInputBuilder();
+        builder.setCollectorCodeName("Test");
+        builder.setTSDRLogRecord(createTSDRLogRecordList());
+        impl.insertTSDRLogRecord(builder.build());
     }
 }

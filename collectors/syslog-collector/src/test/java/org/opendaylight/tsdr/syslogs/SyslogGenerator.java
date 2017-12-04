@@ -10,21 +10,24 @@
 package org.opendaylight.tsdr.syslogs;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 /**
  * This Class is for Syslog Message generating.
  *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
-/*
-    This is a Syslog Generator for testing purposes
  */
+@SuppressWarnings("checkstyle:RegexpSingleLineJava")
 public class SyslogGenerator {
+    public static final int DEFAULT_SYSLOG_PORT = 514;
+
     private final DatagramSocket socket;
     private final InetAddress destHost;
     private final int destPort;
-    public static final int DEFAULT_SYSLOG_PORT = 514;
 
     public SyslogGenerator(String destHost, int destinationPort) throws SocketException, UnknownHostException {
         this.destPort = destinationPort;
@@ -33,10 +36,11 @@ public class SyslogGenerator {
         this.destHost = InetAddress.getByName(destHost);
     }
 
-    public final void sendSyslog(String syslogMessageText, int numberOfSyslogsToSend, long delayBetweenSyslogs, int numberOfIteration, long delayBetweenIterations) throws InterruptedException, IOException {
+    public final void sendSyslog(String syslogMessageText, int numberOfSyslogsToSend, long delayBetweenSyslogs,
+            int numberOfIteration, long delayBetweenIterations) throws InterruptedException, IOException {
         for (int i = 0; i < numberOfIteration; i++) {
             for (int j = 0; j < numberOfSyslogsToSend; j++) {
-                byte data[] = syslogMessageText.getBytes();
+                byte[] data = syslogMessageText.getBytes();
                 DatagramPacket packet = new DatagramPacket(data, data.length, destHost, destPort);
                 socket.send(packet);
                 System.out.println(syslogMessageText + " has been sent.");
@@ -50,34 +54,31 @@ public class SyslogGenerator {
         sendSyslog(syslogMessageText, 1, 0, 1, 0);
     }
 
-    public final void sendSyslog(String syslogMessageText, int numberOfSyslogsToSend) throws IOException, InterruptedException {
+    public final void sendSyslog(String syslogMessageText, int numberOfSyslogsToSend)
+            throws IOException, InterruptedException {
         sendSyslog(syslogMessageText, numberOfSyslogsToSend, 50, 1, 0);
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) throws IOException, InterruptedException {
         if (args == null) {
             //Will add more usages in the future
             System.out.println("Usage: sendSyslog <message> - Send syslog to local host on port 514");
             System.out.println("       sendSyslog <message> <count> - Send <count> syslog to local host on port 514");
             System.out.println("       sendSyslog <message> <host> <port> - Send syslog to <host> on <port>");
         }
-        try {
-            if (args.length == 1) {
-                SyslogGenerator generator = new SyslogGenerator("127.0.0.1", DEFAULT_SYSLOG_PORT);
-                generator.sendSyslog(args[0]);
-            } else if (args.length == 2) {
-                SyslogGenerator generator = new SyslogGenerator("127.0.0.1", DEFAULT_SYSLOG_PORT);
-                for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-                    generator.sendSyslog("" + i + ":" + args[0]);
-                    Thread.sleep(100);
-                }
-            } else if (args.length == 3) {
-                SyslogGenerator generator = new SyslogGenerator(args[1], Integer.parseInt(args[2]));
-                generator.sendSyslog(args[0]);
+
+        if (args.length == 1) {
+            SyslogGenerator generator = new SyslogGenerator("127.0.0.1", DEFAULT_SYSLOG_PORT);
+            generator.sendSyslog(args[0]);
+        } else if (args.length == 2) {
+            SyslogGenerator generator = new SyslogGenerator("127.0.0.1", DEFAULT_SYSLOG_PORT);
+            for (int i = 0; i < Integer.parseInt(args[1]); i++) {
+                generator.sendSyslog("" + i + ":" + args[0]);
+                Thread.sleep(100);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } else if (args.length == 3) {
+            SyslogGenerator generator = new SyslogGenerator(args[1], Integer.parseInt(args[2]));
+            generator.sendSyslog(args[0]);
         }
     }
-
 }

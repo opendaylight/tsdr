@@ -13,15 +13,11 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import java.util.List;
+import java.util.Deque;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.tsdr.syslogs.server.decoder.UDPMessageHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is the UDP server using io.netty to start
@@ -32,22 +28,17 @@ import org.slf4j.LoggerFactory;
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
 public class SyslogUDPServer implements SyslogServer {
-    private final AtomicInteger port;
-    private final Bootstrap b;
+    private final Bootstrap bootstrap;
     private final EventLoopGroup group;
     private final AtomicBoolean status;
-    private DataBroker db;
     private final UDPMessageHandler udpMessageHandler;
-    private final static Logger LOGGER = LoggerFactory.getLogger(SyslogUDPServer.class);
 
-
-    public SyslogUDPServer(List<Message> incomingSyslogs, SyslogDatastoreManager manager) {
-        port = new AtomicInteger(-1);
-        b = new Bootstrap();
+    public SyslogUDPServer(Deque<Message> incomingSyslogs, SyslogDatastoreManager manager) {
+        bootstrap = new Bootstrap();
         group = new NioEventLoopGroup();
         status = new AtomicBoolean(false);
         udpMessageHandler = new UDPMessageHandler(incomingSyslogs, manager);
-        b.group(group)
+        bootstrap.group(group)
                 .channel(NioDatagramChannel.class)
                 .handler(udpMessageHandler);
     }
@@ -56,12 +47,10 @@ public class SyslogUDPServer implements SyslogServer {
      * setIncomingSyslogs() here is to pass the message list
      * to handler for and then return back to TSDRSyslogCollectorImpl
      * for being interted into TSDR database.
-     *
-     * @throws InterruptedException
      */
     @Override
-    public void startServer() throws InterruptedException {
-        b.bind(port.get()).sync();
+    public void startServer(int port) throws InterruptedException {
+        bootstrap.bind(port).sync();
         status.set(true);
     }
 
@@ -74,14 +63,6 @@ public class SyslogUDPServer implements SyslogServer {
     @Override
     public boolean isRunning() {
         return status.get();
-    }
-
-    @Override
-    public void setPort(int port) throws Exception {
-//        if (isRunning()) {
-//            throw new Exception("UDP Server is running at port: " + port + ".");
-//        } else
-            this.port.set(port);
     }
 
     @Override

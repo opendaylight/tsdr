@@ -32,15 +32,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This RegisteredListener handles the listening and notification
- * handling of each registered filter
+ * This RegisteredListener handles the listening and notification handling of each registered filter.
  *
  * @author Wei Lai(weilai@tethrnet.com)
  */
 
 public class RegisteredListener implements DataTreeChangeListener<SyslogListener> {
+    private static final Logger LOG = LoggerFactory.getLogger(RegisteredListener.class);
+
     private final DataBroker db;
-    private final Logger LOG = LoggerFactory.getLogger(RegisteredListener.class);
     private final String listenerId;
     private final String callBackUrl;
     private ListenerRegistration<?> listenerReg;
@@ -58,7 +58,7 @@ public class RegisteredListener implements DataTreeChangeListener<SyslogListener
     }
 
     /**
-     * monitor the listener node in operational tree
+     * Monitor the listener node in operational tree.
      */
     public void listen() {
         InstanceIdentifier<SyslogListener> iid = this.toInstanceIdentifier();
@@ -67,20 +67,15 @@ public class RegisteredListener implements DataTreeChangeListener<SyslogListener
     }
 
     /**
-     * close the listener registration
+     * Close the listener registration.
      */
     public boolean close() {
-        try {
-            this.listenerReg.close();
-        } catch (Exception e) {
-            LOG.error("unable to close listener");
-            return false;
-        }
+        this.listenerReg.close();
         return true;
     }
 
     /**
-     * generate notification when Syslog message match certain filter and sent it to the corresponding client
+     * Generate notification when Syslog message match certain filter and sent it to the corresponding client.
      */
     @Override
     public void onDataTreeChanged(Collection<DataTreeModification<SyslogListener>> changes) {

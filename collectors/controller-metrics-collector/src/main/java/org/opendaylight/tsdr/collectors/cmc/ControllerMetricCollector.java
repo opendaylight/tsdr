@@ -21,11 +21,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Collects various metrics for the controller process.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 public class ControllerMetricCollector extends Thread implements AutoCloseable {
 
-    private static final Logger logger = LoggerFactory.getLogger(ControllerMetricCollector.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ControllerMetricCollector.class);
 
     private static final String COLLECTOR_CODE_NAME = ControllerMetricCollector.class.getSimpleName();
 
@@ -46,20 +48,20 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
 
     public void init() {
         this.start();
-        logger.info("Controller Metrics Collector started");
+        LOG.info("Controller Metrics Collector started");
     }
 
     @Override
     public void close() {
         interrupt();
-        logger.info("Controller Metrics Collector closed");
+        LOG.info("Controller Metrics Collector closed");
     }
 
     @Override
     public void run() {
         try {
             while (!interrupted()) {
-                logger.debug("inserting new set of TSDR records");
+                LOG.debug("inserting new set of TSDR records");
                 insertMemorySample();
                 insertControllerCPUSample();
                 insertMachineCPUSample();
@@ -67,45 +69,45 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
                 Thread.sleep(5000);
             }
         } catch (final InterruptedException err) {
-            logger.info("ControllerMetricCollector thread has been interrupted and is now exiting");
+            LOG.info("ControllerMetricCollector thread has been interrupted and is now exiting");
             Thread.currentThread().interrupt();
         }
     }
 
 
     public Optional<Double> getControllerCPU() {
-        logger.debug("Getting controller CPU data");
+        LOG.debug("Getting controller CPU data");
         if (cpuDataCollector.isPresent()) {
             return cpuDataCollector.get().getControllerCpu();
         } else {
             // unable to get controller CPU data, user has already been warned
-            logger.info("Unable to get controller CPU data, data collector is not present");
+            LOG.info("Unable to get controller CPU data, data collector is not present");
             return Optional.empty();
         }
     }
 
     public Optional<Double> getMachineCPU() {
-        logger.debug("Getting machine CPU data");
+        LOG.debug("Getting machine CPU data");
         if (cpuDataCollector.isPresent()) {
             return cpuDataCollector.get().getMachineCpu();
         } else {
             // unable to get machine CPU data, user has already been warned
-            logger.info("Unable to get machine CPU data, data collector is not present");
+            LOG.info("Unable to get machine CPU data, data collector is not present");
             return Optional.empty();
         }
     }
 
     protected void insertMemorySample() {
-        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
-        b.setMetricName("Heap:Memory:Usage");
-        b.setTSDRDataCategory(DataCategory.EXTERNAL);
-        b.setNodeID("Controller");
-        b.setRecordKeys(new ArrayList<>());
-        b.setTimeStamp(System.currentTimeMillis());
-        b.setMetricValue(new BigDecimal(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
+        TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
+        builder.setMetricName("Heap:Memory:Usage");
+        builder.setTSDRDataCategory(DataCategory.EXTERNAL);
+        builder.setNodeID("Controller");
+        builder.setRecordKeys(new ArrayList<>());
+        builder.setTimeStamp(System.currentTimeMillis());
+        builder.setMetricValue(new BigDecimal(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
         InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> list = new LinkedList<>();
-        list.add(b.build());
+        list.add(builder.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
         collectorSPIService.insertTSDRMetricRecord(input.build());
@@ -118,16 +120,16 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
             return;
         }
 
-        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
-        b.setMetricName("CPU:Usage");
-        b.setTSDRDataCategory(DataCategory.EXTERNAL);
-        b.setNodeID("Controller");
-        b.setRecordKeys(new ArrayList<>());
-        b.setTimeStamp(System.currentTimeMillis());
-        b.setMetricValue(new BigDecimal(cpuValue.get()));
+        TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
+        builder.setMetricName("CPU:Usage");
+        builder.setTSDRDataCategory(DataCategory.EXTERNAL);
+        builder.setNodeID("Controller");
+        builder.setRecordKeys(new ArrayList<>());
+        builder.setTimeStamp(System.currentTimeMillis());
+        builder.setMetricValue(new BigDecimal(cpuValue.get()));
         InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> list = new LinkedList<>();
-        list.add(b.build());
+        list.add(builder.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
         collectorSPIService.insertTSDRMetricRecord(input.build());
@@ -140,16 +142,16 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
             return;
         }
 
-        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
-        b.setMetricName("CPU:Usage");
-        b.setTSDRDataCategory(DataCategory.EXTERNAL);
-        b.setNodeID("Machine");
-        b.setRecordKeys(new ArrayList<>());
-        b.setTimeStamp(System.currentTimeMillis());
-        b.setMetricValue(new BigDecimal(cpuValue.get()));
+        TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
+        builder.setMetricName("CPU:Usage");
+        builder.setTSDRDataCategory(DataCategory.EXTERNAL);
+        builder.setNodeID("Machine");
+        builder.setRecordKeys(new ArrayList<>());
+        builder.setTimeStamp(System.currentTimeMillis());
+        builder.setMetricValue(new BigDecimal(cpuValue.get()));
         InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> list = new LinkedList<>();
-        list.add(b.build());
+        list.add(builder.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
         collectorSPIService.insertTSDRMetricRecord(input.build());

@@ -9,7 +9,11 @@
 
 package org.opendaylight.tsdr.syslogs;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.util.concurrent.CheckedFuture;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,35 +23,30 @@ import org.opendaylight.controller.md.sal.common.api.data.TransactionCommitFaile
 import org.opendaylight.tsdr.syslogs.server.datastore.RegisteredListener;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 
-import java.util.Map;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * This is the test of DatastoreMap.
  * @author Wei Lai(weilai@tetthrnet.com)
  */
 public class DatastoreMapTest {
-    private int coreThreadPoolSize = 5;
-    private int maxThreadPoolSize = 10;
-    private long keepAliveTime = 10L;
-    private int queueSize = 10;
-    private SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(coreThreadPoolSize, maxThreadPoolSize, keepAliveTime, queueSize);
-    private DataBroker dataBroker = mock(DataBroker.class);
-    private WriteTransaction writeTransaction = mock(WriteTransaction.class);
-    private CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
+    private final int coreThreadPoolSize = 5;
+    private final int maxThreadPoolSize = 10;
+    private final long keepAliveTime = 10L;
+    private final int queueSize = 10;
+    private final DataBroker dataBroker = mock(DataBroker.class);
+    private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(dataBroker, coreThreadPoolSize,
+            maxThreadPoolSize, keepAliveTime, queueSize);
+    private final WriteTransaction writeTransaction = mock(WriteTransaction.class);
+    private final CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
 
 
     @Before
     public void mockSetUp() {
         when(dataBroker.newWriteOnlyTransaction()).thenReturn(writeTransaction);
         when(writeTransaction.submit()).thenReturn(checkedFuture);
-        manager.setDataBroker(dataBroker);
     }
 
     @Test
-    public void testDatastoreManagerMap(){
+    public void testDatastoreManagerMap() {
 
         Map<String, String> registerMap = manager.getRegisterMap();
         Map<String, RegisteredListener> listenerMap = manager.getListenerMap();

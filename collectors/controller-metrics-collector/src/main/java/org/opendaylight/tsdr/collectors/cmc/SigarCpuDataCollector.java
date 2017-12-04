@@ -7,16 +7,15 @@
  */
 package org.opendaylight.tsdr.collectors.cmc;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Optional;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SigarCpuDataCollector extends CpuDataCollector {
 
@@ -35,7 +34,8 @@ public class SigarCpuDataCollector extends CpuDataCollector {
 
     /*
      * There is a problem with the Karaf/OSGI/Config Subsystem class loader and Sigar.
-     * Sigar cannot be instantiated due to "java.lang.NoClassDefFoundError: Could not initialize class org.hyperic.sigar.Sigar"
+     * Sigar cannot be instantiated due to
+     * "java.lang.NoClassDefFoundError: Could not initialize class org.hyperic.sigar.Sigar"
      * Hence i had to revert to using a dedicated class loader and reflection to use the
      * functionality in the module.
      */
@@ -65,14 +65,14 @@ public class SigarCpuDataCollector extends CpuDataCollector {
     @Override
     public Optional<Double> getControllerCpu() {
         LOG.debug("Getting controller CPU data");
-        try{
-            Method pidM = sigar.getClass().getMethod("getPid", (Class<?>[])null);
-            long pid = (Long)pidM.invoke(sigar, (Object[])null);
+        try {
+            Method pidM = sigar.getClass().getMethod("getPid", (Class<?>[]) null);
+            long pid = (Long) pidM.invoke(sigar, (Object[]) null);
             Method cpuM = sigar.getClass().getMethod("getProcCpu", long.class);
             Object procCPU = cpuM.invoke(sigar, pid);
-            Method procM = procCPU.getClass().getMethod("getPercent",(Class<?>[])null);
-            return Optional.of((double) procM.invoke(procCPU, (Object[])null));
-        }catch(final NoSuchMethodException | InvocationTargetException | IllegalAccessException err){
+            Method procM = procCPU.getClass().getMethod("getPercent", (Class<?>[]) null);
+            return Optional.of((double) procM.invoke(procCPU, (Object[]) null));
+        } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException err) {
             LOG.error("Failed to get Controller CPU, Sigar library is probably not installed...", err);
         }
 

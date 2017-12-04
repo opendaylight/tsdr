@@ -14,6 +14,8 @@ import org.mockito.Mockito;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 
 /**
+ * Unit tests for ControllerMetricCollector.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 public class ControllerMetricCollectorTest {
@@ -22,56 +24,58 @@ public class ControllerMetricCollectorTest {
             Optional.of(new SigarCollectorMock()));
 
     @Test
-    public void testGetControllerCPU(){
+    public void testGetControllerCPU() {
         Object object = collector.getControllerCPU();
         Assert.assertNotNull(object);
     }
 
     @Test
-    public void testGetMachineCPU(){
+    public void testGetMachineCPU() {
         Object object = collector.getMachineCPU();
         Assert.assertNotNull(object);
     }
 
     @Test
-    public void testGetControllerCPUNull(){
+    public void testGetControllerCPUNull() {
         Object object = collector.getControllerCPU();
         Assert.assertNotNull(object);
     }
 
     @Test
-    public void testGetMachineCPUNull(){
+    public void testGetMachineCPUNull() {
         Object object = collector.getMachineCPU();
         Assert.assertNotNull(object);
     }
 
     @Test
-    public void testInsertMemorySample(){
+    public void testInsertMemorySample() {
         collector.insertMemorySample();
     }
 
     @Test
-    public void testInsertControllerCPUSample(){
+    public void testInsertControllerCPUSample() {
         collector.insertControllerCPUSample();
     }
 
     @Test
-    public void testInsertMachineCPUSample(){
+    public void testInsertMachineCPUSample() {
         collector.insertMachineCPUSample();
     }
 
     @Test
     public void testWaitForCollectionInterval() throws InterruptedException {
-        //Wait for @ least one interval
+        // Wait for @ least one interval
         Thread.sleep(6000);
     }
 
     public static class SigarCollectorMock extends CpuDataCollector {
         @Override
-        public Optional<Double> getControllerCpu(){ return Optional.of(0.123d); }
+        public Optional<Double> getControllerCpu() {
+            return Optional.of(0.123d);
+        }
 
         @Override
-        public Optional<Double> getMachineCpu(){
+        public Optional<Double> getMachineCpu() {
             return Optional.of(0.456d);
         }
     }

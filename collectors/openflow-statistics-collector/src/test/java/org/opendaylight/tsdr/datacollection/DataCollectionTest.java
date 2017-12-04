@@ -23,7 +23,7 @@ import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
-import org.opendaylight.tsdr.osc.TSDRDOMCollector;
+import org.opendaylight.tsdr.osc.TSDROpenflowCollector;
 import org.opendaylight.tsdr.osc.handlers.FlowCapableNodeConnectorQueueStatisticsDataHandler;
 import org.opendaylight.tsdr.osc.handlers.FlowStatisticsDataHandler;
 import org.opendaylight.tsdr.osc.handlers.NodeGroupStatisticsChangeHandler;
@@ -93,40 +93,37 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.queue.statistics.rev131216.
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 
 public class DataCollectionTest {
-    private DataBroker dataBroker = null;
+    private DataBroker dataBroker;
     private final TsdrCollectorSpiService collectorSPIService = mock(TsdrCollectorSpiService.class);
-    private ReadOnlyTransaction readTransaction = null;
-    private Nodes nodes = null;
+    private ReadOnlyTransaction readTransaction;
+    private Nodes nodes;
     private final CheckedFuture<Optional<Nodes>, ReadFailedException> checkedFuture = mock(CheckedFuture.class);
     private final Optional<Nodes> optional = mock(Optional.class);
-    private TSDRDOMCollector collector = null;
+    private TSDROpenflowCollector collector;
+
     @Before
-    public void before(){
+    public void before() throws InterruptedException, ExecutionException {
         dataBroker = mock(DataBroker.class);
         readTransaction = mock(ReadOnlyTransaction.class);
         when(dataBroker.newReadOnlyTransaction()).thenReturn(readTransaction);
         InstanceIdentifier<Nodes> id = InstanceIdentifier.create(Nodes.class);
         nodes = buildNodes();
         when(readTransaction.read(LogicalDatastoreType.OPERATIONAL, id)).thenReturn(checkedFuture);
-        try {
-            when(checkedFuture.get()).thenReturn(optional);
-        } catch (InterruptedException | ExecutionException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        when(checkedFuture.get()).thenReturn(optional);
         when(optional.get()).thenReturn(nodes);
-        collector = new TSDRDOMCollector(this.dataBroker, collectorSPIService);
+        collector = new TSDROpenflowCollector(this.dataBroker, collectorSPIService);
     }
+
     @After
-    public void after(){
-        for(Node node:nodes.getNode()){
-            InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
-                    Nodes.class).child(Node.class, node.getKey());
+    public void after() {
+        for (Node node : nodes.getNode()) {
+            InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
             collector.removeAllNodeBuilders(nodeID);
         }
         collector.close();
     }
-    private Nodes buildNodes(){
+
+    private Nodes buildNodes() {
         NodesBuilder nb = new NodesBuilder();
         List<Node> nodeList = new ArrayList<>(2);
         nodeList.add(buildNode("openflow:1"));
@@ -134,268 +131,272 @@ public class DataCollectionTest {
         nb.setNode(nodeList);
         return nb.build();
     }
-    private Node buildNode(String id){
+
+    private Node buildNode(String id) {
         NodeBuilder nb = new NodeBuilder();
         nb.setId(new NodeId(id));
         nb.setKey(new NodeKey(nb.getId()));
-        List<NodeConnector> cList = new ArrayList<>();
-        cList.add(buildNodeConnector(id+":1"));
-        cList.add(buildNodeConnector(id+":2"));
-        nb.setNodeConnector(cList);
+        List<NodeConnector> list = new ArrayList<>();
+        list.add(buildNodeConnector(id + ":1"));
+        list.add(buildNodeConnector(id + ":2"));
+        nb.setNodeConnector(list);
         nb.addAugmentation(FlowCapableNode.class, buildFlowCapableNode());
         return nb.build();
     }
-    private NodeConnector buildNodeConnector(String id){
+
+    private NodeConnector buildNodeConnector(String id) {
         NodeConnectorBuilder ncb = new NodeConnectorBuilder();
         ncb.setId(new NodeConnectorId(id));
         ncb.setKey(new NodeConnectorKey(ncb.getId()));
-        ncb.addAugmentation(FlowCapableNodeConnectorStatisticsData.class, buildFlowCapableNodeConnectorStatisticsData());
+        ncb.addAugmentation(FlowCapableNodeConnectorStatisticsData.class,
+                buildFlowCapableNodeConnectorStatisticsData());
         ncb.addAugmentation(FlowCapableNodeConnector.class, buildFlowCapableNodeConnector());
         return ncb.build();
     }
-    private FlowCapableNode buildFlowCapableNode(){
-        FlowCapableNodeBuilder b = new FlowCapableNodeBuilder();
-        List<Meter> m = new ArrayList<>();
-        m.add(buildMeter(1));
-        m.add(buildMeter(2));
-        b.setMeter(m);
-        List<Table> t = new ArrayList<>();
-        t.add(buildTable((short)11));
-        t.add(buildTable((short)22));
-        b.setTable(t);
-        List<Group> g = new ArrayList<>();
-        g.add(buildGroup(1));
-        g.add(buildGroup(2));
-        b.setGroup(g);
-        return b.build();
+
+    private FlowCapableNode buildFlowCapableNode() {
+        FlowCapableNodeBuilder builder = new FlowCapableNodeBuilder();
+        List<Meter> meters = new ArrayList<>();
+        meters.add(buildMeter(1));
+        meters.add(buildMeter(2));
+        builder.setMeter(meters);
+        List<Table> tables = new ArrayList<>();
+        tables.add(buildTable((short) 11));
+        tables.add(buildTable((short) 22));
+        builder.setTable(tables);
+        List<Group> groups = new ArrayList<>();
+        groups.add(buildGroup(1));
+        groups.add(buildGroup(2));
+        builder.setGroup(groups);
+        return builder.build();
     }
-    private Meter buildMeter(long id){
-       MeterBuilder b = new MeterBuilder();
-       b.setMeterId(new MeterId(id));
-       b.setMeterName("Meter "+id);
-       b.addAugmentation(NodeMeterStatistics.class, buildNodeMeterStatistics());
-       return b.build();
+
+    private Meter buildMeter(long id) {
+        MeterBuilder builder = new MeterBuilder();
+        builder.setMeterId(new MeterId(id));
+        builder.setMeterName("Meter " + id);
+        builder.addAugmentation(NodeMeterStatistics.class, buildNodeMeterStatistics());
+        return builder.build();
     }
-    private NodeMeterStatistics buildNodeMeterStatistics(){
-        NodeMeterStatisticsBuilder b = new NodeMeterStatisticsBuilder();
-        b.setMeterStatistics(buildMeterStatistics());
-        return b.build();
+
+    private NodeMeterStatistics buildNodeMeterStatistics() {
+        NodeMeterStatisticsBuilder builder = new NodeMeterStatisticsBuilder();
+        builder.setMeterStatistics(buildMeterStatistics());
+        return builder.build();
     }
-    private MeterStatistics buildMeterStatistics(){
-        MeterStatisticsBuilder b = new MeterStatisticsBuilder();
-        b.setByteInCount(new Counter64(new BigInteger("1")));
-        b.setFlowCount(new Counter32(1l));
-        b.setPacketInCount(new Counter64(new BigInteger("2")));
-        b.setMeterId(new MeterId(1l));
-        return b.build();
+
+    private MeterStatistics buildMeterStatistics() {
+        MeterStatisticsBuilder builder = new MeterStatisticsBuilder();
+        builder.setByteInCount(new Counter64(new BigInteger("1")));
+        builder.setFlowCount(new Counter32(1L));
+        builder.setPacketInCount(new Counter64(new BigInteger("2")));
+        builder.setMeterId(new MeterId(1L));
+        return builder.build();
     }
-    private Table buildTable(short s){
-        TableBuilder b = new TableBuilder();
-        b.setId(s);
-        b.setKey(new TableKey(b.getId()));
-        b.addAugmentation(FlowTableStatisticsData.class, buildFlowTableStatisticsData());
-        List<Flow> f = new ArrayList<>();
-        f.add(buildFlow("1"));
-        f.add(buildFlow("2"));
-        b.setFlow(f);
-        return b.build();
+
+    private Table buildTable(short id) {
+        TableBuilder builder = new TableBuilder();
+        builder.setId(id);
+        builder.setKey(new TableKey(builder.getId()));
+        builder.addAugmentation(FlowTableStatisticsData.class, buildFlowTableStatisticsData());
+        List<Flow> flows = new ArrayList<>();
+        flows.add(buildFlow("1"));
+        flows.add(buildFlow("2"));
+        builder.setFlow(flows);
+        return builder.build();
     }
-    private FlowTableStatisticsData buildFlowTableStatisticsData(){
-        FlowTableStatisticsDataBuilder b = new FlowTableStatisticsDataBuilder();
-        b.setFlowTableStatistics(buildFlowTableStatistics());
-        return b.build();
+
+    private FlowTableStatisticsData buildFlowTableStatisticsData() {
+        FlowTableStatisticsDataBuilder builder = new FlowTableStatisticsDataBuilder();
+        builder.setFlowTableStatistics(buildFlowTableStatistics());
+        return builder.build();
     }
-    private FlowTableStatistics buildFlowTableStatistics(){
-        FlowTableStatisticsBuilder b = new FlowTableStatisticsBuilder();
-        b.setActiveFlows(new Counter32(1l));
-        b.setPacketsLookedUp(new Counter64(new BigInteger("1")));
-        b.setPacketsMatched(new Counter64(new BigInteger("2")));
-        return b.build();
+
+    private FlowTableStatistics buildFlowTableStatistics() {
+        FlowTableStatisticsBuilder builder = new FlowTableStatisticsBuilder();
+        builder.setActiveFlows(new Counter32(1L));
+        builder.setPacketsLookedUp(new Counter64(new BigInteger("1")));
+        builder.setPacketsMatched(new Counter64(new BigInteger("2")));
+        return builder.build();
     }
-    private Flow buildFlow(String id){
-        FlowBuilder b = new FlowBuilder();
-        b.setId(new FlowId(id));
-        b.setKey(new FlowKey(b.getId()));
-        b.addAugmentation(FlowStatisticsData.class, buildFlowStatisticsData());
-        return b.build();
+
+    private Flow buildFlow(String id) {
+        FlowBuilder builder = new FlowBuilder();
+        builder.setId(new FlowId(id));
+        builder.setKey(new FlowKey(builder.getId()));
+        builder.addAugmentation(FlowStatisticsData.class, buildFlowStatisticsData());
+        return builder.build();
     }
-    private FlowStatisticsData buildFlowStatisticsData(){
-        FlowStatisticsDataBuilder b = new FlowStatisticsDataBuilder();
-        b.setFlowStatistics(buildFlowStatistics());
-        return b.build();
+
+    private FlowStatisticsData buildFlowStatisticsData() {
+        FlowStatisticsDataBuilder builder = new FlowStatisticsDataBuilder();
+        builder.setFlowStatistics(buildFlowStatistics());
+        return builder.build();
     }
-    private FlowStatistics buildFlowStatistics(){
-        FlowStatisticsBuilder b = new FlowStatisticsBuilder();
-        b.setByteCount(new Counter64(new BigInteger("1")));
-        b.setPacketCount(new Counter64(new BigInteger("2")));
-        return b.build();
+
+    private FlowStatistics buildFlowStatistics() {
+        FlowStatisticsBuilder builder = new FlowStatisticsBuilder();
+        builder.setByteCount(new Counter64(new BigInteger("1")));
+        builder.setPacketCount(new Counter64(new BigInteger("2")));
+        return builder.build();
     }
-    private Group buildGroup(long id){
-        GroupBuilder b = new GroupBuilder();
-        b.setGroupId(new GroupId(id));
-        b.addAugmentation(NodeGroupStatistics.class, buildNodeGroupStatistics());
-        return b.build();
+
+    private Group buildGroup(long id) {
+        GroupBuilder builder = new GroupBuilder();
+        builder.setGroupId(new GroupId(id));
+        builder.addAugmentation(NodeGroupStatistics.class, buildNodeGroupStatistics());
+        return builder.build();
     }
-    private NodeGroupStatistics buildNodeGroupStatistics(){
-        NodeGroupStatisticsBuilder b = new NodeGroupStatisticsBuilder();
-        b.setGroupStatistics(buildGroupStatistics());
-        return b.build();
+
+    private NodeGroupStatistics buildNodeGroupStatistics() {
+        NodeGroupStatisticsBuilder builder = new NodeGroupStatisticsBuilder();
+        builder.setGroupStatistics(buildGroupStatistics());
+        return builder.build();
     }
-    private GroupStatistics buildGroupStatistics(){
-        GroupStatisticsBuilder b = new GroupStatisticsBuilder();
-        b.setByteCount(new Counter64(new BigInteger("1")));
-        b.setPacketCount(new Counter64(new BigInteger("2")));
-        b.setRefCount(new Counter32(1l));
-        return b.build();
+
+    private GroupStatistics buildGroupStatistics() {
+        GroupStatisticsBuilder builder = new GroupStatisticsBuilder();
+        builder.setByteCount(new Counter64(new BigInteger("1")));
+        builder.setPacketCount(new Counter64(new BigInteger("2")));
+        builder.setRefCount(new Counter32(1L));
+        return builder.build();
     }
-    private FlowCapableNodeConnectorStatisticsData buildFlowCapableNodeConnectorStatisticsData(){
-        FlowCapableNodeConnectorStatisticsDataBuilder b = new FlowCapableNodeConnectorStatisticsDataBuilder();
-        b.setFlowCapableNodeConnectorStatistics(buildFlowCapableNodeConnectorStatistics());
-        return b.build();
+
+    private FlowCapableNodeConnectorStatisticsData buildFlowCapableNodeConnectorStatisticsData() {
+        FlowCapableNodeConnectorStatisticsDataBuilder builder = new FlowCapableNodeConnectorStatisticsDataBuilder();
+        builder.setFlowCapableNodeConnectorStatistics(buildFlowCapableNodeConnectorStatistics());
+        return builder.build();
     }
-    private FlowCapableNodeConnectorStatistics buildFlowCapableNodeConnectorStatistics(){
-        FlowCapableNodeConnectorStatisticsBuilder b = new FlowCapableNodeConnectorStatisticsBuilder();
+
+    private FlowCapableNodeConnectorStatistics buildFlowCapableNodeConnectorStatistics() {
+        FlowCapableNodeConnectorStatisticsBuilder builder = new FlowCapableNodeConnectorStatisticsBuilder();
         BytesBuilder bb = new BytesBuilder();
         bb.setReceived(new BigInteger("100"));
         bb.setTransmitted(new BigInteger("100"));
-        b.setBytes(bb.build());
-        b.setCollisionCount(new BigInteger("100"));
+        builder.setBytes(bb.build());
+        builder.setCollisionCount(new BigInteger("100"));
         PacketsBuilder pb = new PacketsBuilder();
         pb.setReceived(new BigInteger("100"));
         pb.setTransmitted(new BigInteger("100"));
-        b.setPackets(pb.build());
-        b.setReceiveCrcError(new BigInteger("100"));
-        b.setReceiveDrops(new BigInteger("100"));
-        b.setReceiveErrors(new BigInteger("100"));
-        b.setReceiveFrameError(new BigInteger("100"));
-        b.setReceiveOverRunError(new BigInteger("100"));
-        b.setTransmitDrops(new BigInteger("100"));
-        b.setTransmitErrors(new BigInteger("100"));
-        return b.build();
+        builder.setPackets(pb.build());
+        builder.setReceiveCrcError(new BigInteger("100"));
+        builder.setReceiveDrops(new BigInteger("100"));
+        builder.setReceiveErrors(new BigInteger("100"));
+        builder.setReceiveFrameError(new BigInteger("100"));
+        builder.setReceiveOverRunError(new BigInteger("100"));
+        builder.setTransmitDrops(new BigInteger("100"));
+        builder.setTransmitErrors(new BigInteger("100"));
+        return builder.build();
     }
-    private FlowCapableNodeConnector buildFlowCapableNodeConnector(){
-        FlowCapableNodeConnectorBuilder b = new FlowCapableNodeConnectorBuilder();
-        List<Queue> q = new ArrayList<>();
-        q.add(buildQueue());
-        b.setQueue(q);
-        return b.build();
+
+    private FlowCapableNodeConnector buildFlowCapableNodeConnector() {
+        FlowCapableNodeConnectorBuilder builder = new FlowCapableNodeConnectorBuilder();
+        List<Queue> queues = new ArrayList<>();
+        queues.add(buildQueue());
+        builder.setQueue(queues);
+        return builder.build();
     }
-    private Queue buildQueue(){
-        QueueBuilder b = new QueueBuilder();
-        b.setQueueId(new QueueId(1l));
-        b.setKey(new QueueKey(b.getQueueId()));
-        b.addAugmentation(FlowCapableNodeConnectorQueueStatisticsData.class, buildFlowCapableNodeConnectorQueueStatisticsData());
-        return b.build();
+
+    private Queue buildQueue() {
+        QueueBuilder builder = new QueueBuilder();
+        builder.setQueueId(new QueueId(1L));
+        builder.setKey(new QueueKey(builder.getQueueId()));
+        builder.addAugmentation(FlowCapableNodeConnectorQueueStatisticsData.class,
+                buildFlowCapableNodeConnectorQueueStatisticsData());
+        return builder.build();
     }
-    private FlowCapableNodeConnectorQueueStatisticsData buildFlowCapableNodeConnectorQueueStatisticsData(){
-        FlowCapableNodeConnectorQueueStatisticsDataBuilder b = new FlowCapableNodeConnectorQueueStatisticsDataBuilder();
-        b.setFlowCapableNodeConnectorQueueStatistics(buildFlowCapableNodeConnectorQueueStatistics());
-        return b.build();
+
+    private FlowCapableNodeConnectorQueueStatisticsData buildFlowCapableNodeConnectorQueueStatisticsData() {
+        FlowCapableNodeConnectorQueueStatisticsDataBuilder builder =
+                new FlowCapableNodeConnectorQueueStatisticsDataBuilder();
+        builder.setFlowCapableNodeConnectorQueueStatistics(buildFlowCapableNodeConnectorQueueStatistics());
+        return builder.build();
     }
-    private FlowCapableNodeConnectorQueueStatistics buildFlowCapableNodeConnectorQueueStatistics(){
-        FlowCapableNodeConnectorQueueStatisticsBuilder b = new FlowCapableNodeConnectorQueueStatisticsBuilder();
-        b.setTransmissionErrors(new Counter64(new BigInteger("1")));
-        b.setTransmittedBytes(new Counter64(new BigInteger("1")));
-        b.setTransmittedPackets(new Counter64(new BigInteger("1")));
-        return b.build();
+
+    private FlowCapableNodeConnectorQueueStatistics buildFlowCapableNodeConnectorQueueStatistics() {
+        FlowCapableNodeConnectorQueueStatisticsBuilder builder = new FlowCapableNodeConnectorQueueStatisticsBuilder();
+        builder.setTransmissionErrors(new Counter64(new BigInteger("1")));
+        builder.setTransmittedBytes(new Counter64(new BigInteger("1")));
+        builder.setTransmittedPackets(new Counter64(new BigInteger("1")));
+        return builder.build();
     }
+
     @Test
-    public void testCollectStatistics(){
-        for(Node node:nodes.getNode()){
+    public void testCollectStatistics() {
+        for (Node node : nodes.getNode()) {
             collector.collectStatistics(node);
         }
     }
+
     @Test
-    public void testNodeMeterStatisticsChangeHandler(){
+    public void testNodeMeterStatisticsChangeHandler() {
         NodeMeterStatisticsChangeHandler handler = new NodeMeterStatisticsChangeHandler(collector);
         Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
-                Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<NodeMeterStatistics> id = InstanceIdentifier
-                .create(Nodes.class)
-                .child(Node.class, node.getKey())
-                .augmentation(FlowCapableNode.class)
-                .child(Meter.class, new MeterKey(new MeterId(1l)))
-                .augmentation(NodeMeterStatistics.class);
+        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
+        InstanceIdentifier<NodeMeterStatistics> id = InstanceIdentifier.create(Nodes.class)
+                .child(Node.class, node.getKey()).augmentation(FlowCapableNode.class)
+                .child(Meter.class, new MeterKey(new MeterId(1L))).augmentation(NodeMeterStatistics.class);
         handler.handleData(nodeID, id, buildNodeMeterStatistics());
     }
+
     @Test
-    public void testNodeTableStatisticsChangeHandler(){
+    public void testNodeTableStatisticsChangeHandler() {
         NodeTableStatisticsChangeHandler handler = new NodeTableStatisticsChangeHandler(collector);
         Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
-                Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<FlowTableStatisticsData> id = InstanceIdentifier
-                .create(Nodes.class)
-                .child(Node.class, node.getKey())
-                .augmentation(FlowCapableNode.class)
-                .child(Table.class, buildTable((short)11).getKey())
-                .augmentation(
-                        FlowTableStatisticsData.class);
-        handler.handleData(nodeID, id,buildFlowTableStatisticsData());
+        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
+        InstanceIdentifier<FlowTableStatisticsData> id = InstanceIdentifier.create(Nodes.class)
+                .child(Node.class, node.getKey()).augmentation(FlowCapableNode.class)
+                .child(Table.class, buildTable((short) 11).getKey()).augmentation(FlowTableStatisticsData.class);
+        handler.handleData(nodeID, id, buildFlowTableStatisticsData());
     }
+
     @Test
-    public void testFlowStatisticsDataHandler(){
+    public void testFlowStatisticsDataHandler() {
         FlowStatisticsDataHandler handler = new FlowStatisticsDataHandler(collector);
         Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
-                Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<FlowStatisticsData> id = InstanceIdentifier
-                .create(Nodes.class)
-                .child(Node.class,
-                        node.getKey())
-                .augmentation(
-                        FlowCapableNode.class)
-                .child(Table.class, buildTable((short)11).getKey())
-                .child(Flow.class,
-                        buildFlow("1").getKey())
-                .augmentation(
-                        FlowStatisticsData.class);
+        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
+        InstanceIdentifier<FlowStatisticsData> id = InstanceIdentifier.create(Nodes.class)
+                .child(Node.class, node.getKey()).augmentation(FlowCapableNode.class)
+                .child(Table.class, buildTable((short) 11).getKey()).child(Flow.class, buildFlow("1").getKey())
+                .augmentation(FlowStatisticsData.class);
         handler.handleData(nodeID, id, buildFlowStatisticsData());
     }
+
     @Test
-    public void testNodeGroupStatisticsChangeHandler(){
+    public void testNodeGroupStatisticsChangeHandler() {
         NodeGroupStatisticsChangeHandler handler = new NodeGroupStatisticsChangeHandler(collector);
         Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
-                Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<NodeGroupStatistics> id = InstanceIdentifier
-                .create(Nodes.class)
-                .child(Node.class, node.getKey())
-                .augmentation(FlowCapableNode.class)
-                .child(Group.class, buildGroup(1).getKey())
-                .augmentation(NodeGroupStatistics.class);
+        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
+        InstanceIdentifier<NodeGroupStatistics> id = InstanceIdentifier.create(Nodes.class)
+                .child(Node.class, node.getKey()).augmentation(FlowCapableNode.class)
+                .child(Group.class, buildGroup(1).getKey()).augmentation(NodeGroupStatistics.class);
         handler.handleData(nodeID, id, buildNodeGroupStatistics());
     }
-    /*@Test
-   public void testNodeConnectorStatisticsChangeHandler(){
-        NodeConnectorStatisticsChangeHandler handler = new NodeConnectorStatisticsChangeHandler(collector);
-        Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
-                Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<FlowCapableNodeConnectorStatisticsData> id = InstanceIdentifier
-                .create(Nodes.class)
-                .child(Node.class, node.getKey())
-                .child(NodeConnector.class, buildNodeConnector(node.getId().getValue()+":1").getKey())
-                .augmentation(
-                        FlowCapableNodeConnectorStatisticsData.class);
-        handler.handleData(nodeID, id, buildFlowCapableNodeConnectorStatisticsData());
-    }*/
+
+    /*
+     * @Test public void testNodeConnectorStatisticsChangeHandler(){
+     * NodeConnectorStatisticsChangeHandler handler = new
+     * NodeConnectorStatisticsChangeHandler(collector); Node node =
+     * nodes.getNode().get(0); InstanceIdentifier<Node> nodeID =
+     * InstanceIdentifier.create( Nodes.class).child(Node.class, node.getKey());
+     * InstanceIdentifier<FlowCapableNodeConnectorStatisticsData> id =
+     * InstanceIdentifier .create(Nodes.class) .child(Node.class, node.getKey())
+     * .child(NodeConnector.class,
+     * buildNodeConnector(node.getId().getValue()+":1").getKey()) .augmentation(
+     * FlowCapableNodeConnectorStatisticsData.class); handler.handleData(nodeID,
+     * id, buildFlowCapableNodeConnectorStatisticsData()); }
+     */
     @Test
-    public void testFlowCapableNodeConnectorQueueStatisticsDataHandler(){
-        FlowCapableNodeConnectorQueueStatisticsDataHandler handler = new FlowCapableNodeConnectorQueueStatisticsDataHandler(collector);
+    public void testFlowCapableNodeConnectorQueueStatisticsDataHandler() {
+        FlowCapableNodeConnectorQueueStatisticsDataHandler handler =
+                new FlowCapableNodeConnectorQueueStatisticsDataHandler(collector);
         Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
-                Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<FlowCapableNodeConnectorQueueStatisticsData> id = InstanceIdentifier
-                .create(Nodes.class)
+        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
+        InstanceIdentifier<FlowCapableNodeConnectorQueueStatisticsData> id = InstanceIdentifier.create(Nodes.class)
                 .child(Node.class, node.getKey())
-                .child(NodeConnector.class, buildNodeConnector(node.getId().getValue()+":1").getKey())
-                .augmentation(
-                        FlowCapableNodeConnector.class)
-                .child(Queue.class, buildQueue().getKey())
-                .augmentation(
-                        FlowCapableNodeConnectorQueueStatisticsData.class);
+                .child(NodeConnector.class, buildNodeConnector(node.getId().getValue() + ":1").getKey())
+                .augmentation(FlowCapableNodeConnector.class).child(Queue.class, buildQueue().getKey())
+                .augmentation(FlowCapableNodeConnectorQueueStatisticsData.class);
         handler.handleData(nodeID, id, buildFlowCapableNodeConnectorQueueStatisticsData());
     }
 }

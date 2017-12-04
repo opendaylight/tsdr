@@ -9,14 +9,12 @@
 
 package org.opendaylight.tsdr.syslogs.server.decoder;
 
-import org.opendaylight.tsdr.syslogs.server.decoder.Message.MessageBuilder;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.opendaylight.tsdr.syslogs.server.decoder.Message.MessageBuilder;
 
 /**
- * This Class is for message format decoding,
- * messages meet RFC5424 can be parsed:
+ * This Class is for message format decoding. Messages meet RFC5424 can be parsed:
  * Format of Syslog
  * &lt;PRI&gt;SEQ NO:HostName:Timestamp:Application[ProcessID]:%Facility-Severity-MNEMONIC:description
  *
@@ -24,10 +22,10 @@ import java.util.regex.Pattern;
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
 public class MessageDecoder {
-    /**
+    /*
      <PRI>SEQ NO:HostName:Timestamp:Application[ProcessID]:%Facility-Severity-MNEMONIC:description
      regex for syslog:
-             (<[0-9]+>)([0-9]+):[\s]*([^:]*):[\s]*(.*)[\s]*:[\s]*(.+)\[(.+)\][\s]*:[\s]*%(.*)-([0-7])-(.*)[\s]*:[\s]*(.*)
+           (<[0-9]+>)([0-9]+):[\s]*([^:]*):[\s]*(.*)[\s]*:[\s]*(.+)\[(.+)\][\s]*:[\s]*%(.*)-([0-7])-(.*)[\s]*:[\s]*(.*)
      Group 1: Pri (Facility * 8 + Severity)
      Group 2: SequenceID
      Group 3: Hostname
@@ -37,12 +35,11 @@ public class MessageDecoder {
      Group 7: MNEMONIC
      Group 8: Description
      */
-    private static final String regex =
-            "<([0-9]+)>([0-9]+):([^:]*):(.+):(.+)\\[([0-9]*)]:[\\s]*%.+-[0-7]-(.*):(.*)";
-    private static Pattern pattern = Pattern.compile(regex);
+    private static final String REGEX = "<([0-9]+)>([0-9]+):([^:]*):(.+):(.+)\\[([0-9]*)]:[\\s]*%.+-[0-7]-(.*):(.*)";
+    private static final Pattern PATTERN = Pattern.compile(REGEX);
 
     public static Message decode(String msg) {
-        Matcher matcher = pattern.matcher(msg);
+        Matcher matcher = PATTERN.matcher(msg);
         matcher.find();
         MessageBuilder builder = new MessageBuilder();
         int pri = Integer.parseInt(matcher.group(1));
@@ -60,7 +57,7 @@ public class MessageDecoder {
     }
 
     public static boolean matches(String msg) {
-        Matcher matcher = pattern.matcher(msg);
+        Matcher matcher = PATTERN.matcher(msg);
         return matcher.find();
     }
 }

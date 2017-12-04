@@ -9,10 +9,9 @@
 
 package org.opendaylight.tsdr.syslogs.server.datastore;
 
+import java.util.regex.Pattern;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.FilterEntity;
-
-import java.util.regex.Pattern;
 
 /**
  * This Class is for filter building and
@@ -32,7 +31,8 @@ public class MessageFilter {
     private final String sequenceId;
     private final String content;
 
-    private MessageFilter(Message.Facility facility, Message.Severity severity, String hostname, String applicationName, String processId, String messageId, String content) {
+    private MessageFilter(Message.Facility facility, Message.Severity severity, String hostname,
+            String applicationName, String processId, String messageId, String content) {
         this.facility = facility;
         this.severity = severity;
         this.hostname = hostname;
@@ -46,15 +46,18 @@ public class MessageFilter {
     public boolean equals(Object obj) {
         if (obj instanceof Message) {
             Message msg = (Message) obj;
-            if (facility != null && !facility.equals(msg.getFacility()))
+            if (facility != null && !facility.equals(msg.getFacility())) {
                 return false;
-            if (severity != null && !severity.equals(msg.getSeverity()))
+            }
+            if (severity != null && !severity.equals(msg.getSeverity())) {
                 return false;
-            if (!Pattern.matches(hostname, msg.getHostname()) &&
-                    !Pattern.matches(applicationName, msg.getApplicationName()) &&
-                    !Pattern.matches(processId, msg.getProcessId()) &&
-                    !Pattern.matches(sequenceId, msg.getSequenceId()))
+            }
+            if (!Pattern.matches(hostname, msg.getHostname())
+                    && !Pattern.matches(applicationName, msg.getApplicationName())
+                    && !Pattern.matches(processId, msg.getProcessId())
+                    && !Pattern.matches(sequenceId, msg.getSequenceId())) {
                 return false;
+            }
             if (!Pattern.matches(content, msg.getContent())) {
                 return false;
             }
@@ -63,6 +66,17 @@ public class MessageFilter {
         } else {
             return false;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (content == null ? 0 : content.hashCode());
+        result = prime * result + (facility == null ? 0 : facility.hashCode());
+        result = prime * result + (hostname == null ? 0 : hostname.hashCode());
+        result = prime * result + (severity == null ? 0 : severity.hashCode());
+        return result;
     }
 
     /**

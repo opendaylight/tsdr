@@ -9,8 +9,15 @@
 
 package org.opendaylight.tsdr.syslogs;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.CheckedFuture;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,7 +28,8 @@ import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.controller.md.sal.common.api.data.TransactionCommitFailedException;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.*;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilter;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilterBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.FilterEntity;
@@ -29,36 +37,30 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * This is the test of DatastoreShowRegistedFilter.
  * @author Wei Lai(weilai@tetthrnet.com)
  */
 public class DatastoreShowRegistedFilterTest {
 
-    private int coreThreadPoolSize = 5;
-    private int maxThreadPoolSize = 10;
-    private long keepAliveTime = 10L;
-    private int queueSize = 10;
-    private SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(coreThreadPoolSize, maxThreadPoolSize, keepAliveTime, queueSize);
-    private DataBroker dataBroker = mock(DataBroker.class);
-    private WriteTransaction writeTransaction = mock(WriteTransaction.class);
-    private CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
-    private ReadOnlyTransaction readOnlyTransaction = mock(ReadOnlyTransaction.class);
-    private InstanceIdentifier<SyslogDispatcher> iid =
+    private final int coreThreadPoolSize = 5;
+    private final int maxThreadPoolSize = 10;
+    private final long keepAliveTime = 10L;
+    private final int queueSize = 10;
+    private final DataBroker dataBroker = mock(DataBroker.class);
+    private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(dataBroker, coreThreadPoolSize,
+            maxThreadPoolSize, keepAliveTime, queueSize);
+    private final WriteTransaction writeTransaction = mock(WriteTransaction.class);
+    private final CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
+    private final ReadOnlyTransaction readOnlyTransaction = mock(ReadOnlyTransaction.class);
+    private final InstanceIdentifier<SyslogDispatcher> iid =
             InstanceIdentifier.create(SyslogDispatcher.class);
-    private CheckedFuture<Optional<SyslogDispatcher>, ReadFailedException> checkedReadFuture = mock(CheckedFuture.class);
-    private SyslogDispatcher syslogDispatcher = mock(SyslogDispatcher.class);
-    private List<SyslogFilter> syslogFilters = new ArrayList<>();
-    private Optional<SyslogDispatcher> optional = Optional.of(syslogDispatcher);
-    private FilterEntity filterEntity = new FilterEntityBuilder()
+    private final CheckedFuture<Optional<SyslogDispatcher>, ReadFailedException> checkedReadFuture =
+            mock(CheckedFuture.class);
+    private final SyslogDispatcher syslogDispatcher = mock(SyslogDispatcher.class);
+    private final List<SyslogFilter> syslogFilters = new ArrayList<>();
+    private final Optional<SyslogDispatcher> optional = Optional.of(syslogDispatcher);
+    private final FilterEntity filterEntity = new FilterEntityBuilder()
             .setContent("cisco")
             .setApplication(".*")
             .setFacility(null)
@@ -74,13 +76,12 @@ public class DatastoreShowRegistedFilterTest {
         when(writeTransaction.submit()).thenReturn(checkedFuture);
         when(dataBroker.newReadOnlyTransaction()).thenReturn(readOnlyTransaction);
         when(readOnlyTransaction.read(LogicalDatastoreType.CONFIGURATION,iid)).thenReturn(checkedReadFuture);
-        manager.setDataBroker(dataBroker);
         when(syslogDispatcher.getSyslogFilter()).thenReturn(syslogFilters);
 
     }
 
     @Test
-    public void testShowRegisterFilter() {
+    public void testShowRegisterFilter() throws InterruptedException, ExecutionException {
 
         SyslogFilter syslogFilter = new SyslogFilterBuilder()
                 .setFilterId("123")
@@ -89,53 +90,31 @@ public class DatastoreShowRegistedFilterTest {
                 .build();
         syslogFilters.add(syslogFilter);
 
-        try {
-            when(checkedReadFuture.checkedGet()).thenReturn(optional);
-        } catch (ReadFailedException e) {
-            e.printStackTrace();
-        }
+        when(checkedReadFuture.get()).thenReturn(optional);
 
         Future<RpcResult<ShowRegisterFilterOutput>> future = manager.showRegisterFilter();
-        try {
-            Assert.assertTrue(future.get().isSuccessful());
-            Assert.assertNotNull(future.get().getResult().getRegisteredSyslogFilter());
-            Assert.assertEquals("registered filters are:",future.get().getResult().getResult());
-
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        Assert.assertTrue(future.get().isSuccessful());
+        Assert.assertNotNull(future.get().getResult().getRegisteredSyslogFilter());
+        Assert.assertEquals("registered filters are:",future.get().getResult().getResult());
     }
 
     @Test
-    public void testShowRegisterFilterWithNoExistingRegisteredFilter() {
+    public void testShowRegisterFilterWithNoExistingRegisteredFilter() throws InterruptedException, ExecutionException {
 
-        try {
-            when(checkedReadFuture.checkedGet()).thenReturn(optional);
-        } catch (ReadFailedException e) {
-            e.printStackTrace();
-        }
+        when(checkedReadFuture.get()).thenReturn(optional);
+
         Future<RpcResult<ShowRegisterFilterOutput>> future = manager.showRegisterFilter();
 
-        try {
-            Assert.assertTrue(future.get().isSuccessful());
-            Assert.assertNull(future.get().getResult().getRegisteredSyslogFilter());
-            Assert.assertEquals("no registered filter",future.get().getResult().getResult());
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        Assert.assertTrue(future.get().isSuccessful());
+        Assert.assertNull(future.get().getResult().getRegisteredSyslogFilter());
+        Assert.assertEquals("no registered filter",future.get().getResult().getResult());
     }
 
     @Test
-    public void testShowRegisterFilterWithException() throws ReadFailedException {
-
-        ReadFailedException readFailedException = mock(ReadFailedException.class);
-        when(checkedReadFuture.checkedGet()).thenThrow(readFailedException);
+    public void testShowRegisterFilterWithException() throws InterruptedException, ExecutionException {
+        when(checkedReadFuture.get()).thenThrow(new ExecutionException("mock", new ReadFailedException("mock")));
         Future<RpcResult<ShowRegisterFilterOutput>> future = manager.showRegisterFilter();
 
-        try {
-            Assert.assertEquals("Reading Filter failed", future.get().getResult().getResult());
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
+        Assert.assertEquals("Reading Filter failed", future.get().getResult().getResult());
     }
 }

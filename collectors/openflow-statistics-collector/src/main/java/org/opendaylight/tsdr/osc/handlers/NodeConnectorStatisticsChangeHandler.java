@@ -8,16 +8,13 @@
 package org.opendaylight.tsdr.osc.handlers;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.List;
-
 import org.opendaylight.tsdr.osc.TSDRBaseDataHandler;
-import org.opendaylight.tsdr.osc.TSDRDOMCollector;
 import org.opendaylight.tsdr.osc.TSDRMetricRecordBuilderContainer;
+import org.opendaylight.tsdr.osc.TSDROpenflowCollector;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
-import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter64;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.Node;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.FlowCapableNodeConnectorStatisticsData;
@@ -26,32 +23,31 @@ import org.opendaylight.yangtools.yang.binding.DataObject;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 
 /**
+ * Handles  NodeConnectorStatistics data.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
-/*
- * A Handler for the NodeConnectorStatistics data
  */
 public class NodeConnectorStatisticsChangeHandler extends TSDRBaseDataHandler {
-    public NodeConnectorStatisticsChangeHandler(TSDRDOMCollector _collector) {
-        super(_collector);
+    public NodeConnectorStatisticsChangeHandler(TSDROpenflowCollector collector) {
+        super(collector);
     }
 
     @Override
     public void handleData(InstanceIdentifier<Node> nodeID, InstanceIdentifier<?> id, DataObject dataObject) {
         FlowCapableNodeConnectorStatisticsData stData = (FlowCapableNodeConnectorStatisticsData) dataObject;
         FlowCapableNodeConnectorStatistics fs = stData.getFlowCapableNodeConnectorStatistics();
-        if(fs==null){
+        if (fs == null) {
             //no data yet, ignore
             return;
         }
         TSDRMetricRecordBuilderContainer bc = getCollector()
                 .getTSDRMetricRecordBuilderContainer(id);
         if (bc != null) {
-            TSDRMetricRecordBuilder builder[] = bc.getBuilders();
+            TSDRMetricRecordBuilder[] builder = bc.getBuilders();
             long timeStamp = getTimeStamp();
             builder[0].setMetricValue(FormatUtil.toMetricValue(fs.getTransmitDrops()));
             builder[0].setTimeStamp(timeStamp);
-            builder[1].setMetricValue(FormatUtil.toMetricValue( fs.getReceiveDrops()));
+            builder[1].setMetricValue(FormatUtil.toMetricValue(fs.getReceiveDrops()));
             builder[1].setTimeStamp(timeStamp);
             builder[2].setMetricValue(FormatUtil.toMetricValue(fs.getReceiveCrcError()));
             builder[2].setTimeStamp(timeStamp);

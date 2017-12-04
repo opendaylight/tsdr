@@ -12,20 +12,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributesBuilder;
 
 /**
+ * Utilities for parsing Netflow packets.
+ *
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
  * @author <a href="mailto:muhammad.umair@xflowresearch.com">Umair Bhatti</a>
- *
- * Modified: Jul 18, 2016
  */
 public class NetflowPacketParser {
     private final List<RecordAttributes> recordAttributes = new ArrayList<>();
     private static HashMap<Integer, Integer> template;
-    private static enum netflowV9Attribs {
+
+    private enum NetflowV9Attribs {
         IN_BYTES,
         IN_PKTS,
         FLOWS,
@@ -62,8 +62,7 @@ public class NetflowPacketParser {
         SAMPLING_ALGORITHM,
         FLOW_ACTIVE_TIMEOUT,
         FLOW_INACTIVE_TIMEOUT,
-        ENGINE_TYPE,
-        ENGINE_ID,
+        ENGINE_TYPE, ENGINE_ID,
         TOTAL_BYTES_EXP,
         TOTAL_PKTS_EXP,
         TOTAL_FLOWS_EXP,
@@ -103,58 +102,65 @@ public class NetflowPacketParser {
         IF_DESC,
         SAMPLER_NAME,
         IN_PERMANENT_BYTES,
-        IN_PERMANENT_PKTS
+        IN_PERMANENT_PKTS;
     }
+
     /*
-     * Constructor just make the header for netflow packet.There could be multiple PDU's of which the header would be same.
+     * Constructor just make the header for netflow packet.There could be
+     * multiple PDU's of which the header would be same.
      */
-    public NetflowPacketParser(final byte[] buff){
+    public NetflowPacketParser(final byte[] buff) {
         template = null;
-        netflowV9Attribs.values();//initializing here for code coverage.
+        NetflowV9Attribs.values();// initializing here for code coverage.
         int version = Integer.parseInt(convert(buff, 0, 2));
-        if(version == 9){
+        if (version == 9) {
             addValue("version", "" + version + "");
-            addValue("sysUpTime",convert(buff, 4, 4));
-            addValue("unix_secs",convert(buff, 8, 4));
-            addValue("flow_sequence",convert(buff, 12, 4));
-            addValue("source_id",convert(buff, 16, 4));
-        }else{
+            addValue("sysUpTime", convert(buff, 4, 4));
+            addValue("unix_secs", convert(buff, 8, 4));
+            addValue("flow_sequence", convert(buff, 12, 4));
+            addValue("source_id", convert(buff, 16, 4));
+        } else {
             addValue("version", "" + version + "");
-            addValue("sysUpTime",convert(buff, 4, 4));
-            addValue("unix_secs",convert(buff, 8, 4));
-            addValue("unix_nsecs",convert(buff, 12, 4));
-            addValue("flow_sequence",convert(buff, 16, 4));
-            addValue("engine_type",Byte.toString(buff[20]));
-            addValue("engine_id",Byte.toString(buff[21]));
-            long s_interval = convert(buff[23]);
-            s_interval += Long.parseLong(convert(buff, 23, 1));
-            addValue("samplingInterval","" + s_interval);
+            addValue("sysUpTime", convert(buff, 4, 4));
+            addValue("unix_secs", convert(buff, 8, 4));
+            addValue("unix_nsecs", convert(buff, 12, 4));
+            addValue("flow_sequence", convert(buff, 16, 4));
+            addValue("engine_type", Byte.toString(buff[20]));
+            addValue("engine_id", Byte.toString(buff[21]));
+            long interval = convert(buff[23]) + Long.parseLong(convert(buff, 23, 1));
+            addValue("samplingInterval", "" + interval);
         }
     }
+
     public static HashMap<Integer, Integer> getTemplate() {
         return template;
     }
+
     /**
-     * function to add netflow format to the packets. The netflow header would be same while the format would be different according to the PDU's.
-     * @param buff - the byte array of data contained in netflow packet.
-     * @param len - the offset in the byte array where the data starts from.
+     * function to add netflow format to the packets. The netflow header would
+     * be same while the format would be different according to the PDU's.
+     *
+     * @param buff
+     *            - the byte array of data contained in netflow packet.
+     * @param len
+     *            - the offset in the byte array where the data starts from.
      */
-    public void addFormat(byte[] buff, int len){
-        int version = Integer.parseInt((convert(buff, 0, 2)));
-        if(version == 9){
+    public void addFormat(byte[] buff, int len) {
+        int version = Integer.parseInt(convert(buff, 0, 2));
+        if (version == 9) {
             addFormatV9(buff, len);
-        }
-        else{
+        } else {
             addFormatV5(buff, len);
         }
     }
-    public static void fillFlowSetTemplateMap(byte[] buff, int len, int count){
-        if(template == null){
-            template = new HashMap<Integer, Integer>();
-            if(buff == null){
+
+    public static void fillFlowSetTemplateMap(byte[] buff, int len, int count) {
+        if (template == null) {
+            template = new HashMap<>();
+            if (buff == null) {
                 return;
             }
-            while(count > 0){
+            while (count > 0) {
                 int attrib = Integer.parseInt(convert(buff, len, 2));
                 int lenn = Integer.parseInt(convert(buff, len + 2, 2));
                 template.put(attrib, lenn);
@@ -163,68 +169,71 @@ public class NetflowPacketParser {
             }
         }
     }
-    public void addFormatV9(byte[] buff, int len){
-        if(template != null){
-            netflowV9Attribs[] attributes = netflowV9Attribs.values();
+
+    public void addFormatV9(byte[] buff, int len) {
+        if (template != null) {
+            NetflowV9Attribs[] attributes = NetflowV9Attribs.values();
             int dataOffset = 0;
-            for(Map.Entry<Integer, Integer> entry : template.entrySet()){
+            for (Map.Entry<Integer, Integer> entry : template.entrySet()) {
                 int attribID = entry.getKey();
                 int attribLen = entry.getValue();
-                addValue(attributes[attribID].toString(),convert(buff, len + dataOffset, attribLen));
+                addValue(attributes[attribID].toString(), convert(buff, len + dataOffset, attribLen));
                 dataOffset += attribLen;
             }
-        }else{
-            addValue("startTime",convert(buff, len, 4));
-            addValue("endTime", convert(buff, len+4, 4));
-            addValue("Octets",convert(buff, len+8, 4));
-            addValue("Packets",convert(buff, len+12, 4));
-            addValue("inputInt", convert(buff, len+16, 2));
-            addValue("outputInt", convert(buff, len+18, 2));
+        } else {
+            addValue("startTime", convert(buff, len, 4));
+            addValue("endTime", convert(buff, len + 4, 4));
+            addValue("Octets", convert(buff, len + 8, 4));
+            addValue("Packets", convert(buff, len + 12, 4));
+            addValue("inputInt", convert(buff, len + 16, 2));
+            addValue("outputInt", convert(buff, len + 18, 2));
             addValue("srcAddr", convertIPAddress(new Long(convert(buff, len + 20, 4)).longValue()));
-            addValue("dstAddr",convertIPAddress(new Long(convert(buff, len + 24, 4)).longValue()));
-            addValue("Protocol", convert(buff, len+28, 1));
-            addValue("ipTOS", convert(buff, len+29, 1));
-            addValue("srcPort", convert(buff, len+30, 2));
-            addValue("dstPort", convert(buff, len+32, 2));
-            addValue("samplerID", convert(buff, len+34, 1));
-            addValue("flowClass", convert(buff, len+35, 1));
+            addValue("dstAddr", convertIPAddress(new Long(convert(buff, len + 24, 4)).longValue()));
+            addValue("Protocol", convert(buff, len + 28, 1));
+            addValue("ipTOS", convert(buff, len + 29, 1));
+            addValue("srcPort", convert(buff, len + 30, 2));
+            addValue("dstPort", convert(buff, len + 32, 2));
+            addValue("samplerID", convert(buff, len + 34, 1));
+            addValue("flowClass", convert(buff, len + 35, 1));
             addValue("nextHop", convertIPAddress(new Long(convert(buff, len + 36, 4)).longValue()));
-            addValue("dstMask", convert(buff, len+40, 1));
-            addValue("srcMask", convert(buff, len+41, 1));
-            addValue("TCPFlags", convert(buff, len+42, 1));
-            addValue("Direction", convert(buff, len+43, 1));
-            addValue("dstAS", convert(buff, len+44, 2));
-            addValue("srcAS", convert(buff, len+46, 2));
+            addValue("dstMask", convert(buff, len + 40, 1));
+            addValue("srcMask", convert(buff, len + 41, 1));
+            addValue("TCPFlags", convert(buff, len + 42, 1));
+            addValue("Direction", convert(buff, len + 43, 1));
+            addValue("dstAS", convert(buff, len + 44, 2));
+            addValue("srcAS", convert(buff, len + 46, 2));
         }
     }
-    public void addFormatV5(byte[] buff, int len){
-        addValue("srcAddr",convertIPAddress(new Long(convert(buff, len+24, 4)).longValue()));
-        addValue("dstAddr",convertIPAddress(new Long(convert(buff, len+28, 4)).longValue()));
-        addValue("nextHop",convertIPAddress(new Long(convert(buff, len+32, 4)).longValue()));
-        addValue("input",convert(buff, len+36, 2));
-        addValue("output", convert(buff, len+38, 2));
-        addValue("dPkts", convert(buff, len+40, 4));
-        addValue("dOctets", convert(buff, len+44, 4));
-        String first = convert(buff, len+48, 4);
+
+    public void addFormatV5(byte[] buff, int len) {
+        addValue("srcAddr", convertIPAddress(new Long(convert(buff, len + 24, 4)).longValue()));
+        addValue("dstAddr", convertIPAddress(new Long(convert(buff, len + 28, 4)).longValue()));
+        addValue("nextHop", convertIPAddress(new Long(convert(buff, len + 32, 4)).longValue()));
+        addValue("input", convert(buff, len + 36, 2));
+        addValue("output", convert(buff, len + 38, 2));
+        addValue("dPkts", convert(buff, len + 40, 4));
+        addValue("dOctets", convert(buff, len + 44, 4));
+        String first = convert(buff, len + 48, 4);
         addValue("First", first);
-        String last = convert(buff, len+52, 4);
-        addValue("Last",last);
-        addValue("srcPort",convert(buff, len+56, 2));
-        addValue("dstPort",convert(buff, len + 58, 2));
-        addValue("tcpFlags",Byte.toString(buff[len+61]));
-        addValue("protocol",Byte.toString(buff[len+62]));
-        addValue("tos", Byte.toString(buff[len+63]));
-        addValue("srcAS",convert(buff, len+64, 2));
-        addValue("dstAS",convert(buff, len+66, 2));
-        addValue("srcMask",Byte.toString(buff[len+68]));
-        addValue("dstMask",Byte.toString(buff[len+69]));
-        addValue("flowDuration",new Long(Long.parseLong(last) - Long.parseLong(first)).toString());
+        String last = convert(buff, len + 52, 4);
+        addValue("Last", last);
+        addValue("srcPort", convert(buff, len + 56, 2));
+        addValue("dstPort", convert(buff, len + 58, 2));
+        addValue("tcpFlags", Byte.toString(buff[len + 61]));
+        addValue("protocol", Byte.toString(buff[len + 62]));
+        addValue("tos", Byte.toString(buff[len + 63]));
+        addValue("srcAS", convert(buff, len + 64, 2));
+        addValue("dstAS", convert(buff, len + 66, 2));
+        addValue("srcMask", Byte.toString(buff[len + 68]));
+        addValue("dstMask", Byte.toString(buff[len + 69]));
+        addValue("flowDuration", new Long(Long.parseLong(last) - Long.parseLong(first)).toString());
     }
-    public List<RecordAttributes> getRecordAttributes(){
+
+    public List<RecordAttributes> getRecordAttributes() {
         return this.recordAttributes;
     }
 
-    public void addValue(String name,String value){
+    public void addValue(String name, String value) {
         RecordAttributesBuilder builder = new RecordAttributesBuilder();
         builder.setName(name);
         builder.setValue(value);
@@ -232,49 +241,62 @@ public class NetflowPacketParser {
     }
 
     /**
-     * function to convert the IP address from byte to decimal (quad dotted) notation
-     * @param addr1 - long representing the ip address. if this is ipv4 it should be int and not long, ipv6 is two longs not one.
+     * Function to convert the IP address from byte to decimal (quad dotted) notation.
+     *
+     * @param addr1
+     *            - long representing the ip address. if this is ipv4 it should
+     *            be int and not long, ipv6 is two longs not one.
      * @return - String of the ip address
      */
-    public static final String convertIPAddress(long addr1){
+    public static final String convertIPAddress(long addr1) {
         int addr = (int) (addr1 & 0xffffffff);
         StringBuffer buf = new StringBuffer();
-        buf.append(((addr >>> 24) & 0xff)).append('.').append(((addr >>> 16) & 0xff)).append('.').append(((addr >>> 8) & 0xff)).append('.').append(addr & 0xff);
+        buf.append(addr >>> 24 & 0xff).append('.').append(addr >>> 16 & 0xff).append('.')
+                .append(addr >>> 8 & 0xff).append('.').append(addr & 0xff);
         return buf.toString();
     }
 
     /**
-     * function to convert attributes from byte data to long data type accordingly.
-     * @param p - the byte array containing the long
-     * @param off - The offet place where the long starts
-     * @param len - The length, actually we should remove this parameter as a long is always 8 bytes.
+     * Function to convert attributes from byte data to long data type
+     * accordingly.
+     *
+     * @param bytes
+     *            - the byte array containing the long
+     * @param off
+     *            - The offet place where the long starts
+     * @param len
+     *            - The length, actually we should remove this parameter as a
+     *            long is always 8 bytes.
      * @return - A string representation of the long
      */
-    public static final String convert(byte[] p, int off, int len){
+    public static final String convert(byte[] bytes, int off, int len) {
         long ret = 0;
         int done = off + len;
-        for (int i = off; i < done; i++){
-            ret = ((ret << 8) & 0xffffffff) + (p[i] & 0xff);
+        for (int i = off; i < done; i++) {
+            ret = (ret << 8 & 0xffffffff) + (bytes[i] & 0xff);
         }
-        return (new Long(ret)).toString();
+        return new Long(ret).toString();
     }
 
     /**
-     * function to convert the sampling interval (6 bits of 23rd byte)
-     * @param p - byte out of 6 bits representing the interval.
+     * function to convert the sampling interval (6 bits of 23rd byte).
+     *
+     * @param bytes
+     *            - byte out of 6 bits representing the interval.
      * @return - long interval
      */
-    public static final long convert(byte p){
+    public static final long convert(byte bytes) {
         long ret = 0;
-        ret = ((ret << 8) & 0xffffffff) + (p & 0x3f);
+        ret = (ret << 8 & 0xffffffff) + (bytes & 0x3f);
         return ret;
     }
 
-    public String toString(){
+    @Override
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
-        for(RecordAttributes ra:this.recordAttributes){
-            if(!first){
+        for (RecordAttributes ra : this.recordAttributes) {
+            if (!first) {
                 sb.append(",");
             }
             sb.append(ra.getName());
