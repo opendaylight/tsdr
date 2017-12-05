@@ -11,17 +11,13 @@ package org.opendaylight.tsdr.persistence.hbase;
  * This class is to store the constants used in generic HBase data store.
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
- *
- * Created: Feb 24, 2015
  */
-public class HBaseDataStoreConstants {
+public interface HBaseDataStoreConstants {
     /**
      * Zookeeper constants for hbase clients to connect to the Zookeeper node.
      */
-     public static final String ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
-     public static final String ZOOKEEPER_CLIENTPORT = "hbase.zookeeper.property.clientPort";
-     public static final String HBASE_CLIENT_RETRIES_NUMBER = "hbase.client.retries.number";
-     public static final String HBASE_CLIENT_PAUSE = "hbase.client.pause";
-
-
+    String ZOOKEEPER_QUORUM = "hbase.zookeeper.quorum";
+    String ZOOKEEPER_CLIENTPORT = "hbase.zookeeper.property.clientPort";
+    String HBASE_CLIENT_RETRIES_NUMBER = "hbase.client.retries.number";
+    String HBASE_CLIENT_PAUSE = "hbase.client.pause";
 }

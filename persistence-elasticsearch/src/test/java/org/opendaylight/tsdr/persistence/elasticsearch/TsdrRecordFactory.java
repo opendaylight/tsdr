@@ -8,10 +8,8 @@
 
 package org.opendaylight.tsdr.persistence.elasticsearch;
 
-import java.math.BigDecimal;
-
 import com.google.common.collect.Lists;
-
+import java.math.BigDecimal;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
@@ -32,7 +30,7 @@ final class TsdrRecordFactory {
     }
 
     /**
-     * Create the fake {@link TSDRMetricRecord}
+     * Create the fake {@link TSDRMetricRecord}.
      */
     static TSDRMetricRecord createMetricRecord() {
         return new TSDRMetricRecordBuilder()
@@ -49,9 +47,7 @@ final class TsdrRecordFactory {
     }
 
     /**
-     * Create the fake {@link TSDRLogRecord}
-     *
-     * @return
+     * Create the fake {@link TSDRLogRecord}.
      */
     static TSDRLogRecord createLogRecord() {
         return new TSDRLogRecordBuilder()
@@ -67,9 +63,7 @@ final class TsdrRecordFactory {
     }
 
     /**
-     * Create the fake {@link TSDRBinaryRecord}
-     *
-     * @return
+     * Create the fake {@link TSDRBinaryRecord}.
      */
     static TSDRBinaryRecord createBinaryRecord() {
         return new TSDRBinaryRecordBuilder()

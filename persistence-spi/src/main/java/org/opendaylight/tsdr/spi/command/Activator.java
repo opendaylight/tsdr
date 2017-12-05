@@ -17,67 +17,69 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Bundle Activator.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
+ */
 public class Activator extends DependencyActivatorBase {
-
-    private BundleContext bundleContext = null;
-    private static final Logger log = LoggerFactory.getLogger(Activator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Activator.class);
 
     @Override
     public void init(BundleContext context, DependencyManager manager) throws Exception {
-        this.bundleContext = context;
-        new ServiceLocator();
+        new ServiceLocator(context).start();
     }
 
     @Override
     public void destroy(BundleContext context, DependencyManager manager) throws Exception {
     }
 
-    private class ServiceLocator extends Thread {
-        public boolean metricServiceFound = false;
-        public boolean logServiceFound = false;
+    private static class ServiceLocator extends Thread {
+        private final BundleContext bundleContext;
+        public boolean metricServiceFound;
+        public boolean logServiceFound;
 
-
-        public ServiceLocator(){
+        ServiceLocator(BundleContext bundleContext) {
+            this.bundleContext = bundleContext;
             this.setDaemon(true);
-            this.start();
         }
 
-        public void run(){
+        @Override
+        public void run() {
             int count = 0;
-            while(!metricServiceFound || !logServiceFound) {
+            while (!metricServiceFound || !logServiceFound) {
                 count++;
-                log.info("Attempt #{} to find persistence services",count);
-                if(!metricServiceFound) {
-                    final ServiceReference<TSDRMetricPersistenceService> serviceReference = bundleContext.getServiceReference(TSDRMetricPersistenceService.class);
+                LOG.info("Attempt #{} to find persistence services", count);
+                if (!metricServiceFound) {
+                    final ServiceReference<TSDRMetricPersistenceService> serviceReference = bundleContext
+                            .getServiceReference(TSDRMetricPersistenceService.class);
                     if (serviceReference != null) {
                         ListMetricsCommand.metricService = bundleContext.getService(serviceReference);
                         metricServiceFound = true;
-                        log.info("TSDR List Metric Persistence Service Was Found.");
-                    }else{
-                        log.info("TSDR List Metric Persistence Service Was not Found, will attempt in 2 seconds");
+                        LOG.info("TSDR List Metric Persistence Service Was Found.");
+                    } else {
+                        LOG.info("TSDR List Metric Persistence Service Was not Found, will attempt in 2 seconds");
                     }
                 }
-                if(!logServiceFound) {
-                    final ServiceReference<TSDRLogPersistenceService> serviceReference = bundleContext.getServiceReference(TSDRLogPersistenceService.class);
+                if (!logServiceFound) {
+                    final ServiceReference<TSDRLogPersistenceService> serviceReference = bundleContext
+                            .getServiceReference(TSDRLogPersistenceService.class);
                     if (serviceReference != null) {
                         ListMetricsCommand.logService = bundleContext.getService(serviceReference);
                         logServiceFound = true;
-                        log.info("TSDR List Log Persistence Service Was Found.");
-                    }else{
-                        log.info("TSDR List Log Persistence Service Was not Found, will attempt in 2 seconds");
+                        LOG.info("TSDR List Log Persistence Service Was Found.");
+                    } else {
+                        LOG.info("TSDR List Log Persistence Service Was not Found, will attempt in 2 seconds");
                     }
                 }
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
-                    log.error("Interrupted",e);
+                    LOG.error("Interrupted", e);
                     break;
                 }
             }
-            if(metricServiceFound && logServiceFound){
-                log.info("All TSDR List Persistence Services were found.");
+            if (metricServiceFound && logServiceFound) {
+                LOG.info("All TSDR List Persistence Services were found.");
             }
         }
     }

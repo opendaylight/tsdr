@@ -17,28 +17,29 @@ import org.opendaylight.tsdr.spi.util.ConfigFileUtil;
 import org.osgi.framework.BundleContext;
 
 /**
+ * Bundle Activator.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
+ */
 public class Activator extends DependencyActivatorBase {
 
     @Override
     public void init(BundleContext context, DependencyManager manager) throws Exception {
-        final TSDRHSQLDBPersistenceServiceImpl impl = new TSDRHSQLDBPersistenceServiceImpl();
-        Map<String,String> props = ConfigFileUtil.loadConfig(ConfigFileUtil.HSQLDB_STORE_CONFIG_FILE);
-        if(ConfigFileUtil.isMetricPersistenceEnabled(props)) {
-            manager.add(createComponent().setInterface(
-                    new String[]{TSDRMetricPersistenceService.class.getName()}, null)
+        final TsdrHsqlDBPersistenceServiceImpl impl = new TsdrHsqlDBPersistenceServiceImpl();
+        Map<String, String> props = ConfigFileUtil.loadConfig(ConfigFileUtil.HSQLDB_STORE_CONFIG_FILE);
+        if (ConfigFileUtil.isMetricPersistenceEnabled(props)) {
+            manager.add(
+                    createComponent().setInterface(new String[] { TSDRMetricPersistenceService.class.getName() }, null)
+                            .setImplementation(impl));
+        }
+        if (ConfigFileUtil.isLogPersistenceEnabled(props)) {
+            manager.add(createComponent().setInterface(new String[] { TSDRLogPersistenceService.class.getName() }, null)
                     .setImplementation(impl));
         }
-        if(ConfigFileUtil.isLogPersistenceEnabled(props)){
-            manager.add(createComponent().setInterface(
-                    new String[]{TSDRLogPersistenceService.class.getName()}, null)
-                    .setImplementation(impl));
-        }
-        if(ConfigFileUtil.isBinaryPersistenceEnabled(props)){
-            manager.add(createComponent().setInterface(
-                    new String[]{TSDRBinaryPersistenceService.class.getName()}, null)
-                    .setImplementation(impl));
+        if (ConfigFileUtil.isBinaryPersistenceEnabled(props)) {
+            manager.add(
+                    createComponent().setInterface(new String[] { TSDRBinaryPersistenceService.class.getName() }, null)
+                            .setImplementation(impl));
         }
     }
 

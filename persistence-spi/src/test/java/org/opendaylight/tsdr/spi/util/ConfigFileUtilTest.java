@@ -14,11 +14,9 @@ import static org.opendaylight.tsdr.spi.util.ConfigFileUtil.LOG_PERSISTENCE_PROP
 import static org.opendaylight.tsdr.spi.util.ConfigFileUtil.METRIC_PERSISTENCE_PROPERTY;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.google.common.base.Charsets;
-
 import org.jledit.utils.Files;
 import org.junit.Test;
 
@@ -31,7 +29,7 @@ public class ConfigFileUtilTest {
                 + LOG_PERSISTENCE_PROPERTY + "=" + Boolean.TRUE.toString() + "\n"
                 + BINARY_PERSISTENCE_PROPERTY + "=" + Boolean.TRUE.toString() + "\n";
         File config = File.createTempFile("test_config", null);
-        Files.writeToFile(config, content, Charsets.UTF_8);
+        Files.writeToFile(config, content, StandardCharsets.UTF_8);
         Map<String, String> properties = ConfigFileUtil.loadConfig(config.getAbsolutePath());
 
         assertThat(properties).containsEntry(METRIC_PERSISTENCE_PROPERTY, Boolean.TRUE.toString());

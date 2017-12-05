@@ -7,6 +7,9 @@
  */
 package org.opendaylight.tsdr.spi.command;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
@@ -19,44 +22,37 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * @author saichler@gmail.com
- **/
 public class ListMetricsCommandTest {
 
-    public static TSDRLogRecord createLogRecord(){
-        TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
-        b.setNodeID("Test");
-        b.setTimeStamp(System.currentTimeMillis());
-        b.setTSDRDataCategory(DataCategory.EXTERNAL);
-        b.setRecordFullText("Some syslog text");
+    public static TSDRLogRecord createLogRecord() {
+        TSDRLogRecordBuilder builder = new TSDRLogRecordBuilder();
+        builder.setNodeID("Test");
+        builder.setTimeStamp(System.currentTimeMillis());
+        builder.setTSDRDataCategory(DataCategory.EXTERNAL);
+        builder.setRecordFullText("Some syslog text");
         List<RecordKeys> recs = new ArrayList<>();
         RecordKeysBuilder rb = new RecordKeysBuilder();
         rb.setKeyValue("Test1");
         rb.setKeyName("Test2");
         recs.add(rb.build());
-        b.setRecordKeys(recs);
-        return b.build();
+        builder.setRecordKeys(recs);
+        return builder.build();
     }
 
-    public static TSDRMetricRecord createMetricRecord(){
-        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
-        b.setNodeID("Test");
-        b.setTimeStamp(System.currentTimeMillis());
-        b.setMetricName("Test");
-        b.setMetricValue(new BigDecimal(11D));
-        b.setTSDRDataCategory(DataCategory.EXTERNAL);
+    public static TSDRMetricRecord createMetricRecord() {
+        TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
+        builder.setNodeID("Test");
+        builder.setTimeStamp(System.currentTimeMillis());
+        builder.setMetricName("Test");
+        builder.setMetricValue(new BigDecimal(11D));
+        builder.setTSDRDataCategory(DataCategory.EXTERNAL);
         List<RecordKeys> recs = new ArrayList<>();
         RecordKeysBuilder rb = new RecordKeysBuilder();
         rb.setKeyValue("Test1");
         rb.setKeyName("Test2");
         recs.add(rb.build());
-        b.setRecordKeys(recs);
-        return b.build();
+        builder.setRecordKeys(recs);
+        return builder.build();
     }
 
 
@@ -72,12 +68,14 @@ public class ListMetricsCommandTest {
         cmd.doExecute();
         List<TSDRMetricRecord> metric = new ArrayList<>();
         metric.add(createMetricRecord());
-        Mockito.when(metricService.getTSDRMetricRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong())).thenReturn(metric);
+        Mockito.when(metricService.getTSDRMetricRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong()))
+                .thenReturn(metric);
         cmd.doExecute();
 
         List<TSDRLogRecord> logs = new ArrayList<>();
         logs.add(createLogRecord());
-        Mockito.when(logService.getTSDRLogRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong())).thenReturn(logs);
+        Mockito.when(logService.getTSDRLogRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong()))
+                .thenReturn(logs);
         cmd.category = DataCategory.LOGRECORDS.name();
         cmd.doExecute();
         cmd.startDateTime = "10/10/2010 22:22:22";
@@ -88,10 +86,6 @@ public class ListMetricsCommandTest {
         cmd.doExecute();
         cmd.getDate("10/10/2010 22:22:22");
         cmd.getDate(null);
-        try {
-            cmd.getDate("10/10/2010 22:2222");
-        }catch(NullPointerException e){
-
-        }
+        cmd.getDate("10/10/2010 22:2222");
     }
 }

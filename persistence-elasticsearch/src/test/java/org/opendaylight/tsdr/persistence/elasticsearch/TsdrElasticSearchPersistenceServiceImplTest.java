@@ -8,10 +8,8 @@
 
 package org.opendaylight.tsdr.persistence.elasticsearch;
 
-import java.util.List;
-
 import com.google.common.collect.Lists;
-
+import java.util.List;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecord;
@@ -21,19 +19,18 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 
 /**
- * Test methods of {@link TsdrElasticsearchPersistenceServiceImpl}
+ * Test methods of {@link TsdrElasticSearchPersistenceServiceImpl}.
  *
  * @author Lukas Beles(lbeles@frinx.io)
  */
-public class TsdrElasticsearchPersistenceServiceImplTest {
+public class TsdrElasticSearchPersistenceServiceImplTest {
 
-    private final ElasticsearchStore store = Mockito.mock(ElasticsearchStore.class);
-    private final TsdrElasticsearchPersistenceServiceImpl service = TsdrElasticsearchPersistenceServiceImpl.create(store);
+    private final ElasticSearchStore store = Mockito.mock(ElasticSearchStore.class);
+    private final TsdrElasticSearchPersistenceServiceImpl service =
+            TsdrElasticSearchPersistenceServiceImpl.create(store);
 
     /**
-     * Test storing a metric record. Verify whether ElasticsearchStore.store was called
-     *
-     * @throws Exception
+     * Test storing a metric record. Verify whether ElasticsearchStore.store was called.
      */
     @Test
     public void storeMetricRecord() throws Exception {
@@ -45,7 +42,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test storing a log record. Verify whether ElasticsearchStore.store was called
+     * Test storing a log record. Verify whether ElasticsearchStore.store was called.
      */
     @Test
     public void storeLogRecord() {
@@ -57,7 +54,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test storing a binary record. Verify whether ElasticsearchStore.store was called
+     * Test storing a binary record. Verify whether ElasticsearchStore.store was called.
      */
     @Test
     public void storeBinaryRecord() {
@@ -69,9 +66,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test storing a list of the Metrics records. Verify whether ElasticsearchStore.storeAll was called
-     *
-     * @throws Exception
+     * Test storing a list of the Metrics records. Verify whether ElasticsearchStore.storeAll was called.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -84,9 +79,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test storing a list of the Log records. Verify whether ElasticsearchStore.storeAll was called
-     *
-     * @throws Exception
+     * Test storing a list of the Log records. Verify whether ElasticsearchStore.storeAll was called.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -99,9 +92,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test storing a list of the Binary records. Verify whether ElasticsearchStore.storeAll was called
-     *
-     * @throws Exception
+     * Test storing a list of the Binary records. Verify whether ElasticsearchStore.storeAll was called.
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -114,9 +105,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test searching the metric records. Verify whether ElasticsearchStore.search was called
-     *
-     * @throws Exception
+     * Test searching the metric records. Verify whether ElasticsearchStore.search was called.
      */
     @Test
     public void getTSDRMetricRecords() throws Exception {
@@ -124,11 +113,11 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
         long end = 0L;
         int size = 1000;
         String key = DataCategory.EXTERNAL.name();
-        ElasticsearchStore.RecordType type = ElasticsearchStore.RecordType.METRIC;
+        ElasticSearchStore.RecordType type = ElasticSearchStore.RecordType.METRIC;
         service.getTSDRMetricRecords(key, start, end);
         Mockito.verify(store, Mockito.only()).search(type, key, start, end, size);
         Mockito.doThrow(IllegalStateException.class).when(store).search(
-                Mockito.any(ElasticsearchStore.RecordType.class),
+                Mockito.any(ElasticSearchStore.RecordType.class),
                 Mockito.anyString(),
                 Mockito.anyLong(),
                 Mockito.anyLong(),
@@ -137,9 +126,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test searching the log records. Verify whether ElasticsearchStore.search was called
-     *
-     * @throws Exception
+     * Test searching the log records. Verify whether ElasticsearchStore.search was called.
      */
     @Test
     public void getTSDRLogRecords() throws Exception {
@@ -147,11 +134,11 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
         long end = 0L;
         int size = 1000;
         String key = DataCategory.EXTERNAL.name();
-        ElasticsearchStore.RecordType type = ElasticsearchStore.RecordType.LOG;
+        ElasticSearchStore.RecordType type = ElasticSearchStore.RecordType.LOG;
         service.getTSDRLogRecords(key, start, end);
         Mockito.verify(store, Mockito.only()).search(type, key, start, end, size);
         Mockito.doThrow(IllegalStateException.class).when(store).search(
-                Mockito.any(ElasticsearchStore.RecordType.class),
+                Mockito.any(ElasticSearchStore.RecordType.class),
                 Mockito.anyString(),
                 Mockito.anyLong(),
                 Mockito.anyLong(),
@@ -160,9 +147,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test searching the binary records. Verify whether ElasticsearchStore.search was called
-     *
-     * @throws Exception
+     * Test searching the binary records. Verify whether ElasticsearchStore.search was called.
      */
     @Test
     public void getTSDRBinaryRecords() throws Exception {
@@ -170,11 +155,11 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
         long end = 0L;
         int size = 1000;
         String key = DataCategory.EXTERNAL.name();
-        ElasticsearchStore.RecordType type = ElasticsearchStore.RecordType.BINARY;
+        ElasticSearchStore.RecordType type = ElasticSearchStore.RecordType.BINARY;
         service.getTSDRBinaryRecords(key, start, end);
         Mockito.verify(store, Mockito.only()).search(type, key, start, end, size);
         Mockito.doThrow(IllegalStateException.class).when(store).search(
-                Mockito.any(ElasticsearchStore.RecordType.class),
+                Mockito.any(ElasticSearchStore.RecordType.class),
                 Mockito.anyString(),
                 Mockito.anyLong(),
                 Mockito.anyLong(),
@@ -183,9 +168,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test delete a record. Verify whether ElasticsearchStore.delete was called
-     *
-     * @throws Exception
+     * Test delete a record. Verify whether ElasticsearchStore.delete was called.
      */
     @Test
     public void purge() throws Exception {
@@ -201,9 +184,7 @@ public class TsdrElasticsearchPersistenceServiceImplTest {
     }
 
     /**
-     * Test deleting all records. Verify whether ElasticsearchStore.deleteAll was called
-     *
-     * @throws Exception
+     * Test deleting all records. Verify whether ElasticsearchStore.deleteAll was called.
      */
     @Test
     public void purgeAll() throws Exception {

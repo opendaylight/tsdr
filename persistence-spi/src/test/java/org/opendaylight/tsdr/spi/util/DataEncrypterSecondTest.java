@@ -12,26 +12,23 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * @author saichler@gmail.com
- **/
 public class DataEncrypterSecondTest {
     @BeforeClass
-    public static void beforeClass(){
+    public static void beforeClass() {
         GenerateKey.generateKey();
         GenerateKey.setKey(null);
     }
 
     @Test
-    public void testDataEncrypterLoadKey(){
+    public void testDataEncrypterLoadKey() {
         DataEncrypter.encrypt("Test");
     }
 
     @AfterClass
-    public static final void end(){
-        File f = new File(".bashrck");
-        if(f.exists()){
-            f.delete();
+    public static final void end() {
+        File file = new File(".bashrck");
+        if (file.exists()) {
+            file.delete();
         }
     }
 }

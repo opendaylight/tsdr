@@ -10,10 +10,8 @@ package org.opendaylight.tsdr.persistence.elasticsearch;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import java.math.BigDecimal;
-
 import com.google.common.collect.Lists;
-
+import java.math.BigDecimal;
 import org.junit.Test;
 import org.opendaylight.tsdr.persistence.elasticsearch.TsdrRecordPayload.RecordAttributesPayload;
 import org.opendaylight.tsdr.persistence.elasticsearch.TsdrRecordPayload.RecordKeysPayload;
@@ -31,9 +29,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 public class TsdrRecordPayloadTest {
 
     /**
-     * Test conversion of Metric Record
-     *
-     * @throws Exception
+     * Test conversion of Metric Record.
      */
     @Test
     public void toMetricRecord() throws Exception {
@@ -45,9 +41,7 @@ public class TsdrRecordPayloadTest {
         final String rkName = "TestRKName";
         final String rkValue = "TestRKValue";
 
-        RecordKeysPayload recordKeys = new RecordKeysPayload();
-        recordKeys.setKeyName(rkName);
-        recordKeys.setKeyValue(rkValue);
+        RecordKeysPayload recordKeys = new RecordKeysPayload(rkName, rkValue);
         TsdrRecordPayload payload = new TsdrRecordPayload();
         payload.setNodeID(nodeId);
         payload.setTimeStamp(timestamp);
@@ -56,7 +50,7 @@ public class TsdrRecordPayloadTest {
         payload.setMetricValue(value);
         payload.setRecordKeys(Lists.newArrayList(recordKeys));
 
-        TSDRRecord record = payload.toRecord(ElasticsearchStore.RecordType.METRIC);
+        TSDRRecord record = payload.toRecord(ElasticSearchStore.RecordType.METRIC);
         assertThat(record).isInstanceOf(TSDRMetricRecord.class);
 
         TSDRMetricRecord mr = (TSDRMetricRecord) record;
@@ -72,9 +66,7 @@ public class TsdrRecordPayloadTest {
     }
 
     /**
-     * Test conversion of Log Record
-     *
-     * @throws Exception
+     * Test conversion of Log Record.
      */
     @Test
     public void toLogRecord() throws Exception {
@@ -88,12 +80,8 @@ public class TsdrRecordPayloadTest {
         final String raName = "TestRAName";
         final String raValue = "TestRAValue";
 
-        RecordAttributesPayload recordAttributes = new RecordAttributesPayload();
-        recordAttributes.setName(raName);
-        recordAttributes.setValue(raValue);
-        RecordKeysPayload recordKeys = new RecordKeysPayload();
-        recordKeys.setKeyName(rkName);
-        recordKeys.setKeyValue(rkValue);
+        RecordAttributesPayload recordAttributes = new RecordAttributesPayload(raName, raValue);
+        RecordKeysPayload recordKeys = new RecordKeysPayload(rkName, rkValue);
         TsdrRecordPayload payload = new TsdrRecordPayload();
         payload.setNodeID(nodeId);
         payload.setTimeStamp(timestamp);
@@ -103,7 +91,7 @@ public class TsdrRecordPayloadTest {
         payload.setRecordAttributes(Lists.newArrayList(recordAttributes));
         payload.setRecordKeys(Lists.newArrayList(recordKeys));
 
-        TSDRRecord record = payload.toRecord(ElasticsearchStore.RecordType.LOG);
+        TSDRRecord record = payload.toRecord(ElasticSearchStore.RecordType.LOG);
         assertThat(record).isInstanceOf(TSDRLogRecord.class);
 
         TSDRLogRecord lr = (TSDRLogRecord) record;
@@ -123,9 +111,7 @@ public class TsdrRecordPayloadTest {
     }
 
     /**
-     * Test conversion of Binary Record
-     *
-     * @throws Exception
+     * Test conversion of Binary Record.
      */
     @Test
     public void toBinaryRecord() throws Exception {
@@ -139,12 +125,8 @@ public class TsdrRecordPayloadTest {
         final String raName = "TestRAName";
         final String raValue = "TestRAValue";
 
-        RecordAttributesPayload recordAttributes = new RecordAttributesPayload();
-        recordAttributes.setName(raName);
-        recordAttributes.setValue(raValue);
-        RecordKeysPayload recordKeys = new RecordKeysPayload();
-        recordKeys.setKeyName(rkName);
-        recordKeys.setKeyValue(rkValue);
+        RecordAttributesPayload recordAttributes = new RecordAttributesPayload(raName, raValue);
+        RecordKeysPayload recordKeys = new RecordKeysPayload(rkName, rkValue);
         TsdrRecordPayload payload = new TsdrRecordPayload();
         payload.setNodeID(nodeId);
         payload.setTimeStamp(timestamp);
@@ -154,7 +136,7 @@ public class TsdrRecordPayloadTest {
         payload.setRecordAttributes(Lists.newArrayList(recordAttributes));
         payload.setRecordKeys(Lists.newArrayList(recordKeys));
 
-        TSDRRecord record = payload.toRecord(ElasticsearchStore.RecordType.BINARY);
+        TSDRRecord record = payload.toRecord(ElasticSearchStore.RecordType.BINARY);
         assertThat(record).isInstanceOf(TSDRBinaryRecord.class);
 
         TSDRBinaryRecord br = (TSDRBinaryRecord) record;

@@ -12,18 +12,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.io.File;
-import java.io.IOException;
-import java.lang.invoke.MethodHandles;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.Lists;
@@ -33,7 +21,6 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
-
 import io.searchbox.action.Action;
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
@@ -50,6 +37,17 @@ import io.searchbox.indices.CreateIndex;
 import io.searchbox.indices.IndicesExists;
 import io.searchbox.indices.mapping.PutMapping;
 import io.searchbox.params.Parameters;
+import java.io.File;
+import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.opendaylight.tsdr.spi.util.ConfigFileUtil;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
@@ -68,7 +66,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Lukas Beles(lbeles@frinx.io)
  */
-class ElasticsearchStore extends AbstractScheduledService {
+class ElasticSearchStore extends AbstractScheduledService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private static final String ELK_QUERY = ""
@@ -110,8 +108,9 @@ class ElasticsearchStore extends AbstractScheduledService {
             name = name().toLowerCase();
             String json = null;
             try {
-                File file = new File(ConfigFileUtil.CONFIG_DIR + "tsdr-persistence-elasticsearch_" + name + "_mapping.json");
-                json = Files.toString(file, Charsets.UTF_8);
+                File file = new File(ConfigFileUtil.CONFIG_DIR + "tsdr-persistence-elasticsearch_"
+                        + name + "_mapping.json");
+                json = Files.asCharSource(file, StandardCharsets.UTF_8).read();
             } catch (IOException | IllegalArgumentException e) {
                 LOGGER.error("Mapping for {} cannot be set: {}", name, e);
                 LOGGER.warn("Using the default mapping strategy for {} type "
@@ -136,7 +135,7 @@ class ElasticsearchStore extends AbstractScheduledService {
         }
     }
 
-    private Map<String, String> properties;
+    private final Map<String, String> properties;
 
     private final Lock batchLock = new ReentrantLock();
 
@@ -145,15 +144,15 @@ class ElasticsearchStore extends AbstractScheduledService {
     private JestClient client;
 
     /**
-     * Creates a new instance of {@link ElasticsearchStore} backed by the client.
+     * Creates a new instance of {@link ElasticSearchStore} backed by the client.
      * If the client is null, then a client based on properties files will
      * be created, setup, and used.
      */
-    static ElasticsearchStore create(Map<String, String> properties, JestClient client) {
-        return new ElasticsearchStore(checkNotNull(properties), client);
+    static ElasticSearchStore create(Map<String, String> properties, JestClient client) {
+        return new ElasticSearchStore(checkNotNull(properties), client);
     }
 
-    private ElasticsearchStore(Map<String, String> properties, JestClient client) {
+    private ElasticSearchStore(Map<String, String> properties, JestClient client) {
         this.properties = properties;
         this.client = client;
     }
@@ -162,7 +161,8 @@ class ElasticsearchStore extends AbstractScheduledService {
      * Empty constructor. We use it only because of tests
      */
     @VisibleForTesting
-    ElasticsearchStore() {
+    ElasticSearchStore() {
+        properties = null;
     }
 
     /**
@@ -315,7 +315,7 @@ class ElasticsearchStore extends AbstractScheduledService {
     private String buildELKQuery(RecordType type, String tsdrKey, long start, long end) {
         String queryString = buildQueryString(type, tsdrKey);
         String query = String.format(
-                ElasticsearchStore.ELK_QUERY,
+                ElasticSearchStore.ELK_QUERY,
                 queryString,
                 start,
                 Math.min(end, 9999999999999L));
@@ -324,7 +324,7 @@ class ElasticsearchStore extends AbstractScheduledService {
     }
 
     /**
-     * Create queryString of the ELK query
+     * Create queryString of the ELK query.
      */
     String buildQueryString(RecordType type, String tsdrKey) {
         StringBuffer queryBuffer = new StringBuffer();
@@ -341,7 +341,8 @@ class ElasticsearchStore extends AbstractScheduledService {
 
         if (type == RecordType.METRIC) {
             appendCondition(queryBuffer, TsdrRecordPayload.ELK_NODE_ID, FormatUtil.getNodeIdFromTSDRKey(tsdrKey));
-            appendCondition(queryBuffer, TsdrRecordPayload.ELK_METRIC_NAME, FormatUtil.getMetriNameFromTSDRKey(tsdrKey));
+            appendCondition(queryBuffer, TsdrRecordPayload.ELK_METRIC_NAME,
+                    FormatUtil.getMetriNameFromTSDRKey(tsdrKey));
             List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrKey);
             if (recKeys != null) {
                 for (RecordKeys recKey : recKeys) {
@@ -379,15 +380,16 @@ class ElasticsearchStore extends AbstractScheduledService {
     }
 
     /**
-     * Resolve TSDR data category from the String
+     * Resolve TSDR data category from the String.
      */
+    @SuppressWarnings("checkstyle:IllegalCatch")
     private String resolveDataCategory(String key) {
         String dataCategory = FormatUtil.getDataCategoryFromTSDRKey(key);
         if (dataCategory == null) {
             try {
                 DataCategory dc = DataCategory.valueOf(key);
                 dataCategory = dc.name();
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 LOGGER.error("TSDR Metric Key {} is not a DataCategory", key);
             }
         }
@@ -404,7 +406,7 @@ class ElasticsearchStore extends AbstractScheduledService {
         checkState(isRunning(), "The service is not running");
 
         String query = String.format(
-                ElasticsearchStore.ELK_QUERY,
+                ElasticSearchStore.ELK_QUERY,
                 category,
                 0,
                 Math.min(timestamp - 1, 9999999999999L));
@@ -512,10 +514,7 @@ class ElasticsearchStore extends AbstractScheduledService {
     }
 
     /**
-     * Create Jest client according properties from config file
-     *
-     * @return
-     * @throws IOException
+     * Create Jest client according properties from config file.
      */
     JestClient createJestClient() throws IOException {
         HttpClientConfig config = buildClientConfig();

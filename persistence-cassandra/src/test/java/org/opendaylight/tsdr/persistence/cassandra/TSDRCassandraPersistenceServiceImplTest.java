@@ -9,6 +9,8 @@ package org.opendaylight.tsdr.persistence.cassandra;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -16,19 +18,17 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storets
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
+ * Unit tests.
+ *
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
- * Created by saichler on 12/16/15.
  */
 public class TSDRCassandraPersistenceServiceImplTest {
 
-    private Cluster cluster = Mockito.mock(Cluster.class);
-    private Session session = Mockito.mock(Session.class);
-    private CassandraStore store = Mockito.mock(CassandraStore.class);
-    private TSDRCassandraPersistenceServiceImpl impl = new TSDRCassandraPersistenceServiceImpl(store);
+    private final Cluster cluster = Mockito.mock(Cluster.class);
+    private final Session session = Mockito.mock(Session.class);
+    private final CassandraStore store = Mockito.mock(CassandraStore.class);
+    private final TSDRCassandraPersistenceServiceImpl impl = new TSDRCassandraPersistenceServiceImpl(store);
 
     @Before
     public void before(){
@@ -36,21 +36,21 @@ public class TSDRCassandraPersistenceServiceImplTest {
     }
 
     @Test
-    public void testStoreMetric(){
+    public void testStoreMetric() {
         TSDRMetricRecord metricRecord = CassandraStoreTest.createMetricRecord();
         impl.storeMetric(metricRecord);
         Mockito.verify(store, Mockito.atLeast(1)).store(metricRecord);
     }
 
     @Test
-    public void testStoreLog(){
+    public void testStoreLog() {
         TSDRLogRecord logRecord = CassandraStoreTest.createLogRecord();
         impl.storeLog(logRecord);
         Mockito.verify(store, Mockito.atLeast(1)).store(logRecord);
     }
 
     @Test
-    public void testMetricStoreList(){
+    public void testMetricStoreList() {
         List<TSDRMetricRecord> list = new ArrayList<>(2);
         TSDRMetricRecord metricRecord = CassandraStoreTest.createMetricRecord();
         list.add(metricRecord);
@@ -59,7 +59,7 @@ public class TSDRCassandraPersistenceServiceImplTest {
     }
 
     @Test
-    public void testLogStoreList(){
+    public void testLogStoreList() {
         List<TSDRLogRecord> list = new ArrayList<>(2);
         TSDRLogRecord logRecord = CassandraStoreTest.createLogRecord();
         list.add(logRecord);
@@ -68,28 +68,28 @@ public class TSDRCassandraPersistenceServiceImplTest {
     }
 
     @Test
-    public void testPurgeTSDRRecords(){
+    public void testPurgeTSDRRecords() {
         impl.purge(DataCategory.QUEUESTATS,0L);
         Mockito.verify(store,Mockito.atLeast(1)).purge(DataCategory.QUEUESTATS,0L);
     }
 
     @Test
-    public void testPurgeAllTSDRRecords(){
+    public void testPurgeAllTSDRRecords() {
         impl.purge(0L);
-        for(DataCategory dc:DataCategory.values()) {
+        for (DataCategory dc : DataCategory.values()) {
             Mockito.verify(store, Mockito.atLeast(1)).purge(dc, 0L);
         }
     }
 
     @Test
-    public void testGetTSDRMetricRecords(){
-        impl.getTSDRMetricRecords("Test",0L,0L);
-        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRMetricRecords("Test",0L,0L,1000);
+    public void testGetTSDRMetricRecords() {
+        impl.getTSDRMetricRecords("Test", 0L, 0L);
+        Mockito.verify(store, Mockito.atLeastOnce()).getTSDRMetricRecords("Test", 0L, 0L, 1000);
     }
 
     @Test
-    public void testGetTSDRLogRecords(){
-        impl.getTSDRLogRecords("Test",0L,0L);
-        Mockito.verify(store,Mockito.atLeastOnce()).getTSDRLogRecords("Test",0L,0L,1000);
+    public void testGetTSDRLogRecords() {
+        impl.getTSDRLogRecords("Test", 0L, 0L);
+        Mockito.verify(store, Mockito.atLeastOnce()).getTSDRLogRecords("Test", 0L, 0L, 1000);
     }
 }

@@ -11,18 +11,15 @@ import java.io.File;
 import org.junit.Assert;
 import org.junit.Test;
 
-/**
- * @author saichler@gmail.com
- **/
 public class GenerateKeyTest {
     @Test
-    public void testGenerateKey(){
-        File f = new File(GenerateKey.KEY_FILE_NAME);
-        if(f.exists()){
-            f.delete();
+    public void testGenerateKey() {
+        File file = new File(GenerateKey.KEY_FILE_NAME);
+        if (file.exists()) {
+            file.delete();
         }
         GenerateKey.main(null);
-        f = new File(GenerateKey.KEY_FILE_NAME);
-        Assert.assertTrue(f.exists());
+        file = new File(GenerateKey.KEY_FILE_NAME);
+        Assert.assertTrue(file.exists());
     }
 }

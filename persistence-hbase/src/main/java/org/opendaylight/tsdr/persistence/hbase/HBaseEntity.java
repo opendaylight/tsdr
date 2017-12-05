@@ -16,11 +16,10 @@ import java.util.List;
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  *
- * Created: Feb 24, 2015
- *
  */
 public class HBaseEntity implements Serializable {
     private static final long serialVersionUID = 1L;
+
     private String rowKey;
     private String tableName;
     private List<HBaseColumn> columns;

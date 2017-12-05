@@ -20,27 +20,34 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @author Sharon Aicler(saichler@gmail.com)
- **/
-public class TSDRCassandraPersistenceServiceImpl implements TSDRMetricPersistenceService,TSDRLogPersistenceService, TSDRBinaryPersistenceService{
-    private static final Logger LOGGER = LoggerFactory.getLogger(TSDRCassandraPersistenceServiceImpl.class);
-    private CassandraStore store = null;
+public class TSDRCassandraPersistenceServiceImpl implements TSDRMetricPersistenceService,TSDRLogPersistenceService,
+        TSDRBinaryPersistenceService {
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRCassandraPersistenceServiceImpl.class);
+    private final CassandraStore store;
 
-    public TSDRCassandraPersistenceServiceImpl(){
+    public TSDRCassandraPersistenceServiceImpl() {
         store = new CassandraStore();
-        LOGGER.info("TSDR Cassandra Store was initialized.");
+        LOG.info("TSDR Cassandra Store was initialized.");
     }
 
-    public TSDRCassandraPersistenceServiceImpl(CassandraStore store){
+    public TSDRCassandraPersistenceServiceImpl(CassandraStore store) {
         this.store = store;
-        LOGGER.info("TSDR Cassandra Store was initialized.");
+        LOG.info("TSDR Cassandra Store was initialized.");
     }
 
     @Override
     public void storeMetric(TSDRMetricRecord metricRecord) {
         store.startBatch();
         store.store(metricRecord);
+        store.executeBatch();
+    }
+
+    @Override
+    public void storeMetric(List<TSDRMetricRecord> metricRecordList) {
+        store.startBatch();
+        for (TSDRMetricRecord record : metricRecordList) {
+            store.store(record);
+        }
         store.executeBatch();
     }
 
@@ -52,6 +59,15 @@ public class TSDRCassandraPersistenceServiceImpl implements TSDRMetricPersistenc
     }
 
     @Override
+    public void storeLog(List<TSDRLogRecord> metricRecordList) {
+        store.startBatch();
+        for (TSDRLogRecord record : metricRecordList) {
+            store.store(record);
+        }
+        store.executeBatch();
+    }
+
+    @Override
     public void storeBinary(TSDRBinaryRecord binaryRecord) {
         store.startBatch();
         store.store(binaryRecord);
@@ -59,57 +75,42 @@ public class TSDRCassandraPersistenceServiceImpl implements TSDRMetricPersistenc
     }
 
     @Override
-    public void storeMetric(List<TSDRMetricRecord> metricRecordList) {
-        store.startBatch();
-        for(TSDRMetricRecord record:metricRecordList){
-            store.store(record);
-        }
-        store.executeBatch();
-    }
-
-    @Override
-    public void storeLog(List<TSDRLogRecord> metricRecordList) {
-        store.startBatch();
-        for(TSDRLogRecord record:metricRecordList){
-            store.store(record);
-        }
-        store.executeBatch();
-    }
-
-    @Override
     public void storeBinary(List<TSDRBinaryRecord> recordList) {
         store.startBatch();
-        for(TSDRBinaryRecord record:recordList){
+        for (TSDRBinaryRecord record : recordList) {
             store.store(record);
         }
         store.executeBatch();
     }
 
     @Override
-    public void purge(DataCategory category, long retentionTime){
-        LOGGER.info("Execute Purge with Category {} and earlier than {}.",category.name(),new Date(retentionTime));
+    public void purge(DataCategory category, long retentionTime) {
+        LOG.info("Execute Purge with Category {} and earlier than {}.",category.name(),new Date(retentionTime));
         store.purge(category,retentionTime);
     }
 
     @Override
-    public void purge(long retentionTime){
-        for(DataCategory dataCategory:DataCategory.values()){
+    public void purge(long retentionTime) {
+        for (DataCategory dataCategory : DataCategory.values()) {
             store.purge(dataCategory,retentionTime);
         }
     }
 
     @Override
     public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime) {
-        return store.getTSDRMetricRecords(tsdrMetricKey,startDateTime,endDateTime, TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
+        return store.getTSDRMetricRecords(tsdrMetricKey, startDateTime, endDateTime,
+                TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
     }
 
     @Override
     public List<TSDRLogRecord> getTSDRLogRecords(String tsdrMetricKey, long startTime, long endTime) {
-        return store.getTSDRLogRecords(tsdrMetricKey,startTime,endTime,TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
+        return store.getTSDRLogRecords(tsdrMetricKey, startTime, endTime,
+                TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
     }
 
     @Override
     public List<TSDRBinaryRecord> getTSDRBinaryRecords(String tsdrBinaryKey, long startTime, long endTime) {
-        return store.getTSDRBinaryRecords(tsdrBinaryKey,startTime,endTime,TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
+        return store.getTSDRBinaryRecords(tsdrBinaryKey, startTime, endTime,
+                TSDRConstants.MAX_RESULTS_FROM_LIST_METRICS_COMMAND);
     }
 }

@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -35,14 +35,17 @@ import org.slf4j.LoggerFactory;
  * The usage is very simple:
  *  Use the method "encrypt" with a String to encrypt, the result is an encrypted String.
  *  Use the method "decrypt" with an encrypted String to decrypt it.
- *  Please note, if a string is encrypted with a key and a new key is generated afterwards, you will be unable to descrypt the strings.
+ *  Please note, if a string is encrypted with a key and a new key is generated afterwards, you will be unable to
+ *  decrypt the strings.
+ *
  * @author saichler@gmail.com
  **/
 public class DataEncrypter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataEncrypter.class);
     public static final String ENCRYPTED_TAG = "Encrypted:";
     public static final String TAG_PASSWORD = "password";
-    private static final Set<Tag> tagsToEncrypt = new HashSet<Tag>();
+
+    private static final Set<Tag> TAGS_TO_ENCRYPT = ConcurrentHashMap.newKeySet();
     private static final String CIPHER_PADDING = "AES/CFB8/NoPadding";
 
     static {
@@ -51,42 +54,42 @@ public class DataEncrypter {
 
     /**
      * Read the key and install the different tags to seek in the xml config files
-     * Currently it is only seeking "password"
+     * Currently it is only seeking "password".
      **/
-    private static final void init() {
-        tagsToEncrypt.add(new Tag(TAG_PASSWORD));
+    private static void init() {
+        TAGS_TO_ENCRYPT.add(new Tag(TAG_PASSWORD));
 
         if (GenerateKey.getKey() == null) {
             File keyFile = new File(GenerateKey.PATH_TO_KEY);
-            if(keyFile.exists()) {
+            if (keyFile.exists()) {
                 int length = (int) keyFile.length();
-                byte keyData[] = new byte[length];
+                byte[] keyData = new byte[length];
                 FileInputStream in = null;
                 try {
                     in = new FileInputStream(keyFile);
                     in.read(keyData);
                 } catch (FileNotFoundException e) {
-                    LOGGER.error("Key file was not found",e);
+                    LOGGER.error("Key file was not found", e);
                 } catch (IOException e) {
-                    LOGGER.error("Could not read key file",e);
-                }finally {
-                    if(in!=null){
+                    LOGGER.error("Could not read key file", e);
+                } finally {
+                    if (in != null) {
                         try {
                             in.close();
                         } catch (IOException e) {
-                            LOGGER.error("Could not close key file",e);
+                            LOGGER.error("Could not close key file", e);
                         }
                     }
                 }
                 GenerateKey.setKey(new SecretKeySpec(keyData, GenerateKey.KEY_METHOD));
-            }else{
+            } else {
                 GenerateKey.generateKey();
             }
         }
     }
 
-    public static final void addTag(final String tag){
-        tagsToEncrypt.add(new Tag(tag));
+    public static void addTag(final String tag) {
+        TAGS_TO_ENCRYPT.add(new Tag(tag));
     }
 
     /**
@@ -97,13 +100,13 @@ public class DataEncrypter {
      * @param  str  The String to be encrypted
      * @return      The Encrypted String representation with a prefix tag
      */
-    public static final String encrypt(final String str) {
+    public static String encrypt(final String str) {
         // No Key, hence disabled
         if (GenerateKey.getKey() == null) {
             return str;
         }
 
-        if (str==null){
+        if (str == null) {
             return str;
         }
         //already encrypted
@@ -139,14 +142,14 @@ public class DataEncrypter {
             out.write(data);
             final byte[] encData = bout.toByteArray();
             return ENCRYPTED_TAG + DatatypeConverter.printBase64Binary(encData);
-        }catch(IOException e){
-            LOGGER.error("Could not encrypt String",e);
-        }finally {
-            if(out!=null){
+        } catch (IOException e) {
+            LOGGER.error("Could not encrypt String", e);
+        } finally {
+            if (out != null) {
                 try {
                     out.close();
                 } catch (IOException e) {
-                    LOGGER.error("Could not close stream",e);
+                    LOGGER.error("Could not close stream", e);
                 }
             }
         }
@@ -158,13 +161,13 @@ public class DataEncrypter {
      * @param  encStr  The Tagged Encrypted String
      * @return         The unencrypted string.
      */
-    public final static String decrypt(final String encStr) {
+    public static String decrypt(final String encStr) {
         // No Key, hence disabled
         if (GenerateKey.getKey() == null) {
             return encStr;
         }
 
-        if(encStr==null) {
+        if (encStr == null) {
             return null;
         }
 
@@ -194,21 +197,21 @@ public class DataEncrypter {
             return encStr;
         }
 
-        final byte encData[] = DatatypeConverter.parseBase64Binary(encStr.substring(ENCRYPTED_TAG.length()));
+        final byte[] encData = DatatypeConverter.parseBase64Binary(encStr.substring(ENCRYPTED_TAG.length()));
         final ByteArrayInputStream bin = new ByteArrayInputStream(encData);
         final CipherInputStream in = new CipherInputStream(bin, cr);
-        final byte data[] = new byte[encStr.length() * 2];
+        final byte[] data = new byte[encStr.length() * 2];
         try {
             in.read(data);
             return new String(data).trim();
-        }catch(IOException e){
-            LOGGER.error("Could not decrypt string",e);
-        }finally {
-            if(in!=null){
+        } catch (IOException e) {
+            LOGGER.error("Could not decrypt string", e);
+        } finally {
+            if (in != null) {
                 try {
                     in.close();
                 } catch (IOException e) {
-                    LOGGER.error("Could not close stream",e);
+                    LOGGER.error("Could not close stream", e);
                 }
             }
         }
@@ -216,25 +219,24 @@ public class DataEncrypter {
     }
 
     /**
-     * Loads the a text file content
+     * Loads the a text file content.
      */
-
-    private final static String loadFileContent(final String fileName) {
-        final File f = new File(fileName);
-        final byte data[] = new byte[(int) f.length()];
-        FileInputStream in=null;
+    private static String loadFileContent(final String fileName) {
+        final File file = new File(fileName);
+        final byte[] data = new byte[(int) file.length()];
+        FileInputStream in = null;
         try {
-            in = new FileInputStream(f);
+            in = new FileInputStream(file);
             in.read(data);
-        }catch(IOException e){
-            LOGGER.error("Could not read file",e);
-        }finally {
+        } catch (IOException e) {
+            LOGGER.error("Could not read file", e);
+        } finally {
             try {
-                if(in!=null) {
+                if (in != null) {
                     in.close();
                 }
-            }catch(IOException e){
-                LOGGER.error("could not close stream",e);
+            } catch (IOException e) {
+                LOGGER.error("could not close stream", e);
             }
         }
         return new String(data);
@@ -258,7 +260,7 @@ public class DataEncrypter {
         String fileContentInLowerCase = fileContent.toLowerCase();
         boolean encryptedAValue = false;
 
-        for (Tag t : tagsToEncrypt) {
+        for (Tag t : TAGS_TO_ENCRYPT) {
             t.reset();
             String data = t.next(fileContentInLowerCase, fileContent);
             while (data != null) {
@@ -267,7 +269,8 @@ public class DataEncrypter {
                 } else {
                     encryptedAValue = true;
                     final String eData = encrypt(data);
-                    fileContent = fileContent.substring(0, t.tagLabelEnd + 1)+eData+fileContent.substring(t.tagDataEnd);
+                    fileContent = fileContent.substring(0, t.tagLabelEnd + 1) + eData
+                            + fileContent.substring(t.tagDataEnd);
                     fileContentInLowerCase = fileContent.toLowerCase();
                     data = t.next(fileContentInLowerCase, fileContent);
                 }
@@ -279,13 +282,13 @@ public class DataEncrypter {
                 out = new FileOutputStream(filename);
                 out.write(fileContent.getBytes());
             } catch (IOException e) {
-                LOGGER.error("",e);
-            }finally {
-                if(out!=null){
+                LOGGER.error("", e);
+            } finally {
+                if (out != null) {
                     try {
                         out.close();
                     } catch (IOException e) {
-                        LOGGER.error("",e);
+                        LOGGER.error("", e);
                     }
                 }
             }
@@ -297,8 +300,8 @@ public class DataEncrypter {
      * @param  filename - The filename to seek the tags and decrypt
      * @return - StreamSource object
      */
-    public final static StreamSource decryptCredentialAttributes(final String filename) {
-        if(filename==null) {
+    public static StreamSource decryptCredentialAttributes(final String filename) {
+        if (filename == null) {
             return null;
         }
 
@@ -315,8 +318,8 @@ public class DataEncrypter {
         int index = fileContent.indexOf(ENCRYPTED_TAG);
         while (index != -1) {
             int index1 = fileContent.indexOf("<", index);
-            String eData = fileContent.substring(index, index1);
-            String data = decrypt(eData);
+            String encyptedData = fileContent.substring(index, index1);
+            String data = decrypt(encyptedData);
             fileContent = fileContent.substring(0, index) + data + fileContent.substring(index1);
             index = fileContent.indexOf(ENCRYPTED_TAG);
         }
@@ -326,17 +329,17 @@ public class DataEncrypter {
 
     /**
      * The Tag class represents a tag in an xml file that its value should be encrypted,
-     * for example the tag "<password>" and value is "admin", e.g. "<password>admin</password>", the "admin" should be encrypted
-     * in the XML file.
+     * For example, if the tag is "&lt;password&gt;" and value is "admin",
+     * e.g. "&lt;password&gt;admin&lt;/password&gt;", the "admin" should be encrypted in the XML file.
      */
     private static final class Tag {
-        private String startTag = null;
+        private final String startTag;
         private int tagLabelStart = -1;
         private int tagLabelEnd = -1;
         private int tagDataEnd = -1;
 
-        public Tag(String _tag) {
-            this.startTag = "<" + _tag;
+        Tag(String tag) {
+            this.startTag = "<" + tag;
         }
 
         /*

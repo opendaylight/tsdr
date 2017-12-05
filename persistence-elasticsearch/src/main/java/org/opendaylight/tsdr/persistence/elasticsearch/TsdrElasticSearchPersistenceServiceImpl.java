@@ -12,8 +12,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
-import org.opendaylight.tsdr.persistence.elasticsearch.ElasticsearchStore.RecordType;
+import org.opendaylight.tsdr.persistence.elasticsearch.ElasticSearchStore.RecordType;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
 import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
@@ -31,19 +30,20 @@ import org.slf4j.LoggerFactory;
  *
  * @author Lukas Beles(lbeles@frinx.io)
  */
-class TsdrElasticsearchPersistenceServiceImpl implements TSDRMetricPersistenceService, TSDRLogPersistenceService, TSDRBinaryPersistenceService {
+class TsdrElasticSearchPersistenceServiceImpl implements TSDRMetricPersistenceService, TSDRLogPersistenceService,
+        TSDRBinaryPersistenceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private final ElasticsearchStore store;
+    private final ElasticSearchStore store;
 
     /**
-     * Returns a new instance of {@link TsdrElasticsearchPersistenceServiceImpl} with given data store.
+     * Returns a new instance of {@link TsdrElasticSearchPersistenceServiceImpl} with given data store.
      */
-    static TsdrElasticsearchPersistenceServiceImpl create(ElasticsearchStore store) {
-        return new TsdrElasticsearchPersistenceServiceImpl(store);
+    static TsdrElasticSearchPersistenceServiceImpl create(ElasticSearchStore store) {
+        return new TsdrElasticSearchPersistenceServiceImpl(store);
     }
 
-    private TsdrElasticsearchPersistenceServiceImpl(ElasticsearchStore store) {
+    private TsdrElasticSearchPersistenceServiceImpl(ElasticSearchStore store) {
         this.store = store;
     }
 
@@ -77,83 +77,51 @@ class TsdrElasticsearchPersistenceServiceImpl implements TSDRMetricPersistenceSe
         return Collections.emptyList();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void storeMetric(TSDRMetricRecord metricRecord) {
         store(metricRecord);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void storeMetric(List<TSDRMetricRecord> recordList) {
         storeAll(recordList);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<TSDRMetricRecord> getTSDRMetricRecords(String key, long start, long end) {
         return getTSDRRecords(RecordType.METRIC, key, start, end);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void storeLog(TSDRLogRecord logRecord) {
         store(logRecord);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void storeLog(List<TSDRLogRecord> recordList) {
         storeAll(recordList);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<TSDRLogRecord> getTSDRLogRecords(String key, long start, long end) {
         return getTSDRRecords(RecordType.LOG, key, start, end);
     }
 
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void storeBinary(TSDRBinaryRecord binaryRecord) {
         store(binaryRecord);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void storeBinary(List<TSDRBinaryRecord> recordList) {
         storeAll(recordList);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public List<TSDRBinaryRecord> getTSDRBinaryRecords(String key, long start, long end) {
         return getTSDRRecords(RecordType.BINARY, key, start, end);
     }
 
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void purge(long timestamp) {
         // TODO: rewrite this to a more effective version, by using one bulk delete instead of several separate calls.
@@ -162,9 +130,6 @@ class TsdrElasticsearchPersistenceServiceImpl implements TSDRMetricPersistenceSe
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void purge(DataCategory category, long timestamp) {
         LOGGER.info("Purging data Category {} earlier than {}.", category.name(), new Date(timestamp));

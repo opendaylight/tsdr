@@ -14,13 +14,11 @@ import java.util.concurrent.ScheduledFuture;
  * by the SchedulerService.
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
- *
- * Created: May 4th, 2015
  */
-public abstract class Task implements Runnable{
+public abstract class Task implements Runnable {
 
     @Override
-    public void run(){
+    public void run() {
         runTask();
     }
 

@@ -7,10 +7,9 @@
  */
 package org.opendaylight.tsdr.spi.persistence;
 
+import java.util.List;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
-
-import java.util.List;
 
 /**
  * This interface provides a list of APIs for accessing TSDR Metric persistence data store.
@@ -31,7 +30,8 @@ public interface TSDRLogPersistenceService {
     void storeLog(List<TSDRLogRecord> recordList);
 
     /**
-     * Returns the TSDRLogRecords based on category, startTime, and endTime
+     * Returns the TSDRLogRecords based on category, startTime, and endTime.
+     *
      * @param tsdrLogKey - The tsdr log key, can be also just Data Category
      * @param startTime - The starting time
      * @param endTime - The end time
@@ -40,8 +40,8 @@ public interface TSDRLogPersistenceService {
     List<TSDRLogRecord> getTSDRLogRecords(String tsdrLogKey, long startTime, long endTime);
 
     /**
-     * Purges all the data from TSDR data store older than the
-     * retention timestamp
+     * Purges all the data from TSDR data store older than the retention timestamp.
+     *
      * @param timestamp - The time stamp
      */
     void purge(long timestamp);

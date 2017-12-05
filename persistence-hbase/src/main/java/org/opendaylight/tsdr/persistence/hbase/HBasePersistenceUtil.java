@@ -7,6 +7,8 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
@@ -15,16 +17,13 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
 /**
  * Utility class for TSDR HBase datastore.
- * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  *
- * Created: Feb 24, 2015
+ * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  */
 public class HBasePersistenceUtil {
-    private static final Logger log = LoggerFactory.getLogger(HBasePersistenceUtil.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HBasePersistenceUtil.class);
 
     /**
      * Get HBaseEntity from TSDRMetric data structure.
@@ -33,60 +32,54 @@ public class HBasePersistenceUtil {
      * @param dataCategory - the data category
      * @return - an hbase entity
      */
-    public static HBaseEntity getEntityFromMetricStats(TSDRMetric metricData
-        , DataCategory dataCategory){
-        log.debug("Entering getEntityFromMetricStats(TSDRMetric)");
-        if ( !validateMetricInput(metricData)){
+    public static HBaseEntity getEntityFromMetricStats(TSDRMetric metricData, DataCategory dataCategory) {
+        LOG.debug("Entering getEntityFromMetricStats(TSDRMetric)");
+        if (!validateMetricInput(metricData)) {
             return null;
         }
 
         HBaseEntity entity = new HBaseEntity();
-        String nodeID = metricData.getNodeID();
-        String metricName = metricData.getMetricName();
-        String metricValue = metricData.getMetricValue().toString();
         Long timeStamp = null;
-        //If there's no timestamp in the metric Data, append the current
-        //system timestamp
-        if ( metricData.getTimeStamp() != null ){
+        // If there's no timestamp in the metric Data, append the current
+        // system timestamp
+        if (metricData.getTimeStamp() != null) {
             timeStamp = new Long(metricData.getTimeStamp().longValue());
-        }else{
+        } else {
             timeStamp = System.currentTimeMillis();
         }
 
         entity.setTableName(dataCategory.name());
         entity.setRowKey(FormatUtil.getTSDRMetricKeyWithTimeStamp(metricData));
-        List<HBaseColumn> columnList = new ArrayList<HBaseColumn>();
         HBaseColumn column = new HBaseColumn();
-        column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
-        column.setColumnQualifier(TSDRHBaseDataStoreConstants.COLUMN_QUALIFIER_NAME);
+        column.setColumnFamily(TsdrHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
+        column.setColumnQualifier(TsdrHBaseDataStoreConstants.COLUMN_QUALIFIER_NAME);
         column.setTimeStamp(timeStamp);
-        column.setValue(metricValue);
+        column.setValue(metricData.getMetricValue().toString());
+
+        List<HBaseColumn> columnList = new ArrayList<>();
         columnList.add(column);
         entity.setColumns(columnList);
-        log.debug("Exiting getEntityFromMetricStats(TSDRMetric)");
+        LOG.debug("Exiting getEntityFromMetricStats(TSDRMetric)");
         return entity;
     }
 
-/**
- * Check if the input of TSDRMetric is valid.
- * @param metricData
- * @return true - valid
- *         false - invalid
- */
-    private static boolean validateMetricInput(TSDRMetric metricData){
-        if ( metricData == null){
-            log.error("metricData is null. The data is invalid and will not be persisted.");
+    /**
+     * Check if the input of TSDRMetric is valid.
+     * @return true - valid
+     *         false - invalid
+     */
+    private static boolean validateMetricInput(TSDRMetric metricData) {
+        if (metricData == null) {
+            LOG.error("metricData is null. The data is invalid and will not be persisted.");
             return false;
-        }else if ( metricData.getNodeID() == null
-            || metricData.getNodeID().trim().length() == 0){
-            log.error("NodeID in metric Data is null. The data is invalid and will not be persisted.");
+        } else if (metricData.getNodeID() == null || metricData.getNodeID().trim().length() == 0) {
+            LOG.error("NodeID in metric Data is null. The data is invalid and will not be persisted.");
             return false;
-        }else if ( metricData.getMetricName() == null
-            || metricData.getMetricName().trim().length() == 0){
-            log.error("MetricName is null. The data is invalid and will not be persisted.");
+        } else if (metricData.getMetricName() == null || metricData.getMetricName().trim().length() == 0) {
+            LOG.error("MetricName is null. The data is invalid and will not be persisted.");
             return false;
-        }else if ( metricData.getMetricValue() == null){
-            log.error("MetricValue is null. The data is invalid and will not be persisted.)");
+        } else if (metricData.getMetricValue() == null) {
+            LOG.error("MetricValue is null. The data is invalid and will not be persisted.)");
             return false;
         }
         return true;
@@ -94,21 +87,19 @@ public class HBasePersistenceUtil {
 
     /**
      * Check if the input of TSDRMetric is valid.
-     * @param logrecordData
      * @return true - valid
      *         false - invalid
      */
-    private static boolean validateLogRecordInput(TSDRLogRecord logrecordData){
-        if ( logrecordData == null){
-            log.error("logrecordData is null. The data is invalid and will not be persisted.");
+    private static boolean validateLogRecordInput(TSDRLogRecord logrecordData) {
+        if (logrecordData == null) {
+            LOG.error("logrecordData is null. The data is invalid and will not be persisted.");
             return false;
-        }else if ( logrecordData.getNodeID() == null
-            || logrecordData.getNodeID().trim().length() == 0){
-            log.error("NodeID in logrecord Data is null. The data is invalid and will not be persisted.");
+        } else if (logrecordData.getNodeID() == null || logrecordData.getNodeID().trim().length() == 0) {
+            LOG.error("NodeID in logrecord Data is null. The data is invalid and will not be persisted.");
             return false;
-        }else if ( logrecordData.getRecordFullText() == null
-            || logrecordData.getRecordFullText().trim().length() == 0){
-            log.error("RecordFullText is null. The data is invalid and will not be persisted.");
+        } else if (logrecordData.getRecordFullText() == null
+                || logrecordData.getRecordFullText().trim().length() == 0) {
+            LOG.error("RecordFullText is null. The data is invalid and will not be persisted.");
             return false;
         }
         return true;
@@ -121,48 +112,48 @@ public class HBasePersistenceUtil {
      * @param dataCategory - the data category
      * @return - an hbase entity
      */
-    public static HBaseEntity getEntityFromLogRecord(TSDRLogRecord logRecord, DataCategory dataCategory){
-        log.debug("Entering getEntityFromLogRecord(TSDRLogRecord)");
-        if ( !validateLogRecordInput(logRecord) ){
+    public static HBaseEntity getEntityFromLogRecord(TSDRLogRecord logRecord, DataCategory dataCategory) {
+        LOG.debug("Entering getEntityFromLogRecord(TSDRLogRecord)");
+        if (!validateLogRecordInput(logRecord)) {
             return null;
         }
         HBaseEntity entity = new HBaseEntity();
         String nodeID = logRecord.getNodeID();
         Long timeStamp = null;
-        //If there's no timestamp in the metric Data, append the current
-        //system timestamp
-        if ( logRecord.getTimeStamp() != null ){
+        // If there's no timestamp in the metric Data, append the current
+        // system timestamp
+        if (logRecord.getTimeStamp() != null) {
             timeStamp = new Long(logRecord.getTimeStamp().longValue());
-        }else{
+        } else {
             timeStamp = System.currentTimeMillis();
         }
 
         entity.setTableName(dataCategory.name());
         entity.setRowKey(FormatUtil.getTSDRLogKeyWithTimeStamp(logRecord));
-        List<HBaseColumn> columnList = new ArrayList<HBaseColumn>();
+        List<HBaseColumn> columnList = new ArrayList<>();
 
-        //add attribute names as columns
+        // add attribute names as columns
         List<RecordAttributes> attributes = logRecord.getRecordAttributes();
-        if ( attributes != null && attributes.size() != 0){
-            for ( RecordAttributes attribute: attributes){
+        if (attributes != null && attributes.size() != 0) {
+            for (RecordAttributes attribute : attributes) {
                 HBaseColumn column = new HBaseColumn();
-                column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
+                column.setColumnFamily(TsdrHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
                 column.setTimeStamp(timeStamp);
                 column.setColumnQualifier(attribute.getName());
                 column.setValue(attribute.getValue());
                 columnList.add(column);
             }
         }
-        //add FullLengthText as the last column
+        // add FullLengthText as the last column
         HBaseColumn column = new HBaseColumn();
-        column.setColumnFamily(TSDRHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
+        column.setColumnFamily(TsdrHBaseDataStoreConstants.COLUMN_FAMILY_NAME);
         column.setTimeStamp(timeStamp);
-        column.setColumnQualifier(TSDRHBaseDataStoreConstants.LOGRECORD_FULL_TEXT);
+        column.setColumnQualifier(TsdrHBaseDataStoreConstants.LOGRECORD_FULL_TEXT);
         column.setValue(logRecord.getRecordFullText());
         columnList.add(column);
 
         entity.setColumns(columnList);
-        log.debug("Exiting getEntityFromLogRecord(TSDRLogRecord)");
+        LOG.debug("Exiting getEntityFromLogRecord(TSDRLogRecord)");
         return entity;
     }
 
@@ -170,10 +161,10 @@ public class HBasePersistenceUtil {
      * Obtain TSDR HBase Tables name list.
      * @return - List of String
      */
-    public static List<String> getTSDRHBaseTables(){
-        List<String>  hbaseTables = new ArrayList<String>();
-        DataCategory values[] = DataCategory.values();
-        for(DataCategory c:values){
+    public static List<String> getTsdrHBaseTables() {
+        List<String> hbaseTables = new ArrayList<>();
+        DataCategory[] values = DataCategory.values();
+        for (DataCategory c : values) {
             hbaseTables.add(c.name());
         }
         return hbaseTables;

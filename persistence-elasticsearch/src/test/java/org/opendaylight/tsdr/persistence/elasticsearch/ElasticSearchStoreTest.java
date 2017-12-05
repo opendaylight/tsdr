@@ -10,18 +10,10 @@ package org.opendaylight.tsdr.persistence.elasticsearch;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
-
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestResultHandler;
 import io.searchbox.core.Bulk;
@@ -29,6 +21,12 @@ import io.searchbox.core.BulkResult;
 import io.searchbox.core.DeleteByQuery;
 import io.searchbox.core.Search;
 import io.searchbox.core.SearchResult;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -40,11 +38,11 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 
 /**
- * Test all methods of {@link ElasticsearchStore}
+ * Test all methods of {@link ElasticSearchStore}.
  *
  * @author Lukas Beles(lbeles@frinx.io)
  */
-public class ElasticsearchStoreTest {
+public class ElasticSearchStoreTest {
 
     private static final BulkResult EMPTY_BULK_RESULT = new BulkResult(new Gson());
     private static final SearchResult EMPTY_SEARCH_RESULT = new SearchResult(new Gson());
@@ -53,23 +51,19 @@ public class ElasticsearchStoreTest {
             "stopTimeout", "1",
             "syncInterval", "1");
     private static final JestClient CLIENT = Mockito.mock(JestClient.class);
-    private static ElasticsearchStore store;
+    private static ElasticSearchStore store;
 
     /**
      * Test setUp method, common scenario.
-     *
-     * @throws Exception
      */
     @BeforeClass
     public static void setUp() throws Exception {
-        store = ElasticsearchStore.create(PROPERTIES, CLIENT);
+        store = ElasticSearchStore.create(PROPERTIES, CLIENT);
         store.startAsync().awaitRunning(1, TimeUnit.SECONDS);
     }
 
     /**
      * Test tearDown method, common scenario.
-     *
-     * @throws Exception
      */
     @AfterClass
     public static void tearDown() throws Exception {
@@ -78,8 +72,6 @@ public class ElasticsearchStoreTest {
 
     /**
      * Test store method, where value is {@link TSDRMetricRecord}. Check whether batch contains the value.
-     *
-     * @throws Exception
      */
     @Test
     public void storeMetricRecord() throws Exception {
@@ -91,8 +83,6 @@ public class ElasticsearchStoreTest {
 
     /**
      * Test store method, where value is {@link TSDRLogRecord}. Check whether batch contains the value.
-     *
-     * @throws Exception
      */
     @Test
     public void storeLogRecord() throws Exception {
@@ -104,8 +94,6 @@ public class ElasticsearchStoreTest {
 
     /**
      * Test store method, where value is {@link TSDRBinaryRecord}. Check whether batch contains the value.
-     *
-     * @throws Exception
      */
     @Test
     public void storeBinaryRecord() throws Exception {
@@ -116,9 +104,7 @@ public class ElasticsearchStoreTest {
     }
 
     /**
-     * Test store method, where value is null
-     *
-     * @throws Exception
+     * Test store method, where value is null.
      */
     @Test(expected = NullPointerException.class)
     public void storeNull() throws Exception {
@@ -127,8 +113,6 @@ public class ElasticsearchStoreTest {
 
     /**
      * Test storeAll method. The collection contains one {@link TSDRMetricRecord} and one {@link TSDRLogRecord}.
-     *
-     * @throws Exception
      */
     @Test
     public void storeAll() throws Exception {
@@ -142,8 +126,6 @@ public class ElasticsearchStoreTest {
 
     /**
      * Test storeAll method, where value is null.
-     *
-     * @throws Exception
      */
     @Test(expected = NullPointerException.class)
     public void storeAllNullRecord() throws Exception {
@@ -152,25 +134,21 @@ public class ElasticsearchStoreTest {
 
     /**
      * Test storeAll method. Collection contains null record.
-     *
-     * @throws Exception
      */
     @Test(expected = NullPointerException.class)
     public void storeAllRecordListHasNullRecord() throws Exception {
-        List records = Collections.singletonList(null);
-        store.storeAll(records);
+        store.storeAll(Collections.singletonList(null));
     }
 
     /**
-     * Test search method. Test whether result is empty. It is expected. And verify whether method execute of {@link JestClient} was called at least one.
-     *
-     * @throws Exception
+     * Test search method. Test whether result is empty. It is expected. And verify whether method execute of
+     * {@link JestClient} was called at least one.
      */
     @Test
     public void search() throws Exception {
         Mockito.doReturn(EMPTY_SEARCH_RESULT).when(CLIENT).execute(Mockito.any(Search.class));
         List<TSDRRecord> result = store.search(
-                ElasticsearchStore.RecordType.METRIC,
+                ElasticSearchStore.RecordType.METRIC,
                 DataCategory.EXTERNAL.name(),
                 1L,
                 0L,
@@ -178,7 +156,7 @@ public class ElasticsearchStoreTest {
         assertThat(result).isEmpty();
 
         result = store.search(
-                ElasticsearchStore.RecordType.METRIC,
+                ElasticSearchStore.RecordType.METRIC,
                 DataCategory.EXTERNAL.name(),
                 0L,
                 0L,
@@ -188,9 +166,7 @@ public class ElasticsearchStoreTest {
     }
 
     /**
-     * Test appendCondition method. Test all possible ways of the condition
-     *
-     * @throws Exception
+     * Test appendCondition method. Test all possible ways of the condition.
      */
     @Test
     public void appendCondition() throws Exception {
@@ -210,61 +186,57 @@ public class ElasticsearchStoreTest {
     }
 
     /**
-     * Test of building query String for Binary request
-     *
-     * @throws Exception
+     * Test of building query String for Binary request.
      */
     @Test
     public void buildQueryStringOfBinary() throws Exception {
-        String result = store.buildQueryString(ElasticsearchStore.RecordType.BINARY, "FLOWSTATS");
+        String result = store.buildQueryString(ElasticSearchStore.RecordType.BINARY, "FLOWSTATS");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
 
-        result = store.buildQueryString(ElasticsearchStore.RecordType.BINARY, "[NID=][DC=FLOWSTATS][RK=][MN=]");
+        result = store.buildQueryString(ElasticSearchStore.RecordType.BINARY, "[NID=][DC=FLOWSTATS][RK=][MN=]");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
 
-        result = store.buildQueryString(ElasticsearchStore.RecordType.BINARY, "[NID=][DC=FLOWSTATS][RK=][MN=PacketCount]");
+        result = store.buildQueryString(ElasticSearchStore.RecordType.BINARY,
+                "[NID=][DC=FLOWSTATS][RK=][MN=PacketCount]");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
         assertThat(result.contains("PacketCount")).isFalse();
     }
 
     /**
-     * Test of building query String for Log request
-     *
-     * @throws Exception
+     * Test of building query String for Log request.
      */
     @Test
     public void buildQueryStringOfLog() throws Exception {
-        String result = store.buildQueryString(ElasticsearchStore.RecordType.LOG, "FLOWSTATS");
+        String result = store.buildQueryString(ElasticSearchStore.RecordType.LOG, "FLOWSTATS");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
 
-        result = store.buildQueryString(ElasticsearchStore.RecordType.LOG, "[NID=][DC=FLOWSTATS][RK=][MN=]");
+        result = store.buildQueryString(ElasticSearchStore.RecordType.LOG, "[NID=][DC=FLOWSTATS][RK=][MN=]");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
 
-        result = store.buildQueryString(ElasticsearchStore.RecordType.LOG, "[NID=][DC=FLOWSTATS][RK=][MN=PacketCount]");
+        result = store.buildQueryString(ElasticSearchStore.RecordType.LOG, "[NID=][DC=FLOWSTATS][RK=][MN=PacketCount]");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
         assertThat(result.contains("PacketCount")).isFalse();
 
-        result = store.buildQueryString(ElasticsearchStore.RecordType.LOG, "[NID=][DC=FLOWSTATS][RK=][RA=key:value]");
+        result = store.buildQueryString(ElasticSearchStore.RecordType.LOG, "[NID=][DC=FLOWSTATS][RK=][RA=key:value]");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
         assertThat(result.contains(TsdrRecordPayload.ELK_RA_KEY_NAME + ":\\\"key\\\"")).isTrue();
         assertThat(result.contains(TsdrRecordPayload.ELK_RA_KEY_VALUE + ":\\\"value\\\"")).isTrue();
     }
 
     /**
-     * Test of building query String for Metric request
-     *
-     * @throws Exception
+     * Test of building query String for Metric request.
      */
     @Test
     public void buildQueryStringOfMetric() throws Exception {
-        String result = store.buildQueryString(ElasticsearchStore.RecordType.METRIC, "FLOWSTATS");
+        String result = store.buildQueryString(ElasticSearchStore.RecordType.METRIC, "FLOWSTATS");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY)).isTrue();
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
 
-        result = store.buildQueryString(ElasticsearchStore.RecordType.METRIC, "[NID=][DC=FLOWSTATS][RK=][MN=]");
+        result = store.buildQueryString(ElasticSearchStore.RecordType.METRIC, "[NID=][DC=FLOWSTATS][RK=][MN=]");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
 
-        result = store.buildQueryString(ElasticsearchStore.RecordType.METRIC, "[NID=node][DC=FLOWSTATS][MN=PacketCount][RK=key:value]");
+        result = store.buildQueryString(ElasticSearchStore.RecordType.METRIC,
+                "[NID=node][DC=FLOWSTATS][MN=PacketCount][RK=key:value]");
         assertThat(result.contains(TsdrRecordPayload.ELK_DATA_CATEGORY + ":\\\"FLOWSTATS\\\"")).isTrue();
         assertThat(result.contains(TsdrRecordPayload.ELK_METRIC_NAME + ":\\\"PacketCount\\\"")).isTrue();
         assertThat(result.contains(TsdrRecordPayload.ELK_NODE_ID + ":\\\"node\\\"")).isTrue();
@@ -275,8 +247,6 @@ public class ElasticsearchStoreTest {
 
     /**
      * Test delete method. Verify whether method executeAsync of {@link JestClient} was called at least one.
-     *
-     * @throws Exception
      */
     @Test
     @SuppressWarnings("unchecked")
@@ -288,24 +258,20 @@ public class ElasticsearchStoreTest {
     }
 
     /**
-     * Test start and then stop service
-     *
-     * @throws Exception
+     * Test start and then stop service.
      */
     @Test
     public void createAndStartAndShutDown() throws Exception {
-        ElasticsearchStore store = ElasticsearchStore.create(PROPERTIES, CLIENT);
-        assertThat(store.state()).isEqualTo(Service.State.NEW);
-        store.startAsync().awaitRunning(2, TimeUnit.SECONDS);
-        assertThat(store.state()).isEqualTo(Service.State.RUNNING);
-        store.stopAsync().awaitTerminated(2, TimeUnit.SECONDS);
-        assertThat(store.state()).isEqualTo(Service.State.TERMINATED);
+        ElasticSearchStore localStore = ElasticSearchStore.create(PROPERTIES, CLIENT);
+        assertThat(localStore.state()).isEqualTo(Service.State.NEW);
+        localStore.startAsync().awaitRunning(2, TimeUnit.SECONDS);
+        assertThat(localStore.state()).isEqualTo(Service.State.RUNNING);
+        localStore.stopAsync().awaitTerminated(2, TimeUnit.SECONDS);
+        assertThat(localStore.state()).isEqualTo(Service.State.TERMINATED);
     }
 
     /**
      * Test store record and sync method. Verify whether method execute of {@link JestClient} was called at least one.
-     *
-     * @throws Exception
      */
     @Test
     public void runOneIteration() throws Exception {
@@ -321,9 +287,7 @@ public class ElasticsearchStoreTest {
     }
 
     /**
-     * Test whether scheduler is implemented
-     *
-     * @throws Exception
+     * Test whether scheduler is implemented.
      */
     @Test
     public void scheduler() throws Exception {
@@ -331,35 +295,30 @@ public class ElasticsearchStoreTest {
     }
 
     /**
-     * Test service with wrong state
-     *
-     * @throws Exception
+     * Test service with wrong state.
      */
     @Test(expected = IllegalStateException.class)
     public void unknownClientConfiguration() throws Exception {
-        ElasticsearchStore store = ElasticsearchStore.create(PROPERTIES, null);
-        store.startAsync().awaitRunning();
+        ElasticSearchStore localStore = ElasticSearchStore.create(PROPERTIES, null);
+        localStore.startAsync().awaitRunning();
     }
 
     /**
-     * Test method resolve of {@link org.opendaylight.tsdr.persistence.elasticsearch.ElasticsearchStore.RecordType}, when argument is null
-     *
-     * @throws Exception
+     * Test method resolve of {@link org.opendaylight.tsdr.persistence.elasticsearch.ElasticSearchStore.RecordType},
+     * when argument is null.
      */
     @Test(expected = IllegalArgumentException.class)
     public void resolveUnknownRecordType() throws Exception {
-        ElasticsearchStore.RecordType.resolve(null);
+        ElasticSearchStore.RecordType.resolve(null);
     }
 
     /**
-     * Test starup service
-     *
-     * @throws Exception
+     * Test starup service.
      */
     @Test
     public void startup() throws Exception {
-        ElasticsearchStore store = Mockito.spy(ElasticsearchStore.class);
-        Mockito.doReturn(null).when(store).createJestClient();
-        store.startUp();
+        ElasticSearchStore localStore = Mockito.spy(ElasticSearchStore.class);
+        Mockito.doReturn(null).when(localStore).createJestClient();
+        localStore.startUp();
     }
 }

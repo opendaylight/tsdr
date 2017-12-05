@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.spi.command;
 
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -27,12 +28,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This command is provided to get a list of metrics based on arguments passed
+ * This command is provided to get a list of metrics based on arguments passed.
  *
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
- *
  */
-@Command(scope = "tsdr", name = "list", description = "Lists recent 1000 metrics(default) or returns time specified metrics")
+@Command(scope = "tsdr", name = "list",
+    description = "Lists recent 1000 metrics(default) or returns time specified metrics")
 public class ListMetricsCommand extends OsgiCommandSupport {
     private final Logger
             log = LoggerFactory.getLogger(ListMetricsCommand.class);
@@ -41,15 +42,18 @@ public class ListMetricsCommand extends OsgiCommandSupport {
     public static TSDRLogPersistenceService logService;
     public static TSDRBinaryPersistenceService binaryService;
 
-    @Argument(index=0, name="category", required=true, description="The category of the metrics we want to get", multiValued=false)
+    @Argument(index = 0, name = "category", required = true,
+            description = "The category of the metrics we want to get", multiValued = false)
     public String category = null;
-    @Argument(index=1, name="startDateTime", required=false, description="list the metrics from this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
+    @Argument(index = 1, name = "startDateTime", required = false,
+            description = "list the metrics from this time (format: MM/dd/yyyy HH:mm:ss)", multiValued = false)
     public String startDateTime = null;
-    @Argument(index=2, name="endDateTime", required=false, description="list the metrics till this time (format: MM/dd/yyyy HH:mm:ss)", multiValued=false)
+    @Argument(index = 2, name = "endDateTime", required = false,
+            description = "list the metrics till this time (format: MM/dd/yyyy HH:mm:ss)", multiValued = false)
     public String endDateTime = null;
 
-    protected long getDate(String dateTime){
-        if(dateTime == null){
+    protected long getDate(String dateTime) {
+        if (dateTime == null) {
             return System.currentTimeMillis();
         }
         DateFormat format = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", Locale.US);
@@ -59,43 +63,47 @@ public class ListMetricsCommand extends OsgiCommandSupport {
         } catch (ParseException e) {
             //Note we will log just a warning for this exception without stack trace
             // As this is expected in some cases
-            System.out.println("Time format is invalid and will be ignored.");
             log.warn("getDate for " + dateTime + "caused exception {}", e);
+            return 0;
         }
         return date.getTime();
     }
 
 
     @Override
+    @SuppressWarnings("checkstyle:RegexpSingleLineJava")
     protected Object doExecute() throws Exception {
+        PrintStream ps = session != null ? session.getConsole() : System.out;
 
         long startDate = 0;
         long endDate = Long.MAX_VALUE;
-        if(startDateTime!=null) {
+        if (startDateTime != null) {
             startDate = getDate(startDateTime);
             endDate = getDate(endDateTime);
         }
 
         if (startDate >= endDate) {
-            System.out.println("StatDateTime value cannot be greater or equal to EndDateTime");
+            ps.println("StatDateTime value cannot be greater or equal to EndDateTime");
             return null;
         }
         DataCategory dataCategory = DataCategory.valueOf(category);
-        if((dataCategory== DataCategory.NETFLOW || dataCategory==DataCategory.SYSLOG || dataCategory==DataCategory.LOGRECORDS || dataCategory==DataCategory.RESTCONF) && logService!=null){
+        if ((dataCategory == DataCategory.NETFLOW || dataCategory == DataCategory.SYSLOG
+                || dataCategory == DataCategory.LOGRECORDS || dataCategory == DataCategory.RESTCONF)
+                && logService != null) {
             List<TSDRLogRecord> logs = logService.getTSDRLogRecords(category, startDate, endDate);
             if (logs == null || logs.isEmpty()) {
-                System.out.println("No data of this category in the specified time range. ");
+                ps.println("No data of this category in the specified time range. ");
                 return null;
             }
-            System.out.println(listLogs(logs));
+            ps.println(listLogs(logs));
 
-        }else if(metricService!=null){
+        } else if (metricService != null) {
             List<TSDRMetricRecord> metrics = metricService.getTSDRMetricRecords(category, startDate, endDate);
             if (metrics == null || metrics.isEmpty()) {
-                System.out.println("No data of this category in the specified time range. ");
+                ps.println("No data of this category in the specified time range. ");
                 return null;
             }
-            System.out.println(listMetrics(metrics));
+            ps.println(listMetrics(metrics));
         }
 
         return null;

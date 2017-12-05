@@ -30,21 +30,22 @@ public interface TSDRMetricPersistenceService {
     void storeMetric(List<TSDRMetricRecord> recordList);
 
     /**
-     * Returns the list of metrics based on startDateTime and endDateTime
+     * Returns the list of metrics based on startDateTime and endDateTime.
      * If startDateTime OR(/AND)  endDateTime is not specified returns the recent
-     * predefined N metrics
+     * predefined N metrics.
      *
      * @param tsdrMetricKey -- The tsdr metric key, can also be just Data Category,
      * @param startDateTime  --The start time in milis
      * @param endDateTime   -- The end time in milis
      * @return - List of persistence store dependents records
      */
-    //format of tsdrMetricKey is "[NID=<node id>][DC=<data category>][MN=<metric name>][RK=<a list or record keys>][TS=<timestamp - for hbase>]"
+    // format of tsdrMetricKey is "[NID=<node id>][DC=<data category>][MN=<metric name>][RK=<a list
+    // or record keys>][TS=<timestamp - for hbase>]"
     List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey,long startDateTime, long endDateTime);
 
     /**
-     * Purges all the data from TSDR data store older than the
-     * retention timestamp
+     * Purges all the data from TSDR data store older than the etention timestamp.
+     *
      * @param timestamp - The time stamp
      */
     void purge(long timestamp);

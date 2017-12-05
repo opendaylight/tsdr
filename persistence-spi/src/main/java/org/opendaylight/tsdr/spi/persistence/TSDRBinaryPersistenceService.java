@@ -30,7 +30,8 @@ public interface TSDRBinaryPersistenceService {
     void storeBinary(List<TSDRBinaryRecord> recordList);
 
     /**
-     * Returns the TSDRLogRecords based on category, startTime, and endTime
+     * Returns the TSDRLogRecords based on category, startTime, and endTime.
+     *
      * @param tsdrBinaryKey - The tsdr log key, can be also just Data Category
      * @param startTime - The starting time
      * @param endTime - The end time
@@ -39,8 +40,8 @@ public interface TSDRBinaryPersistenceService {
     List<TSDRBinaryRecord> getTSDRBinaryRecords(String tsdrBinaryKey, long startTime, long endTime);
 
     /**
-     * Purges all the data from TSDR data store older than the
-     * retention timestamp
+     * Purges all the data from TSDR data store older than the retention timestamp.
+     *
      * @param timestamp - The time stamp
      */
     void purge(long timestamp);

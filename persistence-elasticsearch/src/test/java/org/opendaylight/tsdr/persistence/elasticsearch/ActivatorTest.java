@@ -22,13 +22,13 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 
 /**
- * Test bundle activator
+ * Test bundle activator.
  *
  * @author Lukas Beles(lbeles@frinx.io)
  */
 @RunWith(PowerMockRunner.class)
 public class ActivatorTest {
-    private ElasticsearchStore store = Mockito.spy(ElasticsearchStore.class);
+    private final ElasticSearchStore store = Mockito.spy(ElasticSearchStore.class);
 
     @Test
     public void init() throws Exception {

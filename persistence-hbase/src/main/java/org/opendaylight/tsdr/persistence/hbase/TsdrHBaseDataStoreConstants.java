@@ -11,21 +11,18 @@ package org.opendaylight.tsdr.persistence.hbase;
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  *
- * Created: Feb 24, 2015
- *
  */
-public class TSDRHBaseDataStoreConstants {
-
+public interface TsdrHBaseDataStoreConstants {
     /**
      * Other constants used in HBase tables for OpenFlow statistics data.
-    */
-    public static final String ROWKEY_SPLIT = "_";
-    public static final String COLUMN_FAMILY_NAME = "c1";
-    public static final String COLUMN_QUALIFIER_NAME = "raw";
-    public static final String LOGRECORD_FULL_TEXT = "RecordFullText";
+     */
+    String ROWKEY_SPLIT = "_";
+    String COLUMN_FAMILY_NAME = "c1";
+    String COLUMN_QUALIFIER_NAME = "raw";
+    String LOGRECORD_FULL_TEXT = "RecordFullText";
 
     /**
-     * Constants related to ListMetricsCommand
+     * Constants related to ListMetricsCommand.
      */
-    public static final int MAX_QUERY_RECORDS = 1000;
+    int MAX_QUERY_RECORDS = 1000;
 }

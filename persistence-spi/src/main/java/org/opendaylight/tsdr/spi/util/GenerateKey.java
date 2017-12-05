@@ -10,6 +10,8 @@ package org.opendaylight.tsdr.spi.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -24,14 +26,17 @@ import org.slf4j.LoggerFactory;
  * @author saichler@gmail.com
  **/
 public class GenerateKey {
-    private static final Logger LOGGER = LoggerFactory.getLogger(GenerateKey.class);
-    protected static final String KEY_FILE_NAME = ".bashrck";
-    protected static final String PATH_TO_KEY = "."+ File.separator + KEY_FILE_NAME;
-    private static SecretKey key = null;
     public static final int KEY_ENCRYPTION_SIZE = 128;
     public static final String KEY_METHOD = "AES";
+
+    private static final Logger LOG = LoggerFactory.getLogger(GenerateKey.class);
     private static byte[] iv = { 0, 4, 0, 0, 6, 81, 0, 8, 0, 0, 0, 0, 0, 43, 0,1 };
     private static IvParameterSpec ivspec = new IvParameterSpec(iv);
+
+    protected static final String KEY_FILE_NAME = ".bashrck";
+    protected static final String PATH_TO_KEY = "." + File.separator + KEY_FILE_NAME;
+
+    private static SecretKey key;
 
     private GenerateKey(){
     }
@@ -41,32 +46,32 @@ public class GenerateKey {
             KeyGenerator keyGen = KeyGenerator.getInstance(KEY_METHOD);
             keyGen.init(KEY_ENCRYPTION_SIZE);
             key = keyGen.generateKey();
-            byte keyData[] = key.getEncoded();
+            byte[] keyData = key.getEncoded();
             FileOutputStream out = new FileOutputStream(PATH_TO_KEY);
             out.write(keyData);
             out.close();
-        } catch (Exception e) {
-            LOGGER.error("Failed to generate a key",e);
+        } catch (NoSuchAlgorithmException | IOException e) {
+            LOG.error("Failed to generate a key", e);
         }
     }
 
-    public static void main(String args[]) {
-        System.out.print("Generating Key... ");
-        generateKey();
-        if (key != null) {
-            System.out.println("Done!");
-        }
+    public static void setKey(SecretKey newKey) {
+        key = newKey;
     }
 
-    public static final void setKey(SecretKey k){
-        key = k;
-    }
-
-    public static final SecretKey getKey(){
+    public static SecretKey getKey() {
         return key;
     }
 
-    public static final IvParameterSpec getIvSpec(){
+    public static IvParameterSpec getIvSpec() {
         return ivspec;
+    }
+
+    public static void main(String[] args) {
+        LOG.info("Generating Key... ");
+        generateKey();
+        if (key != null) {
+            LOG.info("Done!");
+        }
     }
 }

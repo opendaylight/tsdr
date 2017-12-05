@@ -15,25 +15,21 @@ import org.opendaylight.tsdr.spi.command.completer.ListMetricsCommandCompleter;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 
-/**
- * @author saichler@gmail.com
- **/
 public class GeneralTest {
     @Test
-    public void testTSDRConstants(){
-        TSDRConstants c = new TSDRConstants();
-        Assert.assertEquals("FlowID",TSDRConstants.FLOW_KEY_NAME);
+    public void testTSDRConstants() {
+        Assert.assertEquals("FlowID", TSDRConstants.FLOW_KEY_NAME);
     }
 
     @Test
-    public void testCompleter(){
-        ListMetricsCommandCompleter c = new ListMetricsCommandCompleter();
-        String b = new String("PORT");
+    public void testCompleter() {
+        ListMetricsCommandCompleter completer = new ListMetricsCommandCompleter();
+        String str = new String("PORT");
         List<String> vals = new ArrayList<>();
-        for(DataCategory dc:DataCategory.values()){
+        for (DataCategory dc : DataCategory.values()) {
             vals.add(dc.name());
         }
         DataCategory.values();
-        c.complete(b,4,vals);
+        completer.complete(str,4,vals);
     }
 }

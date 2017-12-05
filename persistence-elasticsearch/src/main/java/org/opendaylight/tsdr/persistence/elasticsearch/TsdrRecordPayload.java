@@ -8,13 +8,11 @@
 
 package org.opendaylight.tsdr.persistence.elasticsearch;
 
+import com.google.common.collect.Lists;
+import com.google.gson.FieldNamingPolicy;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Lists;
-import com.google.gson.FieldNamingPolicy;
-
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
@@ -26,7 +24,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 
 /**
  * Used for deserialization of {@link TSDRRecord} objects stored as JSON in the data store.
- * <p>
+ *
  * <p>
  * Note: the name of fields must respect {@link FieldNamingPolicy#UPPER_CAMEL_CASE} naming policy.
  *
@@ -43,137 +41,132 @@ final class TsdrRecordPayload {
     public static final String ELK_RA_KEY_VALUE = "RecordAttributes.Value";
 
     static final class RecordKeysPayload {
-        private String KeyName;
-        private String KeyValue;
+        private final String keyName;
+        private final String keyValue;
 
-        void setKeyName(String keyName) {
-            KeyName = keyName;
-        }
-
-        void setKeyValue(String keyValue) {
-            KeyValue = keyValue;
+        RecordKeysPayload(String keyName, String keyValue) {
+            this.keyName = keyName;
+            this.keyValue = keyValue;
         }
     }
 
     static final class RecordAttributesPayload {
-        private String Name;
-        private String Value;
+        private final String name;
+        private final String value;
 
-        void setName(String name) {
-            Name = name;
-        }
-
-        void setValue(String value) {
-            Value = value;
+        RecordAttributesPayload(String name, String value) {
+            this.name = name;
+            this.value = value;
         }
     }
 
     // TSDRMetricRecord specific attributes.
-    private String MetricName;
-    private BigDecimal MetricValue;
+    private String metricName;
+    private BigDecimal metricValue;
 
     // TSDRLogRecord specific attributes.
-    private String RecordFullText;
+    private String recordFullText;
 
     // TSDRBinaryRecord specific attributes.
-    private byte[] Data;
+    private byte[] data;
 
     // Common attributes for TSDRLogRecord and TSDRBinaryRecord.
-    private Integer Index;
-    private List<RecordAttributesPayload> RecordAttributes;
+    private Integer index;
+    private List<RecordAttributesPayload> recordAttributes;
 
     // Common attributes.
-    private String NodeID;
-    private List<RecordKeysPayload> RecordKeys;
-    private DataCategory TSDRDataCategory;
-    private Long TimeStamp;
+    private String nodeID;
+    private List<RecordKeysPayload> recordKeyPayloadList;
+    private DataCategory dataCategory;
+    private Long timeStamp;
 
     void setMetricName(String metricName) {
-        MetricName = metricName;
+        this.metricName = metricName;
     }
 
     void setMetricValue(BigDecimal metricValue) {
-        MetricValue = metricValue;
+        this.metricValue = metricValue;
     }
 
     void setRecordFullText(String recordFullText) {
-        RecordFullText = recordFullText;
+        this.recordFullText = recordFullText;
     }
 
     public void setData(byte[] data) {
-        Data = data;
+        this.data = data;
     }
 
     void setIndex(Integer index) {
-        Index = index;
+        this.index = index;
     }
 
     void setRecordAttributes(List<RecordAttributesPayload> recordAttributes) {
-        RecordAttributes = recordAttributes;
+        this.recordAttributes = recordAttributes;
     }
 
     void setNodeID(String nodeID) {
-        NodeID = nodeID;
+        this.nodeID = nodeID;
     }
 
     void setRecordKeys(List<RecordKeysPayload> recordKeys) {
-        RecordKeys = recordKeys;
+        this.recordKeyPayloadList = recordKeys;
     }
 
-    void setTSDRDataCategory(DataCategory TSDRDataCategory) {
-        this.TSDRDataCategory = TSDRDataCategory;
+    void setTSDRDataCategory(DataCategory dataCategory) {
+        this.dataCategory = dataCategory;
     }
 
     void setTimeStamp(Long timeStamp) {
-        TimeStamp = timeStamp;
+        this.timeStamp = timeStamp;
     }
 
     /**
      * Convert data from Elasticsearch to TSDR.
      */
-    TSDRRecord toRecord(ElasticsearchStore.RecordType type) {
+    TSDRRecord toRecord(ElasticSearchStore.RecordType type) {
         List<RecordKeys> recordKeys = null;
-        if (RecordKeys != null) {
-            recordKeys = Lists.newArrayListWithCapacity(RecordKeys.size());
-            recordKeys.addAll(RecordKeys.stream()
-                    .map(p -> new RecordKeysBuilder().setKeyName(p.KeyName).setKeyValue(p.KeyValue).build())
+        if (recordKeyPayloadList != null) {
+            recordKeys = Lists.newArrayListWithCapacity(recordKeyPayloadList.size());
+            recordKeys.addAll(recordKeyPayloadList.stream()
+                    .map(p -> new RecordKeysBuilder().setKeyName(p.keyName).setKeyValue(p.keyValue).build())
                     .collect(Collectors.toList()));
         }
 
         switch (type) {
             case METRIC:
                 return new TSDRMetricRecordBuilder()
-                        .setMetricName(MetricName)
-                        .setMetricValue(MetricValue)
-                        .setNodeID(NodeID)
+                        .setMetricName(metricName)
+                        .setMetricValue(metricValue)
+                        .setNodeID(nodeID)
                         .setRecordKeys(recordKeys)
-                        .setTSDRDataCategory(TSDRDataCategory)
-                        .setTimeStamp(TimeStamp)
+                        .setTSDRDataCategory(dataCategory)
+                        .setTimeStamp(timeStamp)
                         .build();
             case LOG:
                 return new TSDRLogRecordBuilder()
-                        .setIndex(Index)
-                        .setNodeID(NodeID)
+                        .setIndex(index)
+                        .setNodeID(nodeID)
                         .setRecordAttributes(buildLogRecordAttributes())
-                        .setRecordFullText(RecordFullText)
+                        .setRecordFullText(recordFullText)
                         .setRecordKeys(recordKeys)
-                        .setTSDRDataCategory(TSDRDataCategory)
-                        .setTimeStamp(TimeStamp)
+                        .setTSDRDataCategory(dataCategory)
+                        .setTimeStamp(timeStamp)
                         .build();
             case BINARY:
                 return new TSDRBinaryRecordBuilder()
-                        .setData(Data)
-                        .setIndex(Index)
-                        .setNodeID(NodeID)
+                        .setData(data)
+                        .setIndex(index)
+                        .setNodeID(nodeID)
                         .setRecordKeys(recordKeys)
-                        .setRecordAttributes(RecordAttributes.stream()
-                                .map(p -> new org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.tsdrbinary.RecordAttributesBuilder()
-                                        .setName(p.Name)
-                                        .setValue(p.Value)
+                        .setRecordAttributes(recordAttributes.stream()
+                                .map(p -> new org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325
+                                            .tsdrbinary.RecordAttributesBuilder()
+                                        .setName(p.name)
+                                        .setValue(p.value)
                                         .build())
                                 .collect(Collectors.toList()))
-                        .setTSDRDataCategory(TSDRDataCategory)
-                        .setTimeStamp(TimeStamp)
+                        .setTSDRDataCategory(dataCategory)
+                        .setTimeStamp(timeStamp)
                         .build();
             default:
                 throw new IllegalArgumentException("Unknown record type");
@@ -181,15 +174,16 @@ final class TsdrRecordPayload {
     }
 
     /**
-     * Convert Elasticsearch RecordAttributes to TSDR RecordAttributes
+     * Convert Elasticsearch RecordAttributes to TSDR RecordAttributes.
      */
     List<RecordAttributes> buildLogRecordAttributes() {
         List<RecordAttributes> attributes = null;
-        if (RecordAttributes != null) {
-            attributes = RecordAttributes.stream()
-                    .map(p -> new org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributesBuilder()
-                            .setName(p.Name)
-                            .setValue(p.Value)
+        if (recordAttributes != null) {
+            attributes = recordAttributes.stream()
+                    .map(p -> new org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog
+                                .RecordAttributesBuilder()
+                            .setName(p.name)
+                            .setValue(p.value)
                             .build())
                     .collect(Collectors.toList());
         }

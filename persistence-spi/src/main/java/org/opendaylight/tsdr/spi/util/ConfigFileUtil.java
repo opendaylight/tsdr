@@ -7,27 +7,22 @@
  */
 package org.opendaylight.tsdr.spi.util;
 
+import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
-
-/**
- * @author <a href="mailto:saichler@cisco.com">Sharon Aicler</a>
- *         <p>
- *         Created: March 29, 2016
- */
 public final class ConfigFileUtil {
     public static final String CONFIG_DIR = "." + File.separator + "etc" + File.separator;
 
     public static final String CASSANDRA_STORE_CONFIG_FILE = CONFIG_DIR + "tsdr-persistence-cassandra.properties";
     public static final String HBASE_STORE_CONFIG_FILE = CONFIG_DIR + "tsdr-persistence-hbase.properties";
     public static final String HSQLDB_STORE_CONFIG_FILE = CONFIG_DIR + "tsdr-persistence-hsqldb.properties";
-    public static final String ELASTICSEARCH_STORE_CONFIG_FILE = CONFIG_DIR + "tsdr-persistence-elasticsearch.properties";
+    public static final String ELASTICSEARCH_STORE_CONFIG_FILE =
+            CONFIG_DIR  + "tsdr-persistence-elasticsearch.properties";
 
     public static final String METRIC_PERSISTENCE_PROPERTY = "metric-persistency";
     public static final String LOG_PERSISTENCE_PROPERTY = "log-persistency";
@@ -39,7 +34,7 @@ public final class ConfigFileUtil {
 
     public static Map<String, String> loadConfig(String config) throws IOException {
         Properties properties = new Properties();
-        properties.load(Files.asCharSource(new File(config), Charsets.UTF_8).openStream());
+        properties.load(Files.asCharSource(new File(config), StandardCharsets.UTF_8).openStream());
         return Maps.fromProperties(properties);
     }
 

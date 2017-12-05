@@ -14,62 +14,62 @@ import java.util.concurrent.ScheduledFuture;
 import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 /**
  * This class is a task that create HBase tables during the initialization
  * time of HBase data store. It extends the TSDR Task, which is schedulable
  * by TSDR Scheduler.
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
- *
- * Created: May 4th, 2015
- *
  */
-public class CreateTableTask extends Task{
-    private static final Logger log = LoggerFactory.getLogger(CreateTableTask.class);
-    public ScheduledFuture future = null;
-    public List<String> pendingTableNames = new ArrayList<String>();
-    public CreateTableTask(){
-        super();
-        pendingTableNames = new ArrayList<String>(HBasePersistenceUtil.getTSDRHBaseTables());
+public class CreateTableTask extends Task {
+    private static final Logger LOG = LoggerFactory.getLogger(CreateTableTask.class);
+
+    public ScheduledFuture<?> future;
+    public List<String> pendingTableNames = new ArrayList<>();
+
+    public CreateTableTask() {
+        pendingTableNames = new ArrayList<>(HBasePersistenceUtil.getTsdrHBaseTables());
     }
 
     @Override
-    public void runTask(){
-        Thread.currentThread().setName("TSDR HBase Data Store CreateTableTask-thread-" + Thread.currentThread().getId());
+    public void runTask() {
+        Thread.currentThread().setName("TSDR HBase Data Store CreateTableTask-thread-"
+                + Thread.currentThread().getId());
         createTables();
     }
-/**
- * Calls the CreateTable function for the tableName passed in the DataStore.
- * @param tableName
- * @throws Throwable
- */
-    public void runCreateTable (String tableName) throws Throwable{
-              HBaseDataStoreFactory.getHBaseDataStore().createTable(tableName);
-    }
-    public void createTables(){
-         log.debug("Entering createTables()");
-         Iterator<String> tableNameIter = pendingTableNames.iterator();
-         while( tableNameIter.hasNext()){
-             String  tableName = tableNameIter.next();
-             try{
-                 runCreateTable(tableName);
-                 tableNameIter.remove();
-             }catch ( Throwable t){
-                 log.error("Exception caught creating tables", t);
-                 log.trace("Exception caught creating tables", t);
-             }
-         }
-         log.info("Exiting createTables()..pending tables count:" + pendingTableNames.size());
-         synchronized(future){
-             if(pendingTableNames.size() == 0){
-                 future.cancel(true);
-             }
-         }
-         return;
+
+    /**
+     * Calls the CreateTable function for the tableName passed in the DataStore.
+     */
+    public void runCreateTable(String tableName) throws Exception {
+        HBaseDataStoreFactory.getHBaseDataStore().createTable(tableName);
     }
 
-    public void setScheduledFuture(ScheduledFuture scheduledFuture){
-       future = scheduledFuture; 
+    @SuppressWarnings("checkstyle:IllegalCatch")
+    public void createTables() {
+        LOG.debug("Entering createTables()");
+        Iterator<String> tableNameIter = pendingTableNames.iterator();
+        while (tableNameIter.hasNext()) {
+            String tableName = tableNameIter.next();
+            try {
+                runCreateTable(tableName);
+                tableNameIter.remove();
+            } catch (Exception t) {
+                LOG.error("Exception caught creating tables", t);
+            }
+        }
+        LOG.info("Exiting createTables()..pending tables count:" + pendingTableNames.size());
+        synchronized (future) {
+            if (pendingTableNames.size() == 0) {
+                future.cancel(true);
+            }
+        }
+        return;
     }
 
+    @Override
+    public void setScheduledFuture(ScheduledFuture scheduledFuture) {
+        future = scheduledFuture;
+    }
 }

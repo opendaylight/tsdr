@@ -17,62 +17,67 @@ import java.io.Serializable;
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  *
- * Created: Feb 24, 2015
- *
  */
-public class HBaseColumn implements Serializable{
+public class HBaseColumn implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-      private static final long serialVersionUID = 1L;
-      private String columnFamily;
-      private String columnQualifier;
-      private String Value;
-      private long timeStamp;
+    private String columnFamily;
+    private String columnQualifier;
+    private String value;
+    private long timeStamp;
 
-      /**
-       * Default constructor.
-       */
-      public HBaseColumn(){
-          super();
-      }
+    /**
+     * Default constructor.
+     */
+    public HBaseColumn() {
+        super();
+    }
 
-      /**
-       * Constructor with specified parameters.
-       * @param columnFamily - The column family
-       * @param columnQualifier - The column qualifier
-       * @param value - The value
-       */
-      public HBaseColumn(String columnFamily, String columnQualifier, String value){
-              this.columnFamily=columnFamily;
-              this.columnQualifier=columnQualifier;
-              this.Value=value;
-      }
+    /**
+     * Constructor with specified parameters.
+     *
+     * @param columnFamily
+     *            - The column family
+     * @param columnQualifier
+     *            - The column qualifier
+     * @param value
+     *            - The value
+     */
+    public HBaseColumn(String columnFamily, String columnQualifier, String value) {
+        this.columnFamily = columnFamily;
+        this.columnQualifier = columnQualifier;
+        this.value = value;
+    }
 
-      public String getColumnFamily() {
-              return columnFamily;
-      }
+    public String getColumnFamily() {
+        return columnFamily;
+    }
 
-      public void setColumnFamily(String collumnFamily) {
-              this.columnFamily = collumnFamily;
-      }
-      public String getColumnQualifier() {
-          return columnQualifier;
-      }
+    public void setColumnFamily(String collumnFamily) {
+        this.columnFamily = collumnFamily;
+    }
 
-      public void setColumnQualifier(String collumnQualifier) {
-          this.columnQualifier = collumnQualifier;
-      }
+    public String getColumnQualifier() {
+        return columnQualifier;
+    }
 
-      public String getValue() {
-          return Value;
-      }
-      public void setValue(String value) {
-          Value = value;
-      }
-      public long getTimeStamp() {
-          return timeStamp;
-      }
+    public void setColumnQualifier(String collumnQualifier) {
+        this.columnQualifier = collumnQualifier;
+    }
 
-      public void setTimeStamp(long timeStamp) {
-          this.timeStamp = timeStamp;
-      }
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public long getTimeStamp() {
+        return timeStamp;
+    }
+
+    public void setTimeStamp(long timeStamp) {
+        this.timeStamp = timeStamp;
+    }
 }
