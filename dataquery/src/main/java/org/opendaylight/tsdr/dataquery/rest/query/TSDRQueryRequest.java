@@ -10,15 +10,17 @@ package org.opendaylight.tsdr.dataquery.rest.query;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
+ * Query request.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
+ */
 @XmlRootElement(name = "TSDRQueryRequest")
 public class TSDRQueryRequest {
-    public String tsdrkey=null;
-    public String from=null;
-    public String until=null;
-    public String maxDataPoints=null;
-    public String aggregation=null;
+    public String tsdrkey;
+    public String from;
+    public String until;
+    public String maxDataPoints;
+    public String aggregation;
 
     public String getTsdrkey() {
         return tsdrkey;

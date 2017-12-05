@@ -21,25 +21,30 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.opendaylight.tsdr.dataquery.TSDRNBIServiceImpl;
-import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNBIRestAPI;
+import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNbiRestAPI;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
+ * Metrics query REST endpoint.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
+ */
 @Path("/metrics")
 public class TSDRMetricsQueryAPI {
-    private static final Logger logger = LoggerFactory.getLogger(TSDRNBIRestAPI.class);
+    private static TsdrMetricDataService metricDataService;
+
+    public static void setMetricDataService(TsdrMetricDataService newMetricDataService) {
+        metricDataService = newMetricDataService;
+    }
+
     @GET
     @Path("/{query}")
     @Produces("application/json")
@@ -60,22 +65,24 @@ public class TSDRMetricsQueryAPI {
 
     @POST
     @Produces("application/json")
-    public Response post(@Context UriInfo info, TSDRQueryRequest request) throws ExecutionException, InterruptedException {
-
+    public Response post(@Context UriInfo info, TSDRQueryRequest request)
+                throws ExecutionException, InterruptedException {
         if (request.getMaxDataPoints() != null && request.getAggregation() != null) {
-            final long from = TSDRNBIRestAPI.getTimeFromString(request.getFrom());
-            final long until = TSDRNBIRestAPI.getTimeFromString(request.getUntil());
-            final long maxDataPoints = request.getMaxDataPoints() != null ? Long.parseLong(request.getMaxDataPoints()) : 0;
+            final long from = TSDRNbiRestAPI.getTimeFromString(request.getFrom());
+            final long until = TSDRNbiRestAPI.getTimeFromString(request.getUntil());
+            final long maxDataPoints = request.getMaxDataPoints() != null
+                    ? Long.parseLong(request.getMaxDataPoints()) : 0;
             final GetTSDRAggregatedMetricsInputBuilder input = new GetTSDRAggregatedMetricsInputBuilder();
             input.setTSDRDataCategory(request.getTsdrkey());
-            input.setStartTime(TSDRNBIRestAPI.getTimeFromString(request.getFrom()));
-            input.setEndTime(TSDRNBIRestAPI.getTimeFromString(request.getUntil()));
+            input.setStartTime(TSDRNbiRestAPI.getTimeFromString(request.getFrom()));
+            input.setEndTime(TSDRNbiRestAPI.getTimeFromString(request.getUntil()));
             input.setInterval(Math.floorDiv(until - from, maxDataPoints) + 1);
             input.setAggregation(AggregationType.valueOf(request.getAggregation()));
 
-            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRNBIServiceImpl.metricDataService().getTSDRAggregatedMetrics(input.build());
+            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = metricDataService
+                    .getTSDRAggregatedMetrics(input.build());
 
-            if(!metric.get().isSuccessful()){
+            if (!metric.get().isSuccessful()) {
                 Response.status(503).entity("{}").build();
             }
 
@@ -86,12 +93,12 @@ public class TSDRMetricsQueryAPI {
         } else {
             GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
             input.setTSDRDataCategory(request.getTsdrkey());
-            input.setStartTime(TSDRNBIRestAPI.getTimeFromString(request.getFrom()));
-            input.setEndTime(TSDRNBIRestAPI.getTimeFromString(request.getUntil()));
+            input.setStartTime(TSDRNbiRestAPI.getTimeFromString(request.getFrom()));
+            input.setEndTime(TSDRNbiRestAPI.getTimeFromString(request.getUntil()));
 
-            Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRNBIServiceImpl.metricDataService().getTSDRMetrics(input.build());
+            Future<RpcResult<GetTSDRMetricsOutput>> metric = metricDataService.getTSDRMetrics(input.build());
 
-            if(!metric.get().isSuccessful()){
+            if (!metric.get().isSuccessful()) {
                 Response.status(503).entity("{}").build();
             }
 
@@ -102,7 +109,7 @@ public class TSDRMetricsQueryAPI {
         }
     }
 
-    public static final String toJson(Object obj){
+    public static final String toJson(Object obj) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         return gson.toJson(obj);
     }

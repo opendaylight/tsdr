@@ -25,14 +25,14 @@ import org.slf4j.LoggerFactory;
  */
 public class PurgeDataTask extends Task {
     private static final Logger LOG = LoggerFactory.getLogger(PurgeDataTask.class);
-    private ScheduledFuture future = null;
-    private TSDRService storageService = null;
-    private RpcProviderRegistry rpcRegistry;
-    private int retentionTimeinHours = 0;
     private static final long HOUR_2_MILLI_SECS = 60 * 60 * 1000;
 
+    private final RpcProviderRegistry rpcRegistry;
+
+    private TSDRService storageService;
+    private int retentionTimeinHours = 0;
+
     public PurgeDataTask(RpcProviderRegistry rpcProviderRegistry) {
-        super();
         this.rpcRegistry = rpcProviderRegistry;
     }
 
@@ -56,8 +56,8 @@ public class PurgeDataTask extends Task {
         LOG.debug("Exiting PurgeData");
     }
 
+    @Override
     public void setScheduledFuture(ScheduledFuture scheduledFuture) {
-        future = scheduledFuture;
     }
 
     public int getRetentionTimeinHours() {

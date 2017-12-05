@@ -7,25 +7,26 @@
  */
 package org.opendaylight.tsdr.dataquery.rest.query;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.gettsdrlogrecords.output.Logs;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-
 /**
+ * Log query reply.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
-
-@XmlRootElement(name = "TSDRMetricsQueryReply")
+ */
+@XmlRootElement(name = "TSDRLogQueryReply")
 public class TSDRLogQueryReply {
+    @SuppressWarnings("unused")
     private final int recordCount;
     private final List<LogRecords> logRecords = new ArrayList<>();
 
-    public TSDRLogQueryReply(List<Logs> logs){
+    public TSDRLogQueryReply(List<Logs> logs) {
         this.recordCount = logs.size();
         for (Logs l : logs) {
             logRecords.add(new LogRecords(l));
@@ -33,17 +34,25 @@ public class TSDRLogQueryReply {
     }
 
     public static class LogRecords {
+        @SuppressWarnings("unused")
         private final String recordFullText;
+
+        @SuppressWarnings("unused")
         private final String timeStamp;
+
+        @SuppressWarnings("unused")
         private final String nodeID;
+
+        @SuppressWarnings("unused")
         private final String tsdrDataCategory;
+
         private final List<LogRecordKeys> recordKeys = new ArrayList<>();
         private final List<LogRecordAttributes> recordAttributes = new ArrayList<>();
 
         public LogRecords(Logs mr) {
-            Calendar c = Calendar.getInstance();
-            c.setTimeInMillis(mr.getTimeStamp());
-            this.timeStamp = c.getTime().toString();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(mr.getTimeStamp());
+            this.timeStamp = calendar.getTime().toString();
             this.nodeID = mr.getNodeID();
             this.tsdrDataCategory = mr.getTSDRDataCategory().name();
             this.recordFullText = mr.getRecordFullText();
@@ -59,13 +68,14 @@ public class TSDRLogQueryReply {
             }
         }
     }
+
     public static class LogRecordKeys {
         private final String keyName;
         private final String keyValue;
 
-        public LogRecordKeys(RecordKeys r) {
-            this.keyName = r.getKeyName();
-            this.keyValue = r.getKeyValue();
+        public LogRecordKeys(RecordKeys keys) {
+            this.keyName = keys.getKeyName();
+            this.keyValue = keys.getKeyValue();
         }
 
         public String getKeyName() {
@@ -81,9 +91,9 @@ public class TSDRLogQueryReply {
         private final String name;
         private final String value;
 
-        public LogRecordAttributes(RecordAttributes r) {
-            this.name = r.getName();
-            this.value = r.getValue();
+        public LogRecordAttributes(RecordAttributes attrs) {
+            this.name = attrs.getName();
+            this.value = attrs.getValue();
         }
 
         public String getName() {

@@ -20,24 +20,29 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.opendaylight.tsdr.dataquery.TSDRNBIServiceImpl;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRMetricsOutput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
+ * Northbound REST endpoint.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 @Path("/nbi")
-public class TSDRNBIRestAPI {
-    private static final Logger logger = LoggerFactory.getLogger(TSDRNBIRestAPI.class);
+public class TSDRNbiRestAPI {
+    private static TsdrMetricDataService metricDataService;
+
+    public static void setMetricDataService(TsdrMetricDataService newMetricDataService) {
+        metricDataService = newMetricDataService;
+    }
+
     @GET
     @Path("/{render}")
     @Produces("application/json")
@@ -49,7 +54,7 @@ public class TSDRNBIRestAPI {
             @QueryParam("maxDataPoints") String maxDataPoints) throws ExecutionException, InterruptedException {
         //Example query from Grafana
         //Get render?target=EXTERNAL.Heap:Memory:Usage.Controller&from=-5min&until=now&format=json&maxDataPoints=1582
-        TSDRNBIRequest request = new TSDRNBIRequest();
+        TSDRNbiRequest request = new TSDRNbiRequest();
         request.setFormat(format);
         request.setFrom(from);
         request.setMaxDataPoints(maxDataPoints);
@@ -60,8 +65,9 @@ public class TSDRNBIRestAPI {
 
     @POST
     @Produces("application/json")
-    public Response post(@Context UriInfo info, TSDRNBIRequest request) throws ExecutionException, InterruptedException {
-        final TSDRNBIReply reply = new TSDRNBIReply();
+    public Response post(@Context UriInfo info, TSDRNbiRequest request)
+            throws ExecutionException, InterruptedException {
+        final TSDRNbiReply reply = new TSDRNbiReply();
         reply.setTarget(request.getTarget());
 
         final long from = getTimeFromString(request.getFrom());
@@ -75,8 +81,8 @@ public class TSDRNBIRestAPI {
             input.setStartTime(from);
             input.setEndTime(until);
 
-            Future<RpcResult<GetTSDRMetricsOutput>> metric = TSDRNBIServiceImpl.metricDataService().getTSDRMetrics(input.build());
-            if(!metric.get().isSuccessful()){
+            Future<RpcResult<GetTSDRMetricsOutput>> metric = metricDataService.getTSDRMetrics(input.build());
+            if (!metric.get().isSuccessful()) {
                 Response.status(503).entity("{}").build();
             }
             List<Metrics> metrics = metric.get().getResult().getMetrics();
@@ -94,15 +100,17 @@ public class TSDRNBIRestAPI {
             input.setInterval(Math.floorDiv(until - from, maxDataPoints) + 1);
             input.setAggregation(AggregationType.MEAN);
 
-            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = TSDRNBIServiceImpl.metricDataService().getTSDRAggregatedMetrics(input.build());
-            if(metric==null){
+            Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = metricDataService
+                    .getTSDRAggregatedMetrics(input.build());
+            if (metric == null) {
                 return Response.status(501).entity("{}").build();
             }
 
             List<AggregatedMetrics> metrics = metric.get().getResult().getAggregatedMetrics();
             if (metrics != null) {
                 for (AggregatedMetrics m : metrics) {
-                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue() != null ? m.getMetricValue().doubleValue() : null);
+                    reply.addDataPoint(m.getTimeStamp(),
+                            m.getMetricValue() != null ? m.getMetricValue().doubleValue() : null);
                 }
             }
         }
@@ -110,40 +118,38 @@ public class TSDRNBIRestAPI {
         if (reply.getDatapoints().size() < 1) {
             return Response.status(201).entity("{}").build();
         }
-        return Response.status(201).entity(toJson(new TSDRNBIReply[]{reply})).build();
+        return Response.status(201).entity(toJson(new TSDRNbiReply[]{reply})).build();
     }
 
-    public static long getTimeFromString(String t) {
-        if (t == null) {
+    public static long getTimeFromString(String str) {
+        if (str == null) {
             return System.currentTimeMillis();
         }
-        int index1 = t.indexOf("-");
+        int index1 = str.indexOf("-");
         if (index1 != -1) {
-            int index2 = t.indexOf("min");
+            int index2 = str.indexOf("min");
             if (index2 != -1) {
-                int min = Integer.parseInt(t.substring(index1 + 1, index2)
+                int min = Integer.parseInt(str.substring(index1 + 1, index2)
                         .trim());
                 return System.currentTimeMillis() - min * 60000;
             }
-            index2 = t.indexOf("h");
+            index2 = str.indexOf("h");
             if (index2 != -1) {
-                int h = Integer
-                        .parseInt(t.substring(index1 + 1, index2).trim());
-                return System.currentTimeMillis() - h * 3600000;
+                int hours = Integer.parseInt(str.substring(index1 + 1, index2).trim());
+                return System.currentTimeMillis() - hours * 3600000;
             }
-            index2 = t.indexOf("d");
+            index2 = str.indexOf("d");
             if (index2 != -1) {
-                int d = Integer
-                        .parseInt(t.substring(index1 + 1, index2).trim());
-                return System.currentTimeMillis() - d * 86400000;
+                int days = Integer.parseInt(str.substring(index1 + 1, index2).trim());
+                return System.currentTimeMillis() - days * 86400000;
             }
-        } else if (t.equals("now")) {
+        } else if (str.equals("now")) {
             return System.currentTimeMillis();
         }
-        return Long.parseLong(t) * 1000;
+        return Long.parseLong(str) * 1000;
     }
 
-    public static final String toJson(Object obj){
+    public static final String toJson(Object obj) {
         Gson gson = new Gson();
         return gson.toJson(obj);
     }

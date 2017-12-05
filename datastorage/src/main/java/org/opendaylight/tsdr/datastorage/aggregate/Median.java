@@ -7,16 +7,14 @@
  */
 package org.opendaylight.tsdr.datastorage.aggregate;
 
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
+import static java.lang.Math.floorDiv;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-
-import static java.lang.Math.floorDiv;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
 
 /**
  * Calculates the median for a list of metrics.
@@ -38,12 +36,7 @@ public class Median implements AggregationFunction {
         }
 
         // Sort the list of metrics in ascending order
-        Collections.sort(metrics, new Comparator<Metrics>() {
-            @Override
-            public int compare(Metrics m1, Metrics m2) {
-                return m1.getMetricValue().compareTo(m2.getMetricValue());
-            }
-        });
+        Collections.sort(metrics, (m1, m2) -> m1.getMetricValue().compareTo(m2.getMetricValue()));
 
         final int middle = floorDiv(metrics.size(), 2);
         if (metrics.size() % 2 == 0) {

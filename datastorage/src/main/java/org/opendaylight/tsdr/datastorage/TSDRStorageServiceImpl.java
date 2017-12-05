@@ -66,52 +66,37 @@ import org.slf4j.LoggerFactory;
  * </p>
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
- *
- *    Created: March 1, 2015
  */
 public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService,TsdrLogDataService, AutoCloseable {
 
-    private static final Logger log = LoggerFactory.getLogger(TSDRStorageServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRStorageServiceImpl.class);
 
     private final ServiceLoader<AggregationFunction> aggregationFunctions;
 
-    private TSDRMetricPersistenceService metricPersistenceService;
+    private final TSDRMetricPersistenceService metricPersistenceService;
 
-    private TSDRLogPersistenceService logPersistenceService;
+    private final TSDRLogPersistenceService logPersistenceService;
 
-    private TSDRBinaryPersistenceService binaryPersistenceService;
+    private final TSDRBinaryPersistenceService binaryPersistenceService;
 
-    public TSDRStorageServiceImpl(TSDRMetricPersistenceService metricService,TSDRLogPersistenceService logService,
-            TSDRBinaryPersistenceService binaryPersistenceService){
-     this.metricPersistenceService = metricService;
-     this.logPersistenceService = logService;
-     this.binaryPersistenceService = binaryPersistenceService;
-     aggregationFunctions = ServiceLoader.load(AggregationFunction.class,this.getClass().getClassLoader());
-    }
-
-    public void setMetricPersistenceService(TSDRMetricPersistenceService metricService){
+    public TSDRStorageServiceImpl(TSDRMetricPersistenceService metricService, TSDRLogPersistenceService logService,
+            TSDRBinaryPersistenceService binaryPersistenceService) {
         this.metricPersistenceService = metricService;
-    }
-
-    public void setLogPersistenceService(TSDRLogPersistenceService logService) {
         this.logPersistenceService = logService;
+        this.binaryPersistenceService = binaryPersistenceService;
+        aggregationFunctions = ServiceLoader.load(AggregationFunction.class, this.getClass().getClassLoader());
     }
 
-    public void setBinaryPersistenceService(TSDRBinaryPersistenceService binaryService){
-        this.binaryPersistenceService = binaryService;
-    }
-
-     /**
+    /**
      * stores TSDRMetricRecord.
      *
      */
     @Override
     public Future<RpcResult<java.lang.Void>> storeTSDRMetricRecord(StoreTSDRMetricRecordInput input) {
-        log.debug("Entering TSDRStorageService.storeTSDRMetrics()");
-        if ( input == null || input.getTSDRMetricRecord() == null){
-            log.error("Input of storeTSDRMetrics is null");
-            return Futures.immediateFuture(RpcResultBuilder.<Void> success()
-                    .build());
+        LOG.debug("Entering TSDRStorageService.storeTSDRMetrics()");
+        if (input == null || input.getTSDRMetricRecord() == null) {
+            LOG.error("Input of storeTSDRMetrics is null");
+            return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
         }
         List<TSDRMetricRecord> tsdrMetricRecordList = new ArrayList<>(input.getTSDRMetricRecord().size());
         tsdrMetricRecordList.addAll(input.getTSDRMetricRecord());
@@ -119,11 +104,11 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
         try {
             metricPersistenceService.storeMetric(tsdrMetricRecordList);
         } catch (ServiceUnavailableException e) {
-            log.warn("storeTSDRMetricRecord: cannot store the metric -- persistence service is not available");
+            LOG.warn("storeTSDRMetricRecord: cannot store the metric -- persistence service is not available");
         }
 
-        log.debug("Exiting TSDRStorageService.storeTSDRMetrics()");
-        return Futures.immediateFuture(RpcResultBuilder.<Void> success().build());
+        LOG.debug("Exiting TSDRStorageService.storeTSDRMetrics()");
+        return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
     }
 
     /**
@@ -131,31 +116,28 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
      *
      */
     @Override
-    public Future<RpcResult<java.lang.Void>> purgeTSDRRecord(PurgeTSDRRecordInput input){
-         log.info("Entering TSDRStorageService.purgeTSDRRecord()");
-         if ( input == null || input.getRetentionTime() == null
-             || input.getRetentionTime() == 0
-             || input.getTSDRDataCategory() == null){
-             /*
-              * The data category and retention_time of this API cannot be null.
-              *
-              */
-             log.error("Input of  purgeTSDRRecord invalid");
-             return Futures.immediateFuture(RpcResultBuilder.<Void> success()
-                     .build());
-         }
-         DataCategory category = input.getTSDRDataCategory();
-         Long timestamp = input.getRetentionTime();
+    public Future<RpcResult<java.lang.Void>> purgeTSDRRecord(PurgeTSDRRecordInput input) {
+        LOG.info("Entering TSDRStorageService.purgeTSDRRecord()");
+        if (input == null || input.getRetentionTime() == null || input.getRetentionTime() == 0
+                || input.getTSDRDataCategory() == null) {
+            /*
+             * The data category and retention_time of this API cannot be null.
+             *
+             */
+            LOG.error("Input of  purgeTSDRRecord invalid");
+            return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
+        }
+        DataCategory category = input.getTSDRDataCategory();
+        Long timestamp = input.getRetentionTime();
 
-         try {
-             this.metricPersistenceService.purge(category, timestamp);
-         } catch (ServiceUnavailableException e) {
-             log.warn("purgeTSDRRecord -- persistence service is not available");
-         }
+        try {
+            this.metricPersistenceService.purge(category, timestamp);
+        } catch (ServiceUnavailableException e) {
+            LOG.warn("purgeTSDRRecord -- persistence service is not available");
+        }
 
-         log.info("Exiting TSDRStorageService.purgeTSDRRecord()");
-         return Futures.immediateFuture(RpcResultBuilder.<Void> success()
-             .build());
+        LOG.info("Exiting TSDRStorageService.purgeTSDRRecord()");
+        return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
     }
 
     /**
@@ -163,29 +145,27 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
      *
      */
     @Override
-    public Future<RpcResult<java.lang.Void>> purgeAllTSDRRecord(PurgeAllTSDRRecordInput input){
-         log.info("Entering TSDRStorageService.purgeAllTSDRRecord()");
-         if ( input == null || input.getRetentionTime() == null || input.getRetentionTime() == 0){
-             /*
-              * The retention time cannot be null.
-              *
-              */
-             log.error("Input of purgeAllTSDRRecord is invalid");
-             return Futures.immediateFuture(RpcResultBuilder.<Void> success()
-                     .build());
-         }
+    public Future<RpcResult<java.lang.Void>> purgeAllTSDRRecord(PurgeAllTSDRRecordInput input) {
+        LOG.info("Entering TSDRStorageService.purgeAllTSDRRecord()");
+        if (input == null || input.getRetentionTime() == null || input.getRetentionTime() == 0) {
+            /*
+             * The retention time cannot be null.
+             *
+             */
+            LOG.error("Input of purgeAllTSDRRecord is invalid");
+            return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
+        }
 
-         Long timestamp = input.getRetentionTime();
+        Long timestamp = input.getRetentionTime();
 
-         try {
-             this.metricPersistenceService.purge(timestamp);
-         } catch (ServiceUnavailableException e) {
-             log.warn("purgeAllTSDRRecord -- persistence service is not available");
-         }
+        try {
+            this.metricPersistenceService.purge(timestamp);
+        } catch (ServiceUnavailableException e) {
+            LOG.warn("purgeAllTSDRRecord -- persistence service is not available");
+        }
 
-         log.info("Exiting TSDRStorageService.purgeAllTSDRRecord()");
-         return Futures.immediateFuture(RpcResultBuilder.<Void> success()
-             .build());
+        LOG.info("Exiting TSDRStorageService.purgeAllTSDRRecord()");
+        return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
     }
 
     @Override
@@ -195,8 +175,8 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
     @Override
     public Future<RpcResult<GetTSDRMetricsOutput>> getTSDRMetrics(GetTSDRMetricsInput input) {
         try {
-            List<TSDRMetricRecord> result = this.metricPersistenceService.getTSDRMetricRecords(input.getTSDRDataCategory(),
-                    input.getStartTime(), input.getEndTime());
+            List<TSDRMetricRecord> result = this.metricPersistenceService.getTSDRMetricRecords(
+                    input.getTSDRDataCategory(), input.getStartTime(), input.getEndTime());
             return buildResult(result);
         } catch (ServiceUnavailableException e) {
             return RpcResultBuilder.<GetTSDRMetricsOutput>failed().withError(ErrorType.APPLICATION,
@@ -204,20 +184,20 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
         }
     }
 
-    private Future<RpcResult<GetTSDRMetricsOutput>> buildResult(List<TSDRMetricRecord> result){
+    private Future<RpcResult<GetTSDRMetricsOutput>> buildResult(List<TSDRMetricRecord> result) {
 
         GetTSDRMetricsOutputBuilder output = new GetTSDRMetricsOutputBuilder();
 
         List<Metrics> metrics = new LinkedList<>();
-        for(TSDRMetricRecord m:result){
-            MetricsBuilder b = new MetricsBuilder();
-            b.setMetricName(m.getMetricName());
-            b.setMetricValue(m.getMetricValue());
-            b.setNodeID(m.getNodeID());
-            b.setRecordKeys(m.getRecordKeys());
-            b.setTimeStamp(m.getTimeStamp());
-            b.setTSDRDataCategory(m.getTSDRDataCategory());
-            metrics.add(b.build());
+        for (TSDRMetricRecord m:result) {
+            MetricsBuilder builder = new MetricsBuilder();
+            builder.setMetricName(m.getMetricName());
+            builder.setMetricValue(m.getMetricValue());
+            builder.setNodeID(m.getNodeID());
+            builder.setRecordKeys(m.getRecordKeys());
+            builder.setTimeStamp(m.getTimeStamp());
+            builder.setTSDRDataCategory(m.getTSDRDataCategory());
+            metrics.add(builder.build());
         }
         output.setMetrics(metrics);
         RpcResultBuilder<GetTSDRMetricsOutput> builder = RpcResultBuilder.success(output);
@@ -247,19 +227,19 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
         final Future<RpcResult<GetTSDRMetricsOutput>> result = getTSDRMetrics(metricsInput);
 
         //Fix for bug 5655 - Do not aggregate when # of points is less than requested
-        long numberOfPoints = (input.getEndTime()-input.getStartTime())/input.getInterval();
+        long numberOfPoints = (input.getEndTime() - input.getStartTime()) / input.getInterval();
         try {
-            if(result.isDone() && !result.get().isSuccessful()) {
+            if (result.isDone() && !result.get().isSuccessful()) {
                 return RpcResultBuilder.<GetTSDRAggregatedMetricsOutput>failed().withRpcErrors(result.get()
                         .getErrors()).buildFuture();
             }
 
-            //In case of a MEAN aggregation and the number of requested points is larger than what is, just return the original
-            //result.
-            if(input.getAggregation() == AggregationType.MEAN &&
-                    result.get().getResult().getMetrics().size()<=numberOfPoints){
+            // In case of a MEAN aggregation and the number of requested points is larger than what is, just return
+            // the original result.
+            if (input.getAggregation() == AggregationType.MEAN
+                    && result.get().getResult().getMetrics().size() <= numberOfPoints) {
                 final List<AggregatedMetrics> aggregatedMetrics = Lists.newLinkedList();
-                for(Metrics m:result.get().getResult().getMetrics()){
+                for (Metrics m : result.get().getResult().getMetrics()) {
                     // Aggregate the metrics in the interval
                     aggregatedMetrics.add(new AggregatedMetricsBuilder()
                             .setTimeStamp(m.getTimeStamp())
@@ -272,22 +252,23 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
 
             }
         } catch (InterruptedException | ExecutionException e) {
-            RpcResultBuilder builder = RpcResultBuilder.failed();
-            builder.withError(ErrorType.APPLICATION,"Failed to extract data for aggregation");
-            return builder.buildFuture();
+            return RpcResultBuilder.<GetTSDRAggregatedMetricsOutput>failed().withError(
+                    ErrorType.APPLICATION,"Failed to extract data for aggregation").buildFuture();
         }
 
         // Aggregate the results
         return Futures.lazyTransform(result, metricsOutput -> {
-            final List<AggregatedMetrics> aggregatedMetrics = Lists.newLinkedList();
-            final PeekingIterator<Metrics> metricIterator = Iterators.peekingIterator(metricsOutput.getResult().getMetrics().iterator());
+            final List<AggregatedMetrics> aggregatedMetrics = Lists.newArrayList();
+            final PeekingIterator<Metrics> metricIterator = Iterators
+                    .peekingIterator(metricsOutput.getResult().getMetrics().iterator());
             // Generate and iterate over all the intervals in the given range
-            for (Long intervalStartInclusive : new IntervalGenerator(input.getStartTime(), input.getEndTime(), input.getInterval())) {
+            for (Long intervalStartInclusive : new IntervalGenerator(input.getStartTime(), input.getEndTime(),
+                    input.getInterval())) {
                 final Long intervalEndExclusive = intervalStartInclusive + input.getInterval();
 
                 // Gather the list of metrics that fall within the current interval
                 // We make the assumption that the list of metrics is already sorted by time-stamp
-                final List<Metrics> metricsInInterval = Lists.newLinkedList();
+                final List<Metrics> metricsInInterval = Lists.newArrayList();
                 while (metricIterator.hasNext()) {
                     if (metricIterator.peek().getTimeStamp() >= intervalEndExclusive) {
                         break;
@@ -311,19 +292,20 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
     @Override
     public Future<RpcResult<GetTSDRLogRecordsOutput>> getTSDRLogRecords(GetTSDRLogRecordsInput input) {
         try {
-            List<TSDRLogRecord> result = this.logPersistenceService.getTSDRLogRecords(input.getTSDRDataCategory(), input.getStartTime(), input.getEndTime());
+            List<TSDRLogRecord> result = this.logPersistenceService.getTSDRLogRecords(input.getTSDRDataCategory(),
+                    input.getStartTime(), input.getEndTime());
             GetTSDRLogRecordsOutputBuilder output = new GetTSDRLogRecordsOutputBuilder();
             List<Logs> logs = new LinkedList<>();
-            for(TSDRLogRecord l:result){
-                LogsBuilder b = new LogsBuilder();
-                b.setTSDRDataCategory(l.getTSDRDataCategory());
-                b.setTimeStamp(l.getTimeStamp());
-                b.setRecordKeys(l.getRecordKeys());
-                b.setNodeID(l.getNodeID());
-                b.setIndex(l.getIndex());
-                b.setRecordAttributes(l.getRecordAttributes());
-                b.setRecordFullText(l.getRecordFullText());
-                logs.add(b.build());
+            for (TSDRLogRecord log : result) {
+                LogsBuilder builder = new LogsBuilder();
+                builder.setTSDRDataCategory(log.getTSDRDataCategory());
+                builder.setTimeStamp(log.getTimeStamp());
+                builder.setRecordKeys(log.getRecordKeys());
+                builder.setNodeID(log.getNodeID());
+                builder.setIndex(log.getIndex());
+                builder.setRecordAttributes(log.getRecordAttributes());
+                builder.setRecordFullText(log.getRecordFullText());
+                logs.add(builder.build());
             }
             output.setLogs(logs);
             RpcResultBuilder<GetTSDRLogRecordsOutput> builder = RpcResultBuilder.success(output);
@@ -336,10 +318,10 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
 
     @Override
     public Future<RpcResult<Void>> storeTSDRLogRecord(StoreTSDRLogRecordInput input) {
-        log.debug("Entering TSDRStorageService.storeTSDRLog()");
-        if ( input == null || input.getTSDRLogRecord() == null){
-            log.error("Input of storeTSDRLog is null");
-            return Futures.immediateFuture(RpcResultBuilder.<Void> success().build());
+        LOG.debug("Entering TSDRStorageService.storeTSDRLog()");
+        if (input == null || input.getTSDRLogRecord() == null) {
+            LOG.error("Input of storeTSDRLog is null");
+            return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
         }
         List<TSDRLogRecord> tsdrLogRecordList = new ArrayList<>(input.getTSDRLogRecord().size());
         tsdrLogRecordList.addAll(input.getTSDRLogRecord());
@@ -347,10 +329,10 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
         try {
             this.logPersistenceService.storeLog(tsdrLogRecordList);
         } catch (ServiceUnavailableException e) {
-            log.warn("storeTSDRLogRecord: cannot store the record -- persistence service is not available");
+            LOG.warn("storeTSDRLogRecord: cannot store the record -- persistence service is not available");
         }
 
-        log.debug("Exiting TSDRStorageService.storeTSDRMetrics()");
-        return Futures.immediateFuture(RpcResultBuilder.<Void> success().build());
+        LOG.debug("Exiting TSDRStorageService.storeTSDRMetrics()");
+        return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
     }
 }

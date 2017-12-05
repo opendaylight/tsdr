@@ -10,6 +10,9 @@ package org.opendaylight.tsdr.dataquery;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
+import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNbiRestAPI;
+import org.opendaylight.tsdr.dataquery.rest.query.TSDRLogQueryAPI;
+import org.opendaylight.tsdr.dataquery.rest.query.TSDRMetricsQueryAPI;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
@@ -29,39 +32,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Implementation of the TSDRDataqueryImplService interface.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
-    private static Logger logger = LoggerFactory.getLogger(TSDRNBIServiceImpl.class);
-    private static TsdrMetricDataService metricDataService;
-    private static TsdrLogDataService logDataService;
+public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
+    private static Logger LOG = LoggerFactory.getLogger(TSDRNbiServiceImpl.class);
+
+    private final TsdrMetricDataService metricDataService;
+    private final TsdrLogDataService logDataService;
+
     // The reference to the the RPC registry to store the data
 
-    public TSDRNBIServiceImpl(TsdrMetricDataService metricService, TsdrLogDataService logService) {
+    public TSDRNbiServiceImpl(TsdrMetricDataService metricService, TsdrLogDataService logService) {
         logDataService = logService;
         metricDataService = metricService;
-    }
 
-    public static TsdrMetricDataService metricDataService() {
-        return metricDataService;
-    }
-
-    public static TsdrLogDataService logDataService() {
-        return logDataService;
+        TSDRNbiRestAPI.setMetricDataService(metricService);
+        TSDRLogQueryAPI.setLogDataService(logService);
+        TSDRMetricsQueryAPI.setMetricDataService(metricService);
     }
 
     @Override
     public Future<RpcResult<Void>> addMetric(AddMetricInput input) {
-        TSDRMetricRecordBuilder b = new TSDRMetricRecordBuilder();
-        b.setMetricName(input.getMetricName());
-        b.setMetricValue(input.getMetricValue());
-        b.setNodeID(input.getNodeID());
-        b.setTimeStamp(input.getTimeStamp());
-        b.setTSDRDataCategory(input.getTSDRDataCategory());
-        b.setRecordKeys(input.getRecordKeys());
+        TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
+        builder.setMetricName(input.getMetricName());
+        builder.setMetricValue(input.getMetricValue());
+        builder.setNodeID(input.getNodeID());
+        builder.setTimeStamp(input.getTimeStamp());
+        builder.setTSDRDataCategory(input.getTSDRDataCategory());
+        builder.setRecordKeys(input.getRecordKeys());
         StoreTSDRMetricRecordInputBuilder in = new StoreTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> list = new LinkedList<>();
-        list.add(b.build());
+        list.add(builder.build());
         in.setTSDRMetricRecord(list);
         store(in.build());
         RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
@@ -70,16 +73,16 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
 
     @Override
     public Future<RpcResult<Void>> addLog(AddLogInput input) {
-        TSDRLogRecordBuilder b = new TSDRLogRecordBuilder();
-        b.setRecordFullText(input.getRecordFullText());
-        b.setNodeID(input.getNodeID());
-        b.setTimeStamp(input.getTimeStamp());
-        b.setTSDRDataCategory(input.getTSDRDataCategory());
-        b.setRecordKeys(input.getRecordKeys());
-        b.setRecordAttributes(input.getRecordAttributes());
+        TSDRLogRecordBuilder builder = new TSDRLogRecordBuilder();
+        builder.setRecordFullText(input.getRecordFullText());
+        builder.setNodeID(input.getNodeID());
+        builder.setTimeStamp(input.getTimeStamp());
+        builder.setTSDRDataCategory(input.getTSDRDataCategory());
+        builder.setRecordKeys(input.getRecordKeys());
+        builder.setRecordAttributes(input.getRecordAttributes());
         StoreTSDRLogRecordInputBuilder in = new StoreTSDRLogRecordInputBuilder();
         List<TSDRLogRecord> list = new LinkedList<>();
-        list.add(b.build());
+        list.add(builder.build());
         in.setTSDRLogRecord(list);
         store(in.build());
         RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
@@ -90,12 +93,12 @@ public class TSDRNBIServiceImpl implements TSDRDataqueryImplService {
     // Invoke the storage rpc method
     private void store(StoreTSDRMetricRecordInput input) {
         metricDataService.storeTSDRMetricRecord(input);
-        logger.debug("Data Storage called");
+        LOG.debug("Data Storage called");
     }
 
     // Invoke the storage rpc method
     private void store(StoreTSDRLogRecordInput input) {
         logDataService.storeTSDRLogRecord(input);
-        logger.debug("Data Storage called");
+        LOG.debug("Data Storage called");
     }
 }

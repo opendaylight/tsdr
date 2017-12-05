@@ -26,13 +26,14 @@ import org.slf4j.LoggerFactory;
 public class PurgingScheduler {
     private static final Logger LOG = LoggerFactory.getLogger(PurgingScheduler.class);
 
-    private ScheduledFuture<?> future = null;
-    private PurgeDataTask purgedatatask;
-    private boolean isEnabled = false;
     private final int purgingInterval;
     private final String purgingTime;
     private final int retentionTime;
     private final RpcProviderRegistry rpcRegistry;
+    private final boolean isEnabled;
+
+    private volatile ScheduledFuture<?> future;
+    private volatile PurgeDataTask purgeDataTask;
 
     public PurgingScheduler(RpcProviderRegistry rpcRegistry, boolean isEnabled, int purgingInterval, String purgingTime,
                             int retentionTime) {
@@ -65,10 +66,10 @@ public class PurgingScheduler {
         }
 
         long firstTime = cal.getTime().getTime() - System.currentTimeMillis();
-        purgedatatask = new PurgeDataTask(rpcRegistry);
-        purgedatatask.setRetentionTimeinHours(this.retentionTime);
+        purgeDataTask = new PurgeDataTask(rpcRegistry);
+        purgeDataTask.setRetentionTimeinHours(this.retentionTime);
         this.future = SchedulerService.getInstance()
-                .scheduleTaskAtFixedRate(purgedatatask, TimeUnit.MILLISECONDS.toSeconds(firstTime),
+                .scheduleTaskAtFixedRate(purgeDataTask, TimeUnit.MILLISECONDS.toSeconds(firstTime),
                                          TimeUnit.MINUTES.toSeconds(purgingInterval));
     }
 

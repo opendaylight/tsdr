@@ -7,6 +7,8 @@
  */
 package org.opendaylight.tsdr.dataquery;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -20,25 +22,25 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddLogInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddMetricInputBuilder;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-
 /**
+ * Unit tests for TSDRNbiServiceImpl.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
  **/
-public class TSDRNBIServiceImplTest {
-    private TsdrMetricDataService metricDataService = Mockito.mock(TsdrMetricDataService.class);
-    private TsdrLogDataService logDataService = Mockito.mock(TsdrLogDataService.class);
-    private RpcProviderRegistry rpcRegistry = Mockito.mock(RpcProviderRegistry.class);
+public class TSDRNbiServiceImplTest {
+    private final TsdrMetricDataService metricDataService = Mockito.mock(TsdrMetricDataService.class);
+    private final TsdrLogDataService logDataService = Mockito.mock(TsdrLogDataService.class);
+    private final RpcProviderRegistry rpcRegistry = Mockito.mock(RpcProviderRegistry.class);
+
+    private final TSDRNbiServiceImpl impl = new TSDRNbiServiceImpl(metricDataService, logDataService);
 
     @Before
-    public void before(){
-       Mockito.when(rpcRegistry.getRpcService(TsdrMetricDataService.class)).thenReturn(metricDataService);
+    public void before() {
+        Mockito.when(rpcRegistry.getRpcService(TsdrMetricDataService.class)).thenReturn(metricDataService);
     }
 
     @Test
-    public void testAddMetricsWithServiceInInput(){
-        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService);
+    public void testAddMetricsWithServiceInInput() {
         AddMetricInputBuilder input = new AddMetricInputBuilder();
         input.setMetricName("Test");
         input.setMetricValue(new BigDecimal(10));
@@ -47,12 +49,12 @@ public class TSDRNBIServiceImplTest {
         input.setTSDRDataCategory(DataCategory.EXTERNAL);
         input.setRecordKeys(new ArrayList<RecordKeys>());
         impl.addMetric(input.build());
-        Mockito.verify(metricDataService,Mockito.atLeastOnce()).storeTSDRMetricRecord(Mockito.any(StoreTSDRMetricRecordInput.class));
+        Mockito.verify(metricDataService, Mockito.atLeastOnce())
+                .storeTSDRMetricRecord(Mockito.any(StoreTSDRMetricRecordInput.class));
     }
 
     @Test
-    public void testAddMetricsWithoutServiceInInput(){
-        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService);
+    public void testAddMetricsWithoutServiceInInput() {
         AddMetricInputBuilder input = new AddMetricInputBuilder();
         input.setMetricName("Test");
         input.setMetricValue(new BigDecimal(10));
@@ -61,12 +63,12 @@ public class TSDRNBIServiceImplTest {
         input.setTSDRDataCategory(DataCategory.EXTERNAL);
         input.setRecordKeys(new ArrayList<RecordKeys>());
         impl.addMetric(input.build());
-        Mockito.verify(metricDataService,Mockito.atLeastOnce()).storeTSDRMetricRecord(Mockito.any(StoreTSDRMetricRecordInput.class));
+        Mockito.verify(metricDataService, Mockito.atLeastOnce())
+                .storeTSDRMetricRecord(Mockito.any(StoreTSDRMetricRecordInput.class));
     }
 
     @Test
-    public void testAddLogsWithServiceInInput(){
-        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService);
+    public void testAddLogsWithServiceInInput() {
         AddLogInputBuilder input = new AddLogInputBuilder();
         input.setRecordFullText("Test");
         input.setNodeID("Test");
@@ -74,12 +76,12 @@ public class TSDRNBIServiceImplTest {
         input.setTSDRDataCategory(DataCategory.EXTERNAL);
         input.setRecordKeys(new ArrayList<RecordKeys>());
         impl.addLog(input.build());
-        Mockito.verify(logDataService,Mockito.atLeastOnce()).storeTSDRLogRecord(Mockito.any(StoreTSDRLogRecordInput.class));
+        Mockito.verify(logDataService, Mockito.atLeastOnce())
+                .storeTSDRLogRecord(Mockito.any(StoreTSDRLogRecordInput.class));
     }
 
     @Test
-    public void testAddLogsWithoutServiceInInput(){
-        TSDRNBIServiceImpl impl = new TSDRNBIServiceImpl(metricDataService,logDataService);
+    public void testAddLogsWithoutServiceInInput() {
         AddLogInputBuilder input = new AddLogInputBuilder();
         input.setRecordFullText("Test");
         input.setNodeID("Test");
@@ -87,6 +89,7 @@ public class TSDRNBIServiceImplTest {
         input.setTSDRDataCategory(DataCategory.EXTERNAL);
         input.setRecordKeys(new ArrayList<RecordKeys>());
         impl.addLog(input.build());
-        Mockito.verify(logDataService,Mockito.atLeastOnce()).storeTSDRLogRecord(Mockito.any(StoreTSDRLogRecordInput.class));
+        Mockito.verify(logDataService, Mockito.atLeastOnce())
+                .storeTSDRLogRecord(Mockito.any(StoreTSDRLogRecordInput.class));
     }
 }

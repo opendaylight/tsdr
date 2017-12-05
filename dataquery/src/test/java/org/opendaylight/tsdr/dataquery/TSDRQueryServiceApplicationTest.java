@@ -13,12 +13,14 @@ import org.junit.Test;
 import org.opendaylight.tsdr.dataquery.rest.query.TSDRLogQueryAPI;
 
 /**
+ * Unit tests for TSDRQueryServiceApplication.
+ *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
+ */
 public class TSDRQueryServiceApplicationTest {
 
     @Test
-    public void testTSDRApplication(){
+    public void testTSDRApplication() {
         TSDRQueryServiceApplication app = new TSDRQueryServiceApplication();
         Set<Class<?>> classes = app.getClasses();
         Assert.assertTrue(classes.contains(TSDRLogQueryAPI.class));

@@ -28,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
-import org.opendaylight.tsdr.datastorage.TSDRMetricsMap;
 import org.opendaylight.tsdr.datastorage.TSDRStorageServiceImpl;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
@@ -52,41 +51,43 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yangtools.yang.common.RpcResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Unit Test for TSDR Data Storage Service.
- * * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
  *
- * Created: Apr 27, 2015
+ * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
  */
-
 public class TSDRStorageServiceImplTest {
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRStorageServiceImplTest.class);
+    private static final String GROUP_METRICS_TABLE_NAME = "GroupMetrics";
+    private static final String SYS_LOG_TABLE_NAME = "SYSLOG";
 
-    public TSDRStorageServiceImpl storageService;
-    public TSDRMetricPersistenceService metricPersistenceService;
-    public TSDRLogPersistenceService logPersistenceService;
-    public TSDRMetricsMap MetricsMap;
-    private static Map<String, List<TSDRRecord>> tableRecordMap;
+    private final Map<String, List<TSDRRecord>> tableRecordMap = new HashMap<>();
 
+    private TSDRStorageServiceImpl storageService;
+    private TSDRMetricPersistenceService metricPersistenceService;
+    private TSDRLogPersistenceService logPersistenceService;
+
+    @SuppressWarnings("unchecked")
     @Before
     public void setup() {
         metricPersistenceService = mock(TSDRMetricPersistenceService.class);
         logPersistenceService = mock(TSDRLogPersistenceService.class);
         storageService = new TSDRStorageServiceImpl(metricPersistenceService,logPersistenceService, null);
-        MetricsMap = new TSDRMetricsMap();
-        tableRecordMap = new HashMap<>();
-        Answer answerStore = invocation -> {
+        Answer<Void> answerStore = invocation -> {
             Object[] arguments = invocation.getArguments();
             String tableName = null;
             if (arguments != null && arguments.length > 0 && arguments[0] != null) {
                 List<TSDRRecord> recordCol = (List<TSDRRecord>)arguments[0];
-                for(TSDRRecord record: recordCol){
+                for (TSDRRecord record : recordCol) {
                     tableName = getTableNameFrom(record.getTSDRDataCategory());
-                    if(!tableRecordMap.containsKey(tableName)){
+                    if (!tableRecordMap.containsKey(tableName)) {
                         tableRecordMap.put(tableName, new ArrayList<TSDRRecord>());
                     }
                     List<TSDRRecord> existingRecordCol = tableRecordMap.get(tableName);
-                    System.out.println("Creating record " + record + " under table " + tableName);
+                    LOG.info("Creating record {} under table {}", record, tableName);
                     existingRecordCol.add(record);
                 }
             }
@@ -99,93 +100,88 @@ public class TSDRStorageServiceImplTest {
         Mockito.doNothing().when(logPersistenceService).purge(any(DataCategory.class),any(long.class));
         Mockito.doNothing().when(metricPersistenceService).purge(any(long.class));
         Mockito.doNothing().when(logPersistenceService).purge(any(long.class));
-       Answer answerGetMetrics = invocation -> {
-        Object[] arguments = invocation.getArguments();
-        List<TSDRRecord> recordCol = new ArrayList<>();
-        if (arguments != null && arguments.length > 0 && arguments[0] != null) {
-            String tableName = (String)arguments[0];
-            System.out.println("Retrieving metrics from table name " + tableName + " records:"+tableRecordMap);
-            List<TSDRRecord> allRecordCol = tableRecordMap.get(tableName);
-            System.out.println(allRecordCol);
-            for(TSDRRecord record: allRecordCol){
+        Answer<List<TSDRRecord>> answerGetMetrics = invocation -> {
+            Object[] arguments = invocation.getArguments();
+            List<TSDRRecord> recordCol = new ArrayList<>();
+            if (arguments != null && arguments.length > 0 && arguments[0] != null) {
+                String tableName = (String) arguments[0];
+                List<TSDRRecord> allRecordCol = tableRecordMap.get(tableName);
+                LOG.info("Retrieved metrics from table name {} records: {}", tableName, allRecordCol);
+                for (TSDRRecord record : allRecordCol) {
                     recordCol.add(record);
+                }
             }
-        }
-        System.out.println("Get metrics of size " + recordCol.size() + ", records:" + recordCol);
-        return recordCol;
-    };
+            LOG.info("Get metrics of size {}, records: {}", recordCol.size(), recordCol);
+            return recordCol;
+        };
 
-        doAnswer(answerGetMetrics).when(metricPersistenceService).getTSDRMetricRecords(any(String.class),any(long.class),any(long.class));
-        doAnswer(answerGetMetrics).when(logPersistenceService).getTSDRLogRecords(any(String.class),any(long.class),any(long.class));
-}
+        doAnswer(answerGetMetrics).when(metricPersistenceService).getTSDRMetricRecords(any(String.class),
+                any(long.class), any(long.class));
+        doAnswer(answerGetMetrics).when(logPersistenceService).getTSDRLogRecords(any(String.class), any(long.class),
+                any(long.class));
+    }
+
+    @After
+    public void teardown() {
+        storageService.close();
+        tableRecordMap.clear();
+    }
 
     @Test
-    public void testpurgeAllTSDRRecord(){
+    public void testpurgeAllTSDRRecord() {
         String timeStamp = new Long(new Date().getTime()).toString();
-          storageService.purgeAllTSDRRecord(new PurgeAllTSDRRecordInputBuilder().setRetentionTime(new Long(timeStamp)).build());
-          storageService.purgeAllTSDRRecord(new PurgeAllTSDRRecordInputBuilder().setRetentionTime(null).build());
+        storageService.purgeAllTSDRRecord(
+                new PurgeAllTSDRRecordInputBuilder().setRetentionTime(new Long(timeStamp)).build());
+        storageService.purgeAllTSDRRecord(new PurgeAllTSDRRecordInputBuilder().setRetentionTime(null).build());
     }
 
     @Test
     public void teststoreTSDRLogRecord() {
-           List<TSDRLogRecord> metricCol = new ArrayList<>();
-           String timeStamp = new Long(new Date().getTime()).toString();
-           List<RecordKeys> recordKeys = new ArrayList<>();
-           RecordKeys recordKey1 = new RecordKeysBuilder()
-                   .setKeyName(DataCategory.SYSLOG.name())
-                   .setKeyValue("log1").build();
-               recordKeys.add(recordKey1);
-           TSDRLogRecordBuilder builder1 = new TSDRLogRecordBuilder();
-            metricCol.add(builder1.setIndex(1)
-                   .setRecordFullText("su root failed for lonvick")
-                   .setNodeID("node1.example.com")
-                   .setRecordKeys(recordKeys)
-                   .setTSDRDataCategory(DataCategory.SYSLOG)
-                   .setTimeStamp(new Long(timeStamp)).build());
+        List<TSDRLogRecord> metricCol = new ArrayList<>();
+        String timeStamp = new Long(new Date().getTime()).toString();
+        List<RecordKeys> recordKeys = new ArrayList<>();
+        RecordKeys recordKey1 = new RecordKeysBuilder().setKeyName(DataCategory.SYSLOG.name()).setKeyValue("log1")
+                .build();
+        recordKeys.add(recordKey1);
+        TSDRLogRecordBuilder builder1 = new TSDRLogRecordBuilder();
+        metricCol.add(builder1.setIndex(1).setRecordFullText("su root failed for lonvick")
+                .setNodeID("node1.example.com").setRecordKeys(recordKeys).setTSDRDataCategory(DataCategory.SYSLOG)
+                .setTimeStamp(new Long(timeStamp)).build());
         storageService.storeTSDRLogRecord(new StoreTSDRLogRecordInputBuilder().setTSDRLogRecord(metricCol).build());
         storageService.storeTSDRLogRecord(new StoreTSDRLogRecordInputBuilder().setTSDRLogRecord(null).build());
     }
 
     @Test
     public void testgetTSDRLogRecord() {
-           Date startDate = new Date();
-           List<TSDRLogRecord> metricCol = new ArrayList<>();
-           String timeStamp = new Long(new Date().getTime()).toString();
-           List<RecordKeys> recordKeys = new ArrayList<>();
-           RecordKeys recordKey1 = new RecordKeysBuilder()
-                   .setKeyName(DataCategory.SYSLOG.name())
-                   .setKeyValue("log1").build();
-               recordKeys.add(recordKey1);
-           TSDRLogRecordBuilder builder1 = new TSDRLogRecordBuilder();
-            metricCol.add(builder1.setIndex(1)
-                   .setRecordFullText("su root failed for lonvick")
-                   .setNodeID("node1.example.com")
-                   .setRecordKeys(recordKeys)
-                   .setTSDRDataCategory(DataCategory.SYSLOG)
-                   .setTimeStamp(new Long(timeStamp)).build());
-            Date endDate = new Date();
+        final Date startDate = new Date();
+        List<TSDRLogRecord> metricCol = new ArrayList<>();
+        String timeStamp = new Long(new Date().getTime()).toString();
+        List<RecordKeys> recordKeys = new ArrayList<>();
+        RecordKeys recordKey1 = new RecordKeysBuilder().setKeyName(DataCategory.SYSLOG.name()).setKeyValue("log1")
+                .build();
+        recordKeys.add(recordKey1);
+        TSDRLogRecordBuilder builder1 = new TSDRLogRecordBuilder();
+        metricCol.add(builder1.setIndex(1).setRecordFullText("su root failed for lonvick")
+                .setNodeID("node1.example.com").setRecordKeys(recordKeys).setTSDRDataCategory(DataCategory.SYSLOG)
+                .setTimeStamp(new Long(timeStamp)).build());
+        Date endDate = new Date();
         storageService.storeTSDRLogRecord(new StoreTSDRLogRecordInputBuilder().setTSDRLogRecord(metricCol).build());
         storageService.storeTSDRLogRecord(new StoreTSDRLogRecordInputBuilder().setTSDRLogRecord(null).build());
-        storageService.getTSDRLogRecords(new GetTSDRLogRecordsInputBuilder()
-                .setStartTime(startDate.getTime())
-                .setEndTime(endDate.getTime())
-                .setTSDRDataCategory(SYS_LOG_TABLE_NAME).build());
+        storageService.getTSDRLogRecords(new GetTSDRLogRecordsInputBuilder().setStartTime(startDate.getTime())
+                .setEndTime(endDate.getTime()).setTSDRDataCategory(SYS_LOG_TABLE_NAME).build());
     }
 
-
     @Test
-    public void testpurgeTSDRRecord(){
+    public void testpurgeTSDRRecord() {
         String timeStamp = new Long(new Date().getTime()).toString();
-            storageService.purgeTSDRRecord(new PurgeTSDRRecordInputBuilder()
-             .setTSDRDataCategory(DataCategory.SYSLOG)
-             .setRetentionTime(new Long(timeStamp)).build());
-            storageService.purgeTSDRRecord(new PurgeTSDRRecordInputBuilder()
-                    .setRetentionTime(null).build());
+        storageService.purgeTSDRRecord(new PurgeTSDRRecordInputBuilder().setTSDRDataCategory(DataCategory.SYSLOG)
+                .setRetentionTime(new Long(timeStamp)).build());
+        storageService.purgeTSDRRecord(new PurgeTSDRRecordInputBuilder().setRetentionTime(null).build());
 
     }
 
     @Test
-    public void teststoreTSDRMetricRecord(){
+    public void teststoreTSDRMetricRecord() {
         List<TSDRMetricRecord> metricCol = new ArrayList<>();
         String timeStamp = new Long(new Date().getTime()).toString();
         List<RecordKeys> recordKeys = new ArrayList<>();
@@ -200,13 +196,14 @@ public class TSDRStorageServiceImplTest {
             .setRecordKeys(recordKeys)
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
             .setTimeStamp(new Long(timeStamp)).build());
-            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
-            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(null).build());
+        storageService
+                .storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
+        storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(null).build());
     }
 
     @Test
-    public void testgetTSDRMetricRecord(){
-        Date startDate = new Date();
+    public void testgetTSDRMetricRecord() {
+        final Date startDate = new Date();
         List<TSDRMetricRecord> metricCol = new ArrayList<>();
         String timeStamp = new Long(new Date().getTime()).toString();
         List<RecordKeys> recordKeys = new ArrayList<>();
@@ -222,16 +219,15 @@ public class TSDRStorageServiceImplTest {
             .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
             .setTimeStamp(new Long(timeStamp)).build());
         Date endDate = new Date();
-            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
-            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(null).build());
-            storageService.getTSDRMetrics(new GetTSDRMetricsInputBuilder()
-                    .setStartTime(startDate.getTime())
-                    .setEndTime(endDate.getTime())
-                    .setTSDRDataCategory(GROUP_METRICS_TABLE_NAME).build());
+        storageService
+                .storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
+        storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(null).build());
+        storageService.getTSDRMetrics(new GetTSDRMetricsInputBuilder().setStartTime(startDate.getTime())
+                .setEndTime(endDate.getTime()).setTSDRDataCategory(GROUP_METRICS_TABLE_NAME).build());
     }
 
     @Test
-    public void testGetTSDRAggregatedMetrics() throws InterruptedException, ExecutionException{
+    public void testGetTSDRAggregatedMetrics() throws InterruptedException, ExecutionException {
         // Generate and store metrics
         final ImmutableMap<Long, Double> valuesByTimestamps =
                 new ImmutableMap.Builder<Long, Double>()
@@ -256,11 +252,13 @@ public class TSDRStorageServiceImplTest {
                 .setRecordKeys(recordKeys)
                 .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
                 .setTimeStamp(valueAtTimestamp.getKey()).build());
-            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
+            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder()
+                    .setTSDRMetricRecord(metricCol).build());
         }
 
         // Issue the RPC call to gather the aggregated results
-        Future<RpcResult<GetTSDRAggregatedMetricsOutput>> future = storageService.getTSDRAggregatedMetrics(new GetTSDRAggregatedMetricsInputBuilder()
+        Future<RpcResult<GetTSDRAggregatedMetricsOutput>> future = storageService.getTSDRAggregatedMetrics(
+            new GetTSDRAggregatedMetricsInputBuilder()
                 .setTSDRDataCategory(GROUP_METRICS_TABLE_NAME)
                 .setStartTime(0L)
                 .setEndTime(6L)
@@ -279,7 +277,7 @@ public class TSDRStorageServiceImplTest {
     }
 
     @Test
-    public void testGetTSDRAggregatedMetricsNoMean() throws InterruptedException, ExecutionException{
+    public void testGetTSDRAggregatedMetricsNoMean() throws InterruptedException, ExecutionException {
         // Generate and store metrics
         final ImmutableMap<Long, Double> valuesByTimestamps =
                 new ImmutableMap.Builder<Long, Double>()
@@ -304,11 +302,13 @@ public class TSDRStorageServiceImplTest {
                     .setRecordKeys(recordKeys)
                     .setTSDRDataCategory(DataCategory.FLOWGROUPSTATS)
                     .setTimeStamp(valueAtTimestamp.getKey()).build());
-            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(metricCol).build());
+            storageService.storeTSDRMetricRecord(new StoreTSDRMetricRecordInputBuilder()
+                    .setTSDRMetricRecord(metricCol).build());
         }
 
         // Issue the RPC call to gather the aggregated results
-        Future<RpcResult<GetTSDRAggregatedMetricsOutput>> future = storageService.getTSDRAggregatedMetrics(new GetTSDRAggregatedMetricsInputBuilder()
+        Future<RpcResult<GetTSDRAggregatedMetricsOutput>> future = storageService.getTSDRAggregatedMetrics(
+            new GetTSDRAggregatedMetricsInputBuilder()
                 .setTSDRDataCategory(GROUP_METRICS_TABLE_NAME)
                 .setStartTime(0L)
                 .setEndTime(20L)
@@ -329,26 +329,12 @@ public class TSDRStorageServiceImplTest {
         assertEquals(108, metrics.get(5).getMetricValue().doubleValue(), delta);
     }
 
-    private static final String GROUP_METRICS_TABLE_NAME = "GroupMetrics";
-    private static final String SYS_LOG_TABLE_NAME = "SYSLOG";
-
-    private static String getTableNameFrom(DataCategory datacategory){
-        if ( datacategory == DataCategory.FLOWGROUPSTATS){
+    private static String getTableNameFrom(DataCategory datacategory) {
+        if (datacategory == DataCategory.FLOWGROUPSTATS) {
             return GROUP_METRICS_TABLE_NAME;
-        }else if (datacategory == DataCategory.SYSLOG){
+        } else if (datacategory == DataCategory.SYSLOG) {
             return SYS_LOG_TABLE_NAME;
         }
         return "";
-    }
-
-    @After
-    public void teardown() {
-        try {
-            storageService.close();
-        }catch(Exception ee){}
-        storageService = null;
-        metricPersistenceService = null;
-        logPersistenceService = null;
-        tableRecordMap.clear();
     }
 }

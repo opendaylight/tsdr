@@ -7,11 +7,10 @@
  */
 package org.opendaylight.tsdr.datastorage.aggregate;
 
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
-
 import java.math.BigDecimal;
 import java.util.List;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
 
 /**
  * Used to reduce, or aggregate a list of metrics to a single value.
