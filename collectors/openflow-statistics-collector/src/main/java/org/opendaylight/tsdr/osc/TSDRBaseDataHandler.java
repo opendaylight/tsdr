@@ -25,6 +25,8 @@ import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier.IdentifiableItem;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier.Item;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier.PathArgument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is an abstract handler where all handlers should inherit as it has
@@ -32,6 +34,8 @@ import org.opendaylight.yangtools.yang.binding.InstanceIdentifier.PathArgument;
  * the handlers.
  */
 public abstract class TSDRBaseDataHandler<T extends DataObject> {
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRBaseDataHandler.class);
+
     private final TSDROpenflowCollector collector;
 
     public TSDRBaseDataHandler(TSDROpenflowCollector collector) {
@@ -70,8 +74,7 @@ public abstract class TSDRBaseDataHandler<T extends DataObject> {
             } else if (pa instanceof IdentifiableItem) {
                 recKeys.add(getIdentifiableItemID((IdentifiableItem) pa));
             } else {
-                TSDROpenflowCollector.log("Missed class type:"
-                        + pa.getClass().getName(), TSDROpenflowCollector.ERROR);
+                LOG.warn("createRecordKeys - unknown PathArgument {}", pa.getClass());
             }
         }
         return recKeys;

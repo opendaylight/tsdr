@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
  * Polls the inventory every 15 seconds and determines if there are nodes added/removed.
  *
  * @author Sharon Aicler(saichler@gmail.com)
+ * @author Thomas Pantelis
  */
 public class TSDRInventoryNodesPoller extends Thread implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(TSDRInventoryNodesPoller.class);

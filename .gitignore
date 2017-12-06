@@ -2,6 +2,7 @@
 target/
 target-ide/
 .checkstyle
+.fbExcludeFilterFile
 
 # OpenDaylight
 yang-gen-sal/

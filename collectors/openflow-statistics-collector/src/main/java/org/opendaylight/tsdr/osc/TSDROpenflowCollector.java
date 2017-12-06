@@ -9,9 +9,6 @@ package org.opendaylight.tsdr.osc;
 
 import com.google.common.base.Optional;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -21,7 +18,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import javax.annotation.Nonnull;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
@@ -74,18 +70,9 @@ import org.slf4j.LoggerFactory;
  * storage.
  *
  * @author Sharon Aicler(saichler@gmail.com)
+ * @author Thomas Pantelis
  */
 public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorService, AutoCloseable {
-    // For debugging, enable the ability to output to a different file to avoid looking for TSDR logs in the main log.
-    public static final int INFO = 1;
-    public static final int DEBUG = 2;
-    public static final int ERROR = 3;
-    public static final int WARNING = 4;
-
-    // for debugging, specify if the logs should go to external file or the karaf log
-    private static boolean logToExternalFile = false;
-    private static volatile PrintStream out;
-
     private static final Logger LOG = LoggerFactory.getLogger(TSDROpenflowCollector.class);
 
     // A reference to the data broker
@@ -146,7 +133,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
 
         new StoringThread().start();
 
-        log("TSDR DOM Collector initialized", INFO);
+        LOG.info("TSDR DOM Collector initialized");
     }
 
     public void loadConfigData() {
@@ -160,8 +147,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
                 this.config = optional.get();
             }
         } catch (InterruptedException | ExecutionException e) {
-            log("Failed to read TSDR Data Collection configuration from data store, using defaults.",
-                    WARNING);
+            LOG.warn("Failed to read TSDR Data Collection configuration from data store, using defaults.");
         } finally {
             readTx.close();
         }
@@ -286,7 +272,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         }
         TSDRBaseDataHandler<T> handler = (TSDRBaseDataHandler<T>) handlers.get(cls);
         if (handler == null) {
-            log("Error, can't find collector for " + cls.getSimpleName(), ERROR);
+            LOG.error("Can't find collector for {}", cls.getSimpleName());
             return;
         }
         handler.handleData(nodeID, id, dataObject);
@@ -421,7 +407,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
                 }
             }
         } catch (RuntimeException ex) {
-            log("Failed to register on metric data due to the following exception:", ex, ERROR);
+            LOG.error("Failed to register on metric data due to the following exception:", ex);
         }
     }
 
@@ -446,7 +432,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         StoringThread() {
             this.setName("TSDR Storing Thread");
             this.setDaemon(true);
-            log("Storing Thread Started", INFO);
+            LOG.info("Storing Thread Started");
         }
 
         @Override
@@ -466,7 +452,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
                         TSDROpenflowCollector.this.wait(getConfigData()
                                 .getPollingInterval() * 2);
                     } catch (InterruptedException err) {
-                        log("Storing Thread Interrupted.", ERROR);
+                        LOG.error("Storing Thread Interrupted.");
                     }
                 }
 
@@ -486,50 +472,8 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
 
     // Invoke the storage rpc method
     private void store(InsertTSDRMetricRecordInput input) {
+        LOG.debug("Storing {} records", input.getTSDRMetricRecord().size());
         RPCFutures.logResult(collectorSPIService.insertTSDRMetricRecord(input), "insertTSDRMetricRecord", LOG);
-        log("Data Storage called", DEBUG);
-    }
-
-    public static synchronized void log(String str, Exception error) {
-        log(str, error, ERROR);
-    }
-
-    public static synchronized void log(String str, int type) {
-        log(str, null, type);
-    }
-
-    @SuppressWarnings("checkstyle:RegexpSingleLineJava")
-    @SuppressFBWarnings({"DM_DEFAULT_ENCODING", "DMI_HARDCODED_ABSOLUTE_FILENAME"})
-    private static synchronized void log(@Nonnull String str, Exception error, int type) {
-        if (logToExternalFile) {
-            try {
-                if (out == null) {
-                    out = new PrintStream(new File("/tmp/tsdr.log"));
-                }
-                out.println(str);
-                if (error != null) {
-                    error.printStackTrace(out);
-                }
-                out.flush();
-            } catch (FileNotFoundException ex) {
-                LOG.error("Error writing to log file", ex);
-            }
-        } else {
-            switch (type) {
-                case INFO:
-                    LOG.info(str);
-                    break;
-                case ERROR:
-                    LOG.error(str);
-                    break;
-                case WARNING:
-                    LOG.warn(str);
-                    break;
-                case DEBUG:
-                default:
-                    LOG.debug(str);
-            }
-        }
     }
 
     public void removeAllNodeBuilders(InstanceIdentifier<Node> nodeID) {
@@ -542,7 +486,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
                 removeBuilderContailer(subID);
             }
             subIDs.clear();
-            log("Removed all data for node-" + nodeID, INFO);
+            LOG.info("Removed all data for node {}", nodeID);
         }
     }
 
