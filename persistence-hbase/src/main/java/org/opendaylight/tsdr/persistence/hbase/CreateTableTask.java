@@ -60,12 +60,9 @@ public class CreateTableTask extends Task {
             }
         }
         LOG.info("Exiting createTables()..pending tables count:" + pendingTableNames.size());
-        synchronized (future) {
-            if (pendingTableNames.size() == 0) {
-                future.cancel(true);
-            }
+        if (pendingTableNames.size() == 0) {
+            future.cancel(true);
         }
-        return;
     }
 
     @Override

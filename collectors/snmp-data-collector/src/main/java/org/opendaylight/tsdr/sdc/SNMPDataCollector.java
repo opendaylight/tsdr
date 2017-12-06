@@ -11,6 +11,7 @@ package org.opendaylight.tsdr.sdc;
 
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.CheckedFuture;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.snmp.plugin.internal.SNMPImpl;
+import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
@@ -139,7 +141,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService, AutoClos
 
                 builder.setMetricName(snmpMetric.name());
                 builder.setTSDRDataCategory(DataCategory.SNMPINTERFACES);
-                builder.setNodeID(ip.getValue().toString());
+                builder.setNodeID(ip.getValue());
                 ArrayList<RecordKeys> list = new ArrayList<>(3);
 
                 RecordKeysBuilder recordKeyB = new RecordKeysBuilder();
@@ -232,6 +234,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService, AutoClos
     }
 
     @Override
+    @SuppressFBWarnings("NN_NAKED_NOTIFY")
     public void close() {
         this.running = false;
 
@@ -257,6 +260,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService, AutoClos
         }
 
         @Override
+        @SuppressFBWarnings("UW_UNCOND_WAIT")
         public void run() {
             while (running) {
                 synchronized (SNMPDataCollector.this) {
@@ -293,7 +297,7 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService, AutoClos
 
     // Invoke the storage rpc method
     private void store(InsertTSDRMetricRecordInput input) {
-        this.collectorSPIService.insertTSDRMetricRecord(input);
+        RPCFutures.logResult(collectorSPIService.insertTSDRMetricRecord(input), "insertTSDRMetricRecord", LOG);
         LOG.debug("Data Storage Called from SNMP Collector");
     }
 

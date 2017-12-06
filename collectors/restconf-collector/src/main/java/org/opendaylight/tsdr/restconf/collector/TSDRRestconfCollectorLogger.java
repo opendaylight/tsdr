@@ -15,6 +15,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Supplier;
 import javax.annotation.concurrent.GuardedBy;
+import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
@@ -180,13 +181,14 @@ public class TSDRRestconfCollectorLogger extends TimerTask implements AutoClosea
 
     /**
      * persists the cache queue.
-     * @param queue the queue to persist
+     * @param records the queue to persist
      */
-    private void store(List<TSDRLogRecord> queue) {
+    private void store(List<TSDRLogRecord> records) {
         InsertTSDRLogRecordInputBuilder input = new InsertTSDRLogRecordInputBuilder();
-        input.setTSDRLogRecord(queue);
+        input.setTSDRLogRecord(records);
         input.setCollectorCodeName("TSDRRestconfCollector");
-        this.tsdrCollectorSpiService.insertTSDRLogRecord(input.build());
+
+        RPCFutures.logResult(tsdrCollectorSpiService.insertTSDRLogRecord(input.build()), "insertTSDRLogRecord", LOG);
     }
 
     /**

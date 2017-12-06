@@ -49,8 +49,8 @@ public class SNMPInterfacePoller extends Thread implements AutoCloseable {
 
             final String[] credentials = configuration.get(SNMPConfig.P_CREDENTIALS);
             for (nodeConfigDetails = 0; nodeConfigDetails < credentials.length; nodeConfigDetails += 2) {
-                Ipv4Address ip = new Ipv4Address(credentials[nodeConfigDetails].toString());
-                community = DataEncrypter.decrypt(credentials[nodeConfigDetails + 1].toString());
+                Ipv4Address ip = new Ipv4Address(credentials[nodeConfigDetails]);
+                community = DataEncrypter.decrypt(credentials[nodeConfigDetails + 1]);
                 result = collector.loadGetInterfacesData(ip, community);
                 collector.insertInterfacesEntries(ip, result);
             }
@@ -62,7 +62,9 @@ public class SNMPInterfacePoller extends Thread implements AutoCloseable {
             //This object is only for the time when we shutdown so we want to break the waiting time
             synchronized (shutdownSync) {
                 try {
-                    shutdownSync.wait(this.collector.getConfigData().getPollingInterval());
+                    if (collector.isRunning()) {
+                        shutdownSync.wait(this.collector.getConfigData().getPollingInterval());
+                    }
                 } catch (InterruptedException e) {
                     LOG.debug("Interrupted when sleeping in SNMP poller", e);
                     Thread.currentThread().interrupt();

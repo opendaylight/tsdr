@@ -53,7 +53,7 @@ public class Activator extends DependencyActivatorBase {
                     final ServiceReference<TSDRMetricPersistenceService> serviceReference = bundleContext
                             .getServiceReference(TSDRMetricPersistenceService.class);
                     if (serviceReference != null) {
-                        ListMetricsCommand.metricService = bundleContext.getService(serviceReference);
+                        ListMetricsCommand.setMetricService(bundleContext.getService(serviceReference));
                         metricServiceFound = true;
                         LOG.info("TSDR List Metric Persistence Service Was Found.");
                     } else {
@@ -64,7 +64,7 @@ public class Activator extends DependencyActivatorBase {
                     final ServiceReference<TSDRLogPersistenceService> serviceReference = bundleContext
                             .getServiceReference(TSDRLogPersistenceService.class);
                     if (serviceReference != null) {
-                        ListMetricsCommand.logService = bundleContext.getService(serviceReference);
+                        ListMetricsCommand.setLogService(bundleContext.getService(serviceReference));
                         logServiceFound = true;
                         LOG.info("TSDR List Log Persistence Service Was Found.");
                     } else {

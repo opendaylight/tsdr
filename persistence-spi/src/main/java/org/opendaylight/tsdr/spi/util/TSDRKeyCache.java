@@ -7,12 +7,14 @@
  */
 package org.opendaylight.tsdr.spi.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +51,9 @@ public class TSDRKeyCache {
     public TSDRKeyCache() {
         File dir = new File("tsdr");
         if (!dir.exists()) {
-            dir.mkdirs();
+            if (!dir.mkdirs()) {
+                LOG.warn("Could not create directories for path {}", dir);
+            }
         }
         try {
             loadTSDRCacheKey();
@@ -60,17 +64,16 @@ public class TSDRKeyCache {
         }
     }
 
+    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     private void loadTSDRCacheKey() throws IOException {
-        synchronized (cache) {
-            File file = new File(TSDR_KEY_CACHE_FILENAME);
-            if (file.exists() && file.length() > 0) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+        File file = new File(TSDR_KEY_CACHE_FILENAME);
+        if (file.exists() && file.length() > 0) {
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
                 String tsdrKey = in.readLine();
                 while (tsdrKey != null) {
                     addTSDRCacheEntry(tsdrKey.substring(0, tsdrKey.indexOf("|")), false);
                     tsdrKey = in.readLine();
                 }
-                in.close();
             }
         }
     }
@@ -95,12 +98,12 @@ public class TSDRKeyCache {
             if (save && cacheStore != null) {
                 try {
                     synchronized (cache) {
-                        cacheStore.write(tsdrKey.getBytes());
+                        cacheStore.write(tsdrKey.getBytes(StandardCharsets.UTF_8));
                         cacheStore.write('|');
-                        cacheStore.write(("" + entry.getMd5ID().getMd5Long1()).getBytes());
+                        cacheStore.write(("" + entry.getMd5ID().getMd5Long1()).getBytes(StandardCharsets.UTF_8));
                         cacheStore.write('|');
-                        cacheStore.write(("" + entry.getMd5ID().getMd5Long2()).getBytes());
-                        cacheStore.write("\n".getBytes());
+                        cacheStore.write(("" + entry.getMd5ID().getMd5Long2()).getBytes(StandardCharsets.UTF_8));
+                        cacheStore.write("\n".getBytes(StandardCharsets.UTF_8));
                         cacheStore.flush();
                     }
                 } catch (IOException e) {

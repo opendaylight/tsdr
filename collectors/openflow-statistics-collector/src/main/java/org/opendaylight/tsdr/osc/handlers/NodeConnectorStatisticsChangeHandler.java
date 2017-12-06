@@ -19,7 +19,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.N
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.FlowCapableNodeConnectorStatisticsData;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.flow.capable.node.connector.statistics.FlowCapableNodeConnectorStatistics;
-import org.opendaylight.yangtools.yang.binding.DataObject;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 
 /**
@@ -27,14 +26,14 @@ import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
  *
  * @author Sharon Aicler(saichler@gmail.com)
  */
-public class NodeConnectorStatisticsChangeHandler extends TSDRBaseDataHandler {
+public class NodeConnectorStatisticsChangeHandler extends TSDRBaseDataHandler<FlowCapableNodeConnectorStatisticsData> {
     public NodeConnectorStatisticsChangeHandler(TSDROpenflowCollector collector) {
         super(collector);
     }
 
     @Override
-    public void handleData(InstanceIdentifier<Node> nodeID, InstanceIdentifier<?> id, DataObject dataObject) {
-        FlowCapableNodeConnectorStatisticsData stData = (FlowCapableNodeConnectorStatisticsData) dataObject;
+    public void handleData(InstanceIdentifier<Node> nodeID, InstanceIdentifier<?> id,
+            FlowCapableNodeConnectorStatisticsData stData) {
         FlowCapableNodeConnectorStatistics fs = stData.getFlowCapableNodeConnectorStatistics();
         if (fs == null) {
             //no data yet, ignore

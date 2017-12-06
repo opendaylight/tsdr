@@ -31,8 +31,8 @@ import org.opendaylight.yangtools.yang.binding.InstanceIdentifier.PathArgument;
  * a reference to the main collector and provide some common methods to use by
  * the handlers.
  */
-public abstract class TSDRBaseDataHandler {
-    private TSDROpenflowCollector collector = null;
+public abstract class TSDRBaseDataHandler<T extends DataObject> {
+    private final TSDROpenflowCollector collector;
 
     public TSDRBaseDataHandler(TSDROpenflowCollector collector) {
         this.collector = collector;
@@ -42,7 +42,7 @@ public abstract class TSDRBaseDataHandler {
      * An abstract method that each handler should implement according to the type of data it is handling.
      */
     public abstract void handleData(InstanceIdentifier<Node> nodeID,
-            InstanceIdentifier<?> id, DataObject dataObject);
+            InstanceIdentifier<?> id, T dataObject);
 
     /*
      * Returns a reference to the main collector

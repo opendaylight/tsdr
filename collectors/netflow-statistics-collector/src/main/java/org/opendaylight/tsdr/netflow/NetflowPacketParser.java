@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributesBuilder;
 
@@ -23,7 +24,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog
  */
 public class NetflowPacketParser {
     private final List<RecordAttributes> recordAttributes = new ArrayList<>();
-    private static HashMap<Integer, Integer> template;
 
     private enum NetflowV9Attribs {
         IN_BYTES,
@@ -110,8 +110,6 @@ public class NetflowPacketParser {
      * multiple PDU's of which the header would be same.
      */
     public NetflowPacketParser(final byte[] buff) {
-        template = null;
-        NetflowV9Attribs.values();// initializing here for code coverage.
         int version = Integer.parseInt(convert(buff, 0, 2));
         if (version == 9) {
             addValue("version", "" + version + "");
@@ -132,45 +130,40 @@ public class NetflowPacketParser {
         }
     }
 
-    public static HashMap<Integer, Integer> getTemplate() {
-        return template;
-    }
-
     /**
      * function to add netflow format to the packets. The netflow header would
      * be same while the format would be different according to the PDU's.
      *
-     * @param buff
-     *            - the byte array of data contained in netflow packet.
-     * @param len
-     *            - the offset in the byte array where the data starts from.
+     * @param buff the byte array of data contained in netflow packet.
+     * @param len the offset in the byte array where the data starts from.
+     * @param template optional template Map.
      */
-    public void addFormat(byte[] buff, int len) {
+    public void addFormat(byte[] buff, int len, @Nullable Map<Integer, Integer> template) {
         int version = Integer.parseInt(convert(buff, 0, 2));
         if (version == 9) {
-            addFormatV9(buff, len);
+            addFormatV9(buff, len, template);
         } else {
             addFormatV5(buff, len);
         }
     }
 
-    public static void fillFlowSetTemplateMap(byte[] buff, int len, int count) {
-        if (template == null) {
-            template = new HashMap<>();
-            if (buff == null) {
-                return;
-            }
-            while (count > 0) {
-                int attrib = Integer.parseInt(convert(buff, len, 2));
-                int lenn = Integer.parseInt(convert(buff, len + 2, 2));
-                template.put(attrib, lenn);
-                len += 4;
-                count -= 1;
-            }
+    public static Map<Integer, Integer> createFlowSetTemplateMap(byte[] buff, int len, int count) {
+        Map<Integer, Integer> template = new HashMap<>();
+        if (buff == null) {
+            return template;
         }
+        while (count > 0) {
+            int attrib = Integer.parseInt(convert(buff, len, 2));
+            int lenn = Integer.parseInt(convert(buff, len + 2, 2));
+            template.put(attrib, lenn);
+            len += 4;
+            count -= 1;
+        }
+
+        return template;
     }
 
-    public void addFormatV9(byte[] buff, int len) {
+    public void addFormatV9(byte[] buff, int len, @Nullable Map<Integer, Integer> template) {
         if (template != null) {
             NetflowV9Attribs[] attributes = NetflowV9Attribs.values();
             int dataOffset = 0;
@@ -187,15 +180,15 @@ public class NetflowPacketParser {
             addValue("Packets", convert(buff, len + 12, 4));
             addValue("inputInt", convert(buff, len + 16, 2));
             addValue("outputInt", convert(buff, len + 18, 2));
-            addValue("srcAddr", convertIPAddress(new Long(convert(buff, len + 20, 4)).longValue()));
-            addValue("dstAddr", convertIPAddress(new Long(convert(buff, len + 24, 4)).longValue()));
+            addValue("srcAddr", convertIPAddress(Long.parseLong(convert(buff, len + 20, 4))));
+            addValue("dstAddr", convertIPAddress(Long.parseLong(convert(buff, len + 24, 4))));
             addValue("Protocol", convert(buff, len + 28, 1));
             addValue("ipTOS", convert(buff, len + 29, 1));
             addValue("srcPort", convert(buff, len + 30, 2));
             addValue("dstPort", convert(buff, len + 32, 2));
             addValue("samplerID", convert(buff, len + 34, 1));
             addValue("flowClass", convert(buff, len + 35, 1));
-            addValue("nextHop", convertIPAddress(new Long(convert(buff, len + 36, 4)).longValue()));
+            addValue("nextHop", convertIPAddress(Long.parseLong(convert(buff, len + 36, 4))));
             addValue("dstMask", convert(buff, len + 40, 1));
             addValue("srcMask", convert(buff, len + 41, 1));
             addValue("TCPFlags", convert(buff, len + 42, 1));
@@ -206,9 +199,9 @@ public class NetflowPacketParser {
     }
 
     public void addFormatV5(byte[] buff, int len) {
-        addValue("srcAddr", convertIPAddress(new Long(convert(buff, len + 24, 4)).longValue()));
-        addValue("dstAddr", convertIPAddress(new Long(convert(buff, len + 28, 4)).longValue()));
-        addValue("nextHop", convertIPAddress(new Long(convert(buff, len + 32, 4)).longValue()));
+        addValue("srcAddr", convertIPAddress(Long.parseLong(convert(buff, len + 24, 4))));
+        addValue("dstAddr", convertIPAddress(Long.parseLong(convert(buff, len + 28, 4))));
+        addValue("nextHop", convertIPAddress(Long.parseLong(convert(buff, len + 32, 4))));
         addValue("input", convert(buff, len + 36, 2));
         addValue("output", convert(buff, len + 38, 2));
         addValue("dPkts", convert(buff, len + 40, 4));
@@ -226,7 +219,7 @@ public class NetflowPacketParser {
         addValue("dstAS", convert(buff, len + 66, 2));
         addValue("srcMask", Byte.toString(buff[len + 68]));
         addValue("dstMask", Byte.toString(buff[len + 69]));
-        addValue("flowDuration", new Long(Long.parseLong(last) - Long.parseLong(first)).toString());
+        addValue("flowDuration", Long.toString(Long.parseLong(last) - Long.parseLong(first)));
     }
 
     public List<RecordAttributes> getRecordAttributes() {
@@ -275,7 +268,7 @@ public class NetflowPacketParser {
         for (int i = off; i < done; i++) {
             ret = (ret << 8 & 0xffffffff) + (bytes[i] & 0xff);
         }
-        return new Long(ret).toString();
+        return Long.toString(ret);
     }
 
     /**

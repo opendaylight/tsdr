@@ -43,6 +43,7 @@ import java.lang.invoke.MethodHandles;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -70,24 +71,24 @@ class ElasticSearchStore extends AbstractScheduledService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private static final String ELK_QUERY = ""
-            + "{\n"
-            + "    \"query\": {\n"
-            + "        \"filtered\": {\n"
-            + "            \"query\": {\n"
-            + "                \"query_string\": {\n"
-            + "                    \"query\": \"%s\"\n"
-            + "                }\n"
-            + "            },\n"
-            + "            \"filter\": {\n"
-            + "                \"range\": {\n"
-            + "                   \"TimeStamp\": {\n"
-            + "                      \"gte\": %d,\n"
-            + "                      \"lte\": %d\n"
-            + "                   }\n"
-            + "                }\n"
-            + "            }\n"
-            + "        }\n"
-            + "    }\n"
+            + "{%n"
+            + "    \"query\": {%n"
+            + "        \"filtered\": {%n"
+            + "            \"query\": {%n"
+            + "                \"query_string\": {%n"
+            + "                    \"query\": \"%s\"%n"
+            + "                }%n"
+            + "            },%n"
+            + "            \"filter\": {%n"
+            + "                \"range\": {%n"
+            + "                   \"TimeStamp\": {%n"
+            + "                      \"gte\": %d,%n"
+            + "                      \"lte\": %d%n"
+            + "                   }%n"
+            + "                }%n"
+            + "            }%n"
+            + "        }%n"
+            + "    }%n"
             + "}";
     private static final String QUERY_CONDITION = "%s:\\\"%s\\\"";
 
@@ -105,7 +106,7 @@ class ElasticSearchStore extends AbstractScheduledService {
         private final String mapping;
 
         RecordType() {
-            name = name().toLowerCase();
+            name = name().toLowerCase(Locale.getDefault());
             String json = null;
             try {
                 File file = new File(ConfigFileUtil.CONFIG_DIR + "tsdr-persistence-elasticsearch_"
@@ -440,7 +441,7 @@ class ElasticSearchStore extends AbstractScheduledService {
                 .setExclusionStrategies(new ExclusionStrategy() {
                     @Override
                     public boolean shouldSkipField(FieldAttributes fieldAttributes) {
-                        String name = fieldAttributes.getName().toLowerCase();
+                        String name = fieldAttributes.getName().toLowerCase(Locale.getDefault());
                         return name.equals("hash") || name.equals("hashvalid");
                     }
 
@@ -550,7 +551,7 @@ class ElasticSearchStore extends AbstractScheduledService {
     protected Scheduler scheduler() {
         long delay = 1L;
         if (properties.containsKey("syncInterval")) {
-            delay = Math.max(Long.valueOf(properties.get("syncInterval")), delay);
+            delay = Math.max(Long.parseLong(properties.get("syncInterval")), delay);
         }
         return Scheduler.newFixedDelaySchedule(0L, delay, TimeUnit.SECONDS);
     }

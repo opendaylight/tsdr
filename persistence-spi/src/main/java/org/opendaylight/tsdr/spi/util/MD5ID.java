@@ -7,6 +7,8 @@
  */
 package org.opendaylight.tsdr.spi.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
@@ -79,6 +81,16 @@ public class MD5ID {
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
         MD5ID other = (MD5ID) obj;
         if (other.md5Long1 == md5Long1 && other.md5Long2 == md5Long2) {
             return true;
@@ -94,12 +106,13 @@ public class MD5ID {
         return this.md5Long2;
     }
 
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public byte[] toByteArray() {
         return this.hashByteArray;
     }
 
     public static MD5ID createTSDRId(final String tsdrKey) {
-        return new MD5ID(tsdrKey.getBytes(), false);
+        return new MD5ID(tsdrKey.getBytes(StandardCharsets.UTF_8), false);
     }
 
     public static MD5ID createTSDRId(long l1, long l2) {

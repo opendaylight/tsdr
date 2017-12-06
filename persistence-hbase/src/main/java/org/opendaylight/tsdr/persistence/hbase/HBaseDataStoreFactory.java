@@ -23,8 +23,9 @@ import org.slf4j.LoggerFactory;
  */
 public class HBaseDataStoreFactory {
     private static final Logger LOG = LoggerFactory.getLogger(HBaseDataStoreFactory.class);
+    private static final String HBASE_PROPS_FILENAME = "tsdr-persistence-hbase.properties";
+
     private static HBaseDataStore datastore;
-    private static String hbasePropsFilename = "tsdr-persistence-hbase.properties";
 
     /**
      * Default constructor.
@@ -36,7 +37,7 @@ public class HBaseDataStoreFactory {
      * To obtain or create the HBase Data Store.
      * @return HBaseDataStore
      */
-    public static HBaseDataStore getHBaseDataStore() {
+    public static synchronized HBaseDataStore getHBaseDataStore() {
         //load XML and initialize HBase data store
         if (datastore == null) {
             HBaseDataStoreContext context = initializeDatastoreContext();
@@ -48,7 +49,7 @@ public class HBaseDataStoreFactory {
     /*
      * Setter for UT purpose which is invoked from the factory
      */
-    static void setHBaseDataStoreIfAbsent(HBaseDataStore hbaseDataStore) {
+    static synchronized void setHBaseDataStoreIfAbsent(HBaseDataStore hbaseDataStore) {
         if (datastore == null) {
             initializeDatastoreContext();// just for UT purpose
             datastore = hbaseDataStore;
@@ -66,7 +67,7 @@ public class HBaseDataStoreFactory {
         InputStream inputStream = null;
 
         try {
-            String fileFullPath = System.getProperty("karaf.etc") + "/" + hbasePropsFilename;
+            String fileFullPath = System.getProperty("karaf.etc") + "/" + HBASE_PROPS_FILENAME;
             File file = new File(fileFullPath);
             if (file.exists()) {
                 LOG.info("Loading properties from " + fileFullPath);
@@ -81,8 +82,8 @@ public class HBaseDataStoreFactory {
 
         try {
             if (inputStream == null || !properties.propertyNames().hasMoreElements()) {
-                LOG.error("Properties stream is null or properties failed to load, check the file=" + hbasePropsFilename
-                        + " exists in classpath");
+                LOG.error("Properties stream is null or properties failed to load, check the file {}"
+                        + " exists in classpath", HBASE_PROPS_FILENAME);
                 LOG.warn("Initializing HbaseDataStoreContext default values");
                 context.setPoolSize(20);
                 context.setZookeeperClientport("2181");
@@ -96,13 +97,13 @@ public class HBaseDataStoreFactory {
 
             LOG.info("Updating properties onto context");
 
-            context.setPoolSize(Integer.valueOf(properties.getProperty("poolsize")));
+            context.setPoolSize(Integer.parseInt(properties.getProperty("poolsize")));
             context.setZookeeperClientport(properties.getProperty("zoo.keeper.client.port"));
             context.setZookeeperQuorum(properties.getProperty("zoo.keeper.quorum"));
             context.setAutoFlush(Boolean.valueOf(properties.getProperty("autoflush")));
-            context.setWriteBufferSize(Integer.valueOf(properties.getProperty("writebuffersize")));
+            context.setWriteBufferSize(Integer.parseInt(properties.getProperty("writebuffersize")));
             HBaseDataStoreContext.addProperty(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL,
-                    Long.valueOf(properties.getProperty("createTableRetryInterval")));
+                    Long.parseLong(properties.getProperty("createTableRetryInterval")));
 
         } finally {
             if (inputStream != null) {

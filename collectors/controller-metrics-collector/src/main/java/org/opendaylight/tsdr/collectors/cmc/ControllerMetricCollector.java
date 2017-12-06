@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
@@ -75,7 +76,7 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
     }
 
 
-    public Optional<Double> getControllerCPU() {
+    public Optional<Double> getControllerCpu() {
         LOG.debug("Getting controller CPU data");
         if (cpuDataCollector.isPresent()) {
             return cpuDataCollector.get().getControllerCpu();
@@ -86,7 +87,7 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
         }
     }
 
-    public Optional<Double> getMachineCPU() {
+    public Optional<Double> getMachineCpu() {
         LOG.debug("Getting machine CPU data");
         if (cpuDataCollector.isPresent()) {
             return cpuDataCollector.get().getMachineCpu();
@@ -110,11 +111,12 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
         list.add(builder.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
-        collectorSPIService.insertTSDRMetricRecord(input.build());
+
+        RPCFutures.logResult(collectorSPIService.insertTSDRMetricRecord(input.build()), "insertTSDRMetricRecord", LOG);
     }
 
     protected void insertControllerCPUSample() {
-        final Optional<Double> cpuValue = getControllerCPU();
+        final Optional<Double> cpuValue = getControllerCpu();
 
         if (!cpuValue.isPresent()) {
             return;
@@ -132,11 +134,12 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
         list.add(builder.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
-        collectorSPIService.insertTSDRMetricRecord(input.build());
+
+        RPCFutures.logResult(collectorSPIService.insertTSDRMetricRecord(input.build()), "insertTSDRMetricRecord", LOG);
     }
 
     protected void insertMachineCPUSample() {
-        final Optional<Double> cpuValue = getMachineCPU();
+        final Optional<Double> cpuValue = getMachineCpu();
 
         if (!cpuValue.isPresent()) {
             return;
@@ -154,6 +157,7 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
         list.add(builder.build());
         input.setTSDRMetricRecord(list);
         input.setCollectorCodeName(COLLECTOR_CODE_NAME);
-        collectorSPIService.insertTSDRMetricRecord(input.build());
+
+        RPCFutures.logResult(collectorSPIService.insertTSDRMetricRecord(input.build()), "insertTSDRMetricRecord", LOG);
     }
 }

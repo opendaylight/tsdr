@@ -8,6 +8,7 @@
 package org.opendaylight.tsdr.osc;
 
 import com.google.common.base.Optional;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -25,6 +26,7 @@ import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
+import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.tsdr.osc.handlers.FlowCapableNodeConnectorQueueStatisticsDataHandler;
 import org.opendaylight.tsdr.osc.handlers.FlowStatisticsDataHandler;
 import org.opendaylight.tsdr.osc.handlers.NodeConnectorStatisticsChangeHandler;
@@ -105,7 +107,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
     private TSDRMetricRecordBuilderContainer[] containers = new TSDRMetricRecordBuilderContainer[0];
 
     // collectors
-    private final Map<Class<? extends DataObject>, TSDRBaseDataHandler> handlers = new ConcurrentHashMap<>();
+    private final Map<Class<? extends DataObject>, TSDRBaseDataHandler<?>> handlers = new ConcurrentHashMap<>();
     private final Map<InstanceIdentifier<Node>, Set<InstanceIdentifier<?>>> nodeID2SubIDs = new ConcurrentHashMap<>();
     private TSDROSCConfig config;
     private final TsdrCollectorSpiService collectorSPIService;
@@ -124,8 +126,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         // initialize handlers
         handlers.put(FlowCapableNodeConnectorQueueStatisticsData.class,
                 new FlowCapableNodeConnectorQueueStatisticsDataHandler(this));
-        handlers.put(FlowStatisticsData.class, new FlowStatisticsDataHandler(
-                this));
+        handlers.put(FlowStatisticsData.class, new FlowStatisticsDataHandler(this));
         handlers.put(FlowCapableNodeConnectorStatisticsData.class,
                 new NodeConnectorStatisticsChangeHandler(this));
         handlers.put(NodeGroupStatistics.class,
@@ -178,6 +179,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
     }
 
     @Override
+    @SuppressFBWarnings("NN_NAKED_NOTIFY")
     public void close() {
         this.running = false;
 
@@ -194,7 +196,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
     // the builder container.
     public void addBuilderToContainer(InstanceIdentifier<Node> nodeID,
             InstanceIdentifier<?> id, TSDRMetricRecordBuilder builder) {
-        TSDRMetricRecordBuilderContainer container = null;
+        TSDRMetricRecordBuilderContainer container;
         // We want to synchronize here because when adding a new builder we want
         // to make sure there
         // is only one builder container per metric path as we might get on the
@@ -276,13 +278,13 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
     }
 
     // Finds the handler for this statistics and apply it
-    public void handle(InstanceIdentifier<Node> nodeID,
-            InstanceIdentifier<?> id, DataObject dataObject,
-            Class<? extends DataObject> cls) {
+    @SuppressWarnings("unchecked")
+    public <T extends DataObject> void handle(InstanceIdentifier<Node> nodeID,
+            InstanceIdentifier<?> id, T dataObject, Class<T> cls) {
         if (dataObject == null) {
             return;
         }
-        TSDRBaseDataHandler handler = handlers.get(cls);
+        TSDRBaseDataHandler<T> handler = (TSDRBaseDataHandler<T>) handlers.get(cls);
         if (handler == null) {
             log("Error, can't find collector for " + cls.getSimpleName(), ERROR);
             return;
@@ -448,6 +450,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         }
 
         @Override
+        @SuppressFBWarnings("UW_UNCOND_WAIT")
         public void run() {
             while (running) {
                 synchronized (TSDROpenflowCollector.this) {
@@ -483,7 +486,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
 
     // Invoke the storage rpc method
     private void store(InsertTSDRMetricRecordInput input) {
-        this.collectorSPIService.insertTSDRMetricRecord(input);
+        RPCFutures.logResult(collectorSPIService.insertTSDRMetricRecord(input), "insertTSDRMetricRecord", LOG);
         log("Data Storage called", DEBUG);
     }
 
@@ -496,6 +499,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
     }
 
     @SuppressWarnings("checkstyle:RegexpSingleLineJava")
+    @SuppressFBWarnings({"DM_DEFAULT_ENCODING", "DMI_HARDCODED_ABSOLUTE_FILENAME"})
     private static synchronized void log(@Nonnull String str, Exception error, int type) {
         if (logToExternalFile) {
             try {
@@ -515,15 +519,13 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
                 case INFO:
                     LOG.info(str);
                     break;
-                case DEBUG:
-                    LOG.debug(str);
-                    break;
                 case ERROR:
                     LOG.error(str);
                     break;
                 case WARNING:
                     LOG.warn(str);
                     break;
+                case DEBUG:
                 default:
                     LOG.debug(str);
             }

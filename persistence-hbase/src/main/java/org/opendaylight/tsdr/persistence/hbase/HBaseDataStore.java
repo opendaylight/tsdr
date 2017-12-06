@@ -9,6 +9,7 @@ package org.opendaylight.tsdr.persistence.hbase;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -179,7 +180,7 @@ public class HBaseDataStore  {
             if (tableName != null) {
                 hbase = getNewHBaseAdmin();
                 HTableDescriptor desc = new HTableDescriptor(tableName);
-                HColumnDescriptor column = new HColumnDescriptor("c1".getBytes());
+                HColumnDescriptor column = new HColumnDescriptor("c1".getBytes(StandardCharsets.UTF_8));
                 desc.addFamily(column);
                 if (!hbase.tableExists(tableName)) {
                     hbase.createTable(desc);
@@ -327,7 +328,7 @@ public class HBaseDataStore  {
                 htablePool.putTable(htable);
             }
             htable.close();
-            LOG.debug("Returned connection back to pool" + htable.getTableName());
+            LOG.debug("Returned connection back to pool");
         } catch (IOException ioe) {
             LOG.error("IOException caught");
         }
@@ -570,7 +571,7 @@ public class HBaseDataStore  {
                     deleteList.clear();
                 }
             }
-            if (count > 0 && deleteList != null && deleteList.size() != 0) {
+            if (count > 0 && deleteList.size() != 0) {
                 htable.delete(deleteList);
             }
         } catch (TableNotFoundException nfe) {

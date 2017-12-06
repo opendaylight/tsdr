@@ -8,6 +8,7 @@
 package org.opendaylight.tsdr.restconf.collector;
 
 import com.google.common.annotations.VisibleForTesting;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Dictionary;
@@ -115,6 +116,7 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
      * @param properties the properties of the collector
      */
     @Override
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
     public synchronized void updated(Dictionary properties) throws ConfigurationException {
         if (properties != null && !properties.isEmpty()) {
 

@@ -8,7 +8,6 @@
 
 package org.opendaylight.tsdr.collector.spi;
 
-import com.google.common.util.concurrent.Futures;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -24,7 +23,8 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yangtools.yang.common.RpcResult;
-import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is being used as a stub to the persistence layer SPI. It purpose is to give a layer
@@ -33,6 +33,7 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
  * @author Sharon Aicler(saichler@gmail.com)
  **/
 public class CollectorSPIImpl implements TsdrCollectorSpiService {
+    private static final Logger LOG = LoggerFactory.getLogger(CollectorSPIImpl.class);
 
     private final TsdrMetricDataService metricDataService;
     private final TsdrLogDataService logDataService;
@@ -59,8 +60,8 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService {
             records.add(rec.build());
         }
         tsdrServiceInput.setTSDRMetricRecord(records);
-        metricDataService.storeTSDRMetricRecord(tsdrServiceInput.build());
-        return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
+
+        return metricDataService.storeTSDRMetricRecord(tsdrServiceInput.build());
     }
 
     @Override
@@ -80,7 +81,7 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService {
             records.add(rec.build());
         }
         tsdrServiceInput.setTSDRLogRecord(records);
-        logDataService.storeTSDRLogRecord(tsdrServiceInput.build());
-        return Futures.immediateFuture(RpcResultBuilder.<Void>success().build());
+
+        return logDataService.storeTSDRLogRecord(tsdrServiceInput.build());
     }
 }

@@ -7,6 +7,8 @@
  */
 package org.opendaylight.tsdr.restconf.collector;
 
+import static org.mockito.Matchers.any;
+
 import java.util.List;
 import java.util.Timer;
 import org.junit.After;
@@ -18,6 +20,7 @@ import org.mockito.Mockito;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
 /**
  * This class is responsible for testing the TSDRRestconfCollectorLogger class.
@@ -54,6 +57,11 @@ public class TSDRRestconfCollectorLoggerTest {
         loggerObject = TSDRRestconfCollectorLogger.getInstance(() -> timer);
 
         tsdrCollectorSpiService = Mockito.mock(TsdrCollectorSpiService.class);
+        Mockito.when(tsdrCollectorSpiService.insertTSDRLogRecord(any()))
+                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+        Mockito.when(tsdrCollectorSpiService.insertTSDRMetricRecord(any()))
+                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+
         loggerObject.setTsdrCollectorSpiService(tsdrCollectorSpiService);
 
         loggerObject.init();
@@ -90,6 +98,10 @@ public class TSDRRestconfCollectorLoggerTest {
         // Now, we try inserting one log to assert whether the queue and
         // the index have been reset
         Mockito.reset(tsdrCollectorSpiService);
+        Mockito.when(tsdrCollectorSpiService.insertTSDRLogRecord(any()))
+                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+        Mockito.when(tsdrCollectorSpiService.insertTSDRMetricRecord(any()))
+                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
 
         loggerObject.insertLog("PUT", "/restconf/path3", "10.0.0.3", "body3");
         loggerObject.run();

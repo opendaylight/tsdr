@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.persistence.hsqldb;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -57,6 +58,7 @@ public class HsqlDBStore {
         this.connection = connection;
     }
 
+    @SuppressFBWarnings("DMI_EMPTY_DB_PASSWORD")
     private static Connection getConnection() {
         try {
             new org.hsqldb.jdbcDriver();
@@ -75,17 +77,19 @@ public class HsqlDBStore {
         if (!rs.next()) {
             String sql = "CREATE TABLE " + METRIC_TABLE + " (" + "KeyA bigint, " + "KeyB bigint, " + "Time bigint, "
                     + "value double," + "PRIMARY KEY (KeyA,KeyB,Time))";
-            Statement st = this.connection.createStatement();
-            st.execute(sql);
-            st.close();
+            try (Statement st = this.connection.createStatement()) {
+                st.execute(sql);
+            }
+
             sql = "CREATE TABLE " + LOG_TABLE + " (" + "KeyA bigint, " + "KeyB bigint, " + "Time bigint, "
                     + "xIndex int," + "value VARCHAR(255)," + "PRIMARY KEY (KeyA,KeyB,Time,xIndex))";
-            st = this.connection.createStatement();
-            st.execute(sql);
-            st.close();
+            try (Statement st = this.connection.createStatement()) {
+                st.execute(sql);
+            }
         }
     }
 
+    @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     public void store(TSDRMetricRecord mr) throws SQLException {
         //create metric key
         String tsdrKey = FormatUtil.getTSDRMetricKey(mr);
@@ -96,17 +100,20 @@ public class HsqlDBStore {
             cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
         }
 
-        StringBuilder sql = new StringBuilder();
-        sql.append("insert into " + METRIC_TABLE + " (KeyA,KeyB,Time,value) values(");
-        sql.append(cacheEntry.getMd5ID().getMd5Long1()).append(",");
-        sql.append(cacheEntry.getMd5ID().getMd5Long2()).append(",");
-        sql.append(mr.getTimeStamp()).append(",");
-        sql.append(mr.getMetricValue()).append(")");
-        Statement st = this.connection.createStatement();
-        st.execute(sql.toString());
-        st.close();
+        StringBuilder buf = new StringBuilder();
+        buf.append("insert into " + METRIC_TABLE + " (KeyA,KeyB,Time,value) values(");
+        buf.append(cacheEntry.getMd5ID().getMd5Long1()).append(",");
+        buf.append(cacheEntry.getMd5ID().getMd5Long2()).append(",");
+        buf.append(mr.getTimeStamp()).append(",");
+        buf.append(mr.getMetricValue()).append(")");
+        String sql = buf.toString();
+
+        try (Statement st = this.connection.createStatement()) {
+            st.execute(sql);
+        }
     }
 
+    @SuppressFBWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
     public void store(TSDRLogRecord lr) throws SQLException {
         //create log key
         String tsdrKey = FormatUtil.getTSDRLogKey(lr);
@@ -116,16 +123,18 @@ public class HsqlDBStore {
             cacheEntry = cache.addTSDRCacheEntry(tsdrKey);
         }
 
-        StringBuilder sql = new StringBuilder();
-        sql.append("insert into " + LOG_TABLE + " (KeyA,KeyB,Time,xIndex,value) values(");
-        sql.append(cacheEntry.getMd5ID().getMd5Long1()).append(",");
-        sql.append(cacheEntry.getMd5ID().getMd5Long2()).append(",");
-        sql.append(lr.getTimeStamp()).append(",");
-        sql.append(lr.getIndex()).append(",'");
-        sql.append(lr.getRecordFullText()).append("')");
-        Statement st = this.connection.createStatement();
-        st.execute(sql.toString());
-        st.close();
+        StringBuilder buf = new StringBuilder();
+        buf.append("insert into " + LOG_TABLE + " (KeyA,KeyB,Time,xIndex,value) values(");
+        buf.append(cacheEntry.getMd5ID().getMd5Long1()).append(",");
+        buf.append(cacheEntry.getMd5ID().getMd5Long2()).append(",");
+        buf.append(lr.getTimeStamp()).append(",");
+        buf.append(lr.getIndex()).append(",'");
+        buf.append(lr.getRecordFullText()).append("')");
+        String sql = buf.toString();
+
+        try (Statement st = this.connection.createStatement()) {
+            st.execute(sql);
+        }
     }
 
     public List<TSDRMetricRecord> getTSDRMetricRecords(String tsdrMetricKey, long startDateTime, long endDateTime,
@@ -137,33 +146,33 @@ public class HsqlDBStore {
             String sql = "select * from " + METRIC_TABLE + " where KeyA=" + entry.getMd5ID().getMd5Long1()
                     + " and KeyB=" + entry.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<="
                     + endDateTime;
-            Statement st = connection.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()) {
-                result.add(getTSDRMetricRecord(rs.getLong("Time"), rs.getDouble("value"), entry));
-                if (result.size() >= recordLimit) {
-                    break;
+
+            try (Statement st = connection.createStatement()) {
+                try (ResultSet rs = st.executeQuery(sql)) {
+                    while (rs.next()) {
+                        result.add(getTSDRMetricRecord(rs.getLong("Time"), rs.getDouble("value"), entry));
+                        if (result.size() >= recordLimit) {
+                            break;
+                        }
+                    }
                 }
             }
-            rs.close();
-            st.close();
+
             return result;
         } else {
             TSDRMetricCollectJob job = (entry1, startDateTime1, endDateTime1, recordLimit1, globalResult) -> {
                 String sql = "select * from " + METRIC_TABLE + " where KeyA=" + entry1.getMd5ID().getMd5Long1()
                         + " and KeyB=" + entry1.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime1
                         + " and Time<=" + endDateTime1;
-                try {
-                    Statement st = connection.createStatement();
-                    ResultSet rs = st.executeQuery(sql);
-                    while (rs.next()) {
-                        globalResult.add(getTSDRMetricRecord(rs.getLong("Time"), rs.getDouble("value"), entry1));
-                        if (globalResult.size() >= recordLimit1) {
-                            break;
+                try (Statement st = connection.createStatement()) {
+                    try (ResultSet rs = st.executeQuery(sql)) {
+                        while (rs.next()) {
+                            globalResult.add(getTSDRMetricRecord(rs.getLong("Time"), rs.getDouble("value"), entry1));
+                            if (globalResult.size() >= recordLimit1) {
+                                break;
+                            }
                         }
                     }
-                    rs.close();
-                    st.close();
                 } catch (SQLException e) {
                     LOG.error("SQL Error while retrieving records", e);
                 }
@@ -180,34 +189,35 @@ public class HsqlDBStore {
             List<TSDRLogRecord> result = new LinkedList<>();
             String sql = "select * from " + LOG_TABLE + " where KeyA=" + entry.getMd5ID().getMd5Long1() + " and KeyB="
                     + entry.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime + " and Time<=" + endDateTime;
-            Statement st = connection.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()) {
-                result.add(getTSDRLogRecord(rs.getLong("Time"), rs.getString("value"), rs.getInt("xIndex"), entry));
-                if (result.size() >= recordLimit) {
-                    break;
+
+            try (Statement st = connection.createStatement()) {
+                try (ResultSet rs = st.executeQuery(sql)) {
+                    while (rs.next()) {
+                        result.add(getTSDRLogRecord(rs.getLong("Time"), rs.getString("value"),
+                                rs.getInt("xIndex"), entry));
+                        if (result.size() >= recordLimit) {
+                            break;
+                        }
+                    }
                 }
             }
-            rs.close();
-            st.close();
+
             return result;
         } else {
             TSDRLogCollectJob job = (entry1, startDateTime1, endDateTime1, recordLimit1, globalResult) -> {
                 String sql = "select * from " + LOG_TABLE + " where KeyA=" + entry1.getMd5ID().getMd5Long1()
                         + " and KeyB=" + entry1.getMd5ID().getMd5Long2() + " and Time>=" + startDateTime1
                         + " and Time<=" + endDateTime1;
-                try {
-                    Statement st = connection.createStatement();
-                    ResultSet rs = st.executeQuery(sql);
-                    while (rs.next()) {
-                        globalResult.add(getTSDRLogRecord(rs.getLong("Time"), rs.getString("value"),
-                                rs.getInt("xIndex"), entry1));
-                        if (globalResult.size() >= recordLimit1) {
-                            break;
+                try (Statement st = connection.createStatement()) {
+                    try (ResultSet rs = st.executeQuery(sql)) {
+                        while (rs.next()) {
+                            globalResult.add(getTSDRLogRecord(rs.getLong("Time"), rs.getString("value"),
+                                    rs.getInt("xIndex"), entry1));
+                            if (globalResult.size() >= recordLimit1) {
+                                break;
+                            }
                         }
                     }
-                    rs.close();
-                    st.close();
                 } catch (SQLException e) {
                     LOG.error("SQL Error while retrieving records", e);
                 }
@@ -257,9 +267,10 @@ public class HsqlDBStore {
         for (TSDRCacheEntry entry : this.cache.getAll()) {
             if (entry.getDataCategory() == category) {
                 String sql = sql1 + entry.getMd5ID().getMd5Long1() + sql2 + entry.getMd5ID().getMd5Long2() + sql3;
-                Statement st = this.connection.createStatement();
-                st.execute(sql);
-                st.close();
+
+                try (Statement st = this.connection.createStatement()) {
+                    st.execute(sql);
+                }
             }
         }
     }
@@ -271,9 +282,10 @@ public class HsqlDBStore {
         for (TSDRCacheEntry entry : this.cache.getAll()) {
             if (entry.getDataCategory() == category) {
                 String sql = sql1 + entry.getMd5ID().getMd5Long1() + sql2 + entry.getMd5ID().getMd5Long2() + sql3;
-                Statement st = this.connection.createStatement();
-                st.execute(sql);
-                st.close();
+
+                try (Statement st = this.connection.createStatement()) {
+                    st.execute(sql);
+                }
             }
         }
     }

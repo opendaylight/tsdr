@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.spi.util;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -14,11 +15,14 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nonnull;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -26,6 +30,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.transform.stream.StreamSource;
+import jline.internal.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +72,11 @@ public class DataEncrypter {
                 FileInputStream in = null;
                 try {
                     in = new FileInputStream(keyFile);
-                    in.read(keyData);
+                    int actual = in.read(keyData);
+                    if (actual < length) {
+                        Log.warn("Expected {} bytes read, actual {}", length, actual);
+                    }
+
                 } catch (FileNotFoundException e) {
                     LOGGER.error("Key file was not found", e);
                 } catch (IOException e) {
@@ -136,23 +145,15 @@ public class DataEncrypter {
         }
 
         final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        final CipherOutputStream out = new CipherOutputStream(bout, cr);
-        try {
-            final byte[] data = str.getBytes();
+        try (CipherOutputStream out = new CipherOutputStream(bout, cr)) {
+            final byte[] data = str.getBytes(StandardCharsets.UTF_8);
             out.write(data);
             final byte[] encData = bout.toByteArray();
             return ENCRYPTED_TAG + DatatypeConverter.printBase64Binary(encData);
         } catch (IOException e) {
             LOGGER.error("Could not encrypt String", e);
-        } finally {
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException e) {
-                    LOGGER.error("Could not close stream", e);
-                }
-            }
         }
+
         return str;
     }
 
@@ -161,6 +162,7 @@ public class DataEncrypter {
      * @param  encStr  The Tagged Encrypted String
      * @return         The unencrypted string.
      */
+    @SuppressFBWarnings("RR_NOT_CHECKED")
     public static String decrypt(final String encStr) {
         // No Key, hence disabled
         if (GenerateKey.getKey() == null) {
@@ -199,35 +201,31 @@ public class DataEncrypter {
 
         final byte[] encData = DatatypeConverter.parseBase64Binary(encStr.substring(ENCRYPTED_TAG.length()));
         final ByteArrayInputStream bin = new ByteArrayInputStream(encData);
-        final CipherInputStream in = new CipherInputStream(bin, cr);
-        final byte[] data = new byte[encStr.length() * 2];
-        try {
+        try (CipherInputStream in = new CipherInputStream(bin, cr)) {
+            final byte[] data = new byte[encStr.length() * 2];
             in.read(data);
-            return new String(data).trim();
+            return new String(data, StandardCharsets.UTF_8).trim();
         } catch (IOException e) {
             LOGGER.error("Could not decrypt string", e);
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                    LOGGER.error("Could not close stream", e);
-                }
-            }
         }
+
         return encStr;
     }
 
     /**
      * Loads the a text file content.
      */
+    @Nonnull
     private static String loadFileContent(final String fileName) {
         final File file = new File(fileName);
         final byte[] data = new byte[(int) file.length()];
         FileInputStream in = null;
         try {
             in = new FileInputStream(file);
-            in.read(data);
+            int actual = in.read(data);
+            if (actual < data.length) {
+                Log.warn("Expected {} bytes read, actual {}", data.length, actual);
+            }
         } catch (IOException e) {
             LOGGER.error("Could not read file", e);
         } finally {
@@ -239,7 +237,7 @@ public class DataEncrypter {
                 LOGGER.error("could not close stream", e);
             }
         }
-        return new String(data);
+        return new String(data, StandardCharsets.UTF_8);
     }
 
     /**
@@ -253,11 +251,7 @@ public class DataEncrypter {
         }
 
         String fileContent = loadFileContent(filename);
-        if (fileContent == null) {
-            return;
-        }
-
-        String fileContentInLowerCase = fileContent.toLowerCase();
+        String fileContentInLowerCase = fileContent.toLowerCase(Locale.getDefault());
         boolean encryptedAValue = false;
 
         for (Tag t : TAGS_TO_ENCRYPT) {
@@ -271,7 +265,7 @@ public class DataEncrypter {
                     final String eData = encrypt(data);
                     fileContent = fileContent.substring(0, t.tagLabelEnd + 1) + eData
                             + fileContent.substring(t.tagDataEnd);
-                    fileContentInLowerCase = fileContent.toLowerCase();
+                    fileContentInLowerCase = fileContent.toLowerCase(Locale.getDefault());
                     data = t.next(fileContentInLowerCase, fileContent);
                 }
             }
@@ -280,7 +274,7 @@ public class DataEncrypter {
             FileOutputStream out = null;
             try {
                 out = new FileOutputStream(filename);
-                out.write(fileContent.getBytes());
+                out.write(fileContent.getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) {
                 LOGGER.error("", e);
             } finally {
@@ -305,15 +299,12 @@ public class DataEncrypter {
             return null;
         }
 
-        String fileContent = loadFileContent(filename);
         // No Key, hence disabled
         if (GenerateKey.getKey() == null) {
             return new StreamSource(new File(filename));
         }
 
-        if (fileContent == null) {
-            return new StreamSource(new File(filename));
-        }
+        String fileContent = loadFileContent(filename);
 
         int index = fileContent.indexOf(ENCRYPTED_TAG);
         while (index != -1) {
@@ -324,7 +315,7 @@ public class DataEncrypter {
             index = fileContent.indexOf(ENCRYPTED_TAG);
         }
 
-        return new StreamSource(new ByteArrayInputStream(fileContent.getBytes()));
+        return new StreamSource(new ByteArrayInputStream(fileContent.getBytes(StandardCharsets.UTF_8)));
     }
 
     /**

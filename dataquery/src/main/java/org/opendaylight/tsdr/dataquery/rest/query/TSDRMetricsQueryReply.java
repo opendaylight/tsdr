@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.dataquery.rest.query;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -22,6 +23,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
  * @author Sharon Aicler(saichler@gmail.com)
  */
 @XmlRootElement(name = "TSDRMetricsQueryReply")
+@SuppressFBWarnings("URF_UNREAD_FIELD")
 public class TSDRMetricsQueryReply {
 
     private final List<MetricRecord> metricRecords = new ArrayList<>();

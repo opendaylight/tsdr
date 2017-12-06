@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.restconf.collector;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -20,6 +21,7 @@ import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
 public class TSDRRestconfCollectorConfigurator implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(TSDRRestconfCollectorConfigurator.class);
 
@@ -131,13 +133,14 @@ public class TSDRRestconfCollectorConfigurator implements AutoCloseable {
             if (customFilterList != null) {
                 if (customFilterList.contains(COLLECTOR_FILTER_CLASS_NAME)) {
                     String[] filters = customFilterList.split(",");
-                    customFilterList = "";
+                    StringBuilder builder = new StringBuilder();
                     for (int i = 0; i < filters.length; i++) {
                         if (!filters[i].equals(COLLECTOR_FILTER_CLASS_NAME)) {
-                            customFilterList += filters[i];
-                            customFilterList += ",";
+                            builder.append(filters[i]).append(',');
                         }
                     }
+
+                    customFilterList = builder.toString();
 
                     // Remove the trailing comma
                     if (customFilterList.length() > 0) {

@@ -71,7 +71,7 @@ public class SigarCpuDataCollector extends CpuDataCollector {
             Method cpuM = sigar.getClass().getMethod("getProcCpu", long.class);
             Object procCPU = cpuM.invoke(sigar, pid);
             Method procM = procCPU.getClass().getMethod("getPercent", (Class<?>[]) null);
-            return Optional.of((double) procM.invoke(procCPU, (Object[]) null));
+            return Optional.of((Double) procM.invoke(procCPU, (Object[]) null));
         } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException err) {
             LOG.error("Failed to get Controller CPU, Sigar library is probably not installed...", err);
         }
@@ -86,7 +86,7 @@ public class SigarCpuDataCollector extends CpuDataCollector {
             Method cpuM = sigar.getClass().getMethod("getCpuPerc", (Class<?>[])null);
             Object cpu = cpuM.invoke(sigar, (Object[])null);
             Method combineM = cpu.getClass().getMethod("getCombined",(Class<?>[])null);
-            return Optional.of((double) combineM.invoke(cpu, (Object[])null));
+            return Optional.of((Double) combineM.invoke(cpu, (Object[])null));
         } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException err) {
             LOG.error("Failed to get Machine CPU, Sigar library is probably not installed...", err);
         }

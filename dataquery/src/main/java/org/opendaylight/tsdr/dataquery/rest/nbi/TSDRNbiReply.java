@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.dataquery.rest.nbi;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -18,8 +19,11 @@ import javax.xml.bind.annotation.XmlTransient;
  * @author Sharon Aicler(saichler@gmail.com)
  */
 @XmlRootElement(name = "TSDRNbiReply")
+@SuppressFBWarnings("URF_UNREAD_FIELD")
 public class TSDRNbiReply {
+    @SuppressWarnings("unused")
     private String target;
+
     private final List<Object[]> datapoints = new ArrayList<>();
 
     public void addDataPoint(Long timestamp, Double value) {

@@ -18,7 +18,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.inventory.rev130819.nodes.N
 import org.opendaylight.yang.gen.v1.urn.opendaylight.meter.statistics.rev131111.NodeMeterStatistics;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.meter.statistics.rev131111.nodes.node.meter.MeterStatistics;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yangtools.yang.binding.DataObject;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 
 /**
@@ -26,15 +25,13 @@ import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
  *
  * @author Sharon Aicler(saichler@gmail.com)
  */
-public class NodeMeterStatisticsChangeHandler extends
-        TSDRBaseDataHandler {
+public class NodeMeterStatisticsChangeHandler extends TSDRBaseDataHandler<NodeMeterStatistics> {
     public NodeMeterStatisticsChangeHandler(TSDROpenflowCollector collector) {
         super(collector);
     }
 
     @Override
-    public void handleData(InstanceIdentifier<Node> nodeID, InstanceIdentifier<?> id, DataObject dataObject) {
-        NodeMeterStatistics nms = (NodeMeterStatistics) dataObject;
+    public void handleData(InstanceIdentifier<Node> nodeID, InstanceIdentifier<?> id, NodeMeterStatistics nms) {
         MeterStatistics ms = nms.getMeterStatistics();
         if (ms == null) {
             //no data yet, ignore

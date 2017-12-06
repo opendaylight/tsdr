@@ -18,6 +18,7 @@ import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -67,6 +68,7 @@ public class CassandraStore {
         this.session = session;
     }
 
+    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     private static Map<String,String> loadConfig() throws IOException {
         Map<String, String> result = new HashMap<>();
         try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(CONF_FILE)))) {
@@ -414,13 +416,16 @@ public class CassandraStore {
         for (TSDRCacheEntry entry : this.cache.getAll()) {
             if (entry.getDataCategory() == category) {
                 String cql = cql1 + entry.getMd5ID().getMd5Long1() + cql2 + entry.getMd5ID().getMd5Long2() + cql3;
-                final ResultSet rs = session.execute(cql);
-                for (Row row : rs.all()) {
-                    if (this.batch.size() >= MAX_BATCH_SIZE) {
-                        this.executeBatch();
-                        this.startBatch();
-                    }
-                }
+                session.execute(cql);
+                // TODO - the following causes a "Dead store to local variable" violation for 'row' since it's not
+                // used in the loop. What is this loop for - seems useless...
+//                final ResultSet rs = session.execute(cql);
+//                for (Row row : rs.all()) {
+//                    if (this.batch.size() >= MAX_BATCH_SIZE) {
+//                        this.executeBatch();
+//                        this.startBatch();
+//                    }
+//                }
             }
         }
         if (this.batch.size() > 0) {

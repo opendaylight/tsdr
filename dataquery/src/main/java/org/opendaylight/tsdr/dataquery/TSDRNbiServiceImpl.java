@@ -7,6 +7,10 @@
  */
 package org.opendaylight.tsdr.dataquery;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.JdkFutureAdapters;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -92,13 +96,25 @@ public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
 
     // Invoke the storage rpc method
     private void store(StoreTSDRMetricRecordInput input) {
-        metricDataService.storeTSDRMetricRecord(input);
-        LOG.debug("Data Storage called");
+        logResult(metricDataService.storeTSDRMetricRecord(input), "storeTSDRMetricRecord");
     }
 
     // Invoke the storage rpc method
     private void store(StoreTSDRLogRecordInput input) {
-        logDataService.storeTSDRLogRecord(input);
-        LOG.debug("Data Storage called");
+        logResult(logDataService.storeTSDRLogRecord(input), "storeTSDRLogRecord");
+    }
+
+    private void logResult(Future<RpcResult<Void>> future, String rpc) {
+        Futures.addCallback(JdkFutureAdapters.listenInPoolThread(future), new FutureCallback<RpcResult<Void>>() {
+            @Override
+            public void onSuccess(RpcResult<Void> result) {
+                LOG.debug("RPC {} returned result {]", rpc, result);
+            }
+
+            @Override
+            public void onFailure(Throwable ex) {
+                LOG.error("RPC {} failed", rpc, ex);
+            }
+        }, MoreExecutors.directExecutor());
     }
 }

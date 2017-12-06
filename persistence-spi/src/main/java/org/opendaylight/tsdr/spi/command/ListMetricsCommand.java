@@ -35,12 +35,19 @@ import org.slf4j.LoggerFactory;
 @Command(scope = "tsdr", name = "list",
     description = "Lists recent 1000 metrics(default) or returns time specified metrics")
 public class ListMetricsCommand extends OsgiCommandSupport {
-    private final Logger
-            log = LoggerFactory.getLogger(ListMetricsCommand.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ListMetricsCommand.class);
 
-    public static TSDRMetricPersistenceService metricService;
-    public static TSDRLogPersistenceService logService;
-    public static TSDRBinaryPersistenceService binaryService;
+    private static TSDRMetricPersistenceService metricService;
+    private static TSDRLogPersistenceService logService;
+    private static TSDRBinaryPersistenceService binaryService;
+
+    public static void setMetricService(TSDRMetricPersistenceService service) {
+        metricService = service;
+    }
+
+    public static void setLogService(TSDRLogPersistenceService service) {
+        logService = service;
+    }
 
     @Argument(index = 0, name = "category", required = true,
             description = "The category of the metrics we want to get", multiValued = false)
@@ -63,7 +70,7 @@ public class ListMetricsCommand extends OsgiCommandSupport {
         } catch (ParseException e) {
             //Note we will log just a warning for this exception without stack trace
             // As this is expected in some cases
-            log.warn("getDate for " + dateTime + "caused exception {}", e);
+            LOG.warn("getDate for " + dateTime + "caused exception {}", e);
             return 0;
         }
         return date.getTime();

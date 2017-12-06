@@ -349,7 +349,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
                     InstanceIdentifier.create(SyslogDispatcher.class);
             ListenableFuture<Optional<SyslogDispatcher>> future =
                     transaction.read(LogicalDatastoreType.CONFIGURATION, iid);
-            Optional<SyslogDispatcher> optional = Optional.absent();
+            Optional<SyslogDispatcher> optional;
             try {
                 optional = future.get();
             } catch (InterruptedException | ExecutionException e) {

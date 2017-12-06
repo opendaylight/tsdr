@@ -7,6 +7,8 @@
  */
 package org.opendaylight.tsdr.dataquery;
 
+import static org.mockito.Matchers.any;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import org.junit.Before;
@@ -21,6 +23,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddLogInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddMetricInputBuilder;
+import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
 /**
  * Unit tests for TSDRNbiServiceImpl.
@@ -37,6 +40,10 @@ public class TSDRNbiServiceImplTest {
     @Before
     public void before() {
         Mockito.when(rpcRegistry.getRpcService(TsdrMetricDataService.class)).thenReturn(metricDataService);
+        Mockito.when(metricDataService.storeTSDRMetricRecord(any()))
+                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+        Mockito.when(logDataService.storeTSDRLogRecord(any()))
+                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
     }
 
     @Test

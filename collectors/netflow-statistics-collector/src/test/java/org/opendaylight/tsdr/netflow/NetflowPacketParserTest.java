@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.netflow;
 
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,9 +64,9 @@ public class NetflowPacketParserTest {
     }
 
     @Test
-    public void fillFlowSetTemplateMapTest() {
-        NetflowPacketParser.fillFlowSetTemplateMap(buff, 100, 10);
-        Assert.assertNotEquals(NetflowPacketParser.getTemplate(), null);
+    public void createFlowSetTemplateMapTest() {
+        Map<Integer, Integer> template = NetflowPacketParser.createFlowSetTemplateMap(buff, 100, 10);
+        Assert.assertNotEquals(template, null);
     }
 
     @Test

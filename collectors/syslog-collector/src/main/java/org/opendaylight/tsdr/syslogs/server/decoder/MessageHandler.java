@@ -38,7 +38,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<String> {
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, String msg) throws Exception {
         String ipaddress = ((InetSocketAddress) channelHandlerContext.channel().remoteAddress())
                 .getAddress().getHostAddress();
-        Message message = new Message.MessageBuilder().create()
+        Message message = Message.MessageBuilder.create()
                 .hostname(ipaddress)
                 .content(msg)
                 .build();

@@ -7,11 +7,15 @@
  */
 package org.opendaylight.tsdr.collectors.cmc;
 
+import static org.mockito.Matchers.any;
+
 import java.util.Optional;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
+import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
 /**
  * Unit tests for ControllerMetricCollector.
@@ -23,27 +27,35 @@ public class ControllerMetricCollectorTest {
     private final ControllerMetricCollector collector = new ControllerMetricCollector(tsdrService,
             Optional.of(new SigarCollectorMock()));
 
+    @Before
+    public void setup() {
+        Mockito.when(tsdrService.insertTSDRLogRecord(any()))
+                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+        Mockito.when(tsdrService.insertTSDRMetricRecord(any()))
+                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+    }
+
     @Test
     public void testGetControllerCPU() {
-        Object object = collector.getControllerCPU();
+        Object object = collector.getControllerCpu();
         Assert.assertNotNull(object);
     }
 
     @Test
     public void testGetMachineCPU() {
-        Object object = collector.getMachineCPU();
+        Object object = collector.getMachineCpu();
         Assert.assertNotNull(object);
     }
 
     @Test
     public void testGetControllerCPUNull() {
-        Object object = collector.getControllerCPU();
+        Object object = collector.getControllerCpu();
         Assert.assertNotNull(object);
     }
 
     @Test
     public void testGetMachineCPUNull() {
-        Object object = collector.getMachineCPU();
+        Object object = collector.getMachineCpu();
         Assert.assertNotNull(object);
     }
 

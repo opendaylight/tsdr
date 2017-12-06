@@ -8,11 +8,17 @@
 
 package org.opendaylight.tsdr.datapurge;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.JdkFutureAdapters;
+import com.google.common.util.concurrent.MoreExecutors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
+import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +58,20 @@ public class PurgeDataTask extends Task {
             storageService = this.rpcRegistry.getRpcService(TSDRService.class);
         }
         input.setRetentionTime(System.currentTimeMillis() - this.retentionTimeinHours * HOUR_2_MILLI_SECS);
-        storageService.purgeAllTSDRRecord(input.build());
+
+        Future<RpcResult<Void>> future = storageService.purgeAllTSDRRecord(input.build());
+        Futures.addCallback(JdkFutureAdapters.listenInPoolThread(future), new FutureCallback<RpcResult<Void>>() {
+            @Override
+            public void onSuccess(RpcResult<Void> result) {
+                LOG.debug("RPC purgeAllTSDRRecord returned result {]", result);
+            }
+
+            @Override
+            public void onFailure(Throwable ex) {
+                LOG.error("RPC purgeAllTSDRRecord failed", ex);
+            }
+        }, MoreExecutors.directExecutor());
+
         LOG.debug("Exiting PurgeData");
     }
 

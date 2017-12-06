@@ -63,8 +63,8 @@ public class ListMetricsCommandTest {
         cmd.doExecute();
         TSDRMetricPersistenceService metricService = Mockito.mock(TSDRMetricPersistenceService.class);
         TSDRLogPersistenceService logService = Mockito.mock(TSDRLogPersistenceService.class);
-        ListMetricsCommand.metricService = metricService;
-        ListMetricsCommand.logService = logService;
+        ListMetricsCommand.setMetricService(metricService);
+        ListMetricsCommand.setLogService(logService);
         cmd.doExecute();
         List<TSDRMetricRecord> metric = new ArrayList<>();
         metric.add(createMetricRecord());

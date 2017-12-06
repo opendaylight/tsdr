@@ -7,8 +7,11 @@
  */
 package org.opendaylight.tsdr.osc;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import javax.annotation.concurrent.GuardedBy;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
 
 /**
@@ -20,9 +23,12 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
  * @author Sharon Aicler(saichler@gmail.com)
  */
 public class TSDRMetricRecordBuilderContainer {
-    // An array of metric record builders
-    private TSDRMetricRecordBuilder[] builders = new TSDRMetricRecordBuilder[0];
+    // List of metric record builders
+    @GuardedBy("builders")
+    private final List<TSDRMetricRecordBuilder> builders = new ArrayList<>();
+
     // A set to make sure the same metric is not been added twice.
+    @GuardedBy("builders")
     private final Set<String> metricNames = new HashSet<>();
 
     /*
@@ -30,20 +36,18 @@ public class TSDRMetricRecordBuilderContainer {
      * cache for this metric type
      */
     public void addBuilder(TSDRMetricRecordBuilder builder) {
-        synchronized (this) {
+        synchronized (builders) {
             if (!metricNames.contains(builder.getMetricName())) {
                 metricNames.add(builder.getMetricName());
-                TSDRMetricRecordBuilder[] temp = new TSDRMetricRecordBuilder[builders.length + 1];
-                System.arraycopy(builders, 0, temp, 0, builders.length);
-                temp[builders.length] = builder;
-                builders = temp;
+                builders.add(builder);
             }
         }
     }
 
-    // Return the array of builders for the update operations following
-    // notifications
+    // Return the array of builders for the update operations following notifications.
     public TSDRMetricRecordBuilder[] getBuilders() {
-        return this.builders;
+        synchronized (builders) {
+            return builders.toArray(new TSDRMetricRecordBuilder[builders.size()]);
+        }
     }
 }

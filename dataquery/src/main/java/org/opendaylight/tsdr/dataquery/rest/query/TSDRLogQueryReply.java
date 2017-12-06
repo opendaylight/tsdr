@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.dataquery.rest.query;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
  * @author Sharon Aicler(saichler@gmail.com)
  */
 @XmlRootElement(name = "TSDRLogQueryReply")
+@SuppressFBWarnings("URF_UNREAD_FIELD")
 public class TSDRLogQueryReply {
     @SuppressWarnings("unused")
     private final int recordCount;

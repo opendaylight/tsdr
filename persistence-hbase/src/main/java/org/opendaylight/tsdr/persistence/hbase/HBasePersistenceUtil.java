@@ -39,11 +39,11 @@ public class HBasePersistenceUtil {
         }
 
         HBaseEntity entity = new HBaseEntity();
-        Long timeStamp = null;
+        long timeStamp;
         // If there's no timestamp in the metric Data, append the current
         // system timestamp
         if (metricData.getTimeStamp() != null) {
-            timeStamp = new Long(metricData.getTimeStamp().longValue());
+            timeStamp = metricData.getTimeStamp().longValue();
         } else {
             timeStamp = System.currentTimeMillis();
         }
@@ -118,12 +118,11 @@ public class HBasePersistenceUtil {
             return null;
         }
         HBaseEntity entity = new HBaseEntity();
-        String nodeID = logRecord.getNodeID();
-        Long timeStamp = null;
+        long timeStamp;
         // If there's no timestamp in the metric Data, append the current
         // system timestamp
         if (logRecord.getTimeStamp() != null) {
-            timeStamp = new Long(logRecord.getTimeStamp().longValue());
+            timeStamp = logRecord.getTimeStamp().longValue();
         } else {
             timeStamp = System.currentTimeMillis();
         }

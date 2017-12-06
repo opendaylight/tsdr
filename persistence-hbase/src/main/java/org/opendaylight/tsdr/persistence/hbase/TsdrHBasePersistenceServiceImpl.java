@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,7 +106,6 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
 
         //tableName, entityList Map
         Map<String, List<HBaseEntity>> entityListMap = new HashMap<>();
-        List<HBaseEntity> entityList = new ArrayList<>();
         if (recordList != null && recordList.size() != 0) {
             try {
                 for (TSDRRecord record : recordList) {
@@ -126,13 +124,10 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                         entityListMap.put(tableName, new ArrayList<HBaseEntity>());
                     }
                     entityListMap.get(tableName).add(entity);
-                    entityList.add(entity);
                 }
-                Set<String> keys = entityListMap.keySet();
-                Iterator<String> iter = keys.iterator();
-                while (iter.hasNext()) {
-                    String tableName = iter.next();
-                    HBaseDataStoreFactory.getHBaseDataStore().create(entityListMap.get(tableName));
+
+                for (List<HBaseEntity> entry: entityListMap.values()) {
+                    HBaseDataStoreFactory.getHBaseDataStore().create(entry);
 
                 }
 
@@ -168,7 +163,6 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
 
         //tableName, entityList Map
         Map<String, List<HBaseEntity>> entityListMap = new HashMap<>();
-        List<HBaseEntity> entityList = new ArrayList<>();
         if (recordList != null && recordList.size() != 0) {
             try {
                 for (TSDRRecord record : recordList) {
@@ -187,14 +181,10 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                         entityListMap.put(tableName, new ArrayList<HBaseEntity>());
                     }
                     entityListMap.get(tableName).add(entity);
-                    entityList.add(entity);
                 }
-                Set<String> keys = entityListMap.keySet();
-                Iterator<String> iter = keys.iterator();
-                while (iter.hasNext()) {
-                    String tableName = iter.next();
-                    HBaseDataStoreFactory.getHBaseDataStore().create(entityListMap.get(tableName));
 
+                for (List<HBaseEntity> entry: entityListMap.values()) {
+                    HBaseDataStoreFactory.getHBaseDataStore().create(entry);
                 }
 
             } catch (TableNotFoundException e) {
@@ -274,10 +264,11 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
             List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrMetricKey);
             String recKeyString = "[RK=";
             if (!recKeys.isEmpty()) {
+                StringBuilder buf = new StringBuilder(recKeyString);
                 for (RecordKeys recKey : recKeys) {
-                    recKeyString = recKeyString + recKey.getKeyName() + ":" + recKey.getKeyValue() + ",";
+                    buf.append(recKey.getKeyName()).append(':').append(recKey.getKeyValue()).append(',');
                 }
-                recKeyString = recKeyString.substring(0, recKeyString.length() - 1) + "]";
+                recKeyString = buf.toString().substring(0, buf.length() - 1) + "]";
                 substringFilterList.add(recKeyString);
             }
 
@@ -344,10 +335,11 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
             List<RecordKeys> recKeys = FormatUtil.getRecordKeysFromTSDRKey(tsdrLogKey);
             String recKeyString = "[RK=";
             if (!recKeys.isEmpty()) {
+                StringBuilder buf = new StringBuilder(recKeyString);
                 for (RecordKeys recKey : recKeys) {
-                    recKeyString = recKeyString + recKey.getKeyName() + ":" + recKey.getKeyValue() + ",";
+                    buf.append(recKey.getKeyName()).append(':').append(recKey.getKeyValue()).append(',');
                 }
-                recKeyString = recKeyString.substring(0, recKeyString.length() - 1) + "]";
+                recKeyString = buf.toString().substring(0, buf.length() - 1) + "]";
                 substringFilterList.add(recKeyString);
             }
 

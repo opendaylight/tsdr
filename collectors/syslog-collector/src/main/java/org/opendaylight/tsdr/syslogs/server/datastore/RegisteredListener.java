@@ -9,6 +9,7 @@
 
 package org.opendaylight.tsdr.syslogs.server.datastore;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -78,6 +79,7 @@ public class RegisteredListener implements DataTreeChangeListener<SyslogListener
      * Generate notification when Syslog message match certain filter and sent it to the corresponding client.
      */
     @Override
+    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public void onDataTreeChanged(Collection<DataTreeModification<SyslogListener>> changes) {
         for (DataTreeModification<SyslogListener> change: changes) {
             DataObjectModification<SyslogListener> rootNode = change.getRootNode();
@@ -89,7 +91,6 @@ public class RegisteredListener implements DataTreeChangeListener<SyslogListener
                         LOG.info("Got updated message from {}: {} ", listener.getListenerId(),
                                 listener.getSyslogMessage());
 
-                        OutputStreamWriter out = null;
                         try {
                             URL url = new URL(callBackUrl);
                             URLConnection urlConnection = url.openConnection();
@@ -97,9 +98,10 @@ public class RegisteredListener implements DataTreeChangeListener<SyslogListener
                             urlConnection.setDoInput(true);
                             urlConnection.setRequestProperty("content-type", "application/x-www-form-urlencoded");
 
-                            out = new OutputStreamWriter(urlConnection.getOutputStream());
-                            out.write("received updated message " + listener.getSyslogMessage());
-                            out.flush();
+                            try (OutputStreamWriter out = new OutputStreamWriter(urlConnection.getOutputStream())) {
+                                out.write("received updated message " + listener.getSyslogMessage());
+                                out.flush();
+                            }
 
                             int responseCode = ((HttpURLConnection) urlConnection).getResponseCode();
                             if (HttpURLConnection.HTTP_OK == responseCode) {
@@ -113,12 +115,6 @@ public class RegisteredListener implements DataTreeChangeListener<SyslogListener
                             }
                         } catch (IOException e) {
                             LOG.error("Error processing message", e);
-                        } finally {
-                            try {
-                                out.close();
-                            } catch (IOException e) {
-                                LOG.error("unable to close the stream");
-                            }
                         }
                     }
                     break;

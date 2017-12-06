@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.tsdr.syslogs.filters.SyslogFilterManager;
 import org.opendaylight.tsdr.syslogs.server.SyslogTCPServer;
 import org.opendaylight.tsdr.syslogs.server.SyslogUDPServer;
@@ -88,7 +89,6 @@ public class TSDRSyslogCollectorImpl {
         try {
             DatagramSocket socket = new DatagramSocket(udpPort);
             socket.close();
-            socket = null;
             udpPortAvailable = true;
         } catch (SocketException e) {
             LOG.warn("Port {} is not available for UDP, trying backup...", udpPort, e);
@@ -96,7 +96,6 @@ public class TSDRSyslogCollectorImpl {
                 udpPort += 1000;
                 DatagramSocket socket = new DatagramSocket(udpPort);
                 socket.close();
-                socket = null;
                 udpPortAvailable = true;
             } catch (SocketException e1) {
                 this.close();
@@ -189,7 +188,8 @@ public class TSDRSyslogCollectorImpl {
         InsertTSDRLogRecordInputBuilder input = new InsertTSDRLogRecordInputBuilder();
         input.setTSDRLogRecord(queue);
         input.setCollectorCodeName("SyslogCollector");
-        collectorSPIService.insertTSDRLogRecord(input.build());
+
+        RPCFutures.logResult(collectorSPIService.insertTSDRLogRecord(input.build()), "insertTSDRLogRecord", LOG);
     }
 
     public int getUdpPort() {

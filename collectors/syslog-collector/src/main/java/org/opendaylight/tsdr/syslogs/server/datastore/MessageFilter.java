@@ -43,32 +43,6 @@ public class MessageFilter {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof Message) {
-            Message msg = (Message) obj;
-            if (facility != null && !facility.equals(msg.getFacility())) {
-                return false;
-            }
-            if (severity != null && !severity.equals(msg.getSeverity())) {
-                return false;
-            }
-            if (!Pattern.matches(hostname, msg.getHostname())
-                    && !Pattern.matches(applicationName, msg.getApplicationName())
-                    && !Pattern.matches(processId, msg.getProcessId())
-                    && !Pattern.matches(sequenceId, msg.getSequenceId())) {
-                return false;
-            }
-            if (!Pattern.matches(content, msg.getContent())) {
-                return false;
-            }
-            //All fields are matched!
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -77,6 +51,61 @@ public class MessageFilter {
         result = prime * result + (hostname == null ? 0 : hostname.hashCode());
         result = prime * result + (severity == null ? 0 : severity.hashCode());
         return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        MessageFilter other = (MessageFilter) obj;
+        if (content == null) {
+            if (other.content != null) {
+                return false;
+            }
+        } else if (!content.equals(other.content)) {
+            return false;
+        }
+        if (facility != other.facility) {
+            return false;
+        }
+        if (hostname == null) {
+            if (other.hostname != null) {
+                return false;
+            }
+        } else if (!hostname.equals(other.hostname)) {
+            return false;
+        }
+        if (severity != other.severity) {
+            return false;
+        }
+        return true;
+    }
+
+    public boolean equals(Message msg) {
+        if (facility != null && !facility.equals(msg.getFacility())) {
+            return false;
+        }
+        if (severity != null && !severity.equals(msg.getSeverity())) {
+            return false;
+        }
+        if (!Pattern.matches(hostname, msg.getHostname())
+                && !Pattern.matches(applicationName, msg.getApplicationName())
+                && !Pattern.matches(processId, msg.getProcessId())
+                && !Pattern.matches(sequenceId, msg.getSequenceId())) {
+            return false;
+        }
+        if (!Pattern.matches(content, msg.getContent())) {
+            return false;
+        }
+        //All fields are matched!
+        return true;
     }
 
     /**

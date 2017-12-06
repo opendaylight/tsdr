@@ -131,17 +131,17 @@ public class TSDRNbiRestAPI {
             if (index2 != -1) {
                 int min = Integer.parseInt(str.substring(index1 + 1, index2)
                         .trim());
-                return System.currentTimeMillis() - min * 60000;
+                return System.currentTimeMillis() - min * 60000L;
             }
             index2 = str.indexOf("h");
             if (index2 != -1) {
                 int hours = Integer.parseInt(str.substring(index1 + 1, index2).trim());
-                return System.currentTimeMillis() - hours * 3600000;
+                return System.currentTimeMillis() - hours * 3600000L;
             }
             index2 = str.indexOf("d");
             if (index2 != -1) {
                 int days = Integer.parseInt(str.substring(index1 + 1, index2).trim());
-                return System.currentTimeMillis() - days * 86400000;
+                return System.currentTimeMillis() - days * 86400000L;
             }
         } else if (str.equals("now")) {
             return System.currentTimeMillis();

@@ -8,6 +8,7 @@
 
 package org.opendaylight.tsdr.restconf.collector;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -77,6 +78,7 @@ public class TSDRRestconfCollectorFilter implements Filter {
      * @param chain the chain of filters registered on the servlet
      */
     @Override
+    @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
 
         try {
@@ -95,10 +97,8 @@ public class TSDRRestconfCollectorFilter implements Filter {
 
             chain.doFilter(bufferedRequest, response);
 
-        } catch (IOException e) {
-            LOG.error(e.toString());
-        } catch (ServletException e) {
-            LOG.error(e.toString());
+        } catch (IOException | ServletException e) {
+            LOG.error("doFilter failed", e);
         }
     }
 
@@ -183,6 +183,7 @@ public class TSDRRestconfCollectorFilter implements Filter {
          * reads the input stream and stores it in a string that it returns.
          * @return returns a string containing the body of the request
          */
+        @SuppressFBWarnings("DM_DEFAULT_ENCODING")
         String getRequestBody() throws IOException  {
             BufferedReader reader = new BufferedReader(new InputStreamReader(this.getInputStream()));
 
@@ -210,7 +211,7 @@ public class TSDRRestconfCollectorFilter implements Filter {
         /**
          * the internal stream.
          */
-        private ByteArrayInputStream bais;
+        private final ByteArrayInputStream bais;
 
         BufferedServletInputStream(ByteArrayInputStream bais) {
             this.bais = bais;
