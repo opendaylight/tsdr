@@ -7,28 +7,43 @@
  */
 package org.opendaylight.tsdr.datacollection;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.reset;
 
-import com.google.common.base.Optional;
-import com.google.common.util.concurrent.CheckedFuture;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Uninterruptibles;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import org.junit.After;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.Test;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
-import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
+import org.mockito.Mockito;
+import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
+import org.opendaylight.controller.md.sal.binding.test.ConstantSchemaAbstractDataBrokerTest;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
-import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.tsdr.osc.TSDROpenflowCollector;
-import org.opendaylight.tsdr.osc.handlers.FlowCapableNodeConnectorQueueStatisticsDataHandler;
-import org.opendaylight.tsdr.osc.handlers.FlowStatisticsDataHandler;
-import org.opendaylight.tsdr.osc.handlers.NodeGroupStatisticsChangeHandler;
-import org.opendaylight.tsdr.osc.handlers.NodeMeterStatisticsChangeHandler;
-import org.opendaylight.tsdr.osc.handlers.NodeTableStatisticsChangeHandler;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter32;
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.yang.types.rev130715.Counter64;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.FlowCapableNode;
@@ -38,7 +53,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.Fl
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.FlowId;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.meters.Meter;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.meters.MeterBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.meters.MeterKey;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.tables.Table;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.tables.TableBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.flow.inventory.rev130819.tables.TableKey;
@@ -81,7 +95,12 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.meter.statistics.rev131111.
 import org.opendaylight.yang.gen.v1.urn.opendaylight.meter.types.rev130918.MeterId;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.model.statistics.types.rev130925.node.connector.statistics.BytesBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.model.statistics.types.rev130925.node.connector.statistics.PacketsBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.SetPollingIntervalInputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.TSDROSCConfig;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.TSDROSCConfigBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.FlowCapableNodeConnectorStatisticsData;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.FlowCapableNodeConnectorStatisticsDataBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.port.statistics.rev131214.flow.capable.node.connector.statistics.FlowCapableNodeConnectorStatistics;
@@ -91,36 +110,228 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.queue.statistics.rev131216.
 import org.opendaylight.yang.gen.v1.urn.opendaylight.queue.statistics.rev131216.flow.capable.node.connector.queue.statistics.FlowCapableNodeConnectorQueueStatistics;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.queue.statistics.rev131216.flow.capable.node.connector.queue.statistics.FlowCapableNodeConnectorQueueStatisticsBuilder;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
+import org.opendaylight.yangtools.yang.common.RpcResult;
+import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
-public class DataCollectionTest {
-    private DataBroker dataBroker;
+public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
     private final TsdrCollectorSpiService collectorSPIService = mock(TsdrCollectorSpiService.class);
-    private ReadOnlyTransaction readTransaction;
-    private Nodes nodes;
-    private final CheckedFuture<Optional<Nodes>, ReadFailedException> checkedFuture = mock(CheckedFuture.class);
-    private final Optional<Nodes> optional = mock(Optional.class);
     private TSDROpenflowCollector collector;
 
     @Before
     public void before() throws InterruptedException, ExecutionException {
-        dataBroker = mock(DataBroker.class);
-        readTransaction = mock(ReadOnlyTransaction.class);
-        when(dataBroker.newReadOnlyTransaction()).thenReturn(readTransaction);
-        InstanceIdentifier<Nodes> id = InstanceIdentifier.create(Nodes.class);
-        nodes = buildNodes();
-        when(readTransaction.read(LogicalDatastoreType.OPERATIONAL, id)).thenReturn(checkedFuture);
-        when(checkedFuture.get()).thenReturn(optional);
-        when(optional.get()).thenReturn(nodes);
-        collector = new TSDROpenflowCollector(this.dataBroker, collectorSPIService);
+        doReturn(RpcResultBuilder.<Void>success().buildFuture()).when(collectorSPIService)
+                .insertTSDRMetricRecord(any());
+
+        collector = new TSDROpenflowCollector(getDataBroker(), collectorSPIService,
+                new TSDROSCConfigBuilder().setPollingInterval(500L).setRecordStoreBatchSize(100L).build());
     }
 
-    @After
-    public void after() {
-        for (Node node : nodes.getNode()) {
-            InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
-            collector.removeAllNodeBuilders(nodeID);
+    @Test
+    public void testPolling() throws InterruptedException, ExecutionException, TimeoutException {
+        WriteTransaction writeTx = getDataBroker().newWriteOnlyTransaction();
+        writeTx.put(LogicalDatastoreType.OPERATIONAL, InstanceIdentifier.create(Nodes.class), buildNodes());
+        writeTx.submit().get(5, TimeUnit.SECONDS);
+
+        Collection<TSDRMetricRecord> metricRecords = Collections.synchronizedList(new ArrayList<>());
+        AtomicReference<CountDownLatch> storeMetricsLatchRef = new AtomicReference<>(new CountDownLatch(2));
+        AtomicBoolean storeMetricsContinue = new AtomicBoolean();
+        doAnswer(invocation -> {
+            metricRecords.addAll(invocation.getArgumentAt(0, InsertTSDRMetricRecordInput.class).getTSDRMetricRecord());
+            CountDownLatch storeMetricsLatch = storeMetricsLatchRef.get();
+            storeMetricsLatch.countDown();
+            if (storeMetricsLatch.getCount() == 0) {
+                synchronized (storeMetricsContinue) {
+                    while (!storeMetricsContinue.get()) {
+                        storeMetricsContinue.wait();
+                    }
+
+                    storeMetricsContinue.set(false);
+                }
+            }
+            return RpcResultBuilder.<Void>success().buildFuture();
+        }).when(collectorSPIService).insertTSDRMetricRecord(any());
+
+        collector.init();
+
+        // Wait for first poll
+
+        assertTrue("Timed out waiting for metrics to be stored",
+                Uninterruptibles.awaitUninterruptibly(storeMetricsLatchRef.get(), 5, TimeUnit.SECONDS));
+        storeMetricsLatchRef.set(new CountDownLatch(2));
+
+        verify(metricRecords, "openflow:1", "openflow:2");
+        metricRecords.clear();
+
+        synchronized (storeMetricsContinue) {
+            storeMetricsContinue.set(true);
+            storeMetricsContinue.notifyAll();
         }
+
+        // Wait for second poll
+
+        assertTrue("Timed out waiting for metrics to be stored",
+                Uninterruptibles.awaitUninterruptibly(storeMetricsLatchRef.get(), 5, TimeUnit.SECONDS));
+        storeMetricsLatchRef.set(new CountDownLatch(1));
+
+        verify(metricRecords, "openflow:1", "openflow:2");
+        metricRecords.clear();
+
+        // Delete the openflow:1 node
+
+        writeTx = getDataBroker().newWriteOnlyTransaction();
+        writeTx.delete(LogicalDatastoreType.OPERATIONAL, InstanceIdentifier.create(Nodes.class)
+                .child(Node.class, new NodeKey(new NodeId("openflow:1"))));
+        writeTx.submit().get(5, TimeUnit.SECONDS);
+
+        synchronized (storeMetricsContinue) {
+            storeMetricsContinue.set(true);
+            storeMetricsContinue.notifyAll();
+        }
+
+        // Wait for third  poll (sans openflow:1)
+
+        assertTrue("Timed out waiting for metrics to be stored",
+                Uninterruptibles.awaitUninterruptibly(storeMetricsLatchRef.get(), 5, TimeUnit.SECONDS));
+        storeMetricsLatchRef.set(new CountDownLatch(1));
+
+        verify(metricRecords, "openflow:2");
+
+        reset(collectorSPIService);
+
         collector.close();
+
+        synchronized (storeMetricsContinue) {
+            storeMetricsContinue.set(true);
+            storeMetricsContinue.notifyAll();
+        }
+
+        Mockito.verify(collectorSPIService, after(1000).never()).insertTSDRMetricRecord(any());
+    }
+
+    @Test
+    public void testSetPollingInterval() throws InterruptedException, ExecutionException, TimeoutException {
+        RpcResult<Void> rpcResult = collector.setPollingInterval(
+                new SetPollingIntervalInputBuilder().setInterval(1000L).build()).get();
+        assertTrue("setPollingInterval failed: " + rpcResult, rpcResult.isSuccessful());
+
+        TSDROSCConfig config = getDataBroker().newReadOnlyTransaction().read(LogicalDatastoreType.CONFIGURATION,
+                InstanceIdentifier.create(TSDROSCConfig.class)).get(5, TimeUnit.SECONDS).get();
+        assertEquals("Polling interval", Long.valueOf(1000L), config.getPollingInterval());
+    }
+
+    private void verify(Collection<TSDRMetricRecord> metricRecords, String... nodeIds) {
+        Set<String> nodeIdSet = ImmutableSet.copyOf(Arrays.asList(nodeIds));
+        Map<String, TSDRMetricRecord> map = new HashMap<>();
+        for (TSDRMetricRecord rec: metricRecords) {
+            assertTrue("Unexpected node Id " + rec.getNodeID(), nodeIdSet.contains(rec.getNodeID()));
+            StringBuilder builder = new StringBuilder(rec.getMetricName());
+            for (RecordKeys key: rec.getRecordKeys()) {
+                builder.append('.').append(key.getKeyName()).append(':').append(key.getKeyValue());
+            }
+
+            map.put(builder.toString(), rec);
+        }
+
+        for (String nodeId: nodeIds) {
+            verifyNodeQueueStats(map, nodeId);
+            verifyNodeFlowStats(map, nodeId);
+            verifyNodeConnectorStats(map, nodeId);
+            verifyNodeGroupStats(map, nodeId);
+            verifyNodeMeterStats(map, nodeId);
+            verifyNodeTableStats(map, nodeId);
+        }
+    }
+
+    private void verifyNodeTableStats(Map<String, TSDRMetricRecord> map, String nodeId) {
+        verifyTableStats(map, "Node:" + nodeId + ".Table:11");
+        verifyTableStats(map, "Node:" + nodeId + ".Table:22");
+    }
+
+    private void verifyTableStats(Map<String, TSDRMetricRecord> map, String tableId) {
+        verifyStat(map, "ActiveFlows." + tableId, DataCategory.FLOWTABLESTATS, BigDecimal.valueOf(10));
+        verifyStat(map, "PacketLookup." + tableId, DataCategory.FLOWTABLESTATS, BigDecimal.valueOf(1));
+        verifyStat(map, "PacketMatch." + tableId, DataCategory.FLOWTABLESTATS, BigDecimal.valueOf(2));
+    }
+
+    private void verifyNodeMeterStats(Map<String, TSDRMetricRecord> map, String nodeId) {
+        verifyMeterStats(map, "Node:" + nodeId + ".Meter:1");
+        verifyMeterStats(map, "Node:" + nodeId + ".Meter:2");
+    }
+
+    private void verifyMeterStats(Map<String, TSDRMetricRecord> map, String meterId) {
+        verifyStat(map, "ByteInCount." + meterId, DataCategory.FLOWMETERSTATS, BigDecimal.valueOf(1));
+        verifyStat(map, "FlowCount." + meterId, DataCategory.FLOWMETERSTATS, BigDecimal.valueOf(10));
+        verifyStat(map, "PacketInCount." + meterId, DataCategory.FLOWMETERSTATS, BigDecimal.valueOf(2));
+    }
+
+    private void verifyNodeGroupStats(Map<String, TSDRMetricRecord> map, String nodeId) {
+        verifyGroupStats(map, "Node:" + nodeId + ".Group:1");
+        verifyGroupStats(map, "Node:" + nodeId + ".Group:2");
+    }
+
+    private void verifyGroupStats(Map<String, TSDRMetricRecord> map, String groupKey) {
+        verifyStat(map, "RefCount." + groupKey, DataCategory.FLOWGROUPSTATS, BigDecimal.valueOf(10));
+        verifyStat(map, "ByteCount." + groupKey, DataCategory.FLOWGROUPSTATS, BigDecimal.valueOf(1));
+        verifyStat(map, "PacketCount." + groupKey, DataCategory.FLOWGROUPSTATS, BigDecimal.valueOf(2));
+    }
+
+    private static void verifyNodeConnectorStats(Map<String, TSDRMetricRecord> map, String nodeId) {
+        verifyConnectorStats(map, nodeConnectorKey(nodeId, "1"));
+        verifyConnectorStats(map, nodeConnectorKey(nodeId, "2"));
+    }
+
+    private static void verifyConnectorStats(Map<String, TSDRMetricRecord> map, String connectorId) {
+        verifyStat(map, "TransmitDrops." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(110));
+        verifyStat(map, "ReceiveDrops." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(106));
+        verifyStat(map, "ReceiveCrcError." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(105));
+        verifyStat(map, "ReceiveFrameError." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(108));
+        verifyStat(map, "ReceiveOverRunError." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(109));
+        verifyStat(map, "TransmitErrors." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(111));
+        verifyStat(map, "CollisionCount." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(102));
+        verifyStat(map, "ReceiveErrors." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(107));
+        verifyStat(map, "TransmittedBytes." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(101));
+        verifyStat(map, "ReceivedBytes." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(100));
+        verifyStat(map, "TransmittedPackets." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(104));
+        verifyStat(map, "ReceivedPackets." + connectorId, DataCategory.PORTSTATS, BigDecimal.valueOf(103));
+    }
+
+    private static void verifyNodeFlowStats(Map<String, TSDRMetricRecord> map, String nodeId) {
+        verifyFlowStats(map, flowKey(nodeId, "11", "1"));
+        verifyFlowStats(map, flowKey(nodeId, "11", "2"));
+        verifyFlowStats(map, flowKey(nodeId, "22", "1"));
+        verifyFlowStats(map, flowKey(nodeId, "22", "2"));
+    }
+
+    private static void verifyFlowStats(Map<String, TSDRMetricRecord> map, String flowId) {
+        verifyStat(map, "ByteCount." + flowId, DataCategory.FLOWSTATS, BigDecimal.valueOf(1));
+        verifyStat(map, "PacketCount." + flowId, DataCategory.FLOWSTATS, BigDecimal.valueOf(2));
+    }
+
+    private static void verifyNodeQueueStats(Map<String, TSDRMetricRecord> map, String nodeId) {
+        verifyQueueStats(map, nodeConnectorKey(nodeId, "1") + ".Queue:1");
+        verifyQueueStats(map, nodeConnectorKey(nodeId, "2") + ".Queue:1");
+    }
+
+    private static void verifyQueueStats(Map<String, TSDRMetricRecord> map, String queueId) {
+        verifyStat(map, "TransmissionErrors." + queueId, DataCategory.QUEUESTATS, BigDecimal.valueOf(1));
+        verifyStat(map, "TransmittedBytes." + queueId, DataCategory.QUEUESTATS, BigDecimal.valueOf(2));
+        verifyStat(map, "TransmittedPackets." + queueId, DataCategory.QUEUESTATS, BigDecimal.valueOf(3));
+    }
+
+    private static void verifyStat(Map<String, TSDRMetricRecord> map, String key, DataCategory category,
+            BigDecimal value) {
+        TSDRMetricRecord record = map.get(key);
+        assertNotNull("TSDRMetricRecord not found for " + key, record);
+        assertEquals("Metric DataCategory for " + key, category, record.getTSDRDataCategory());
+        assertEquals("Metric value for " + key, value, record.getMetricValue());
+    }
+
+    private static String nodeConnectorKey(String nodeId, String id) {
+        return "Node:" + nodeId + ".NodeConnector:" + nodeId + ":" + id;
+    }
+
+    private static String flowKey(String nodeId, String tableId, String flowId) {
+        return "Node:" + nodeId + ".Table:" + tableId + ".Flow:" + flowId;
     }
 
     private Nodes buildNodes() {
@@ -188,7 +399,7 @@ public class DataCollectionTest {
     private MeterStatistics buildMeterStatistics() {
         MeterStatisticsBuilder builder = new MeterStatisticsBuilder();
         builder.setByteInCount(new Counter64(new BigInteger("1")));
-        builder.setFlowCount(new Counter32(1L));
+        builder.setFlowCount(new Counter32(10L));
         builder.setPacketInCount(new Counter64(new BigInteger("2")));
         builder.setMeterId(new MeterId(1L));
         return builder.build();
@@ -214,7 +425,7 @@ public class DataCollectionTest {
 
     private FlowTableStatistics buildFlowTableStatistics() {
         FlowTableStatisticsBuilder builder = new FlowTableStatisticsBuilder();
-        builder.setActiveFlows(new Counter32(1L));
+        builder.setActiveFlows(new Counter32(10L));
         builder.setPacketsLookedUp(new Counter64(new BigInteger("1")));
         builder.setPacketsMatched(new Counter64(new BigInteger("2")));
         return builder.build();
@@ -258,7 +469,7 @@ public class DataCollectionTest {
         GroupStatisticsBuilder builder = new GroupStatisticsBuilder();
         builder.setByteCount(new Counter64(new BigInteger("1")));
         builder.setPacketCount(new Counter64(new BigInteger("2")));
-        builder.setRefCount(new Counter32(1L));
+        builder.setRefCount(new Counter32(10L));
         return builder.build();
     }
 
@@ -272,20 +483,21 @@ public class DataCollectionTest {
         FlowCapableNodeConnectorStatisticsBuilder builder = new FlowCapableNodeConnectorStatisticsBuilder();
         BytesBuilder bb = new BytesBuilder();
         bb.setReceived(new BigInteger("100"));
-        bb.setTransmitted(new BigInteger("100"));
+        bb.setTransmitted(new BigInteger("101"));
         builder.setBytes(bb.build());
-        builder.setCollisionCount(new BigInteger("100"));
+        builder.setCollisionCount(new BigInteger("102"));
+
         PacketsBuilder pb = new PacketsBuilder();
-        pb.setReceived(new BigInteger("100"));
-        pb.setTransmitted(new BigInteger("100"));
+        pb.setReceived(new BigInteger("103"));
+        pb.setTransmitted(new BigInteger("104"));
         builder.setPackets(pb.build());
-        builder.setReceiveCrcError(new BigInteger("100"));
-        builder.setReceiveDrops(new BigInteger("100"));
-        builder.setReceiveErrors(new BigInteger("100"));
-        builder.setReceiveFrameError(new BigInteger("100"));
-        builder.setReceiveOverRunError(new BigInteger("100"));
-        builder.setTransmitDrops(new BigInteger("100"));
-        builder.setTransmitErrors(new BigInteger("100"));
+        builder.setReceiveCrcError(new BigInteger("105"));
+        builder.setReceiveDrops(new BigInteger("106"));
+        builder.setReceiveErrors(new BigInteger("107"));
+        builder.setReceiveFrameError(new BigInteger("108"));
+        builder.setReceiveOverRunError(new BigInteger("109"));
+        builder.setTransmitDrops(new BigInteger("110"));
+        builder.setTransmitErrors(new BigInteger("111"));
         return builder.build();
     }
 
@@ -316,87 +528,8 @@ public class DataCollectionTest {
     private FlowCapableNodeConnectorQueueStatistics buildFlowCapableNodeConnectorQueueStatistics() {
         FlowCapableNodeConnectorQueueStatisticsBuilder builder = new FlowCapableNodeConnectorQueueStatisticsBuilder();
         builder.setTransmissionErrors(new Counter64(new BigInteger("1")));
-        builder.setTransmittedBytes(new Counter64(new BigInteger("1")));
-        builder.setTransmittedPackets(new Counter64(new BigInteger("1")));
+        builder.setTransmittedBytes(new Counter64(new BigInteger("2")));
+        builder.setTransmittedPackets(new Counter64(new BigInteger("3")));
         return builder.build();
-    }
-
-    @Test
-    public void testCollectStatistics() {
-        for (Node node : nodes.getNode()) {
-            collector.collectStatistics(node);
-        }
-    }
-
-    @Test
-    public void testNodeMeterStatisticsChangeHandler() {
-        NodeMeterStatisticsChangeHandler handler = new NodeMeterStatisticsChangeHandler(collector);
-        Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<NodeMeterStatistics> id = InstanceIdentifier.create(Nodes.class)
-                .child(Node.class, node.getKey()).augmentation(FlowCapableNode.class)
-                .child(Meter.class, new MeterKey(new MeterId(1L))).augmentation(NodeMeterStatistics.class);
-        handler.handleData(nodeID, id, buildNodeMeterStatistics());
-    }
-
-    @Test
-    public void testNodeTableStatisticsChangeHandler() {
-        NodeTableStatisticsChangeHandler handler = new NodeTableStatisticsChangeHandler(collector);
-        Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<FlowTableStatisticsData> id = InstanceIdentifier.create(Nodes.class)
-                .child(Node.class, node.getKey()).augmentation(FlowCapableNode.class)
-                .child(Table.class, buildTable((short) 11).getKey()).augmentation(FlowTableStatisticsData.class);
-        handler.handleData(nodeID, id, buildFlowTableStatisticsData());
-    }
-
-    @Test
-    public void testFlowStatisticsDataHandler() {
-        FlowStatisticsDataHandler handler = new FlowStatisticsDataHandler(collector);
-        Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<FlowStatisticsData> id = InstanceIdentifier.create(Nodes.class)
-                .child(Node.class, node.getKey()).augmentation(FlowCapableNode.class)
-                .child(Table.class, buildTable((short) 11).getKey()).child(Flow.class, buildFlow("1").getKey())
-                .augmentation(FlowStatisticsData.class);
-        handler.handleData(nodeID, id, buildFlowStatisticsData());
-    }
-
-    @Test
-    public void testNodeGroupStatisticsChangeHandler() {
-        NodeGroupStatisticsChangeHandler handler = new NodeGroupStatisticsChangeHandler(collector);
-        Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<NodeGroupStatistics> id = InstanceIdentifier.create(Nodes.class)
-                .child(Node.class, node.getKey()).augmentation(FlowCapableNode.class)
-                .child(Group.class, buildGroup(1).getKey()).augmentation(NodeGroupStatistics.class);
-        handler.handleData(nodeID, id, buildNodeGroupStatistics());
-    }
-
-    /*
-     * @Test public void testNodeConnectorStatisticsChangeHandler(){
-     * NodeConnectorStatisticsChangeHandler handler = new
-     * NodeConnectorStatisticsChangeHandler(collector); Node node =
-     * nodes.getNode().get(0); InstanceIdentifier<Node> nodeID =
-     * InstanceIdentifier.create( Nodes.class).child(Node.class, node.getKey());
-     * InstanceIdentifier<FlowCapableNodeConnectorStatisticsData> id =
-     * InstanceIdentifier .create(Nodes.class) .child(Node.class, node.getKey())
-     * .child(NodeConnector.class,
-     * buildNodeConnector(node.getId().getValue()+":1").getKey()) .augmentation(
-     * FlowCapableNodeConnectorStatisticsData.class); handler.handleData(nodeID,
-     * id, buildFlowCapableNodeConnectorStatisticsData()); }
-     */
-    @Test
-    public void testFlowCapableNodeConnectorQueueStatisticsDataHandler() {
-        FlowCapableNodeConnectorQueueStatisticsDataHandler handler =
-                new FlowCapableNodeConnectorQueueStatisticsDataHandler(collector);
-        Node node = nodes.getNode().get(0);
-        InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(Nodes.class).child(Node.class, node.getKey());
-        InstanceIdentifier<FlowCapableNodeConnectorQueueStatisticsData> id = InstanceIdentifier.create(Nodes.class)
-                .child(Node.class, node.getKey())
-                .child(NodeConnector.class, buildNodeConnector(node.getId().getValue() + ":1").getKey())
-                .augmentation(FlowCapableNodeConnector.class).child(Queue.class, buildQueue().getKey())
-                .augmentation(FlowCapableNodeConnectorQueueStatisticsData.class);
-        handler.handleData(nodeID, id, buildFlowCapableNodeConnectorQueueStatisticsData());
     }
 }

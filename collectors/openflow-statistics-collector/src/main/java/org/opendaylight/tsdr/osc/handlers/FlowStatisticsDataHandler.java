@@ -47,10 +47,10 @@ public class FlowStatisticsDataHandler extends TSDRBaseDataHandler<FlowStatistic
             builder[1].setTimeStamp(timeStamp);
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "ByteCount", FormatUtil.toMetricValue(gs.getByteCount()),
                     DataCategory.FLOWSTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "PacketCount", FormatUtil.toMetricValue(gs.getPacketCount()),
                     DataCategory.FLOWSTATS);
         }

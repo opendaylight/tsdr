@@ -50,13 +50,13 @@ public class NodeMeterStatisticsChangeHandler extends TSDRBaseDataHandler<NodeMe
             builder[2].setTimeStamp(timeStamp);
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "ByteInCount", FormatUtil.toMetricValue(ms.getByteInCount()),
                     DataCategory.FLOWMETERSTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "FlowCount", FormatUtil.toMetricValue(ms.getFlowCount()),
                     DataCategory.FLOWMETERSTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "PacketInCount", FormatUtil.toMetricValue(ms.getPacketInCount()),
                     DataCategory.FLOWMETERSTATS);
         }

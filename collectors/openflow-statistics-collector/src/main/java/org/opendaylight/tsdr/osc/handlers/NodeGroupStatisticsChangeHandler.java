@@ -50,13 +50,13 @@ public class NodeGroupStatisticsChangeHandler extends TSDRBaseDataHandler<NodeGr
             builder[2].setTimeStamp(timeStamp);
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "RefCount", FormatUtil.toMetricValue(gs.getRefCount()),
                     DataCategory.FLOWGROUPSTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "PacketCount", FormatUtil.toMetricValue(gs.getPacketCount()),
                     DataCategory.FLOWGROUPSTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "ByteCount", FormatUtil.toMetricValue(gs.getByteCount()),
                     DataCategory.FLOWGROUPSTATS);
         }
