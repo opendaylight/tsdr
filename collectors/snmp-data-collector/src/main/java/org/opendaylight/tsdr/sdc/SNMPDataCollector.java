@@ -9,23 +9,24 @@
 
 package org.opendaylight.tsdr.sdc;
 
-import com.google.common.base.Optional;
-import com.google.common.util.concurrent.CheckedFuture;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.IOException;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.JdkFutureAdapters;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import javax.annotation.concurrent.GuardedBy;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
-import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
-import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
-import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
-import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
-import org.opendaylight.snmp.plugin.internal.SNMPImpl;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
+import org.opendaylight.tsdr.spi.util.DataEncrypter;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
@@ -36,106 +37,111 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.SetPollingIntervalInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.SnmpMetric;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfig;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TSDRSnmpDataCollectorConfigBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.snmp.data.collector.rev151013.TsdrSnmpDataCollectorService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.GetInterfacesOutput;
-import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.snmp.rev140922.SnmpService;
+import org.opendaylight.yangtools.util.concurrent.SpecialExecutors;
 import org.opendaylight.yangtools.yang.common.RpcResult;
-import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Collects SNMP data.
  *
+ * @author Thomas Pantelis
  * @author Sharon Aicler(saichler@gmail.com)
  * @author Trapti Khandelwal(trapti.khandelwal@tcs.com)
  * @author Razi Ahmed(ahmed.razi@tcs.com)
  */
-public class SNMPDataCollector implements TsdrSnmpDataCollectorService, AutoCloseable {
+public class SNMPDataCollector implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(SNMPDataCollector.class);
     private static final String COLLECTOR_CODE_NAME = SNMPDataCollector.class.getSimpleName();
 
-    // The reference to the the RPC registry to store the data
-    private final DataBroker dataBroker;
-    private TSDRSnmpDataCollectorConfig config;
+    private final SnmpService snmpService;
+    private final TSDRSnmpDataCollectorConfig collectorConfig;
     private final TsdrCollectorSpiService collectorSPIService;
     private final SNMPConfig snmpConfig;
-    @GuardedBy("tsdrMetricRecordList")
-    private List<TSDRMetricRecord> tsdrMetricRecordList = new ArrayList<>();
-    private SNMPInterfacePoller interfacePoller;
-    private final long pollingInterval = 300000L;
 
-    private volatile boolean running = true;
+    private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(
+            1, new ThreadFactoryBuilder().setNameFormat("TSDR SNMP Poller-%d").build());
 
-    public SNMPDataCollector(DataBroker dataBroker, TsdrCollectorSpiService collectorSPIService,
-            SNMPConfig snmpConfig) {
-        this.dataBroker = dataBroker;
+    private final ExecutorService storeMetricsExecutor;
+
+    public SNMPDataCollector(SnmpService snmpService, TsdrCollectorSpiService collectorSPIService,
+            SNMPConfig snmpConfig, TSDRSnmpDataCollectorConfig collectorConfig) {
+        this.snmpService = snmpService;
         this.collectorSPIService = collectorSPIService;
         this.snmpConfig = snmpConfig;
+        this.collectorConfig = collectorConfig;
+
+        storeMetricsExecutor = SpecialExecutors.newBoundedSingleThreadExecutor(
+                collectorConfig.getStoreMetricsExecutorQueueSize().intValue(), "TSDR SNMP Storing Thread");
     }
 
     public void init() {
-        TSDRSnmpDataCollectorConfigBuilder builder = new TSDRSnmpDataCollectorConfigBuilder();
-        builder.setPollingInterval(pollingInterval);
-        this.config = builder.build();
-        saveConfigData();
-
-        interfacePoller = new SNMPInterfacePoller(this);
-        interfacePoller.start();
-
-        new StoringThread().start();
+        long pollingInterval = collectorConfig.getPollingInterval();
+        scheduledExecutor.scheduleWithFixedDelay(this::poll, pollingInterval, pollingInterval, TimeUnit.MILLISECONDS);
 
         LOG.info("TSDR SNMP Collector initialized");
     }
 
-    SNMPConfig getSnmpConfig() {
-        return snmpConfig;
+    @Override
+    public void close() {
+        scheduledExecutor.shutdownNow();
+        storeMetricsExecutor.shutdown();
     }
 
-    public void loadConfigData() {
-        // try to load the configuration data from the configuration data store
-        final ReadOnlyTransaction readTx = dataBroker.newReadOnlyTransaction();
+    private void poll() {
+        Dictionary<String, String[]> configuration = snmpConfig.getConfiguration();
+        final String[] credentials = configuration.get(SNMPConfig.P_CREDENTIALS);
+        for (int nodeConfigDetails = 0; nodeConfigDetails < credentials.length; nodeConfigDetails += 2) {
+            Ipv4Address ip = new Ipv4Address(credentials[nodeConfigDetails]);
+            String community = DataEncrypter.decrypt(credentials[nodeConfigDetails + 1]);
+
+            Futures.addCallback(JdkFutureAdapters.listenInPoolThread(getInterfaces(ip, community)),
+                new FutureCallback<RpcResult<GetInterfacesOutput>>() {
+                    @Override
+                    public void onSuccess(@Nonnull RpcResult<GetInterfacesOutput> result) {
+                        LOG.debug("getInterfaces RPC for IP {} returned result - isSuccessful: {}, errors: {}",
+                                ip.getValue(), result.isSuccessful(), result.getErrors());
+
+                        GetInterfacesOutput interfacesOutput = result.getResult();
+                        if (interfacesOutput != null) {
+                            storeInterfaces(ip, interfacesOutput);
+                        } else {
+                            LOG.warn("getInterfaces RPC for IP {} returned null GetInterfacesOutput: {}",
+                                    ip.getValue(), result);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable ex) {
+                        LOG.error("getInterfaces RPC or IP {} failed", ip.getValue(), ex);
+                    }
+                }, MoreExecutors.directExecutor());
+        }
+    }
+
+    public Future<RpcResult<GetInterfacesOutput>> getInterfaces(Ipv4Address ip, String community) {
+        return snmpService.getInterfaces(new GetInterfacesInputBuilder().setCommunity(community)
+                .setIpAddress(ip).build());
+    }
+
+    private void storeInterfaces(Ipv4Address ip, GetInterfacesOutput interfacesOutput) {
         try {
-            InstanceIdentifier<TSDRSnmpDataCollectorConfig> cid = InstanceIdentifier
-                    .create(TSDRSnmpDataCollectorConfig.class);
-            CheckedFuture<Optional<TSDRSnmpDataCollectorConfig>, ReadFailedException> read = readTx
-                    .read(LogicalDatastoreType.CONFIGURATION, cid);
-            if (read != null && read.get() != null) {
-                if (read.get().isPresent()) {
-                    this.config = read.get().get();
-                }
+            storeMetricsExecutor.execute(() -> doStoreInterfaces(ip, interfacesOutput));
+        } catch (RejectedExecutionException e) {
+            if (!storeMetricsExecutor.isShutdown()) {
+                LOG.error("Could not enqueue task to store interfaces for {}", ip, e);
             }
-        } catch (InterruptedException | ExecutionException e) {
-            LOG.error("Failed to read TSDR Data Collection configuration from data store, using defaults", e);
-        } finally {
-            readTx.close();
         }
     }
 
-    public RpcResult<GetInterfacesOutput> loadGetInterfacesData(Ipv4Address ip, String community) {
-        // fetch data from getInterfaces
-        try (SNMPImpl snmpImpl = new SNMPImpl()) {
-            GetInterfacesInputBuilder input = new GetInterfacesInputBuilder();
-            input.setCommunity(community);
-            input.setIpAddress(ip);
-            Future<RpcResult<GetInterfacesOutput>> resultFuture = snmpImpl.getInterfaces(input.build());
-            RpcResult<GetInterfacesOutput> result = resultFuture.get();
-            result.isSuccessful();
-
-            return result;
-        } catch (IOException | InterruptedException | ExecutionException e) {
-            LOG.error("Failed to get interfaces data from SNMP", e);
-            return null;
-        }
-    }
-
-    public void insertInterfacesEntries(Ipv4Address ip, RpcResult<GetInterfacesOutput> result) {
-        for (IfEntry entry : result.getResult().getIfEntry()) {
+    private void doStoreInterfaces(Ipv4Address ip, GetInterfacesOutput interfacesOutput) {
+        List<TSDRMetricRecord> tsdrMetricRecordList = new ArrayList<>();
+        for (IfEntry entry : interfacesOutput.getIfEntry()) {
             for (SnmpMetric snmpMetric : SnmpMetric.values()) {
                 TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
 
@@ -161,13 +167,6 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService, AutoClos
                 builder.setTimeStamp(System.currentTimeMillis());
 
                 switch (snmpMetric) {
-                // do not need to be stored as they do not change often
-                /*    case MTU:
-                        b.setMetricValue(new BigDecimal(entry.getIfMtu()));
-                        break;
-                    case IfSpeed:
-                        b.setMetricValue(new BigDecimal(entry.getIfSpeed().getValue()));
-                        break;*/
                     case IfInNUcastPkts:
                         builder.setMetricValue(new BigDecimal(entry.getIfInNUcastPkts().getValue()));
                         break;
@@ -214,109 +213,19 @@ public class SNMPDataCollector implements TsdrSnmpDataCollectorService, AutoClos
                         break;
                 }
 
-                synchronized (tsdrMetricRecordList) {
-                    tsdrMetricRecordList.add(builder.build());
-                }
+                tsdrMetricRecordList.add(builder.build());
             }
         }
-    }
 
-    public void saveConfigData() {
-        InstanceIdentifier<TSDRSnmpDataCollectorConfig> cid =
-                InstanceIdentifier.create(TSDRSnmpDataCollectorConfig.class);
-        WriteTransaction wrt = this.dataBroker.newWriteOnlyTransaction();
-        wrt.put(LogicalDatastoreType.CONFIGURATION, cid, this.config);
-        wrt.submit();
-    }
+        LOG.debug("Storing {} metric records for IP {}", tsdrMetricRecordList.size(), ip.getValue());
 
-    public TSDRSnmpDataCollectorConfig getConfigData() {
-        return this.config;
-    }
-
-    @Override
-    @SuppressFBWarnings("NN_NAKED_NOTIFY")
-    public void close() {
-        this.running = false;
-
-        if (interfacePoller != null) {
-            interfacePoller.close();
-        }
-
-        synchronized (SNMPDataCollector.this) {
-            SNMPDataCollector.this.notifyAll();
-        }
-    }
-
-    // This class is the storing thread, every 30 seconds it will wake up and
-    // iterate over the builder container array and create
-    // metric data list out of the container builders, wrap it up as input for
-    // the RPC and invoke the storage RPC method.
-
-    private class StoringThread extends Thread {
-        StoringThread() {
-            this.setName("TSDR SNMP Storing Thread");
-            this.setDaemon(true);
-            LOG.info("SNMP Storing Thread Started");
-        }
-
-        @Override
-        @SuppressFBWarnings("UW_UNCOND_WAIT")
-        public void run() {
-            while (running) {
-                synchronized (SNMPDataCollector.this) {
-                    try {
-                        /*
-                         * We wait for 2x the polling interval just for the case
-                         * where the polling thread is dead and there will be no
-                         * thread to wake this thread up if we do "wait()", e.g.
-                         * to avoid "stuck" thread. Disregarding the case where
-                         * storing will take more than the polling interval, we
-                         * have bigger issues in that case...:o)
-                         */
-                        SNMPDataCollector.this.wait(getConfigData().getPollingInterval() * 2);
-                    } catch (InterruptedException e) {
-                        LOG.error("SNMP Storing Thread Interrupted.", e);
-                    }
-                }
-
-                if (!running) {
-                    break;
-                }
-
-                InsertTSDRMetricRecordInputBuilder input = new InsertTSDRMetricRecordInputBuilder();
-                synchronized (tsdrMetricRecordList) {
-                    List<TSDRMetricRecord> list = tsdrMetricRecordList;
-                    tsdrMetricRecordList = new ArrayList<>();
-                    input.setTSDRMetricRecord(list);
-                }
-                input.setCollectorCodeName(COLLECTOR_CODE_NAME);
-                store(input.build());
-            }
-        }
+        store(new InsertTSDRMetricRecordInputBuilder().setTSDRMetricRecord(tsdrMetricRecordList)
+                .setCollectorCodeName(COLLECTOR_CODE_NAME).build());
     }
 
     // Invoke the storage rpc method
     private void store(InsertTSDRMetricRecordInput input) {
         RPCFutures.logResult(collectorSPIService.insertTSDRMetricRecord(input), "insertTSDRMetricRecord", LOG);
-        LOG.debug("Data Storage Called from SNMP Collector");
-    }
-
-    public TsdrCollectorSpiService getTSDRService() {
-        return this.collectorSPIService;
-    }
-
-    public boolean isRunning() {
-        return this.running;
-    }
-
-    @Override
-    public Future<RpcResult<Void>> setPollingInterval(SetPollingIntervalInput input) {
-        TSDRSnmpDataCollectorConfigBuilder builder = new TSDRSnmpDataCollectorConfigBuilder();
-        builder.setPollingInterval(input.getInterval());
-        this.config = builder.build();
-        saveConfigData();
-        RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
-        return rpc.buildFuture();
     }
 }
 
