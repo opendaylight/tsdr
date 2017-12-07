@@ -28,6 +28,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRCacheEntry;
@@ -46,7 +49,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Sharon Aicler(saichler@gmail.com)
  */
-public class CassandraStore {
+@Singleton
+public class CassandraStore implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(CassandraStore.class);
 
     private static final int MAX_BATCH_SIZE = 500;
@@ -57,6 +61,7 @@ public class CassandraStore {
     private final Session session;
     private BatchStatement batch;
 
+    @Inject
     public CassandraStore() {
         LOG.info("Connecting to Cassandra...");
 
@@ -353,8 +358,10 @@ public class CassandraStore {
         return lb.build();
     }
 
+    @Override
+    @PreDestroy
     @SuppressWarnings("checkstyle:IllegalCatch")
-    public void shutdown() {
+    public void close() {
         if (this.session != null) {
             try {
                 this.session.close();

@@ -10,6 +10,8 @@ package org.opendaylight.tsdr.persistence.hsqldb;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
 import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
@@ -26,20 +28,17 @@ import org.slf4j.LoggerFactory;
  *
  * @author Sharon Aicler(saichler@gmail.com)
  */
+@Singleton
 public class TsdrHsqlDBPersistenceServiceImpl implements TSDRMetricPersistenceService, TSDRLogPersistenceService,
         TSDRBinaryPersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(TsdrHsqlDBPersistenceServiceImpl.class);
 
     private final HsqlDBStore store;
 
-    public TsdrHsqlDBPersistenceServiceImpl() {
-        store = new HsqlDBStore();
-        LOG.info("TSDR HSQLDB Data Store was initialized.");
-    }
-
+    @Inject
     public TsdrHsqlDBPersistenceServiceImpl(HsqlDBStore store) {
         this.store = store;
-        LOG.info("TSDR HSQLDB Data Store was initialized.");
+        LOG.info("TSDR HSQLDB Data Store initialized.");
     }
 
     @Override

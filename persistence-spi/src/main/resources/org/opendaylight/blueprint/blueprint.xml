@@ -16,14 +16,25 @@
 -->
 
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
-            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0">
-    <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.0.0">
-      <command name="tsdr/list">
-        <action class="org.opendaylight.tsdr.spi.command.ListMetricsCommand">
-        </action>
-      </command>
-    </command-bundle>
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.0.0">
+
+  <reference id="metricPersistenceService"
+    interface="org.opendaylight.tsdr.spi.persistence.TSDRMetricPersistenceService"
+    availability="optional" />
+
+  <reference id="logPersistenceService"
+    interface="org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService"
+    availability="optional" />
+
+  <command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.0.0">
+    <command name="tsdr/list">
+      <action class="org.opendaylight.tsdr.spi.command.ListMetricsCommand">
+        <argument ref="metricPersistenceService"/>
+        <argument ref="logPersistenceService"/>
+      </action>
+    </command>
+  </command-bundle>
 </blueprint>
 
 

@@ -26,8 +26,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRRecord;
 public class TsdrElasticSearchPersistenceServiceImplTest {
 
     private final ElasticSearchStore store = Mockito.mock(ElasticSearchStore.class);
-    private final TsdrElasticSearchPersistenceServiceImpl service =
-            TsdrElasticSearchPersistenceServiceImpl.create(store);
+    private final TsdrElasticSearchPersistenceServiceImpl service = new TsdrElasticSearchPersistenceServiceImpl(store);
 
     /**
      * Test storing a metric record. Verify whether ElasticsearchStore.store was called.

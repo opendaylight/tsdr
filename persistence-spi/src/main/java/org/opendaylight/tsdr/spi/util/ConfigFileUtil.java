@@ -18,12 +18,6 @@ import java.util.Properties;
 public final class ConfigFileUtil {
     public static final String CONFIG_DIR = "." + File.separator + "etc" + File.separator;
 
-    public static final String CASSANDRA_STORE_CONFIG_FILE = CONFIG_DIR + "tsdr-persistence-cassandra.properties";
-    public static final String HBASE_STORE_CONFIG_FILE = CONFIG_DIR + "tsdr-persistence-hbase.properties";
-    public static final String HSQLDB_STORE_CONFIG_FILE = CONFIG_DIR + "tsdr-persistence-hsqldb.properties";
-    public static final String ELASTICSEARCH_STORE_CONFIG_FILE =
-            CONFIG_DIR  + "tsdr-persistence-elasticsearch.properties";
-
     public static final String METRIC_PERSISTENCE_PROPERTY = "metric-persistency";
     public static final String LOG_PERSISTENCE_PROPERTY = "log-persistency";
     public static final String BINARY_PERSISTENCE_PROPERTY = "binary-persistency";

@@ -12,6 +12,8 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.persistence.elasticsearch.ElasticSearchStore.RecordType;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
@@ -30,20 +32,15 @@ import org.slf4j.LoggerFactory;
  *
  * @author Lukas Beles(lbeles@frinx.io)
  */
-class TsdrElasticSearchPersistenceServiceImpl implements TSDRMetricPersistenceService, TSDRLogPersistenceService,
+@Singleton
+public class TsdrElasticSearchPersistenceServiceImpl implements TSDRMetricPersistenceService, TSDRLogPersistenceService,
         TSDRBinaryPersistenceService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final ElasticSearchStore store;
 
-    /**
-     * Returns a new instance of {@link TsdrElasticSearchPersistenceServiceImpl} with given data store.
-     */
-    static TsdrElasticSearchPersistenceServiceImpl create(ElasticSearchStore store) {
-        return new TsdrElasticSearchPersistenceServiceImpl(store);
-    }
-
-    private TsdrElasticSearchPersistenceServiceImpl(ElasticSearchStore store) {
+    @Inject
+    public TsdrElasticSearchPersistenceServiceImpl(ElasticSearchStore store) {
         this.store = store;
     }
 

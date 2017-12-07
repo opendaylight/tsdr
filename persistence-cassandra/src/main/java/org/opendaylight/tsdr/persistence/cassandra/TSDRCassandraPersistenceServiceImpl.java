@@ -9,6 +9,8 @@ package org.opendaylight.tsdr.persistence.cassandra;
 
 import java.util.Date;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
 import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
@@ -20,19 +22,16 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Singleton
 public class TSDRCassandraPersistenceServiceImpl implements TSDRMetricPersistenceService,TSDRLogPersistenceService,
         TSDRBinaryPersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(TSDRCassandraPersistenceServiceImpl.class);
     private final CassandraStore store;
 
-    public TSDRCassandraPersistenceServiceImpl() {
-        store = new CassandraStore();
-        LOG.info("TSDR Cassandra Store was initialized.");
-    }
-
+    @Inject
     public TSDRCassandraPersistenceServiceImpl(CassandraStore store) {
         this.store = store;
-        LOG.info("TSDR Cassandra Store was initialized.");
+        LOG.info("TSDR Cassandra Store initialized.");
     }
 
     @Override
