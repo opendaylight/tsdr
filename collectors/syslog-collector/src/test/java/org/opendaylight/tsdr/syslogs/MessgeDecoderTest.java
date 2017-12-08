@@ -41,10 +41,6 @@ public class MessgeDecoderTest {
         Assert.assertEquals("quentin",message.getHostname());
         Assert.assertEquals(Message.Facility.SYSTEM_DAEMON,message.getFacility());
         Assert.assertEquals(Message.Severity.INFORMATION,message.getSeverity());
-        Assert.assertEquals("Message{facility=SYSTEM_DAEMON, " + "severity=INFORMATION, sequenceId='1', "
-                + "timestamp='May 24 12:22:25', hostname='quentin', "
-                + "applicationName='TestProcess', processId='1787', " + "content='1 : This is a test log of cisco.'}",
-                message.toString());
     }
 
     /**

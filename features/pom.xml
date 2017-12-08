@@ -23,9 +23,7 @@
       <module>odl-tsdr-openflow-statistics-collector</module>
       <module>odl-tsdr-elasticsearch</module>
       <module>odl-tsdr-netflow-statistics-collector</module>
-<!--
       <module>odl-tsdr-syslog-collector</module>
--->
       <module>odl-tsdr-restconf-collector</module>
       <module>odl-tsdr-controller-metrics-collector</module>
       <module>odl-tsdr-cassandra</module>
