@@ -7,11 +7,16 @@
  */
 package org.opendaylight.tsdr.collectors.cmc;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInputBuilder;
@@ -25,7 +30,8 @@ import org.slf4j.LoggerFactory;
  * Collects various metrics for the controller process.
  *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
+ */
+@Singleton
 public class ControllerMetricCollector extends Thread implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ControllerMetricCollector.class);
@@ -35,11 +41,13 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
     private final Optional<CpuDataCollector> cpuDataCollector;
     private final TsdrCollectorSpiService collectorSPIService;
 
+    @Inject
     public ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService) {
         this(collectorSPIService, CpuDataCollector.getCpuDataCollector());
     }
 
-    public ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService,
+    @VisibleForTesting
+    ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService,
             final Optional<CpuDataCollector> cpuDataCollector) {
         this.collectorSPIService = collectorSPIService;
         this.cpuDataCollector = cpuDataCollector;
@@ -47,14 +55,26 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
         this.setDaemon(true);
     }
 
+    @PostConstruct
     public void init() {
         this.start();
         LOG.info("Controller Metrics Collector started");
     }
 
     @Override
+    @PreDestroy
+    @SuppressWarnings("checkstyle:IllegalCatch")
     public void close() {
         interrupt();
+
+        if (cpuDataCollector.isPresent()) {
+            try {
+                cpuDataCollector.get().close();
+            } catch (Exception e) {
+                LOG.warn("Error closing CpuDataCollector", e);
+            }
+        }
+
         LOG.info("Controller Metrics Collector closed");
     }
 

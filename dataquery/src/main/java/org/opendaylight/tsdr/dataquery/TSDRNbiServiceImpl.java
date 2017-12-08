@@ -14,6 +14,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNbiRestAPI;
 import org.opendaylight.tsdr.dataquery.rest.query.TSDRLogQueryAPI;
 import org.opendaylight.tsdr.dataquery.rest.query.TSDRMetricsQueryAPI;
@@ -39,7 +41,8 @@ import org.slf4j.LoggerFactory;
  * Implementation of the TSDRDataqueryImplService interface.
  *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
+ */
+@Singleton
 public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
     private static Logger LOG = LoggerFactory.getLogger(TSDRNbiServiceImpl.class);
 
@@ -48,6 +51,7 @@ public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
 
     // The reference to the the RPC registry to store the data
 
+    @Inject
     public TSDRNbiServiceImpl(TsdrMetricDataService metricService, TsdrLogDataService logService) {
         logDataService = logService;
         metricDataService = metricService;

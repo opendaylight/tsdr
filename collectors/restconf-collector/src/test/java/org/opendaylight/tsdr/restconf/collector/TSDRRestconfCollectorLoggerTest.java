@@ -11,7 +11,6 @@ import static org.mockito.Matchers.any;
 
 import java.util.List;
 import java.util.Timer;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,15 +53,13 @@ public class TSDRRestconfCollectorLoggerTest {
     public void setup() throws Exception {
         timer = Mockito.mock(Timer.class);
 
-        loggerObject = TSDRRestconfCollectorLogger.getInstance(() -> timer);
-
         tsdrCollectorSpiService = Mockito.mock(TsdrCollectorSpiService.class);
         Mockito.when(tsdrCollectorSpiService.insertTSDRLogRecord(any()))
                 .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
         Mockito.when(tsdrCollectorSpiService.insertTSDRMetricRecord(any()))
                 .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
 
-        loggerObject.setTsdrCollectorSpiService(tsdrCollectorSpiService);
+        loggerObject = new TSDRRestconfCollectorLogger(() -> timer, tsdrCollectorSpiService);
 
         loggerObject.init();
     }
@@ -81,7 +78,7 @@ public class TSDRRestconfCollectorLoggerTest {
 
         ArgumentCaptor<InsertTSDRLogRecordInput> argumentCaptor
             = ArgumentCaptor.forClass(InsertTSDRLogRecordInput.class);
-        Mockito.verify(loggerObject.getTsdrCollectorSpiService()).insertTSDRLogRecord(argumentCaptor.capture());
+        Mockito.verify(tsdrCollectorSpiService).insertTSDRLogRecord(argumentCaptor.capture());
 
         List<TSDRLogRecord> logRecords = argumentCaptor.getValue().getTSDRLogRecord();
 
@@ -106,7 +103,7 @@ public class TSDRRestconfCollectorLoggerTest {
         loggerObject.insertLog("PUT", "/restconf/path3", "10.0.0.3", "body3");
         loggerObject.run();
 
-        Mockito.verify(loggerObject.getTsdrCollectorSpiService()).insertTSDRLogRecord(argumentCaptor.capture());
+        Mockito.verify(tsdrCollectorSpiService).insertTSDRLogRecord(argumentCaptor.capture());
 
         logRecords = argumentCaptor.getValue().getTSDRLogRecord();
 
@@ -120,29 +117,7 @@ public class TSDRRestconfCollectorLoggerTest {
         // spi service won't be called
         Mockito.reset(tsdrCollectorSpiService);
         loggerObject.run();
-        Mockito.verify(loggerObject.getTsdrCollectorSpiService(), Mockito.never()).insertTSDRLogRecord(Mockito.any());
-    }
-
-    /**
-     * tests the cases of getInstance, when an instance doesn't already exist, a new instance should be created.
-     * When an instance exists, we retrieve the same instance.
-     */
-    @Test
-    public void getInstanceTest() {
-
-        TSDRRestconfCollectorLogger oldInstance = TSDRRestconfCollectorLogger.getInstance(() -> timer);
-
-        TSDRRestconfCollectorLogger.setInstance(null);
-
-        TSDRRestconfCollectorLogger newInstance = TSDRRestconfCollectorLogger.getInstance(() -> timer);
-
-        // Assert that a new instance has actually been created
-        Assert.assertNotSame(oldInstance, newInstance);
-
-        TSDRRestconfCollectorLogger sameInstance = TSDRRestconfCollectorLogger.getInstance(() -> timer);
-
-        // Assert that the same old instance was used
-        Assert.assertSame(newInstance, sameInstance);
+        Mockito.verify(tsdrCollectorSpiService, Mockito.never()).insertTSDRLogRecord(Mockito.any());
     }
 
     /**
@@ -154,13 +129,5 @@ public class TSDRRestconfCollectorLoggerTest {
         loggerObject.run();
 
         Mockito.verify(timer).cancel();
-    }
-
-    /**
-     * called after each test to make sure that the TSDRRestconfCollectorLogger instance is cleaned.
-     */
-    @After
-    public void teardown() {
-        TSDRRestconfCollectorLogger.setInstance(null);
     }
 }

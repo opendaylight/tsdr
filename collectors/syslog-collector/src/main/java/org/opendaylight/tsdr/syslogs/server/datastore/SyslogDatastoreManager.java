@@ -23,6 +23,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.ReadTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
@@ -41,6 +44,8 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfigBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.TsdrSyslogCollectorService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.RegisteredSyslogFilter;
@@ -72,6 +77,7 @@ import org.slf4j.LoggerFactory;
  * @author Wei Lai(weilai@tethrnet.com)
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
+@Singleton
 public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(TsdrSyslogCollectorService.class);
 
@@ -80,23 +86,29 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
     private final Map<String, String> registerMap = new ConcurrentHashMap<>();
     private final Map<String, RegisteredListener> listenerMap = new ConcurrentHashMap<>();
 
-    private SyslogDatastoreManager(DataBroker dataBroker, int coreThreadPoolSize, int maxThreadpoolSize,
-            long keepAliveTime, int queueSize) {
+    @VisibleForTesting
+    public static SyslogDatastoreManager getInstance(DataBroker dataBroker, int coreThreadPoolSize,
+            int maxThreadPoolSize, long keepAliveTime, int queueSize) {
+        return new SyslogDatastoreManager(dataBroker, new SyslogCollectorConfigBuilder()
+                .setCoreThreadpoolSize(coreThreadPoolSize).setMaxThreadpoolSize(maxThreadPoolSize)
+                .setKeepAliveTime((int)keepAliveTime).setQueueSize(queueSize).build());
+    }
+
+    @Inject
+    public SyslogDatastoreManager(DataBroker dataBroker, SyslogCollectorConfig collectorConfig) {
         this.dataBroker = Objects.requireNonNull(dataBroker);
-        this.threadPool = new ThreadPoolExecutor(coreThreadPoolSize, maxThreadpoolSize, keepAliveTime,
-                TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(queueSize));
+        this.threadPool = new ThreadPoolExecutor(collectorConfig.getCoreThreadpoolSize(),
+                collectorConfig.getMaxThreadpoolSize(), collectorConfig.getKeepAliveTime(),
+                TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(collectorConfig.getQueueSize()));
         this.threadPool.prestartAllCoreThreads();
 
         LOG.info("SyslogDatastoreManager created: coreThreadPoolSize: {}, maxThreadpoolSize: {}, keepAliveTime: {}, "
-            + "queueSize: {}", coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
-    }
-
-    public static SyslogDatastoreManager getInstance(DataBroker dataBroker, int coreThreadPoolSize,
-            int maxThreadpoolSize, long keepAliveTime, int queueSize) {
-        return new SyslogDatastoreManager(dataBroker, coreThreadPoolSize, maxThreadpoolSize, keepAliveTime, queueSize);
+            + "queueSize: {}", collectorConfig.getCoreThreadpoolSize(), collectorConfig.getMaxThreadpoolSize(),
+            collectorConfig.getKeepAliveTime(), collectorConfig.getQueueSize());
     }
 
     @Override
+    @PreDestroy
     public void close() {
         threadPool.shutdown();
 

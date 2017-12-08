@@ -14,7 +14,11 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Supplier;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.GuardedBy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
@@ -33,22 +37,17 @@ import org.slf4j.LoggerFactory;
  *         Created: Dec 16th, 2016
  *
  */
+@Singleton
 public class TSDRRestconfCollectorLogger extends TimerTask implements AutoCloseable {
-
-    /**
-     * a reference to the collector SPI service.
-     */
-    private TsdrCollectorSpiService tsdrCollectorSpiService;
-
-    /**
-     * The instance of this class (for singleton pattern).
-     */
-    private static TSDRRestconfCollectorLogger INSTANCE = null;
-
     /**
      * The interval after which the data is persisted, specified in milli-seconds.
      */
     private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 5000;
+
+    /**
+     * a reference to the collector SPI service.
+     */
+    private final TsdrCollectorSpiService tsdrCollectorSpiService;
 
     /**
      * The queue in which the data is cached before persisting.
@@ -80,54 +79,33 @@ public class TSDRRestconfCollectorLogger extends TimerTask implements AutoClosea
      */
     private static final Logger LOG = LoggerFactory.getLogger(TSDRRestconfCollectorLogger.class);
 
+    @Inject
+    public TSDRRestconfCollectorLogger(TsdrCollectorSpiService tsdrCollectorSpiService) {
+        this(Timer::new, tsdrCollectorSpiService);
+    }
+
     /**
-     * the constructor is private because we are following the singleton pattern.
-     * it is called once an instance is created.
+     * Only call this constructor when testing. It is useful if you want to mock the timer.
      */
-    private TSDRRestconfCollectorLogger(Supplier<Timer> timerSupplier) {
+    @VisibleForTesting
+    TSDRRestconfCollectorLogger(Supplier<Timer> timerSupplier, TsdrCollectorSpiService tsdrCollectorSpiService) {
         this.timerSupplier = timerSupplier;
+        this.tsdrCollectorSpiService = tsdrCollectorSpiService;
     }
 
-    /**
-     * retrieves the instance of the class, and creates a new one if no instance exists.
-     * @return the instance of the singleton
-     */
-    public static TSDRRestconfCollectorLogger getInstance() {
-        return getInstance(Timer::new);
-    }
-
-    /**
-     * retrieves the instance of the class, and creates a new one if no instance exists.
-     * Only call this version of the function when testing. It is useful if you want to mock the timer
-     * @param timerSupplier the supplier of timer instances
-     * @return the instance of the singleton
-     */
-    @VisibleForTesting
-    public static synchronized TSDRRestconfCollectorLogger getInstance(Supplier<Timer> timerSupplier) {
-        if (INSTANCE == null) {
-            INSTANCE = new TSDRRestconfCollectorLogger(timerSupplier);
-        }
-        return INSTANCE;
-    }
-
-    /**
-     * only call this method in testing to do mocking.
-     * @param instance the instance of the class
-     */
-    @VisibleForTesting
-    static void setInstance(TSDRRestconfCollectorLogger instance) {
-        INSTANCE = instance;
-    }
-
+    @PostConstruct
     public void init() {
         this.timer = timerSupplier.get();
 
         this.timer.schedule(this, PERSIST_CHECK_INTERVAL_IN_MILLISECONDS, PERSIST_CHECK_INTERVAL_IN_MILLISECONDS);
 
+        TSDRRestconfCollectorFilter.setTSDRRestconfCollectorLogger(this);
+
         LOG.info("Restconf collector logger initialized");
     }
 
     @Override
+    @PreDestroy
     public void close() {
         run();
 
@@ -138,22 +116,6 @@ public class TSDRRestconfCollectorLogger extends TimerTask implements AutoClosea
         }
 
         LOG.info("Restconf collector logger closed");
-    }
-
-    /**
-     * sets the collector SPI service.
-     * @param tsdrCollectorSpiService the collector SPI service instance
-     */
-    public void setTsdrCollectorSpiService(TsdrCollectorSpiService tsdrCollectorSpiService) {
-        this.tsdrCollectorSpiService = tsdrCollectorSpiService;
-    }
-
-    /**
-     * returns the collector SPI service.
-     * @return the collector SPI service instance
-     */
-    public TsdrCollectorSpiService getTsdrCollectorSpiService() {
-        return this.tsdrCollectorSpiService;
     }
 
     /**

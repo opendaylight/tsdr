@@ -8,10 +8,5 @@
   <odl:rpc-service id="tsdrLogDataService"
       interface="org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService"/>
 
-  <bean id="tSDRNbiServiceImpl" class="org.opendaylight.tsdr.dataquery.TSDRNbiServiceImpl">
-    <argument ref="tsdrMetricDataService"/>
-    <argument ref="tsdrLogDataService"/>
-  </bean>
-
   <odl:rpc-implementation ref="tSDRNbiServiceImpl"/>
 </blueprint>

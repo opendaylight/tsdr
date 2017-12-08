@@ -1,68 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <artifactId>tsdr-parent</artifactId>
-        <groupId>org.opendaylight.tsdr</groupId>
-        <version>1.5.0-SNAPSHOT</version>
-        <relativePath>../parent</relativePath>
-    </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>tsdr-parent</artifactId>
+    <groupId>org.opendaylight.tsdr</groupId>
+    <version>1.5.0-SNAPSHOT</version>
+    <relativePath>../parent</relativePath>
+  </parent>
 
-    <artifactId>tsdr-datastorage</artifactId>
-    <packaging>bundle</packaging>
+  <artifactId>tsdr-datastorage</artifactId>
+  <packaging>bundle</packaging>
     <!-- <name> formatting is used by autorelease to parse and notify projects on
          build failure. Please do not modify this unless you have a good reason. -->
-    <name>ODL :: tsdr :: ${project.artifactId}</name>
-    <build>
-     <resources>
-        <resource>
+  <name>ODL :: tsdr :: ${project.artifactId}</name>
+  <build>
+    <resources>
+      <resource>
         <directory>src/main/resources</directory>
-        </resource>
-     </resources>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>${bundle.plugin.version}</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <!--Export-Package>org.opendaylight.tsdr.datastorage.*,org.opendaylight.controller.config.yang.config.TSDR_datastorage.impl.*</Export-Package>
-                        <Import-Package>*</Import-Package-->
-                    </instructions>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <!--Export-Package>org.opendaylight.tsdr.datastorage.*,org.opendaylight.controller.config.yang.config.TSDR_datastorage.impl.*</Export-Package>
+            <Import-Package>*</Import-Package-->
+          </instructions>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.aries.blueprint</groupId>
+        <artifactId>blueprint-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.opendaylight.tsdr</groupId>
-            <artifactId>tsdr-persistence-spi</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>org.opendaylight.tsdr</groupId>
+      <artifactId>tsdr-persistence-spi</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-        <dependency>
-            <groupId>org.opendaylight.controller</groupId>
-            <artifactId>sal-binding-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.opendaylight.controller</groupId>
-            <artifactId>sal-common-util</artifactId>
-        </dependency>
+    <dependency>
+      <groupId>org.opendaylight.controller</groupId>
+      <artifactId>sal-binding-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.opendaylight.controller</groupId>
+      <artifactId>sal-common-util</artifactId>
+    </dependency>
 
-     <dependency>
-       <groupId>com.google.protobuf</groupId>
-       <artifactId>protobuf-java</artifactId>
-       <version>${protobuf.version}</version>
-     </dependency>
-      <dependency>
+    <dependency>
+      <groupId>com.google.protobuf</groupId>
+      <artifactId>protobuf-java</artifactId>
+      <version>${protobuf.version}</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
-    </dependencies>
+  </dependencies>
 </project>

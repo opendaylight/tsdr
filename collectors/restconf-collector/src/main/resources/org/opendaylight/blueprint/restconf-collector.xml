@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
-           xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0"
-       odl:use-default-for-reference-types="true">
+           xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0">
 
   <odl:rpc-service id="tsdrCollectorSpiService"
       interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
 
-  <bean id="restconfCollectorLogger" class="org.opendaylight.tsdr.restconf.collector.TSDRRestconfCollectorLogger"
-      factory-method="getInstance" init-method = "init" destroy-method="close">
-    <property name="tsdrCollectorSpiService" ref="tsdrCollectorSpiService"/>
-  </bean>
-
-  <bean id="configurator" class="org.opendaylight.tsdr.restconf.collector.TSDRRestconfCollectorConfigurator"
-      init-method = "init" destroy-method="close">
-    <argument ref="blueprintBundleContext"/>
-  </bean>
+  <service ref="tSDRRestconfCollectorConfig" interface="org.osgi.service.cm.ManagedService">
+    <service-properties>
+      <entry key="service.pid" value="tsdr.restconf.collector"/>
+    </service-properties>
+  </service>
 
 </blueprint>

@@ -8,12 +8,17 @@
  */
 package org.opendaylight.tsdr.syslogs;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.tsdr.syslogs.filters.SyslogFilterManager;
 import org.opendaylight.tsdr.syslogs.server.SyslogTCPServer;
@@ -23,6 +28,8 @@ import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfigBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +40,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Sharon Aicler(saichler@gmail.com)
  * @author Kun Chen(kunch@tethrnet.com)
- **/
-public class TSDRSyslogCollectorImpl {
+ */
+@Singleton
+public class TSDRSyslogCollectorImpl implements AutoCloseable {
     public static final long QUEUE_WAIT_INTERVAL = 2000;
     public static final long STORE_FLUSH_INTERVAL = 2500;
 
@@ -53,22 +61,31 @@ public class TSDRSyslogCollectorImpl {
 
     private volatile boolean running = true;
 
+    @Inject
     public TSDRSyslogCollectorImpl(TsdrCollectorSpiService collectorSPIService, SyslogDatastoreManager manager,
-            int udpPort, int tcpPort) {
+            SyslogCollectorConfig collectorConfig) {
         this.collectorSPIService = collectorSPIService;
         this.manager = manager;
 
-        this.udpPort = udpPort;
-        this.tcpPort = tcpPort;
+        this.udpPort = collectorConfig.getUdpport();
+        this.tcpPort = collectorConfig.getTcpport();
 
         tcpServer = new SyslogTCPServer(messageList, this.manager);
         udpServer = new SyslogUDPServer(messageList, this.manager);
+    }
+
+    @VisibleForTesting
+    TSDRSyslogCollectorImpl(TsdrCollectorSpiService collectorSPIService, SyslogDatastoreManager manager,
+            int udpPort, int tcpPort) {
+        this(collectorSPIService, manager, new SyslogCollectorConfigBuilder().setUdpport(udpPort)
+                .setTcpport(tcpPort).build());
     }
 
     public boolean isRunning() {
         return this.running;
     }
 
+    @PostConstruct
     public void init() {
         new SyslogProcessor().start();
 
@@ -115,6 +132,8 @@ public class TSDRSyslogCollectorImpl {
         }
     }
 
+    @Override
+    @PreDestroy
     public void close() {
         running = false;
         try {

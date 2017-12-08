@@ -9,12 +9,13 @@ package org.opendaylight.tsdr.restconf.collector;
 
 import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
@@ -36,23 +37,8 @@ import org.slf4j.LoggerFactory;
  *         Created: Dec 16th, 2016
  *
  */
+@Singleton
 public class TSDRRestconfCollectorConfig implements ManagedService {
-
-    /**
-     * The instance of this class (for singleton pattern).
-     */
-    private static TSDRRestconfCollectorConfig INSTANCE = null;
-
-    /**
-     * The cached values of the configurations.
-     */
-    private final Dictionary<String, String> configurations = new Hashtable<>();
-
-    /**
-     * The logger of the class.
-     */
-    private static Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-
     /**
      * The default value for which http methods should be logged. GET has been omitted, since there are many GET
      * requests that are usually sent everytime DLUX is started, which will result in a lot of noisy data.
@@ -79,35 +65,22 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
      */
     private static final String[] HTTP_METHODS = {"POST", "PUT", "GET", "DELETE"};
 
-    private TSDRRestconfCollectorConfig() {
-    }
+    private final Logger log;
 
     /**
-     * returns the instance of the singleton.
-     * @return the instance of the class. If the instance was null, a new instance is created
+     * The cached values of the configurations.
      */
-    public static synchronized TSDRRestconfCollectorConfig getInstance() {
-        if (INSTANCE == null) {
-            INSTANCE = new TSDRRestconfCollectorConfig();
-        }
-        return INSTANCE;
+    private final Dictionary<String, String> configurations = new Hashtable<>();
+
+    @Inject
+    public TSDRRestconfCollectorConfig() {
+        this(LoggerFactory.getLogger(TSDRRestconfCollectorConfig.class));
     }
 
-    /**
-     * only call this method in testing to do mocking.
-     * @param instance the instance of the class
-     */
     @VisibleForTesting
-    public static void setInstance(TSDRRestconfCollectorConfig instance) {
-        INSTANCE = instance;
-    }
-
-    /**
-     * only call this method in testing to do mocking.
-     * @param logger the instance of the logger
-     */
-    public static void setLogger(Logger logger) {
-        log = logger;
+    TSDRRestconfCollectorConfig(Logger log) {
+        this.log = log;
+        TSDRRestconfCollectorFilter.setTSDRRestconfCollectorConfig(this);
     }
 
     /**
@@ -156,7 +129,7 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
 
         } else {
 
-            log.error("The configuration properties are either empty or non-existent will use default values of: "
+            log.warn("The configuration properties are either empty or non-existent will use default values of: "
                 + "METHODS_TO_LOG=" + DEFAULT_METHODS_TO_LOG + " PATHS_TO_LOG=" + DEFAULT_PATHS_TO_LOG
                 + " REMOTE_ADDRESSES_TO_LOG=" + DEFAULT_REMOTE_ADDRESSES_TO_LOG + " CONTENT_TO_LOG="
                 + DEFAULT_CONTENT_TO_LOG);

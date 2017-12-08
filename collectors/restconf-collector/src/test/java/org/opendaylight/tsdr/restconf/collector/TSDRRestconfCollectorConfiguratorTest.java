@@ -18,8 +18,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
@@ -33,10 +31,10 @@ import org.osgi.service.cm.ConfigurationAdmin;
  */
 public class TSDRRestconfCollectorConfiguratorTest {
     @Mock
-    private BundleContext bundleContext;
+    private Configuration filterChainConfiguration;
 
     @Mock
-    private Configuration filterChainConfiguration;
+    private ConfigurationAdmin configurationAdmin;
 
     private final Dictionary<String, String> configProperties = new Hashtable<>();
 
@@ -45,17 +43,10 @@ public class TSDRRestconfCollectorConfiguratorTest {
     public void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
 
-        ServiceReference<ConfigurationAdmin> configurationAdminServiceReference = Mockito.mock(ServiceReference.class);
-
         Mockito.when(filterChainConfiguration.getProperties()).thenReturn(configProperties);
 
-        ConfigurationAdmin configurationAdmin = Mockito.mock(ConfigurationAdmin.class);
         Mockito.when(configurationAdmin.getConfiguration("org.opendaylight.aaa.filterchain"))
             .thenReturn(filterChainConfiguration);
-
-        Mockito.when(bundleContext.getServiceReference(ConfigurationAdmin.class))
-            .thenReturn(configurationAdminServiceReference);
-        Mockito.when(bundleContext.getService(configurationAdminServiceReference)).thenReturn(configurationAdmin);
     }
 
     /**
@@ -65,7 +56,8 @@ public class TSDRRestconfCollectorConfiguratorTest {
     @SuppressWarnings("rawtypes")
     @Test
     public void testRegisterFilterWhenOtherFiltersExistButTSDRFilterDoesNot() throws IOException {
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
+        try (TSDRRestconfCollectorConfigurator configurator =
+                new TSDRRestconfCollectorConfigurator(configurationAdmin)) {
             configProperties.put("customFilterList", "randomFilter");
 
             configurator.init();
@@ -86,7 +78,8 @@ public class TSDRRestconfCollectorConfiguratorTest {
     @SuppressWarnings("rawtypes")
     @Test
     public void testRegisterFilterWhenTSDRFilterExists() throws IOException {
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
+        try (TSDRRestconfCollectorConfigurator configurator =
+                new TSDRRestconfCollectorConfigurator(configurationAdmin)) {
             configProperties.put("customFilterList", "randomFilter1," + TSDRRestconfCollectorFilter.class.getName()
                     + ",randomFilter2");
 
@@ -108,7 +101,8 @@ public class TSDRRestconfCollectorConfiguratorTest {
     @SuppressWarnings("rawtypes")
     @Test
     public void testRegisterFilterWhenNoFiltersExist() throws IOException {
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
+        try (TSDRRestconfCollectorConfigurator configurator =
+                new TSDRRestconfCollectorConfigurator(configurationAdmin)) {
             configProperties.put("customFilterList", "");
 
             configurator.init();
@@ -128,7 +122,8 @@ public class TSDRRestconfCollectorConfiguratorTest {
     @SuppressWarnings("rawtypes")
     @Test
     public void testRegisterFilterWhenCustomFilterListDoesntExist() throws IOException {
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
+        try (TSDRRestconfCollectorConfigurator configurator =
+                new TSDRRestconfCollectorConfigurator(configurationAdmin)) {
             configurator.init();
 
             ArgumentCaptor<Dictionary> argumentCaptor = ArgumentCaptor.forClass(Dictionary.class);
@@ -140,27 +135,14 @@ public class TSDRRestconfCollectorConfiguratorTest {
     }
 
     /**
-     * tests filter registration when the configuration admin is down.
-     * no attempts to modify the list should be done
-     */
-    @Test
-    public void testRegisterFilterWhenConfigurationAdminDoesNotExist() throws IOException {
-        Mockito.when(bundleContext.getServiceReference(ConfigurationAdmin.class)).thenReturn(null);
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
-            configurator.init();
-
-            Mockito.verify(filterChainConfiguration, Mockito.never()).update(Mockito.any());
-        }
-    }
-
-    /**
      * tests filter unregistration when our filter exists along with other filters.
      * the list should remain the same with our filter removed from it
      */
     @SuppressWarnings("rawtypes")
     @Test
     public void testUnregisterFilterWhenFilterExistsWithOtherFilters() throws Exception {
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
+        try (TSDRRestconfCollectorConfigurator configurator =
+                new TSDRRestconfCollectorConfigurator(configurationAdmin)) {
             configProperties.put("customFilterList", "randomFilter1," + TSDRRestconfCollectorFilter.class.getName()
                     + ",randomFilter2");
 
@@ -192,7 +174,8 @@ public class TSDRRestconfCollectorConfiguratorTest {
     @SuppressWarnings("rawtypes")
     @Test
     public void testUnregisterFilterWhenFilterExistsAlone() throws Exception {
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
+        try (TSDRRestconfCollectorConfigurator configurator =
+                new TSDRRestconfCollectorConfigurator(configurationAdmin)) {
             configProperties.put("customFilterList", TSDRRestconfCollectorFilter.class.getName());
 
             configurator.init();
@@ -222,7 +205,8 @@ public class TSDRRestconfCollectorConfiguratorTest {
     @SuppressWarnings("rawtypes")
     @Test
     public void testUnregisterFilterWhenCustomFilterListDoesntExist() throws Exception {
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
+        try (TSDRRestconfCollectorConfigurator configurator =
+                new TSDRRestconfCollectorConfigurator(configurationAdmin)) {
             configurator.init();
 
             ArgumentCaptor<Dictionary> argumentCaptor = ArgumentCaptor.forClass(Dictionary.class);
@@ -247,7 +231,8 @@ public class TSDRRestconfCollectorConfiguratorTest {
     @SuppressWarnings("rawtypes")
     @Test
     public void testUnregisterFilterWhenFilterDoesntExist() throws Exception {
-        try (TSDRRestconfCollectorConfigurator configurator = new TSDRRestconfCollectorConfigurator(bundleContext)) {
+        try (TSDRRestconfCollectorConfigurator configurator =
+                new TSDRRestconfCollectorConfigurator(configurationAdmin)) {
             configurator.init();
 
             ArgumentCaptor<Dictionary> argumentCaptor = ArgumentCaptor.forClass(Dictionary.class);

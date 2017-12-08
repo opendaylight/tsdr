@@ -5,41 +5,12 @@
 
   <reference id="dataBroker" interface="org.opendaylight.controller.md.sal.binding.api.DataBroker"/>
 
-  <odl:clustered-app-config id="syslogCollectorConfig"
-      binding-class="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig"/>
-
-  <bean id="syslogDatastoreManager" class="org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager"
-      factory-method="getInstance" destroy-method="close">
-    <argument ref="dataBroker"/>
-    <argument>
-      <bean factory-ref="syslogCollectorConfig" factory-method="getCoreThreadpoolSize"/>
-    </argument>
-    <argument>
-      <bean factory-ref="syslogCollectorConfig" factory-method="getMaxThreadpoolSize"/>
-    </argument>
-    <argument>
-      <bean factory-ref="syslogCollectorConfig" factory-method="getKeepAliveTime"/>
-    </argument>
-    <argument>
-      <bean factory-ref="syslogCollectorConfig" factory-method="getQueueSize"/>
-    </argument>
-  </bean>
-
-  <odl:rpc-implementation ref="syslogDatastoreManager"/>
-
   <odl:rpc-service id="tsdrCollectorSpiService"
       interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
 
-  <bean id="syslogCollectorImpl" class="org.opendaylight.tsdr.syslogs.TSDRSyslogCollectorImpl"
-      init-method = "init" destroy-method="close">
-    <argument ref="tsdrCollectorSpiService"/>
-    <argument ref="syslogDatastoreManager"/>
-    <argument>
-      <bean factory-ref="syslogCollectorConfig" factory-method="getUdpport"/>
-    </argument>
-    <argument>
-      <bean factory-ref="syslogCollectorConfig" factory-method="getTcpport"/>
-    </argument>
-  </bean>
+  <odl:clustered-app-config id="syslogCollectorConfig"
+      binding-class="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig"/>
+
+  <odl:rpc-implementation ref="syslogDatastoreManager"/>
 
 </blueprint>

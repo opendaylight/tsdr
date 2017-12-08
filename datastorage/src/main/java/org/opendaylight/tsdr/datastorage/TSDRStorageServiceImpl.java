@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.datastorage.aggregate.AggregationFunction;
 import org.opendaylight.tsdr.datastorage.aggregate.IntervalGenerator;
 import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
@@ -67,6 +70,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  */
+@Singleton
 public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService,TsdrLogDataService, AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(TSDRStorageServiceImpl.class);
@@ -79,6 +83,7 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
 
     private final TSDRBinaryPersistenceService binaryPersistenceService;
 
+    @Inject
     public TSDRStorageServiceImpl(TSDRMetricPersistenceService metricService, TSDRLogPersistenceService logService,
             TSDRBinaryPersistenceService binaryPersistenceService) {
         this.metricPersistenceService = metricService;
@@ -169,6 +174,7 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
     }
 
     @Override
+    @PreDestroy
     public void close() {
     }
 

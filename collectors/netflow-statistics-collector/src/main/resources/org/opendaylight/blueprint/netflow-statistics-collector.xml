@@ -5,8 +5,4 @@
   <odl:rpc-service id="tsdrCollectorSpiService"
       interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
 
-  <bean id="netflowCollectorImpl" class="org.opendaylight.tsdr.netflow.TSDRNetflowCollectorImpl"
-      init-method = "init" destroy-method="close">
-    <argument ref="tsdrCollectorSpiService"/>
-  </bean>
 </blueprint>

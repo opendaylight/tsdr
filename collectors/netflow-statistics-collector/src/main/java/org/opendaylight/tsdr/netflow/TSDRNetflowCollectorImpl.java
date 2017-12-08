@@ -22,7 +22,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.GuardedBy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
@@ -40,6 +44,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:muhammad.umair@xflowresearch.com">Umair Bhatti</a>
  * @author <a href="mailto:saichler@xgmail.com">Sharon Aicler</a>
  */
+@Singleton
 public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
 
     private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 5000;
@@ -59,6 +64,7 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
     /**
      * Constructor.
      */
+    @Inject
     public TSDRNetflowCollectorImpl(TsdrCollectorSpiService collectorSPIService) {
         super("TSDR NetFlow Listener");
         this.setDaemon(true);
@@ -74,6 +80,7 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
         return packetsCountForTests.get();
     }
 
+    @PostConstruct
     public void init() {
         BindException lastEx = null;
         Stopwatch sw = Stopwatch.createStarted();
@@ -121,6 +128,7 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
     }
 
     @Override
+    @PreDestroy
     public void close() {
         if (running.compareAndSet(true, false)) {
             if (socket != null) {

@@ -10,17 +10,17 @@ package org.opendaylight.tsdr.restconf.collector;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import java.util.Dictionary;
-import java.util.Hashtable;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
-import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import org.ops4j.pax.cdi.api.OsgiService;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
-import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Singleton
 @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
 public class TSDRRestconfCollectorConfigurator implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(TSDRRestconfCollectorConfigurator.class);
@@ -36,41 +36,31 @@ public class TSDRRestconfCollectorConfigurator implements AutoCloseable {
     private static final String FILTER_LIST_PROPERTY = "customFilterList";
 
     /**
-     * The PID used to access the configuration of our module.
-     */
-    private static final String TSDR_RESTCONF_COLLECTOR_PID = "tsdr.restconf.collector";
-
-    /**
      * The full name of the filter class, used when registering and unregistering the filter in the filterchain.
      */
     private static final String COLLECTOR_FILTER_CLASS_NAME = TSDRRestconfCollectorFilter.class.getName();
 
-    private final BundleContext bundleContext;
-
-    private ServiceRegistration<ManagedService> serviceRegistration;
+    private final ConfigurationAdmin configAdmin;
 
     /**
      * A reference to the configuration of the filter chain, where we add/remove our filter.
      */
     private Configuration filterChainConfiguration;
 
-    public TSDRRestconfCollectorConfigurator(BundleContext bundleContext) {
-        this.bundleContext = bundleContext;
+    @Inject
+    public TSDRRestconfCollectorConfigurator(@OsgiService ConfigurationAdmin configAdmin) {
+        this.configAdmin = configAdmin;
     }
 
+    @PostConstruct
     public void init() {
         registerFilter();
-        registerConfiguration();
     }
 
     @Override
+    @PreDestroy
     public void close() {
         unregisterFilter();
-
-        if (serviceRegistration != null) {
-            serviceRegistration.unregister();
-            serviceRegistration = null;
-        }
     }
 
     /**
@@ -78,40 +68,27 @@ public class TSDRRestconfCollectorConfigurator implements AutoCloseable {
      */
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void registerFilter() {
-        ServiceReference<ConfigurationAdmin> configurationAdminReference = null;
         try {
-            configurationAdminReference = bundleContext.getServiceReference(ConfigurationAdmin.class);
+            filterChainConfiguration = configAdmin.getConfiguration(FILTER_CHAIN_PID);
+            Dictionary properties = filterChainConfiguration.getProperties();
 
-            if (configurationAdminReference != null) {
-                ConfigurationAdmin confAdmin = bundleContext.getService(configurationAdminReference);
+            String customFilterList = (String) properties.get(FILTER_LIST_PROPERTY);
 
-                filterChainConfiguration = confAdmin.getConfiguration(FILTER_CHAIN_PID);
-                Dictionary properties = filterChainConfiguration.getProperties();
-
-                String customFilterList = (String) properties.get(FILTER_LIST_PROPERTY);
-
-                if (customFilterList != null && !customFilterList.trim().isEmpty()) {
-                    if (!customFilterList.contains(COLLECTOR_FILTER_CLASS_NAME)) {
-                        customFilterList += "," + COLLECTOR_FILTER_CLASS_NAME;
-                    }
-
-                } else {
-                    customFilterList = COLLECTOR_FILTER_CLASS_NAME;
+            if (customFilterList != null && !customFilterList.trim().isEmpty()) {
+                if (!customFilterList.contains(COLLECTOR_FILTER_CLASS_NAME)) {
+                    customFilterList += "," + COLLECTOR_FILTER_CLASS_NAME;
                 }
 
-                properties.put(FILTER_LIST_PROPERTY, customFilterList);
-                filterChainConfiguration.update(properties);
-
-                LOG.info("Updated aaa {} property to {}", FILTER_LIST_PROPERTY, customFilterList);
             } else {
-                LOG.error("Unable to register TSDRRestconfCollectorFilter: ConfigurationAdmin not found");
+                customFilterList = COLLECTOR_FILTER_CLASS_NAME;
             }
+
+            properties.put(FILTER_LIST_PROPERTY, customFilterList);
+            filterChainConfiguration.update(properties);
+
+            LOG.info("Updated aaa {} property to {}", FILTER_LIST_PROPERTY, customFilterList);
         } catch (IOException e) {
             LOG.error("Error updating aaa {} property", FILTER_LIST_PROPERTY, e);
-        } finally {
-            if (configurationAdminReference != null) {
-                bundleContext.ungetService(configurationAdminReference);
-            }
         }
     }
 
@@ -154,15 +131,5 @@ public class TSDRRestconfCollectorConfigurator implements AutoCloseable {
         } catch (IOException e) {
             LOG.error("Error updating aaa {} property", FILTER_LIST_PROPERTY, e);
         }
-    }
-
-    /**
-     * Registers the TSDRRestconfCollectorConfig as a service that listens to changes in the configuration.
-     */
-    private void registerConfiguration() {
-        Hashtable<String, String> properties = new Hashtable<>();
-        properties.put(Constants.SERVICE_PID, TSDR_RESTCONF_COLLECTOR_PID);
-        serviceRegistration = bundleContext.registerService(ManagedService.class,
-                TSDRRestconfCollectorConfig.getInstance(), properties);
     }
 }

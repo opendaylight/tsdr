@@ -51,12 +51,20 @@ public class TSDRRestconfCollectorFilter implements Filter {
     /**
      * a reference to the restconf collector logger singleton.
      */
-    private TSDRRestconfCollectorLogger tsdrRestconfCollectorLogger;
+    private static TSDRRestconfCollectorLogger tsdrRestconfCollectorLogger;
 
     /**
      * a reference to the restconf collector config singleton.
      */
-    private TSDRRestconfCollectorConfig tsdrRestconfCollectorConfig;
+    private static TSDRRestconfCollectorConfig tsdrRestconfCollectorConfig;
+
+    static void setTSDRRestconfCollectorLogger(TSDRRestconfCollectorLogger logger) {
+        tsdrRestconfCollectorLogger = logger;
+    }
+
+    static void setTSDRRestconfCollectorConfig(TSDRRestconfCollectorConfig config) {
+        tsdrRestconfCollectorConfig = config;
+    }
 
     /**
      * called when the filter is first initialized, it obtains the instances of the restconf collector logger and
@@ -65,8 +73,6 @@ public class TSDRRestconfCollectorFilter implements Filter {
      */
     @Override
     public void init(FilterConfig filterConfig) {
-        tsdrRestconfCollectorLogger = TSDRRestconfCollectorLogger.getInstance();
-        tsdrRestconfCollectorConfig = TSDRRestconfCollectorConfig.getInstance();
     }
 
     /**
