@@ -98,7 +98,15 @@ public class HBaseDataStore  {
      */
     private static Configuration getConfiguration(String zookeeperQuorum, String zookeeperClientport) {
         LOG.debug("Entering getConfiguration()");
-        Configuration conf = HBaseConfiguration.create();
+
+        ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(HBaseDataStore.class.getClassLoader());
+        Configuration conf;
+        try {
+            conf = HBaseConfiguration.create();
+        } finally {
+            Thread.currentThread().setContextClassLoader(oldClassLoader);
+        }
 
         if (zookeeperQuorum != null) {
             conf.set(HBaseDataStoreConstants.ZOOKEEPER_QUORUM, zookeeperQuorum);
