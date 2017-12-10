@@ -29,9 +29,15 @@ module tsdr-snmp-data-collector {
     }
 
     container TSDRSnmpDataCollectorConfig{
-       leaf polling-interval{
-          type int64;
-       }
+        leaf polling-interval {
+            type int64;
+            default 30000;
+        }
+
+        leaf store-metrics-executor-queue-size {
+            type int64;
+            default 100000;
+        }
      }
 
     typedef snmp-metric {
@@ -52,17 +58,6 @@ module tsdr-snmp-data-collector {
             enum ifOutOctets;
             enum ifOperStatus;
             enum ifAdminStatus;
-        }
-    }
-
-    rpc setPollingInterval  {
-        description
-          "set the polling interval of the collector";
-        input {
-            leaf interval {
-              type int64;
-              description "interval";
-            }
         }
     }
 }
