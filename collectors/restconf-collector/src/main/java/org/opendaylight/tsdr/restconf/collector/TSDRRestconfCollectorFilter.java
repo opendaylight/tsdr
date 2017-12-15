@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ReadListener;
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRequest;
@@ -245,6 +246,20 @@ public class TSDRRestconfCollectorFilter implements Filter {
         @Override
         public int read(byte[] buf, int off, int len) {
             return this.bais.read(buf, off, len);
+        }
+
+        @Override
+        public boolean isFinished() {
+            return true;
+        }
+
+        @Override
+        public boolean isReady() {
+            return true;
+        }
+
+        @Override
+        public void setReadListener(ReadListener arg0) {
         }
     }
 }

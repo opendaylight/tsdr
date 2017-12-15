@@ -41,6 +41,10 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.compendium</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.opendaylight.tsdr</groupId>
       <artifactId>tsdr-persistence-spi</artifactId>
       <version>${project.version}</version>

@@ -53,8 +53,6 @@
                                 org.hibernate.proxy,
                                 javassist.util.proxy,
                                 javax.persistence,
-                                org.apache.karaf.shell.commands;version="[3.0.0,4.1)",
-                                org.apache.karaf.shell.console;version="[3.0.0,4.1)",
                                 *
 
                             </ImportPackage>

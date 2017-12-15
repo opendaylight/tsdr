@@ -3,6 +3,7 @@ target/
 target-ide/
 .checkstyle
 .fbExcludeFilterFile
+.factorypath
 
 # OpenDaylight
 yang-gen-sal/

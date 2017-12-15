@@ -108,7 +108,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
     private final TsdrCollectorSpiService collectorSPIService;
 
     private final ExecutorService storeMetricsExecutor = SpecialExecutors.newBoundedSingleThreadExecutor(
-            1000, "TSDR Openflow Storing Thread");
+            1000, "TSDR Openflow Storing Thread", TSDROpenflowCollector.class);
 
     private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(
             1, new ThreadFactoryBuilder().setNameFormat("TSDR Openflow Poller-%d").build());

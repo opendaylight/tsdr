@@ -77,7 +77,8 @@ public class SNMPDataCollector implements AutoCloseable {
         this.collectorConfig = collectorConfig;
 
         storeMetricsExecutor = SpecialExecutors.newBoundedSingleThreadExecutor(
-                collectorConfig.getStoreMetricsExecutorQueueSize().intValue(), "TSDR SNMP Storing Thread");
+                collectorConfig.getStoreMetricsExecutorQueueSize().intValue(), "TSDR SNMP Storing Thread",
+                SNMPDataCollector.class);
     }
 
     public void init() {
