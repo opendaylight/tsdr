@@ -8,6 +8,7 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
 import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
@@ -41,6 +44,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed </a>
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
  */
+@Singleton
 public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceService, TSDRMetricPersistenceService,
         TSDRBinaryPersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(TsdrHBasePersistenceServiceImpl.class);
@@ -50,6 +54,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     /**
      * Constructor.
      */
+    @Inject
     public TsdrHBasePersistenceServiceImpl() {
         LOG.debug("Entering start(timeout)");
         //create the HTables used in TSDR.
@@ -64,17 +69,10 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
      * This overloaded constructor version is added for UT purpose. Refrain from
      * calling it(except from UT)
      */
-    public TsdrHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore, ScheduledFuture<?> sfuture) {
+    @VisibleForTesting
+    TsdrHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore, ScheduledFuture<?> sfuture) {
         HBaseDataStoreFactory.setHBaseDataStoreIfAbsent(hbaseDataStore);
         future = sfuture;
-    }
-
-    /*
-     * This overloaded constructor version is added for UT purpose. Refrain from
-     * calling it(except from UT)
-     */
-    public TsdrHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore) {
-        HBaseDataStoreFactory.setHBaseDataStoreIfAbsent(hbaseDataStore);
     }
 
     /**

@@ -58,13 +58,11 @@ public class ListMetricsCommandTest {
 
     @Test
     public void test() throws Exception {
-        ListMetricsCommand cmd = new ListMetricsCommand();
-        cmd.category = "EXTERNAL";
-        cmd.doExecute();
         TSDRMetricPersistenceService metricService = Mockito.mock(TSDRMetricPersistenceService.class);
         TSDRLogPersistenceService logService = Mockito.mock(TSDRLogPersistenceService.class);
-        ListMetricsCommand.setMetricService(metricService);
-        ListMetricsCommand.setLogService(logService);
+        ListMetricsCommand cmd = new ListMetricsCommand(metricService, logService);
+        cmd.category = "EXTERNAL";
+        cmd.doExecute();
         cmd.doExecute();
         List<TSDRMetricRecord> metric = new ArrayList<>();
         metric.add(createMetricRecord());

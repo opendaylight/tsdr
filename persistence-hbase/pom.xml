@@ -1,92 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
   <parent>
-        <artifactId>tsdr-parent</artifactId>
-        <groupId>org.opendaylight.tsdr</groupId>
-        <version>1.5.0-SNAPSHOT</version>
-        <relativePath>../parent</relativePath>
-    </parent>
+    <artifactId>tsdr-parent</artifactId>
+    <groupId>org.opendaylight.tsdr</groupId>
+    <version>1.5.0-SNAPSHOT</version>
+    <relativePath>../parent</relativePath>
+  </parent>
 
-    <artifactId>tsdr-persistence-hbase</artifactId>
-    <packaging>bundle</packaging>
+  <artifactId>tsdr-persistence-hbase</artifactId>
+  <packaging>bundle</packaging>
     <!-- <name> formatting is used by autorelease to parse and notify projects on
          build failure. Please do not modify this unless you have a good reason. -->
-    <name>ODL :: tsdr :: ${project.artifactId}</name>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-artifacts</id>
-                        <goals>
-                            <goal>attach-artifact</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <artifacts>
-                                <artifact>
-                                    <file>${project.build.directory}/classes/configuration/initial/tsdr-persistence-hbase.properties</file>
-                                    <type>xml</type>
-                                    <classifier>config</classifier>
-                                </artifact>
-                            </artifacts>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <version>${bundle.plugin.version}</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Bundle-Activator>org.opendaylight.tsdr.persistence.hbase.Activator</Bundle-Activator>
-                        <Bundle-Name>org.opendaylight.tsdr.hbase</Bundle-Name>
-                    </instructions>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-    <dependencies>
+  <name>ODL :: tsdr :: ${project.artifactId}</name>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-artifacts</id>
+            <goals>
+              <goal>attach-artifact</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <artifacts>
+                <artifact>
+                  <file>${project.build.directory}/classes/configuration/initial/tsdr-persistence-hbase.properties</file>
+                  <type>xml</type>
+                  <classifier>config</classifier>
+                </artifact>
+              </artifacts>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Bundle-Name>org.opendaylight.tsdr.hbase</Bundle-Name>
+          </instructions>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.aries.blueprint</groupId>
+        <artifactId>blueprint-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
       <version>${hbase.version}</version>
     </dependency>
     <dependency>
-       <groupId>org.apache.hadoop</groupId>
-       <artifactId>hadoop-core</artifactId>
-    <version>${hadoop.version}</version>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-core</artifactId>
+      <version>${hadoop.version}</version>
     </dependency>
     <dependency>
-        <groupId>org.opendaylight.tsdr</groupId>
-        <artifactId>tsdr-persistence-spi</artifactId>
-        <version>${project.version}</version>
+      <groupId>org.opendaylight.tsdr</groupId>
+      <artifactId>tsdr-persistence-spi</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
     </dependency>
     <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
-     <dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
     <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
     </dependency>
-        <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.dependencymanager</artifactId>
-            <version>4.3.0</version>
-        </dependency>
-    </dependencies>
+  </dependencies>
 </project>

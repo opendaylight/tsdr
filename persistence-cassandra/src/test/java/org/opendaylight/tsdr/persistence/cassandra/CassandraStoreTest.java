@@ -61,7 +61,7 @@ public class CassandraStoreTest {
 
     @After
     public void after() {
-        store.shutdown();
+        store.close();
         File dir = new File("./tsdr");
         File[] files = dir.listFiles();
         for (File f : files) {
@@ -118,7 +118,7 @@ public class CassandraStoreTest {
     public void testStoreTSDRMetric() {
         store.store(createMetricRecord());
         Assert.assertEquals(1,store.getBatch().size());
-        store.shutdown();
+        store.close();
         Mockito.verify(session,Mockito.atLeast(1)).close();
     }
 
@@ -126,7 +126,7 @@ public class CassandraStoreTest {
     public void testStoreTSDRLog() {
         store.store(createLogRecord());
         Assert.assertEquals(1,store.getBatch().size());
-        store.shutdown();
+        store.close();
         Mockito.verify(session,Mockito.atLeast(1)).close();
     }
 

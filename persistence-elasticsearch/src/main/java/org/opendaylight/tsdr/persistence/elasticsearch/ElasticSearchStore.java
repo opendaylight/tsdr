@@ -45,10 +45,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.opendaylight.tsdr.spi.util.ConfigFileUtil;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
@@ -67,8 +73,12 @@ import org.slf4j.LoggerFactory;
  *
  * @author Lukas Beles(lbeles@frinx.io)
  */
-class ElasticSearchStore extends AbstractScheduledService {
+@Singleton
+public class ElasticSearchStore extends AbstractScheduledService implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+    private static final String ELASTICSEARCH_STORE_CONFIG_FILE =
+            ConfigFileUtil.CONFIG_DIR  + "tsdr-persistence-elasticsearch.properties";
 
     private static final String ELK_QUERY = ""
             + "{%n"
@@ -144,26 +154,31 @@ class ElasticSearchStore extends AbstractScheduledService {
 
     private JestClient client;
 
-    /**
-     * Creates a new instance of {@link ElasticSearchStore} backed by the client.
-     * If the client is null, then a client based on properties files will
-     * be created, setup, and used.
-     */
-    static ElasticSearchStore create(Map<String, String> properties, JestClient client) {
-        return new ElasticSearchStore(checkNotNull(properties), client);
+    @Inject
+    public ElasticSearchStore() throws IOException {
+        this(ConfigFileUtil.loadConfig(ELASTICSEARCH_STORE_CONFIG_FILE), null);
     }
 
-    private ElasticSearchStore(Map<String, String> properties, JestClient client) {
-        this.properties = properties;
+    @VisibleForTesting
+    ElasticSearchStore(Map<String, String> properties, JestClient client) {
+        this.properties = Objects.requireNonNull(properties);
         this.client = client;
     }
 
-    /**
-     * Empty constructor. We use it only because of tests
-     */
-    @VisibleForTesting
-    ElasticSearchStore() {
-        properties = null;
+    @PostConstruct
+    public void init() {
+        startAsync();
+    }
+
+    @Override
+    @PreDestroy
+    public void close() {
+        try {
+            stopAsync().awaitTerminated(3L, TimeUnit.SECONDS);
+            LOGGER.info("TSDR ElasticSearch data store was successfully stopped");
+        } catch (TimeoutException e) {
+            LOGGER.warn("Could not stop TSDR Elastic Search data store within 3 sec", e);
+        }
     }
 
     /**

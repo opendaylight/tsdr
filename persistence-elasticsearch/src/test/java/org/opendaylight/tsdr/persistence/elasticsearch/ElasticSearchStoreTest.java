@@ -51,6 +51,7 @@ public class ElasticSearchStoreTest {
             "stopTimeout", "1",
             "syncInterval", "1");
     private static final JestClient CLIENT = Mockito.mock(JestClient.class);
+
     private static ElasticSearchStore store;
 
     /**
@@ -58,7 +59,7 @@ public class ElasticSearchStoreTest {
      */
     @BeforeClass
     public static void setUp() throws Exception {
-        store = ElasticSearchStore.create(PROPERTIES, CLIENT);
+        store = new ElasticSearchStore(PROPERTIES, CLIENT);
         store.startAsync().awaitRunning(1, TimeUnit.SECONDS);
     }
 
@@ -262,7 +263,7 @@ public class ElasticSearchStoreTest {
      */
     @Test
     public void createAndStartAndShutDown() throws Exception {
-        ElasticSearchStore localStore = ElasticSearchStore.create(PROPERTIES, CLIENT);
+        ElasticSearchStore localStore = new ElasticSearchStore(PROPERTIES, CLIENT);
         assertThat(localStore.state()).isEqualTo(Service.State.NEW);
         localStore.startAsync().awaitRunning(2, TimeUnit.SECONDS);
         assertThat(localStore.state()).isEqualTo(Service.State.RUNNING);
@@ -299,7 +300,7 @@ public class ElasticSearchStoreTest {
      */
     @Test(expected = IllegalStateException.class)
     public void unknownClientConfiguration() throws Exception {
-        ElasticSearchStore localStore = ElasticSearchStore.create(PROPERTIES, null);
+        ElasticSearchStore localStore = new ElasticSearchStore(PROPERTIES, null);
         localStore.startAsync().awaitRunning();
     }
 
@@ -317,8 +318,13 @@ public class ElasticSearchStoreTest {
      */
     @Test
     public void startup() throws Exception {
-        ElasticSearchStore localStore = Mockito.spy(ElasticSearchStore.class);
-        Mockito.doReturn(null).when(localStore).createJestClient();
+        ElasticSearchStore localStore = new ElasticSearchStore(PROPERTIES, null) {
+            @Override
+            JestClient createJestClient() throws IOException {
+                return CLIENT;
+            }
+
+        };
         localStore.startUp();
     }
 }

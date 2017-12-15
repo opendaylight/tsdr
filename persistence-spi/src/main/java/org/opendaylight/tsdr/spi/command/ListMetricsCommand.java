@@ -17,7 +17,6 @@ import java.util.Locale;
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.console.OsgiCommandSupport;
-import org.opendaylight.tsdr.spi.persistence.TSDRBinaryPersistenceService;
 import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
 import org.opendaylight.tsdr.spi.persistence.TSDRMetricPersistenceService;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
@@ -37,18 +36,6 @@ import org.slf4j.LoggerFactory;
 public class ListMetricsCommand extends OsgiCommandSupport {
     private static final Logger LOG = LoggerFactory.getLogger(ListMetricsCommand.class);
 
-    private static TSDRMetricPersistenceService metricService;
-    private static TSDRLogPersistenceService logService;
-    private static TSDRBinaryPersistenceService binaryService;
-
-    public static void setMetricService(TSDRMetricPersistenceService service) {
-        metricService = service;
-    }
-
-    public static void setLogService(TSDRLogPersistenceService service) {
-        logService = service;
-    }
-
     @Argument(index = 0, name = "category", required = true,
             description = "The category of the metrics we want to get", multiValued = false)
     public String category = null;
@@ -58,6 +45,14 @@ public class ListMetricsCommand extends OsgiCommandSupport {
     @Argument(index = 2, name = "endDateTime", required = false,
             description = "list the metrics till this time (format: MM/dd/yyyy HH:mm:ss)", multiValued = false)
     public String endDateTime = null;
+
+    private final TSDRMetricPersistenceService metricService;
+    private final TSDRLogPersistenceService logService;
+
+    public ListMetricsCommand(TSDRMetricPersistenceService metricService, TSDRLogPersistenceService logService) {
+        this.metricService = metricService;
+        this.logService = logService;
+    }
 
     protected long getDate(String dateTime) {
         if (dateTime == null) {

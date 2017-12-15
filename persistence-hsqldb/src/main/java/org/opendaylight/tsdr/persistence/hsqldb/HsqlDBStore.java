@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.persistence.hsqldb;
 
+import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -17,6 +18,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache;
 import org.opendaylight.tsdr.spi.util.TSDRKeyCache.TSDRCacheEntry;
@@ -34,8 +38,9 @@ import org.slf4j.LoggerFactory;
  * HSQLDB Back-end store.
  *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
-public class HsqlDBStore {
+ */
+@Singleton
+public class HsqlDBStore implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(HsqlDBStore.class);
     private static final String METRIC_TABLE = "METRICS";
     private static final String LOG_TABLE = "LOGS";
@@ -43,6 +48,7 @@ public class HsqlDBStore {
     private final Connection connection;
     private final TSDRKeyCache cache = new TSDRKeyCache();
 
+    @Inject
     public HsqlDBStore() {
         LOG.info("Connecting to HSQLDB...");
         this.connection = getConnection();
@@ -53,7 +59,8 @@ public class HsqlDBStore {
         }
     }
 
-    public HsqlDBStore(Connection connection) {
+    @VisibleForTesting
+    HsqlDBStore(Connection connection) {
         LOG.info("Connecting to HSQLDB...");
         this.connection = connection;
     }
@@ -249,7 +256,9 @@ public class HsqlDBStore {
         return lb.build();
     }
 
-    public void shutdown() {
+    @Override
+    @PreDestroy
+    public void close() {
         if (this.connection != null) {
             try {
                 this.connection.close();

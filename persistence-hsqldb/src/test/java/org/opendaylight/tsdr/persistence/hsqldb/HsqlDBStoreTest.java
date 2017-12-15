@@ -58,7 +58,7 @@ public class HsqlDBStoreTest {
 
     @After
     public void after() {
-        store.shutdown();
+        store.close();
         File dir = new File("./tsdr");
         File[] files = dir.listFiles();
         for (File f : files) {
@@ -116,7 +116,7 @@ public class HsqlDBStoreTest {
     public void testStoreTSDRMetric() throws SQLException {
         store.store(createMetricRecord());
         Mockito.verify(statement, Mockito.atLeast(1)).execute(Mockito.anyString());
-        store.shutdown();
+        store.close();
         Mockito.verify(connection, Mockito.atLeast(1)).close();
     }
 
@@ -124,7 +124,7 @@ public class HsqlDBStoreTest {
     public void testStoreTSDRLog() throws SQLException {
         store.store(createLogRecord());
         Mockito.verify(statement, Mockito.atLeast(1)).execute(Mockito.anyString());
-        store.shutdown();
+        store.close();
         Mockito.verify(connection, Mockito.atLeast(1)).close();
     }
 
