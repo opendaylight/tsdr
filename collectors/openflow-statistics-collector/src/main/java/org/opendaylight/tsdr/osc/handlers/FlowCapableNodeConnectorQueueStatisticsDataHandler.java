@@ -52,15 +52,15 @@ public class FlowCapableNodeConnectorQueueStatisticsDataHandler
             builder[2].setTimeStamp(timeStamp);
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "TransmissionErrors",
                     FormatUtil.toMetricValue(gs.getTransmissionErrors()),
                     DataCategory.QUEUESTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "TransmittedBytes",
                     FormatUtil.toMetricValue(gs.getTransmittedBytes()),
                     DataCategory.QUEUESTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "TransmittedPackets",
                     FormatUtil.toMetricValue(gs.getTransmittedPackets()),
                     DataCategory.QUEUESTATS);

@@ -25,7 +25,7 @@ public class RPCFutures {
         Futures.addCallback(JdkFutureAdapters.listenInPoolThread(future), new FutureCallback<RpcResult<Void>>() {
             @Override
             public void onSuccess(RpcResult<Void> result) {
-                logger.debug("RPC {} returned result {]", rpc, result);
+                logger.debug("RPC {} returned result {}", rpc, result);
             }
 
             @Override

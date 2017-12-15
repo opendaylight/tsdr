@@ -8,10 +8,14 @@
   <odl:rpc-service id="tsdrCollectorSpiService"
       interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
 
+  <odl:clustered-app-config id="openflowConfig"
+      binding-class="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.TSDROSCConfig"/>
+
   <bean id="tSDROpenflowCollector" class="org.opendaylight.tsdr.osc.TSDROpenflowCollector"
       init-method = "init" destroy-method="close">
     <argument ref="dataBroker"/>
     <argument ref="tsdrCollectorSpiService"/>
+    <argument ref="openflowConfig"/>
   </bean>
 
   <odl:rpc-implementation ref="tSDROpenflowCollector"/>

@@ -22,10 +22,16 @@ module tsdr-openflow-statistics-collector {
             "Initial revision.";
     }
 
-    container TSDROSCConfig{
-       leaf polling-interval{
+    container TSDROSCConfig {
+       leaf polling-interval {
           type int64;
+          default 15000;
        }
+
+       leaf record-store-batch-size {
+           type int64;
+           default 500;
+        }
     }
 
     rpc setPollingInterval  {

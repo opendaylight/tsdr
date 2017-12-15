@@ -39,8 +39,17 @@ public class NodeConnectorStatisticsChangeHandler extends TSDRBaseDataHandler<Fl
             //no data yet, ignore
             return;
         }
-        TSDRMetricRecordBuilderContainer bc = getCollector()
-                .getTSDRMetricRecordBuilderContainer(id);
+
+        BigDecimal transmittedBytes = fs.getBytes() != null
+                ? FormatUtil.toMetricValue(fs.getBytes().getTransmitted()) : BigDecimal.ZERO;
+        BigDecimal receivedBytes = fs.getBytes() != null
+                ? FormatUtil.toMetricValue(fs.getBytes().getReceived()) : BigDecimal.ZERO;
+        BigDecimal transmittedPackets = fs.getPackets() != null
+                ? FormatUtil.toMetricValue(fs.getPackets().getTransmitted()) : BigDecimal.ZERO;
+        BigDecimal receivedPackets = fs.getPackets() != null
+                ? FormatUtil.toMetricValue(fs.getPackets().getReceived()) : BigDecimal.ZERO;
+
+        TSDRMetricRecordBuilderContainer bc = getCollector().getTSDRMetricRecordBuilderContainer(id);
         if (bc != null) {
             TSDRMetricRecordBuilder[] builder = bc.getBuilders();
             long timeStamp = getTimeStamp();
@@ -60,18 +69,14 @@ public class NodeConnectorStatisticsChangeHandler extends TSDRBaseDataHandler<Fl
             builder[6].setTimeStamp(timeStamp);
             builder[7].setMetricValue(FormatUtil.toMetricValue(fs.getReceiveErrors()));
             builder[7].setTimeStamp(timeStamp);
+            builder[8].setMetricValue(transmittedBytes);
             builder[8].setTimeStamp(timeStamp);
+            builder[9].setMetricValue(receivedBytes);
             builder[9].setTimeStamp(timeStamp);
+            builder[10].setMetricValue(transmittedPackets);
             builder[10].setTimeStamp(timeStamp);
+            builder[11].setMetricValue(receivedPackets);
             builder[11].setTimeStamp(timeStamp);
-            if (fs.getBytes() != null) {
-                builder[8].setMetricValue(FormatUtil.toMetricValue(fs.getBytes().getTransmitted()));
-                builder[9].setMetricValue(FormatUtil.toMetricValue(fs.getBytes().getReceived()));
-            }
-            if (fs.getPackets() != null) {
-                builder[10].setMetricValue(FormatUtil.toMetricValue(fs.getPackets().getTransmitted()));
-                builder[11].setMetricValue(FormatUtil.toMetricValue(fs.getPackets().getReceived()));
-            }
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
@@ -99,13 +104,13 @@ public class NodeConnectorStatisticsChangeHandler extends TSDRBaseDataHandler<Fl
                     "ReceiveErrors", FormatUtil.toMetricValue(fs.getReceiveErrors()),
                     DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "TransmittedBytes", new BigDecimal(0), DataCategory.PORTSTATS);
+                    "TransmittedBytes", transmittedBytes, DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceivedBytes", new BigDecimal(0), DataCategory.PORTSTATS);
+                    "ReceivedBytes", receivedBytes, DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "TransmittedPackets", new BigDecimal(0), DataCategory.PORTSTATS);
+                    "TransmittedPackets", transmittedPackets, DataCategory.PORTSTATS);
             getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
-                    "ReceivedPackets", new BigDecimal(0), DataCategory.PORTSTATS);
+                    "ReceivedPackets", receivedPackets, DataCategory.PORTSTATS);
         }
     }
 }

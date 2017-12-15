@@ -50,13 +50,13 @@ public class NodeTableStatisticsChangeHandler extends TSDRBaseDataHandler<FlowTa
             builder[2].setTimeStamp(timeStamp);
         } else {
             List<RecordKeys> recKeys = createRecordKeys(id);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "ActiveFlows", FormatUtil.toMetricValue(fs.getActiveFlows()),
                     DataCategory.FLOWTABLESTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "PacketMatch", FormatUtil.toMetricValue(fs.getPacketsMatched()),
                     DataCategory.FLOWTABLESTATS);
-            getCollector().createTSDRMetricRecordBuilder(nodeID,id, recKeys,
+            getCollector().createTSDRMetricRecordBuilder(nodeID, id, recKeys,
                     "PacketLookup", FormatUtil.toMetricValue(fs.getPacketsLookedUp()),
                     DataCategory.FLOWTABLESTATS);
         }
