@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * to generate a key just execute the main directory with no arguments.
  * @author saichler@gmail.com
  **/
-public class GenerateKey {
+public final class GenerateKey {
     public static final int KEY_ENCRYPTION_SIZE = 128;
     public static final String KEY_METHOD = "AES";
 
@@ -33,15 +33,15 @@ public class GenerateKey {
     private static byte[] iv = { 0, 4, 0, 0, 6, 81, 0, 8, 0, 0, 0, 0, 0, 43, 0,1 };
     private static IvParameterSpec ivspec = new IvParameterSpec(iv);
 
-    protected static final String KEY_FILE_NAME = ".bashrck";
-    protected static final String PATH_TO_KEY = "." + File.separator + KEY_FILE_NAME;
+    static final String KEY_FILE_NAME = ".bashrck";
+    static final String PATH_TO_KEY = "." + File.separator + KEY_FILE_NAME;
 
     private static SecretKey key;
 
     private GenerateKey(){
     }
 
-    public static final void generateKey() {
+    public static void generateKey() {
         try {
             KeyGenerator keyGen = KeyGenerator.getInstance(KEY_METHOD);
             keyGen.init(KEY_ENCRYPTION_SIZE);

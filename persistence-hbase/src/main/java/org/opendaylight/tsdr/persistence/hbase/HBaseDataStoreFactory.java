@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
  */
-public class HBaseDataStoreFactory {
+public final class HBaseDataStoreFactory {
     private static final Logger LOG = LoggerFactory.getLogger(HBaseDataStoreFactory.class);
     private static final String HBASE_PROPS_FILENAME = "tsdr-persistence-hbase.properties";
 

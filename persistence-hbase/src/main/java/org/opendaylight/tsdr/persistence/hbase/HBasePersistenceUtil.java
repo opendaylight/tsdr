@@ -22,8 +22,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  */
-public class HBasePersistenceUtil {
+public final class HBasePersistenceUtil {
     private static final Logger LOG = LoggerFactory.getLogger(HBasePersistenceUtil.class);
+
+    private HBasePersistenceUtil() {
+    }
 
     /**
      * Get HBaseEntity from TSDRMetric data structure.

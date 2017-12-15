@@ -26,8 +26,6 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 
 public class HBasePersistenceUtilTest {
-    private final HBasePersistenceUtil hbasePersistenceUtil = new HBasePersistenceUtil();
-
     @Test
     public void testGetEntityFromMetricStats() {
         String timeStamp = new Long(new Date().getTime()).toString();

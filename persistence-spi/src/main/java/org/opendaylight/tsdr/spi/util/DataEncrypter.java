@@ -44,8 +44,8 @@ import org.slf4j.LoggerFactory;
  *  decrypt the strings.
  *
  * @author saichler@gmail.com
- **/
-public class DataEncrypter {
+ */
+public final class DataEncrypter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataEncrypter.class);
     public static final String ENCRYPTED_TAG = "Encrypted:";
     public static final String TAG_PASSWORD = "password";
@@ -55,6 +55,9 @@ public class DataEncrypter {
 
     static {
         init();
+    }
+
+    private DataEncrypter() {
     }
 
     /**
@@ -244,7 +247,7 @@ public class DataEncrypter {
      * Receive a filename and seeks all the defined tags in it and encrypt them.
      * @param  filename  The filename to seek the tags and encrypt
      */
-    public static final void encryptCredentialAttributes(final String filename) {
+    public static void encryptCredentialAttributes(final String filename) {
         // No Key, hence disabled
         if (GenerateKey.getKey() == null) {
             return;

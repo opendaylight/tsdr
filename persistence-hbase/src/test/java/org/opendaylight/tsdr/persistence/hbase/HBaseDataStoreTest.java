@@ -65,12 +65,12 @@ public class HBaseDataStoreTest {
         hbase = mock(HBaseAdmin.class);
         hbaseDataStore = new HBaseDataStore(hbaseDataStoreContext) {
             @Override
-            public HTablePool getHTablePool() {
+            public HTablePool newHTablePool() {
                 return htablePool;
             }
 
             @Override
-            public HBaseEntity convertResultToEntity(String tableName, Result result) {
+            public HBaseEntity convertResultToEntity(String tableName, Result resultToConvert) {
                 HBaseEntity dentity = new HBaseEntity();
                 dentity.setRowKey("rowKey1");
                 dentity.setTableName("tableName1");

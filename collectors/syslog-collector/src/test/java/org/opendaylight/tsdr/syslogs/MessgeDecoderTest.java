@@ -50,8 +50,6 @@ public class MessgeDecoderTest {
     @Test
     public void testUnrecognizableMessage() {
         String str = "Simple string.";
-        MessageDecoder decoder = new MessageDecoder();
-
-        Assert.assertTrue(!decoder.matches(str));
+        Assert.assertTrue(!MessageDecoder.matches(str));
     }
 }

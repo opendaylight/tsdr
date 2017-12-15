@@ -20,7 +20,10 @@ import org.slf4j.Logger;
  *
  * @author Thomas Pantelis
  */
-public class RPCFutures {
+public final class RPCFutures {
+    private RPCFutures() {
+    }
+
     public static void logResult(Future<RpcResult<Void>> future, String rpc, Logger logger) {
         Futures.addCallback(JdkFutureAdapters.listenInPoolThread(future), new FutureCallback<RpcResult<Void>>() {
             @Override

@@ -112,8 +112,8 @@ final class TsdrRecordPayload {
         this.recordKeyPayloadList = recordKeys;
     }
 
-    void setTSDRDataCategory(DataCategory dataCategory) {
-        this.dataCategory = dataCategory;
+    void setTSDRDataCategory(DataCategory category) {
+        this.dataCategory = category;
     }
 
     void setTimeStamp(Long timeStamp) {

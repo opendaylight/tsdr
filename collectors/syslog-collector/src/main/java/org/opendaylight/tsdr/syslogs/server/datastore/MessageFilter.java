@@ -20,7 +20,7 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
  *
  * @author Kun Chen(kunch@tethrnet.com)
  */
-public class MessageFilter {
+public final class MessageFilter {
     //When the filed is null, it means a wildcard
     //String type should support regex match
     private final Message.Facility facility;

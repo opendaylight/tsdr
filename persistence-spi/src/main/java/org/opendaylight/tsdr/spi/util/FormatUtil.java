@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
  */
-public class FormatUtil {
+public final class FormatUtil {
     private static final Logger LOG = LoggerFactory.getLogger(FormatUtil.class);
 
     public static final String QUERY_TIMESTAMP = "yyyy-MM-dd HH:mm:ss";
@@ -57,6 +57,9 @@ public class FormatUtil {
         for (DataCategory c:DataCategory.values()) {
             DATA_CATEGORY_STRINGS.add(c.name());
         }
+    }
+
+    private FormatUtil() {
     }
 
     public static boolean isDataCategory(String str) {
@@ -368,21 +371,21 @@ public class FormatUtil {
         return sb.toString();
     }
 
-    public static final BigDecimal toMetricValue(Counter32 counter32) {
+    public static BigDecimal toMetricValue(Counter32 counter32) {
         if (counter32 != null) {
             return new BigDecimal(counter32.getValue());
         }
         return BigDecimal.ZERO;
     }
 
-    public static final BigDecimal toMetricValue(Counter64 counter64) {
+    public static BigDecimal toMetricValue(Counter64 counter64) {
         if (counter64 != null) {
             return new BigDecimal(counter64.getValue());
         }
         return BigDecimal.ZERO;
     }
 
-    public static final BigDecimal toMetricValue(BigInteger bigInteger) {
+    public static BigDecimal toMetricValue(BigInteger bigInteger) {
         if (bigInteger != null) {
             return new BigDecimal(bigInteger);
         }

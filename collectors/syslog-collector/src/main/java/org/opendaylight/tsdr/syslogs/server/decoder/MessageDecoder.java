@@ -21,7 +21,7 @@ import org.opendaylight.tsdr.syslogs.server.decoder.Message.MessageBuilder;
  * @author Kun Chen(kunch@tethrnet.com)
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
-public class MessageDecoder {
+public final class MessageDecoder {
     /*
      <PRI>SEQ NO:HostName:Timestamp:Application[ProcessID]:%Facility-Severity-MNEMONIC:description
      regex for syslog:
@@ -37,6 +37,9 @@ public class MessageDecoder {
      */
     private static final String REGEX = "<([0-9]+)>([0-9]+):([^:]*):(.+):(.+)\\[([0-9]*)]:[\\s]*%.+-[0-7]-(.*):(.*)";
     private static final Pattern PATTERN = Pattern.compile(REGEX);
+
+    private MessageDecoder() {
+    }
 
     public static Message decode(String msg) {
         Matcher matcher = PATTERN.matcher(msg);

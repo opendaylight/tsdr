@@ -18,7 +18,7 @@ package org.opendaylight.tsdr.syslogs.server.decoder;
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  * @author Kun Chen(kunch@tethrnet.com)
  */
-public class Message {
+public final class Message {
     // <PRI>SEQ NO:HostName:Timestamp:Application[ProcessID]:%Facility-Severity-MNEMONIC:description
     public enum Facility {
         KERNEL,
@@ -134,43 +134,43 @@ public class Message {
             return new MessageBuilder();
         }
 
-        public MessageBuilder facility(Facility facility) {
-            this.facility = facility;
+        public MessageBuilder facility(Facility newFacility) {
+            this.facility = newFacility;
             return this;
         }
 
-        public MessageBuilder severity(Severity severity) {
-            this.severity = severity;
+        public MessageBuilder severity(Severity newSeverity) {
+            this.severity = newSeverity;
             return this;
         }
 
-        public MessageBuilder timestamp(String timestamp) {
-            this.timestamp = timestamp;
+        public MessageBuilder timestamp(String newTimestamp) {
+            this.timestamp = newTimestamp;
             return this;
         }
 
-        public MessageBuilder hostname(String hostname) {
-            this.hostname = hostname;
+        public MessageBuilder hostname(String newHostname) {
+            this.hostname = newHostname;
             return this;
         }
 
-        public MessageBuilder applicationName(String applicationName) {
-            this.applicationName = applicationName;
+        public MessageBuilder applicationName(String newApplicationName) {
+            this.applicationName = newApplicationName;
             return this;
         }
 
-        public MessageBuilder processId(String processId) {
-            this.processId = processId;
+        public MessageBuilder processId(String newProcessId) {
+            this.processId = newProcessId;
             return this;
         }
 
-        public MessageBuilder sequenceId(String sequenceId) {
-            this.sequenceId = sequenceId;
+        public MessageBuilder sequenceId(String newSequenceId) {
+            this.sequenceId = newSequenceId;
             return this;
         }
 
-        public MessageBuilder content(String content) {
-            this.content = content;
+        public MessageBuilder content(String newContent) {
+            this.content = newContent;
             return this;
         }
 

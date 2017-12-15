@@ -124,17 +124,8 @@ public class HBaseDataStore  {
         return conf;
     }
 
-    /**
-     * Create an HTable pool based on the poolSize obtained from the HBase data
-     * store context.
-     *
-     * @return HTablePool
-     */
-    public HTablePool getHTablePool() {
-        LOG.debug("Entering getHTablePool()");
-        HTablePool htablePool = new HTablePool(config, 1);
-        LOG.debug("Exiting getHTablePool()");
-        return htablePool;
+    protected HTablePool newHTablePool() {
+        return new HTablePool(config, 1);
     }
 
     /**
@@ -153,7 +144,7 @@ public class HBaseDataStore  {
         try {
             Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader());
             if (htablePool == null || htablePool.getTable(tableName) == null) {
-                htablePool = getHTablePool();
+                htablePool = newHTablePool();
             }
             if (htablePool != null) {
                 htableResult = htablePool.getTable(tableName);

@@ -42,7 +42,6 @@ public class PurgeDataTaskTest {
     /**
      * Test to see if purgeTask.purgeData() is called successfully.
      */ public void testPurgeData() {
-        PurgeDataTask purgeTask = new PurgeDataTask(rpcRegistry);
         purgeTask.purgeData();
         assertTrue(true);
     }

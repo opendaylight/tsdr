@@ -18,14 +18,14 @@ import java.util.Objects;
  * so when pushing a sample we do not need to persist the whole tsdr string key but only two longs.
  * @author - Sharon Aicler (saichler@gmail.com)
  */
-public class MD5ID {
+public final class MD5ID {
     private static final MessageDigest MD;
 
     static {
         try {
             MD = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
-            throw new ExceptionInInitializerError("Could not initialize MD5 Algorithm");
+            throw new ExceptionInInitializerError(e);
         }
     }
 

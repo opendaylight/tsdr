@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  */
+// This class is mocked so can't be final
+@SuppressWarnings("checkstyle:FinalClass")
 public class SchedulerService {
     private static final Logger LOG = LoggerFactory.getLogger(SchedulerService.class);
 
