@@ -81,7 +81,6 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
-<!--
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>odl-tsdr-syslog-collector</artifactId>
@@ -89,7 +88,6 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
--->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>odl-tsdr-openflow-statistics-collector</artifactId>

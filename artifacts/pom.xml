@@ -91,14 +91,12 @@
 	    <artifactId>tsdr-openflow-statisctics-collector</artifactId>
 	    <version>${project.version}</version>
         </dependency>
-<!--
-            <dependency>
+        <dependency>
 	    <groupId>${project.groupId}</groupId>
 	    <artifactId>tsdr-syslog-collector</artifactId>
 	    <version>${project.version}</version>
         </dependency>
--->
-            <dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>tsdr-restconf-collector</artifactId>
             <version>${project.version}</version>
@@ -156,7 +154,6 @@
           <version>${project.version}</version>
           <type>cfg</type>
         </dependency>
-<!--
         <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-syslog-collector</artifactId>
@@ -164,7 +161,6 @@
           <type>xml</type>
           <classifier>config</classifier>
         </dependency>
--->
         <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-netflow-statistics-collector</artifactId>
@@ -186,15 +182,6 @@
           <type>xml</type>
           <classifier>config</classifier>
        </dependency>
-<!--
-       <dependency>
-          <groupId>org.opendaylight.tsdr</groupId>
-          <artifactId>tsdr-syslog-collector</artifactId>
-          <version>${project.version}</version>
-          <type>xml</type>
-          <classifier>config</classifier>
-       </dependency>
--->
        <!-- TSDR datastores -->
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
@@ -296,7 +283,6 @@
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
-<!--
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>odl-tsdr-syslog-collector</artifactId>
@@ -304,7 +290,6 @@
         <classifier>features</classifier>
         <type>xml</type>
       </dependency>
--->
    </dependencies>
  </dependencyManagement>
 </project>
