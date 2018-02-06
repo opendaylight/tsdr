@@ -58,32 +58,32 @@ public class ListMetricsCommandTest {
 
     @Test
     public void test() throws Exception {
-        TSDRMetricPersistenceService metricService = Mockito.mock(TSDRMetricPersistenceService.class);
-        TSDRLogPersistenceService logService = Mockito.mock(TSDRLogPersistenceService.class);
-        ListMetricsCommand cmd = new ListMetricsCommand(metricService, logService);
+        final TSDRMetricPersistenceService metricService = Mockito.mock(TSDRMetricPersistenceService.class);
+        final TSDRLogPersistenceService logService = Mockito.mock(TSDRLogPersistenceService.class);
+        ListMetricsCommand cmd = new ListMetricsCommand();
         cmd.category = "EXTERNAL";
-        cmd.doExecute();
-        cmd.doExecute();
+        cmd.execute();
+        cmd.execute();
         List<TSDRMetricRecord> metric = new ArrayList<>();
         metric.add(createMetricRecord());
         Mockito.when(metricService.getTSDRMetricRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong()))
                 .thenReturn(metric);
-        cmd.doExecute();
+        cmd.execute();
 
         List<TSDRLogRecord> logs = new ArrayList<>();
         logs.add(createLogRecord());
         Mockito.when(logService.getTSDRLogRecords(Mockito.anyString(),Mockito.anyLong(),Mockito.anyLong()))
                 .thenReturn(logs);
         cmd.category = DataCategory.LOGRECORDS.name();
-        cmd.doExecute();
+        cmd.execute();
         cmd.startDateTime = "10/10/2010 22:22:22";
         cmd.endDateTime = "10/10/2010 22:23:22";
-        cmd.doExecute();
+        cmd.execute();
         cmd.startDateTime = "10/10/2010 22:22:22";
         cmd.endDateTime = "10/10/2010 22:22:22";
-        cmd.doExecute();
-        cmd.getDate("10/10/2010 22:22:22");
-        cmd.getDate(null);
-        cmd.getDate("10/10/2010 22:2222");
+        cmd.execute();
+        // cmd.getDate("10/10/2010 22:22:22");
+        // cmd.getDate(null);
+        // cmd.getDate("10/10/2010 22:2222");
     }
 }

@@ -9,8 +9,11 @@
 package org.opendaylight.tsdr.spi.command.completer;
 
 import java.util.List;
-import org.apache.karaf.shell.console.Completer;
-import org.apache.karaf.shell.console.completer.StringsCompleter;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.api.console.CommandLine;
+import org.apache.karaf.shell.api.console.Completer;
+import org.apache.karaf.shell.api.console.Session;
+import org.apache.karaf.shell.support.completers.StringsCompleter;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 
 /**
@@ -19,14 +22,15 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
  *
  */
+@Service
 public class ListMetricsCommandCompleter implements Completer {
 
     @Override
-    public int complete(String buffer, int cursor, List<String> candidates) {
+    public int complete(Session session, CommandLine commandLine, List<String> candidates) {
         StringsCompleter completer = new StringsCompleter();
         for (DataCategory c : DataCategory.values()) {
             completer.getStrings().add(c.name());
         }
-        return completer.complete(buffer, cursor, candidates);
+        return completer.complete(session, commandLine, candidates);
     }
 }

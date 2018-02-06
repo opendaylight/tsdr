@@ -14,9 +14,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import org.apache.karaf.shell.commands.Argument;
-import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.console.OsgiCommandSupport;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.api.console.Session;
+import org.opendaylight.tsdr.spi.command.completer.ListMetricsCommandCompleter;
 import org.opendaylight.tsdr.spi.persistence.TSDRLogPersistenceService;
 import org.opendaylight.tsdr.spi.persistence.TSDRMetricPersistenceService;
 import org.opendaylight.tsdr.spi.util.FormatUtil;
@@ -31,13 +36,15 @@ import org.slf4j.LoggerFactory;
  *
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed</a>
  */
+@Service
 @Command(scope = "tsdr", name = "list",
     description = "Lists recent 1000 metrics(default) or returns time specified metrics")
-public class ListMetricsCommand extends OsgiCommandSupport {
+public class ListMetricsCommand implements Action {
     private static final Logger LOG = LoggerFactory.getLogger(ListMetricsCommand.class);
 
     @Argument(index = 0, name = "category", required = true,
             description = "The category of the metrics we want to get", multiValued = false)
+    @Completion(ListMetricsCommandCompleter.class)
     public String category = null;
     @Argument(index = 1, name = "startDateTime", required = false,
             description = "list the metrics from this time (format: MM/dd/yyyy HH:mm:ss)", multiValued = false)
@@ -46,15 +53,15 @@ public class ListMetricsCommand extends OsgiCommandSupport {
             description = "list the metrics till this time (format: MM/dd/yyyy HH:mm:ss)", multiValued = false)
     public String endDateTime = null;
 
-    private final TSDRMetricPersistenceService metricService;
-    private final TSDRLogPersistenceService logService;
+    @Reference TSDRMetricPersistenceService metricService;
+    @Reference TSDRLogPersistenceService logService;
+    @Reference protected Session session;
 
-    public ListMetricsCommand(TSDRMetricPersistenceService metricService, TSDRLogPersistenceService logService) {
-        this.metricService = metricService;
-        this.logService = logService;
+    public ListMetricsCommand() {
+
     }
 
-    protected long getDate(String dateTime) {
+    private long getDate(String dateTime) {
         if (dateTime == null) {
             return System.currentTimeMillis();
         }
@@ -74,8 +81,8 @@ public class ListMetricsCommand extends OsgiCommandSupport {
 
     @Override
     @SuppressWarnings("checkstyle:RegexpSingleLineJava")
-    protected Object doExecute() throws Exception {
-        PrintStream ps = session != null ? session.getConsole() : System.out;
+    public Object execute() throws Exception {
+        PrintStream ps = this.session != null ? this.session.getConsole() : System.out;
 
         long startDate = 0;
         long endDate = Long.MAX_VALUE;
@@ -111,7 +118,7 @@ public class ListMetricsCommand extends OsgiCommandSupport {
         return null;
     }
 
-    protected String listMetrics(List<TSDRMetricRecord> metrics) {
+    private String listMetrics(List<TSDRMetricRecord> metrics) {
         StringBuilder buffer = new StringBuilder();
         for (TSDRMetricRecord metric : metrics) {
             buffer.append(FormatUtil.getTSDRMetricKeyWithTimeStamp(metric));
@@ -120,7 +127,7 @@ public class ListMetricsCommand extends OsgiCommandSupport {
         return buffer.toString();
     }
 
-    protected String listLogs(List<TSDRLogRecord> logs) {
+    private String listLogs(List<TSDRLogRecord> logs) {
         StringBuilder buffer = new StringBuilder();
         for (TSDRLogRecord log : logs) {
             buffer.append(FormatUtil.getTSDRLogKeyWithTimeStamp(log));
