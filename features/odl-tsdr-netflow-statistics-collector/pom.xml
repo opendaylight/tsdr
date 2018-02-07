@@ -17,20 +17,9 @@
     <packaging>feature</packaging>
 
     <name>ODL :: tsdr :: netflow statistics collector</name>
-    <properties>
-          <l2switch.version>0.7.0-SNAPSHOT</l2switch.version>
-    </properties>
 
  <dependencyManagement>
         <dependencies>
-        <!-- To replace with  the actual version of l2swith -->
-            <dependency>
-                <groupId>org.opendaylight.l2switch</groupId>
-                <artifactId>l2switch-artifacts</artifactId>
-                <version>${l2switch.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>tsdr-artifacts</artifactId>
@@ -55,14 +44,6 @@
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-netflow-statistics-collector</artifactId>
           <version>${project.version}</version>
-      </dependency>
-      <!-- ODL dependencies -->
-      <dependency>
-          <groupId>org.opendaylight.l2switch</groupId>
-          <artifactId>odl-l2switch-switch</artifactId>
-          <classifier>features</classifier>
-          <version>${l2switch.version}</version>
-          <type>xml</type>
       </dependency>
     </dependencies>
 </project>

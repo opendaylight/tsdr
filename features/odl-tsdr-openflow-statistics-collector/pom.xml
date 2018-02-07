@@ -18,19 +18,11 @@
 
     <name>ODL :: tsdr :: openflowcollector</name>
     <properties>
-          <l2switch.version>0.7.0-SNAPSHOT</l2switch.version>
+          <openflowplugin.version>0.6.0-SNAPSHOT</openflowplugin.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-        <!-- To replace with  the actual version of l2swith -->
-            <dependency>
-                <groupId>org.opendaylight.l2switch</groupId>
-                <artifactId>l2switch-artifacts</artifactId>
-                <version>${l2switch.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>tsdr-artifacts</artifactId>
@@ -57,10 +49,10 @@
 
         <!-- ODL dependencies -->
         <dependency>
-            <groupId>org.opendaylight.l2switch</groupId>
-            <artifactId>odl-l2switch-switch</artifactId>
+            <groupId>org.opendaylight.openflowplugin</groupId>
+            <artifactId>odl-openflowplugin-flow-services</artifactId>
             <classifier>features</classifier>
-            <version>${l2switch.version}</version>
+            <version>${openflowplugin.version}</version>
             <type>xml</type>
         </dependency>
     </dependencies>
