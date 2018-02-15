@@ -37,14 +37,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- ODL-OPENFLOWPLUGIN-ARTIFACTS -->
-            <dependency>
-                <groupId>org.opendaylight.openflowplugin</groupId>
-                <artifactId>openflowplugin-artifacts</artifactId>
-                <version>${openflowplugin.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
-            </dependency>
             <!-- ODL-CONTROLLER-ARTIFACTS -->
             <dependency>
                 <groupId>org.opendaylight.controller</groupId>
@@ -101,15 +93,8 @@
             <classifier>features</classifier>
         </dependency>
 
-         <!-- Openflow plugin -->
-        <dependency>
-            <groupId>org.opendaylight.openflowplugin</groupId>
-            <artifactId>odl-openflowplugin-nsf-model</artifactId>
-            <version>${openflowplugin.version}</version>
-            <classifier>features</classifier>
-            <type>xml</type>
-        </dependency>
         <!-- restconf -->
+<!--
         <dependency>
             <groupId>org.opendaylight.netconf</groupId>
             <artifactId>odl-restconf-all</artifactId>
@@ -117,6 +102,7 @@
             <classifier>features</classifier>
             <type>xml</type>
         </dependency>
+-->
         <!-- TSDR dependencies -->
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -138,11 +124,13 @@
             <artifactId>tsdr-datapurge</artifactId>
             <version>${project.version}</version>
         </dependency>
+<!--
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>tsdr-dataquery</artifactId>
             <version>${project.version}</version>
         </dependency>
+-->
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
             <artifactId>tsdr-datapurge</artifactId>
