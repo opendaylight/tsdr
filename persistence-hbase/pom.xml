@@ -45,6 +45,7 @@
         <configuration>
           <instructions>
             <Bundle-Name>org.opendaylight.tsdr.hbase</Bundle-Name>
+            <DynamicImport-Package>*</DynamicImport-Package>
           </instructions>
         </configuration>
       </plugin>
