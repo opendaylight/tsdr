@@ -13,7 +13,7 @@
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-controller-metrics-collector</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.6.0-SNAPSHOT</version>
     <packaging>feature</packaging>
 
     <name>ODL :: tsdr :: controller collector</name>
