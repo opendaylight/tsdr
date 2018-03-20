@@ -94,7 +94,7 @@
         </dependency>
 
         <!-- restconf -->
-<!--
+
         <dependency>
             <groupId>org.opendaylight.netconf</groupId>
             <artifactId>odl-restconf-all</artifactId>
@@ -102,7 +102,7 @@
             <classifier>features</classifier>
             <type>xml</type>
         </dependency>
--->
+
         <!-- TSDR dependencies -->
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -124,13 +124,11 @@
             <artifactId>tsdr-datapurge</artifactId>
             <version>${project.version}</version>
         </dependency>
-<!--
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>tsdr-dataquery</artifactId>
             <version>${project.version}</version>
         </dependency>
--->
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
             <artifactId>tsdr-datapurge</artifactId>

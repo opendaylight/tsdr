@@ -11,15 +11,15 @@ import com.google.gson.Gson;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutput;
@@ -44,7 +44,7 @@ public class TSDRNbiRestAPI {
     }
 
     @GET
-    @Path("/{render}")
+    @Path("/render")
     @Produces("application/json")
     public Response get(@PathParam("render") String render,
             @QueryParam("target") String target,
@@ -60,13 +60,30 @@ public class TSDRNbiRestAPI {
         request.setMaxDataPoints(maxDataPoints);
         request.setTarget(target);
         request.setUntil(until);
-        return post(null,request);
+        return execute(request);
     }
 
     @POST
+    @Path("/render")
     @Produces("application/json")
-    public Response post(@Context UriInfo info, TSDRNbiRequest request)
+    @Consumes("application/x-www-form-urlencoded")
+    public Response post(@FormParam("target") String target,
+            @FormParam("from") String from,
+            @FormParam("until") String until,
+            @FormParam("format") String format,
+            @FormParam("maxDataPoints") String maxDataPoints)
             throws ExecutionException, InterruptedException {
+
+        TSDRNbiRequest request = new TSDRNbiRequest();
+        request.setFormat(format);
+        request.setFrom(from);
+        request.setMaxDataPoints(maxDataPoints);
+        request.setTarget(target);
+        request.setUntil(until);
+        return execute(request);
+    }
+
+    private Response execute(TSDRNbiRequest request) throws ExecutionException, InterruptedException {
         final TSDRNbiReply reply = new TSDRNbiReply();
         reply.setTarget(request.getTarget());
 
