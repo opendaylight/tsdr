@@ -13,13 +13,13 @@
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-restconf-collector</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.5.0</version>
     <packaging>feature</packaging>
 
     <name>ODL :: tsdr :: restconfcollector</name>
     <properties>
-          <aaa.version>0.7.0-SNAPSHOT</aaa.version>
-          <restconf.version>1.7.0-SNAPSHOT</restconf.version>
+          <aaa.version>0.7.0</aaa.version>
+          <restconf.version>1.7.0</restconf.version>
     </properties>
 
     <dependencyManagement>

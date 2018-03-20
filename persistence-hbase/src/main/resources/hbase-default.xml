@@ -837,7 +837,7 @@
     ide.  You'll want to set this boolean to true to avoid
     seeing the RuntimException complaint: "hbase-default.xml file
     seems to be for and old version of HBase (0.94.15), this
-    version is X.X.X-SNAPSHOT"
+    version is X.X.X"
     </description>
   </property>
   <property>
