@@ -13,17 +13,17 @@
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-core</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.5.1-SNAPSHOT</version>
     <packaging>feature</packaging>
     <!-- <name> formatting is used by autorelease to parse and notify projects on
          build failure. Please do not modify this unless you have a good reason. -->
     <name>ODL :: tsdr :: core</name>
     <properties>
-        <openflowplugin.version>0.6.0-SNAPSHOT</openflowplugin.version>
-        <mdsal.model.version>0.12.0-SNAPSHOT</mdsal.model.version>
-        <mdsal.common.version>2.4.0-SNAPSHOT</mdsal.common.version>
-        <restconf.version>1.7.0-SNAPSHOT</restconf.version>
-        <controller.mdsal.version>1.7.0-SNAPSHOT</controller.mdsal.version>
+        <openflowplugin.version>0.6.1-SNAPSHOT</openflowplugin.version>
+        <mdsal.model.version>0.12.1-SNAPSHOT</mdsal.model.version>
+        <mdsal.common.version>2.4.1-SNAPSHOT</mdsal.common.version>
+        <restconf.version>1.7.1-SNAPSHOT</restconf.version>
+        <controller.mdsal.version>1.7.1-SNAPSHOT</controller.mdsal.version>
     </properties>
  
 
