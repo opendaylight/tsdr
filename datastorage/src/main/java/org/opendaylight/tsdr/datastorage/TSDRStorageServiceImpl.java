@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.datastorage;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
@@ -215,9 +216,9 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
             final GetTSDRAggregatedMetricsInput input) {
 
         // Locate the appropriate aggregation function implementation
-        final AggregationFunction aggregationFunction = Iterators.find(
-                aggregationFunctions.iterator(), candidate -> candidate.getType().equals(input.getAggregation()), null);
-        if (aggregationFunction == null) {
+        Optional<AggregationFunction> aggregationFunction = Iterators.tryFind(
+                aggregationFunctions.iterator(), candidate -> candidate.getType().equals(input.getAggregation()));
+        if (!aggregationFunction.isPresent()) {
             return RpcResultBuilder.<GetTSDRAggregatedMetricsOutput>failed()
                     .withError(ErrorType.APPLICATION,
                             String.format("No aggregation function implementation was found for '%s'.",
@@ -285,7 +286,7 @@ public class TSDRStorageServiceImpl implements TSDRService,TsdrMetricDataService
                 // Aggregate the metrics in the interval
                 aggregatedMetrics.add(new AggregatedMetricsBuilder()
                         .setTimeStamp(intervalStartInclusive)
-                        .setMetricValue(aggregationFunction.aggregate(metricsInInterval)).build());
+                        .setMetricValue(aggregationFunction.get().aggregate(metricsInInterval)).build());
             }
 
             // We're done
