@@ -37,10 +37,10 @@ import org.opendaylight.yangtools.yang.common.RpcResult;
  **/
 @Path("/nbi")
 public class TSDRNbiRestAPI {
-    private static TsdrMetricDataService metricDataService;
+    private final TsdrMetricDataService metricDataService;
 
-    public static void setMetricDataService(TsdrMetricDataService newMetricDataService) {
-        metricDataService = newMetricDataService;
+    public TSDRNbiRestAPI(TsdrMetricDataService metricDataService) {
+        this.metricDataService = metricDataService;
     }
 
     @GET
@@ -102,10 +102,14 @@ public class TSDRNbiRestAPI {
             if (!metric.get().isSuccessful()) {
                 Response.status(503).entity("{}").build();
             }
-            List<Metrics> metrics = metric.get().getResult().getMetrics();
-            if (metrics != null) {
-                for (Metrics m : metrics) {
-                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
+
+            final GetTSDRMetricsOutput result = metric.get().getResult();
+            if (result != null) {
+                List<Metrics> metrics = result.getMetrics();
+                if (metrics != null) {
+                    for (Metrics m : metrics) {
+                        reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
+                    }
                 }
             }
         } else {

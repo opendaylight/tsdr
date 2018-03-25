@@ -45,6 +45,7 @@
     <module>collectors/restconf-collector</module>
     <module>features</module>
     <module>artifacts</module>
+    <module>karaf</module>
   </modules>
 
  <build>

@@ -35,9 +35,9 @@ import org.opendaylight.yangtools.yang.common.RpcResult;
  **/
 @Path("/logs")
 public class TSDRLogQueryAPI {
-    private static TsdrLogDataService logDataService;
+    private final TsdrLogDataService logDataService;
 
-    public static void setLogDataService(TsdrLogDataService newLogDataService) {
+    public TSDRLogQueryAPI(TsdrLogDataService newLogDataService) {
         logDataService = newLogDataService;
     }
 

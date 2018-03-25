@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.concurrent.Future;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNbiRestAPI;
-import org.opendaylight.tsdr.dataquery.rest.query.TSDRLogQueryAPI;
-import org.opendaylight.tsdr.dataquery.rest.query.TSDRMetricsQueryAPI;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
@@ -55,10 +52,6 @@ public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
     public TSDRNbiServiceImpl(TsdrMetricDataService metricService, TsdrLogDataService logService) {
         logDataService = logService;
         metricDataService = metricService;
-
-        TSDRNbiRestAPI.setMetricDataService(metricService);
-        TSDRLogQueryAPI.setLogDataService(logService);
-        TSDRMetricsQueryAPI.setMetricDataService(metricService);
     }
 
     @Override

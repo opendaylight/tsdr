@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNbiRestAPI;
@@ -62,13 +61,6 @@ public class TSDRQueryAndNBITest extends JerseyTest {
     private static TsdrLogDataService logDataService = Mockito.mock(TsdrLogDataService.class);
 
     private QueryResourceConfig config;
-
-    @BeforeClass
-    public static void staticSetup() {
-        TSDRNbiRestAPI.setMetricDataService(metricDataService);
-        TSDRMetricsQueryAPI.setMetricDataService(metricDataService);
-        TSDRLogQueryAPI.setLogDataService(logDataService);
-    }
 
     public static GetTSDRMetricsOutput createMetricRecords(boolean emptyResult) {
         MetricsBuilder rb = new MetricsBuilder();
@@ -233,9 +225,9 @@ public class TSDRQueryAndNBITest extends JerseyTest {
         @Override
         public Set<Object> getSingletons() {
             HashSet<Object> set = new HashSet<>(1);
-            TSDRMetricsQueryAPI qapi = new TSDRMetricsQueryAPI();
-            TSDRLogQueryAPI lapi = new TSDRLogQueryAPI();
-            TSDRNbiRestAPI nbi = new TSDRNbiRestAPI();
+            TSDRMetricsQueryAPI qapi = new TSDRMetricsQueryAPI(metricDataService);
+            TSDRLogQueryAPI lapi = new TSDRLogQueryAPI(logDataService);
+            TSDRNbiRestAPI nbi = new TSDRNbiRestAPI(metricDataService);
             set.add(qapi);
             set.add(lapi);
             set.add(nbi);

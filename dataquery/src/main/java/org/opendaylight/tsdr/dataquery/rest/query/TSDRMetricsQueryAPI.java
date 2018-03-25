@@ -39,9 +39,9 @@ import org.opendaylight.yangtools.yang.common.RpcResult;
  */
 @Path("/metrics")
 public class TSDRMetricsQueryAPI {
-    private static TsdrMetricDataService metricDataService;
+    private final TsdrMetricDataService metricDataService;
 
-    public static void setMetricDataService(TsdrMetricDataService newMetricDataService) {
+    public TSDRMetricsQueryAPI(TsdrMetricDataService newMetricDataService) {
         metricDataService = newMetricDataService;
     }
 

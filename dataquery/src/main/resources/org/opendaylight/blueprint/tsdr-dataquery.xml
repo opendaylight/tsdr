@@ -9,4 +9,14 @@
       interface="org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService"/>
 
   <odl:rpc-implementation ref="tSDRNbiServiceImpl"/>
+
+  <reference id="webServer" interface="org.opendaylight.aaa.web.WebServer" />
+  <reference id="webContextSecurer" interface="org.opendaylight.aaa.web.WebContextSecurer" />
+
+  <bean id="webInitializer" class="org.opendaylight.tsdr.dataquery.rest.web.WebInitializer" destroy-method="close">
+    <argument ref="webServer"/>
+    <argument ref="webContextSecurer"/>
+    <argument ref="tsdrMetricDataService"/>
+    <argument ref="tsdrLogDataService"/>
+  </bean>
 </blueprint>
