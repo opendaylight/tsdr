@@ -11,7 +11,7 @@
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-elasticsearch</artifactId>
-    <version>1.5.1-SNAPSHOT</version>
+    <version>1.5.1</version>
     <packaging>feature</packaging>
 
     <name>ODL :: tsdr :: elasticsearch</name>
