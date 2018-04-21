@@ -13,13 +13,13 @@
     <parent>
         <groupId>org.opendaylight.odlparent</groupId>
         <artifactId>odlparent-lite</artifactId>
-        <version>1.8.4-SNAPSHOT</version>
+        <version>1.8.4-Carbon</version>
         <relativePath/>
     </parent>
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>tsdr-artifacts</artifactId>
-    <version>1.3.4-SNAPSHOT</version>
+    <version>1.3.4-Carbon</version>
     <name>ODL :: tsdr :: ${project.artifactId}</name>
     <packaging>pom</packaging>
 
