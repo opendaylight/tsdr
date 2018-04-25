@@ -11,7 +11,7 @@
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-hsqldb-all</artifactId>
-    <version>1.5.1-SNAPSHOT</version>
+    <version>1.5.2-SNAPSHOT</version>
     <packaging>feature</packaging>
     <!-- <name> formatting is used by autorelease to parse and notify projects on
          build failure. Please do not modify this unless you have a good reason. -->
