@@ -34,7 +34,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <protobuf.version>2.4.1</protobuf.version>
         <com.codahale.metrics.version>3.0.2</com.codahale.metrics.version>
-        <io.netty.version>3.9.0.Final</io.netty.version>
+        <io.netty.version>3.10.6.Final</io.netty.version>
         <com.datastax.cassandra.version>2.2.0-rc3</com.datastax.cassandra.version>
         <sigar.version>1.6.4</sigar.version>
         <hsqldb.version>1.8.0.10</hsqldb.version>
