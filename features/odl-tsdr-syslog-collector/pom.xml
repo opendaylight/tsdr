@@ -7,19 +7,19 @@
     <parent>
         <groupId>org.opendaylight.odlparent</groupId>
         <artifactId>single-feature-parent</artifactId>
-        <version>1.8.4-SNAPSHOT</version>
+        <version>1.8.5-SNAPSHOT</version>
         <relativePath/>
     </parent>
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-syslog-collector</artifactId>
-    <version>1.3.4-SNAPSHOT</version>
+    <version>1.3.5-SNAPSHOT</version>
     <packaging>feature</packaging>
 
     <name>ODL :: tsdr :: syslogcollector</name>
     <properties>
-         <mdsal.version>1.5.4-SNAPSHOT</mdsal.version>
-         <config.version>0.6.4-SNAPSHOT</config.version>
+         <mdsal.version>1.5.5-SNAPSHOT</mdsal.version>
+         <config.version>0.6.5-SNAPSHOT</config.version>
          <sigar.version>1.6.4</sigar.version>
          <io.netty4.version>4.0.33.Final</io.netty4.version>
     </properties>
