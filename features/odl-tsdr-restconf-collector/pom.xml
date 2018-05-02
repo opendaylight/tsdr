@@ -69,20 +69,5 @@
           <version>${project.version}</version>
           <type>cfg</type>
       </dependency>
-      <!-- ODL dependencies -->
-       <dependency>
-          <groupId>org.opendaylight.netconf</groupId>
-          <artifactId>features-restconf</artifactId>
-          <classifier>features</classifier>
-          <version>${restconf.version}</version>
-          <type>xml</type>
-      </dependency>
-      <dependency>
-          <groupId>org.opendaylight.aaa</groupId>
-          <artifactId>features-aaa</artifactId>
-          <classifier>features</classifier>
-          <version>${aaa.version}</version>
-          <type>xml</type>
-      </dependency>
     </dependencies>
 </project>
