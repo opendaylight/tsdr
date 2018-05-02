@@ -214,7 +214,7 @@ public final class FormatUtil {
         if (index1 == -1) {
             return null;
         }
-        int index2 = tsdrKey.indexOf("]", index1);
+        int index2 = findSubkeyClosingBracket(tsdrKey, index1);
         return tsdrKey.substring(index1 + KEY_CATEGORY.length(), index2);
     }
 
@@ -223,7 +223,7 @@ public final class FormatUtil {
         if (index1 == -1) {
             return null;
         }
-        int index2 = tsdrKey.indexOf("]", index1);
+        int index2 = findSubkeyClosingBracket(tsdrKey, index1);
         if (index2 == -1) {
             return null;
         }
@@ -235,7 +235,7 @@ public final class FormatUtil {
         if (index1 == -1) {
             return null;
         }
-        int index2 = tsdrKey.indexOf("]", index1);
+        int index2 = findSubkeyClosingBracket(tsdrKey, index1);
         return tsdrKey.substring(index1 + KEY_METRICNAME.length(), index2);
     }
 
@@ -244,7 +244,7 @@ public final class FormatUtil {
         if (index1 == -1) {
             return null;
         }
-        int index2 = tsdrKey.indexOf("]", index1);
+        int index2 = findSubkeyClosingBracket(tsdrKey, index1);
         return tsdrKey.substring(index1 + KEY_NODEID.length(), index2);
     }
 
@@ -253,7 +253,7 @@ public final class FormatUtil {
         if (index1 == -1) {
             return null;
         }
-        int index2 = tsdrKey.indexOf("]", index1);
+        int index2 = findSubkeyClosingBracket(tsdrKey, index1);
         String recs = tsdrKey.substring(index1 + KEY_RECORDKEYS.length(), index2);
         StringTokenizer tokens = new StringTokenizer(recs, ",");
         List<RecordKeys> result = new ArrayList<>();
@@ -278,7 +278,7 @@ public final class FormatUtil {
         if (index1 == -1) {
             return null;
         }
-        int index2 = tsdrKey.indexOf("]", index1);
+        int index2 = findSubkeyClosingBracket(tsdrKey, index1);
         String recs = tsdrKey.substring(index1 + KEY_RECORD_ATTRIBUTES.length(), index2);
         StringTokenizer tokens = new StringTokenizer(recs, ",");
         List<RecordAttributes> result = new ArrayList<>();
@@ -394,5 +394,18 @@ public final class FormatUtil {
 
     public static String getFixedFormatString(String value, long length) {
         return String.format("%1$" + length + "s", value);
+    }
+
+    private static int findSubkeyClosingBracket(String tsdrKey, int start) {
+        int openBracket;
+        int closeBracket;
+
+        do {
+            openBracket = tsdrKey.indexOf('[', start + 1);
+            closeBracket = tsdrKey.indexOf(']', start + 1);
+            start = closeBracket;
+        } while (openBracket != -1 && closeBracket > openBracket);
+
+        return closeBracket;
     }
 }
