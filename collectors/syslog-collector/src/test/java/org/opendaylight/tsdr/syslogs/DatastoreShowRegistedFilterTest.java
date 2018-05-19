@@ -28,6 +28,7 @@ import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.controller.md.sal.common.api.data.TransactionCommitFailedException;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilter;
@@ -92,7 +93,8 @@ public class DatastoreShowRegistedFilterTest {
 
         when(checkedReadFuture.get()).thenReturn(optional);
 
-        Future<RpcResult<ShowRegisterFilterOutput>> future = manager.showRegisterFilter();
+        Future<RpcResult<ShowRegisterFilterOutput>> future =
+                manager.showRegisterFilter(new ShowRegisterFilterInputBuilder().build());
         Assert.assertTrue(future.get().isSuccessful());
         Assert.assertNotNull(future.get().getResult().getRegisteredSyslogFilter());
         Assert.assertEquals("registered filters are:",future.get().getResult().getResult());
@@ -103,7 +105,8 @@ public class DatastoreShowRegistedFilterTest {
 
         when(checkedReadFuture.get()).thenReturn(optional);
 
-        Future<RpcResult<ShowRegisterFilterOutput>> future = manager.showRegisterFilter();
+        Future<RpcResult<ShowRegisterFilterOutput>> future =
+                manager.showRegisterFilter(new ShowRegisterFilterInputBuilder().build());
 
         Assert.assertTrue(future.get().isSuccessful());
         Assert.assertNull(future.get().getResult().getRegisteredSyslogFilter());
@@ -113,7 +116,8 @@ public class DatastoreShowRegistedFilterTest {
     @Test
     public void testShowRegisterFilterWithException() throws InterruptedException, ExecutionException {
         when(checkedReadFuture.get()).thenThrow(new ExecutionException("mock", new ReadFailedException("mock")));
-        Future<RpcResult<ShowRegisterFilterOutput>> future = manager.showRegisterFilter();
+        Future<RpcResult<ShowRegisterFilterOutput>> future =
+                manager.showRegisterFilter(new ShowRegisterFilterInputBuilder().build());
 
         Assert.assertEquals("Reading Filter failed", future.get().getResult().getResult());
     }

@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +35,7 @@ import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.controller.md.sal.common.api.data.TransactionCommitFailedException;
+import org.opendaylight.mdsal.common.api.CommitInfo;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.tsdr.osc.handlers.FlowCapableNodeConnectorQueueStatisticsDataHandler;
 import org.opendaylight.tsdr.osc.handlers.FlowStatisticsDataHandler;
@@ -65,6 +65,8 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.SetPollingIntervalInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.SetPollingIntervalOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.SetPollingIntervalOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.TSDROSCConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.TSDROSCConfigBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.openflow.statistics.collector.rev150820.TsdrOpenflowStatisticsCollectorService;
@@ -448,30 +450,29 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
     }
 
     @Override
-    public Future<RpcResult<Void>> setPollingInterval(SetPollingIntervalInput input) {
+    public ListenableFuture<RpcResult<SetPollingIntervalOutput>> setPollingInterval(SetPollingIntervalInput input) {
         TSDROSCConfigBuilder builder = new TSDROSCConfigBuilder();
         builder.setPollingInterval(input.getInterval());
 
-        SettableFuture<RpcResult<Void>> resultFuture = SettableFuture.create();
+        SettableFuture<RpcResult<SetPollingIntervalOutput>> resultFuture = SettableFuture.create();
         WriteTransaction wrt = dataBroker.newWriteOnlyTransaction();
         wrt.put(LogicalDatastoreType.CONFIGURATION, InstanceIdentifier.create(TSDROSCConfig.class), builder.build());
 
-        ListenableFuture<Void> future = wrt.submit();
-        Futures.addCallback(future, new FutureCallback<Void>() {
+        Futures.addCallback(wrt.commit(), new FutureCallback<CommitInfo>() {
             @Override
-            public void onSuccess(Void result) {
+            public void onSuccess(CommitInfo result) {
                 LOG.debug("Save config succeeded");
-                resultFuture.set(RpcResultBuilder.<Void>success().build());
+                resultFuture.set(RpcResultBuilder.success(new SetPollingIntervalOutputBuilder().build()).build());
             }
 
             @Override
             public void onFailure(Throwable ex) {
                 if (ex instanceof TransactionCommitFailedException) {
-                    resultFuture.set(RpcResultBuilder.<Void>failed()
+                    resultFuture.set(RpcResultBuilder.<SetPollingIntervalOutput>failed()
                             .withRpcErrors(((TransactionCommitFailedException)ex).getErrorList()).build());
                 } else {
-                    resultFuture.set(RpcResultBuilder.<Void>failed().withError(ErrorType.APPLICATION,
-                            "Unexpected error saving config", ex).build());
+                    resultFuture.set(RpcResultBuilder.<SetPollingIntervalOutput>failed()
+                            .withError(ErrorType.APPLICATION, "Unexpected error saving config", ex).build());
                 }
             }
         }, MoreExecutors.directExecutor());

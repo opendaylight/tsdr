@@ -10,13 +10,13 @@ package org.opendaylight.tsdr.datapurge;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.JdkFutureAdapters;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordInputBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
@@ -59,10 +59,10 @@ public class PurgeDataTask extends Task {
         }
         input.setRetentionTime(System.currentTimeMillis() - this.retentionTimeinHours * HOUR_2_MILLI_SECS);
 
-        Future<RpcResult<Void>> future = storageService.purgeAllTSDRRecord(input.build());
-        Futures.addCallback(JdkFutureAdapters.listenInPoolThread(future), new FutureCallback<RpcResult<Void>>() {
+        ListenableFuture<RpcResult<PurgeAllTSDRRecordOutput>> future = storageService.purgeAllTSDRRecord(input.build());
+        Futures.addCallback(future, new FutureCallback<RpcResult<PurgeAllTSDRRecordOutput>>() {
             @Override
-            public void onSuccess(RpcResult<Void> result) {
+            public void onSuccess(RpcResult<PurgeAllTSDRRecordOutput> result) {
                 LOG.debug("RPC purgeAllTSDRRecord returned result {]", result);
             }
 

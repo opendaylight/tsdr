@@ -9,9 +9,8 @@ package org.opendaylight.tsdr.collector.spi;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.JdkFutureAdapters;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.util.concurrent.Future;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.slf4j.Logger;
 
@@ -24,10 +23,10 @@ public final class RPCFutures {
     private RPCFutures() {
     }
 
-    public static void logResult(Future<RpcResult<Void>> future, String rpc, Logger logger) {
-        Futures.addCallback(JdkFutureAdapters.listenInPoolThread(future), new FutureCallback<RpcResult<Void>>() {
+    public static <T> void logResult(ListenableFuture<RpcResult<T>> future, String rpc, Logger logger) {
+        Futures.addCallback(future, new FutureCallback<RpcResult<T>>() {
             @Override
-            public void onSuccess(RpcResult<Void> result) {
+            public void onSuccess(RpcResult<T> result) {
                 logger.debug("RPC {} returned result {}", rpc, result);
             }
 

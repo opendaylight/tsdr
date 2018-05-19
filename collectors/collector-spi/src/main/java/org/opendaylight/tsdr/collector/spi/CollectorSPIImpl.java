@@ -8,9 +8,11 @@
 
 package org.opendaylight.tsdr.collector.spi;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
@@ -20,9 +22,14 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.Tsdr
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yangtools.yang.common.RpcResult;
+import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +52,8 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService {
     }
 
     @Override
-    public Future<RpcResult<Void>> insertTSDRMetricRecord(InsertTSDRMetricRecordInput input) {
+    public ListenableFuture<RpcResult<InsertTSDRMetricRecordOutput>> insertTSDRMetricRecord(
+            InsertTSDRMetricRecordInput input) {
         StoreTSDRMetricRecordInputBuilder tsdrServiceInput = new StoreTSDRMetricRecordInputBuilder();
         List<TSDRMetricRecord> records = new ArrayList<>();
         for (org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi
@@ -61,11 +69,15 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService {
         }
         tsdrServiceInput.setTSDRMetricRecord(records);
 
-        return metricDataService.storeTSDRMetricRecord(tsdrServiceInput.build());
+        return Futures.transform(metricDataService.storeTSDRMetricRecord(tsdrServiceInput.build()), result -> {
+            return result.isSuccessful() ? RpcResultBuilder.success(new InsertTSDRMetricRecordOutputBuilder().build())
+                    .build() : RpcResultBuilder.<InsertTSDRMetricRecordOutput>failed()
+                    .withRpcErrors(result.getErrors()).build();
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
-    public Future<RpcResult<Void>> insertTSDRLogRecord(InsertTSDRLogRecordInput input) {
+    public ListenableFuture<RpcResult<InsertTSDRLogRecordOutput>> insertTSDRLogRecord(InsertTSDRLogRecordInput input) {
         StoreTSDRLogRecordInputBuilder tsdrServiceInput = new StoreTSDRLogRecordInputBuilder();
         List<TSDRLogRecord> records = new ArrayList<>();
         for (org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi
@@ -82,6 +94,10 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService {
         }
         tsdrServiceInput.setTSDRLogRecord(records);
 
-        return logDataService.storeTSDRLogRecord(tsdrServiceInput.build());
+        return Futures.transform(logDataService.storeTSDRLogRecord(tsdrServiceInput.build()), result -> {
+            return result.isSuccessful() ? RpcResultBuilder.success(new InsertTSDRLogRecordOutputBuilder().build())
+                        .build() : RpcResultBuilder.<InsertTSDRLogRecordOutput>failed()
+                        .withRpcErrors(result.getErrors()).build();
+        }, MoreExecutors.directExecutor());
     }
 }

@@ -16,8 +16,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.StoreTSDRMetricRecordInput;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.StoreTSDRMetricRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
@@ -41,9 +43,9 @@ public class TSDRNbiServiceImplTest {
     public void before() {
         Mockito.when(rpcRegistry.getRpcService(TsdrMetricDataService.class)).thenReturn(metricDataService);
         Mockito.when(metricDataService.storeTSDRMetricRecord(any()))
-                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+                .thenReturn(RpcResultBuilder.success(new StoreTSDRMetricRecordOutputBuilder().build()).buildFuture());
         Mockito.when(logDataService.storeTSDRLogRecord(any()))
-                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+                .thenReturn(RpcResultBuilder.success(new StoreTSDRLogRecordOutputBuilder().build()).buildFuture());
     }
 
     @Test

@@ -17,6 +17,8 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
@@ -55,9 +57,9 @@ public class TSDRRestconfCollectorLoggerTest {
 
         tsdrCollectorSpiService = Mockito.mock(TsdrCollectorSpiService.class);
         Mockito.when(tsdrCollectorSpiService.insertTSDRLogRecord(any()))
-                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+                .thenReturn(RpcResultBuilder.success(new InsertTSDRLogRecordOutputBuilder().build()).buildFuture());
         Mockito.when(tsdrCollectorSpiService.insertTSDRMetricRecord(any()))
-                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+                .thenReturn(RpcResultBuilder.success(new InsertTSDRMetricRecordOutputBuilder().build()).buildFuture());
 
         loggerObject = new TSDRRestconfCollectorLogger(() -> timer, tsdrCollectorSpiService);
 
@@ -96,9 +98,9 @@ public class TSDRRestconfCollectorLoggerTest {
         // the index have been reset
         Mockito.reset(tsdrCollectorSpiService);
         Mockito.when(tsdrCollectorSpiService.insertTSDRLogRecord(any()))
-                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+                .thenReturn(RpcResultBuilder.success(new InsertTSDRLogRecordOutputBuilder().build()).buildFuture());
         Mockito.when(tsdrCollectorSpiService.insertTSDRMetricRecord(any()))
-                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+                .thenReturn(RpcResultBuilder.success(new InsertTSDRMetricRecordOutputBuilder().build()).buildFuture());
 
         loggerObject.insertLog("PUT", "/restconf/path3", "10.0.0.3", "body3");
         loggerObject.run();

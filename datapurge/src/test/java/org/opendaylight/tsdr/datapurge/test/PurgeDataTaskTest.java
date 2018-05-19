@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.datapurge.PurgeDataTask;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
@@ -34,7 +35,7 @@ public class PurgeDataTaskTest {
         TSDRService storageService = Mockito.mock(TSDRService.class);
         Mockito.when(rpcRegistry.getRpcService(TSDRService.class)).thenReturn(storageService);
         Mockito.when(storageService.purgeAllTSDRRecord(any()))
-                .thenReturn(RpcResultBuilder.<Void>success().buildFuture());
+                .thenReturn(RpcResultBuilder.success(new PurgeAllTSDRRecordOutputBuilder().build()).buildFuture());
         purgeTask.setRetentionTimeinHours(1440);
     }
 

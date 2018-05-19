@@ -9,11 +9,10 @@ package org.opendaylight.tsdr.dataquery;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.JdkFutureAdapters;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Future;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInput;
@@ -27,7 +26,11 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.Tsdr
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddLogInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddLogOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddLogOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddMetricInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddMetricOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.AddMetricOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.dataquery.impl.rev150219.TSDRDataqueryImplService;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
@@ -55,7 +58,7 @@ public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
     }
 
     @Override
-    public Future<RpcResult<Void>> addMetric(AddMetricInput input) {
+    public ListenableFuture<RpcResult<AddMetricOutput>> addMetric(AddMetricInput input) {
         TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
         builder.setMetricName(input.getMetricName());
         builder.setMetricValue(input.getMetricValue());
@@ -68,12 +71,11 @@ public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
         list.add(builder.build());
         in.setTSDRMetricRecord(list);
         store(in.build());
-        RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
-        return rpc.buildFuture();
+        return RpcResultBuilder.success(new AddMetricOutputBuilder().build()).buildFuture();
     }
 
     @Override
-    public Future<RpcResult<Void>> addLog(AddLogInput input) {
+    public ListenableFuture<RpcResult<AddLogOutput>> addLog(AddLogInput input) {
         TSDRLogRecordBuilder builder = new TSDRLogRecordBuilder();
         builder.setRecordFullText(input.getRecordFullText());
         builder.setNodeID(input.getNodeID());
@@ -86,8 +88,7 @@ public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
         list.add(builder.build());
         in.setTSDRLogRecord(list);
         store(in.build());
-        RpcResultBuilder<Void> rpc = RpcResultBuilder.success();
-        return rpc.buildFuture();
+        return RpcResultBuilder.success(new AddLogOutputBuilder().build()).buildFuture();
 
     }
 
@@ -101,10 +102,10 @@ public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
         logResult(logDataService.storeTSDRLogRecord(input), "storeTSDRLogRecord");
     }
 
-    private void logResult(Future<RpcResult<Void>> future, String rpc) {
-        Futures.addCallback(JdkFutureAdapters.listenInPoolThread(future), new FutureCallback<RpcResult<Void>>() {
+    private <T> void logResult(ListenableFuture<RpcResult<T>> future, String rpc) {
+        Futures.addCallback(future, new FutureCallback<RpcResult<T>>() {
             @Override
-            public void onSuccess(RpcResult<Void> result) {
+            public void onSuccess(RpcResult<T> result) {
                 LOG.debug("RPC {} returned result {]", rpc, result);
             }
 

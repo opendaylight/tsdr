@@ -20,7 +20,6 @@ import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PreDestroy;
@@ -40,8 +39,10 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterOutputBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
@@ -120,7 +121,8 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
     }
 
     @Override
-    public Future<RpcResult<ShowThreadpoolConfigurationOutput>> showThreadpoolConfiguration() {
+    public ListenableFuture<RpcResult<ShowThreadpoolConfigurationOutput>> showThreadpoolConfiguration(
+            ShowThreadpoolConfigurationInput input) {
 
         int currentThreadpoolQueueSize = threadPool.getQueue().size();
         int currentThreadpoolQueueRemainingCapacity = threadPool.getQueue().remainingCapacity();
@@ -143,7 +145,8 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
     }
 
     @Override
-    public Future<RpcResult<DeleteRegisteredFilterOutput>> deleteRegisteredFilter(DeleteRegisteredFilterInput input) {
+    public ListenableFuture<RpcResult<DeleteRegisteredFilterOutput>> deleteRegisteredFilter(
+            DeleteRegisteredFilterInput input) {
 
         String listenerID = registerMap.get(input.getFilterId());
         RegisteredListener registeredListener = listenerMap.get(listenerID);
@@ -203,7 +206,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
     }
 
     @Override
-    public Future<RpcResult<ShowRegisterFilterOutput>> showRegisterFilter() {
+    public ListenableFuture<RpcResult<ShowRegisterFilterOutput>> showRegisterFilter(ShowRegisterFilterInput input) {
 
         ReadTransaction transaction = dataBroker.newReadOnlyTransaction();
         InstanceIdentifier<SyslogDispatcher> iid =
@@ -263,7 +266,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
     }
 
     @Override
-    public Future<RpcResult<ConfigThreadpoolOutput>> configThreadpool(ConfigThreadpoolInput input) {
+    public ListenableFuture<RpcResult<ConfigThreadpoolOutput>> configThreadpool(ConfigThreadpoolInput input) {
 
         if (input.getCoreThreadNumber() != 0) {
             threadPool.setCorePoolSize(input.getCoreThreadNumber());
@@ -284,7 +287,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
     }
 
     @Override
-    public Future<RpcResult<RegisterFilterOutput>> registerFilter(RegisterFilterInput input) {
+    public ListenableFuture<RpcResult<RegisterFilterOutput>> registerFilter(RegisterFilterInput input) {
 
         LOG.info("Received a new Register");
         String url = input.getCallbackUrl();

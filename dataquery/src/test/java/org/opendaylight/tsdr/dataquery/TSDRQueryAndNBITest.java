@@ -7,6 +7,7 @@
  */
 package org.opendaylight.tsdr.dataquery;
 
+import com.google.common.util.concurrent.Futures;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.test.framework.AppDescriptor;
@@ -18,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -48,6 +48,7 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeysBuilder;
 import org.opendaylight.yangtools.yang.common.RpcResult;
+import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
 /**
  * Northbound tests.
@@ -124,24 +125,15 @@ public class TSDRQueryAndNBITest extends JerseyTest {
     @Override
     protected AppDescriptor configure() {
         config = new QueryResourceConfig();
-        Future<RpcResult<GetTSDRMetricsOutput>> metric = Mockito.mock(Future.class);
-        Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metricAggregated = Mockito.mock(Future.class);
-        Future<RpcResult<GetTSDRLogRecordsOutput>> metric2 = Mockito.mock(Future.class);
         RpcResult<GetTSDRMetricsOutput> rpcResult = Mockito.mock(RpcResult.class);
         RpcResult<GetTSDRAggregatedMetricsOutput> rpcResultAggregated = Mockito.mock(RpcResult.class);
         RpcResult<GetTSDRLogRecordsOutput> rpcResult2 = Mockito.mock(RpcResult.class);
-        Mockito.when(metricDataService.getTSDRMetrics(Mockito.any(GetTSDRMetricsInput.class))).thenReturn(metric);
+        Mockito.when(metricDataService.getTSDRMetrics(Mockito.any(GetTSDRMetricsInput.class)))
+            .thenReturn(Futures.immediateFuture(rpcResult));
         Mockito.when(metricDataService.getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class)))
-            .thenReturn(metricAggregated);
-        Mockito.when(logDataService.getTSDRLogRecords(Mockito.any(GetTSDRLogRecordsInput.class))).thenReturn(metric2);
-
-        try {
-            Mockito.when(metric.get()).thenReturn(rpcResult);
-            Mockito.when(metricAggregated.get()).thenReturn(rpcResultAggregated);
-            Mockito.when(metric2.get()).thenReturn(rpcResult2);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Shouldn't happen", e);
-        }
+            .thenReturn(Futures.immediateFuture(rpcResultAggregated));
+        Mockito.when(logDataService.getTSDRLogRecords(Mockito.any(GetTSDRLogRecordsInput.class)))
+            .thenReturn(Futures.immediateFuture(rpcResult2));
 
         Mockito.when(rpcResult.getResult()).thenReturn(createMetricRecords(false));
         Mockito.when(rpcResultAggregated.getResult()).thenReturn(createAggregatedMetricRecords(false));
@@ -186,12 +178,11 @@ public class TSDRQueryAndNBITest extends JerseyTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testNBIEmptyResponseForMetrics() throws InterruptedException, ExecutionException {
-        Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = Mockito.mock(Future.class);
-        RpcResult<GetTSDRAggregatedMetricsOutput> rpcResult = Mockito.mock(RpcResult.class);
+        //Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = Mockito.mock(Future.class);
+        RpcResult<GetTSDRAggregatedMetricsOutput> rpcResult =
+                RpcResultBuilder.success(createAggregatedMetricRecords(true)).build();
         Mockito.when(metricDataService.getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class)))
-            .thenReturn(metric);
-        Mockito.when(metric.get()).thenReturn(rpcResult);
-        Mockito.when(rpcResult.getResult()).thenReturn(createAggregatedMetricRecords(true));
+            .thenReturn(Futures.immediateFuture(rpcResult));
 
         WebResource webResource = resource();
         String result = webResource.path("/nbi/render").queryParam("tsdrkey", "[NID=128.0.0.1]")

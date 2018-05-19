@@ -9,22 +9,25 @@
 
 package org.opendaylight.tsdr.syslogs;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.util.concurrent.CheckedFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
-import org.opendaylight.controller.md.sal.common.api.data.TransactionCommitFailedException;
+import org.opendaylight.mdsal.common.api.CommitInfo;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolOutput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationInputBuilder;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 
 /**
@@ -42,22 +45,22 @@ public class DatastoreThreadpoolTest {
     private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(dataBroker, coreThreadPoolSize,
             maxThreadPoolSize, keepAliveTime, queueSize);
     private final WriteTransaction writeTransaction = mock(WriteTransaction.class);
-    private final CheckedFuture<Void, TransactionCommitFailedException> checkedFuture = mock(CheckedFuture.class);
+    private final ShowThreadpoolConfigurationInput showRpcInput = new ShowThreadpoolConfigurationInputBuilder().build();
 
     @Before
     public void mockSetUp() {
         when(dataBroker.newWriteOnlyTransaction()).thenReturn(writeTransaction);
-        when(writeTransaction.submit()).thenReturn(checkedFuture);
+        doReturn(CommitInfo.emptyFluentFuture()).when(writeTransaction).commit();
     }
 
     @Test
     public void testshowThreadpoolConfiguration() throws InterruptedException, ExecutionException {
-        Assert.assertTrue(manager.showThreadpoolConfiguration().get().isSuccessful());
-        Assert.assertEquals(5,(long)manager.showThreadpoolConfiguration().get().getResult().getCoreThreadNumber());
-        Assert.assertEquals(10,(long)manager.showThreadpoolConfiguration().get().getResult().getMaxThreadNumber());
-        Assert.assertEquals(10L,(long)manager.showThreadpoolConfiguration().get().getResult().getKeepAliveTime());
-        Assert.assertEquals(10,manager.showThreadpoolConfiguration().get().getResult().getQueueUsedCapacity()
-                + manager.showThreadpoolConfiguration().get().getResult().getQueueRemainingCapacity());
+        assertTrue(manager.showThreadpoolConfiguration(showRpcInput).get().isSuccessful());
+        assertEquals(5,(long)manager.showThreadpoolConfiguration(showRpcInput).get().getResult().getCoreThreadNumber());
+        assertEquals(10,(long)manager.showThreadpoolConfiguration(showRpcInput).get().getResult().getMaxThreadNumber());
+        assertEquals(10L,(long)manager.showThreadpoolConfiguration(showRpcInput).get().getResult().getKeepAliveTime());
+        assertEquals(10,manager.showThreadpoolConfiguration(showRpcInput).get().getResult().getQueueUsedCapacity()
+                + manager.showThreadpoolConfiguration(showRpcInput).get().getResult().getQueueRemainingCapacity());
     }
 
     @Test
@@ -68,10 +71,11 @@ public class DatastoreThreadpoolTest {
                 .setKeepAliveTime(20)
                 .build();
         Future<RpcResult<ConfigThreadpoolOutput>> future = manager.configThreadpool(input);
-        Assert.assertTrue(future.get().isSuccessful());
-        Assert.assertEquals("success",future.get().getResult().getResult());
-        Assert.assertEquals(10,(long)manager.showThreadpoolConfiguration().get().getResult().getCoreThreadNumber());
-        Assert.assertEquals(20,(long)manager.showThreadpoolConfiguration().get().getResult().getMaxThreadNumber());
-        Assert.assertEquals(20L,(long)manager.showThreadpoolConfiguration().get().getResult().getKeepAliveTime());
+        assertTrue(future.get().isSuccessful());
+        assertEquals("success",future.get().getResult().getResult());
+        assertEquals(10,(long)manager.showThreadpoolConfiguration(showRpcInput).get().getResult()
+                .getCoreThreadNumber());
+        assertEquals(20,(long)manager.showThreadpoolConfiguration(showRpcInput).get().getResult().getMaxThreadNumber());
+        assertEquals(20L,(long)manager.showThreadpoolConfiguration(showRpcInput).get().getResult().getKeepAliveTime());
     }
 }
