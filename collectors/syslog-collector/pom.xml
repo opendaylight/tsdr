@@ -5,7 +5,7 @@
   <parent>
     <artifactId>tsdr-parent</artifactId>
     <groupId>org.opendaylight.tsdr</groupId>
-    <version>1.5.2-SNAPSHOT</version>
+    <version>1.5.2</version>
     <relativePath>../../parent</relativePath>
   </parent>
 

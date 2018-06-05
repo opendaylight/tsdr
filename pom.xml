@@ -11,7 +11,7 @@
 
   <groupId>org.opendaylight.tsdr</groupId>
   <artifactId>tsdr</artifactId>
-  <version>1.5.2-SNAPSHOT</version>
+  <version>1.5.2</version>
   <name>tsdr</name>
   <packaging>pom</packaging>
   <scm>
