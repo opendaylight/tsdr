@@ -207,7 +207,7 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
             if (optional.isPresent()) {
                 Nodes nodes = optional.get();
                 for (Node node : nodes.getNode()) {
-                    InstanceIdentifier<Node> nodeID = id.child(Node.class, node.getKey());
+                    InstanceIdentifier<Node> nodeID = id.child(Node.class, node.key());
                     nodeSet.add(nodeID);
                     knownNodes.add(nodeID);
                     collectStatistics(node);
@@ -255,8 +255,8 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         }
 
         InstanceIdentifier<Node> nodeID = InstanceIdentifier.create(
-                Nodes.class).child(Node.class, node.getKey());
-        FlowCapableNode fcnode = node.getAugmentation(FlowCapableNode.class);
+                Nodes.class).child(Node.class, node.key());
+        FlowCapableNode fcnode = node.augmentation(FlowCapableNode.class);
         if (fcnode != null) {
             processMeters(node, nodeID, fcnode);
 
@@ -273,29 +273,29 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         if (ports != null) {
             for (NodeConnector nc : ports) {
                 FlowCapableNodeConnectorStatisticsData fnc =
-                        nc.getAugmentation(FlowCapableNodeConnectorStatisticsData.class);
+                        nc.augmentation(FlowCapableNodeConnectorStatisticsData.class);
                 InstanceIdentifier<FlowCapableNodeConnectorStatisticsData> statID = InstanceIdentifier
                         .create(Nodes.class)
-                        .child(Node.class, node.getKey())
-                        .child(NodeConnector.class, nc.getKey())
+                        .child(Node.class, node.key())
+                        .child(NodeConnector.class, nc.key())
                         .augmentation(FlowCapableNodeConnectorStatisticsData.class);
 
                 handle(nodeID, statID, fnc, FlowCapableNodeConnectorStatisticsData.class);
 
-                FlowCapableNodeConnector fcnc = nc.getAugmentation(FlowCapableNodeConnector.class);
+                FlowCapableNodeConnector fcnc = nc.augmentation(FlowCapableNodeConnector.class);
                 if (fcnc != null) {
                     List<Queue> queues = fcnc.getQueue();
                     if (queues != null) {
                         for (Queue q : queues) {
                             InstanceIdentifier<FlowCapableNodeConnectorQueueStatisticsData> queueStatID =
                                     InstanceIdentifier.create(Nodes.class)
-                                    .child(Node.class, node.getKey())
-                                    .child(NodeConnector.class, nc.getKey())
+                                    .child(Node.class, node.key())
+                                    .child(NodeConnector.class, nc.key())
                                     .augmentation(FlowCapableNodeConnector.class)
-                                    .child(Queue.class, q.getKey())
+                                    .child(Queue.class, q.key())
                                     .augmentation(FlowCapableNodeConnectorQueueStatisticsData.class);
                             handle(nodeID, queueStatID,
-                                    q.getAugmentation(FlowCapableNodeConnectorQueueStatisticsData.class),
+                                    q.augmentation(FlowCapableNodeConnectorQueueStatisticsData.class),
                                     FlowCapableNodeConnectorQueueStatisticsData.class);
                         }
                     }
@@ -308,12 +308,12 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         List<Group> groups = fcnode.getGroup();
         if (groups != null) {
             for (Group g : groups) {
-                NodeGroupStatistics ngs = g.getAugmentation(NodeGroupStatistics.class);
+                NodeGroupStatistics ngs = g.augmentation(NodeGroupStatistics.class);
                 InstanceIdentifier<NodeGroupStatistics> statID = InstanceIdentifier
                         .create(Nodes.class)
-                        .child(Node.class, node.getKey())
+                        .child(Node.class, node.key())
                         .augmentation(FlowCapableNode.class)
-                        .child(Group.class, g.getKey())
+                        .child(Group.class, g.key())
                         .augmentation(NodeGroupStatistics.class);
                 handle(nodeID, statID, ngs, NodeGroupStatistics.class);
             }
@@ -324,27 +324,27 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         List<Table> tables = fcnode.getTable();
         if (tables != null) {
             for (Table t : tables) {
-                FlowTableStatisticsData data = t.getAugmentation(FlowTableStatisticsData.class);
+                FlowTableStatisticsData data = t.augmentation(FlowTableStatisticsData.class);
                 if (data != null) {
                     InstanceIdentifier<FlowTableStatisticsData> statID = InstanceIdentifier
                             .create(Nodes.class)
-                            .child(Node.class, node.getKey())
+                            .child(Node.class, node.key())
                             .augmentation(FlowCapableNode.class)
-                            .child(Table.class, t.getKey())
+                            .child(Table.class, t.key())
                             .augmentation(FlowTableStatisticsData.class);
                     handle(nodeID, statID, data, FlowTableStatisticsData.class);
                 }
                 // Flow Statistics
                 if (t.getFlow() != null) {
                     for (Flow flow : t.getFlow()) {
-                        FlowStatisticsData flowStatisticsData = flow.getAugmentation(FlowStatisticsData.class);
+                        FlowStatisticsData flowStatisticsData = flow.augmentation(FlowStatisticsData.class);
                         if (flowStatisticsData != null) {
                             InstanceIdentifier<FlowStatisticsData> statID = InstanceIdentifier
                                     .create(Nodes.class)
-                                    .child(Node.class, node.getKey())
+                                    .child(Node.class, node.key())
                                     .augmentation(FlowCapableNode.class)
-                                    .child(Table.class, t.getKey())
-                                    .child(Flow.class,flow.getKey())
+                                    .child(Table.class, t.key())
+                                    .child(Flow.class,flow.key())
                                     .augmentation(FlowStatisticsData.class);
                             handle(nodeID, statID, flowStatisticsData, FlowStatisticsData.class);
                         }
@@ -358,13 +358,13 @@ public class TSDROpenflowCollector implements TsdrOpenflowStatisticsCollectorSer
         List<Meter> meters = fcnode.getMeter();
         if (meters != null) {
             for (Meter meter : meters) {
-                NodeMeterStatistics nodeMeterStatistics = meter.getAugmentation(NodeMeterStatistics.class);
+                NodeMeterStatistics nodeMeterStatistics = meter.augmentation(NodeMeterStatistics.class);
                 if (nodeMeterStatistics != null) {
                     InstanceIdentifier<NodeMeterStatistics> statID = InstanceIdentifier
                             .create(Nodes.class)
-                            .child(Node.class, node.getKey())
+                            .child(Node.class, node.key())
                             .augmentation(FlowCapableNode.class)
-                            .child(Meter.class, meter.getKey())
+                            .child(Meter.class, meter.key())
                             .augmentation(NodeMeterStatistics.class);
                     handle(nodeID, statID, nodeMeterStatistics, NodeMeterStatistics.class);
                 }

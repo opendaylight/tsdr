@@ -347,7 +347,7 @@ public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
     private Node buildNode(String id) {
         NodeBuilder nb = new NodeBuilder();
         nb.setId(new NodeId(id));
-        nb.setKey(new NodeKey(nb.getId()));
+        nb.withKey(new NodeKey(nb.getId()));
         List<NodeConnector> list = new ArrayList<>();
         list.add(buildNodeConnector(id + ":1"));
         list.add(buildNodeConnector(id + ":2"));
@@ -359,7 +359,7 @@ public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
     private NodeConnector buildNodeConnector(String id) {
         NodeConnectorBuilder ncb = new NodeConnectorBuilder();
         ncb.setId(new NodeConnectorId(id));
-        ncb.setKey(new NodeConnectorKey(ncb.getId()));
+        ncb.withKey(new NodeConnectorKey(ncb.getId()));
         ncb.addAugmentation(FlowCapableNodeConnectorStatisticsData.class,
                 buildFlowCapableNodeConnectorStatisticsData());
         ncb.addAugmentation(FlowCapableNodeConnector.class, buildFlowCapableNodeConnector());
@@ -409,7 +409,7 @@ public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
     private Table buildTable(short id) {
         TableBuilder builder = new TableBuilder();
         builder.setId(id);
-        builder.setKey(new TableKey(builder.getId()));
+        builder.withKey(new TableKey(builder.getId()));
         builder.addAugmentation(FlowTableStatisticsData.class, buildFlowTableStatisticsData());
         List<Flow> flows = new ArrayList<>();
         flows.add(buildFlow("1"));
@@ -435,7 +435,7 @@ public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
     private Flow buildFlow(String id) {
         FlowBuilder builder = new FlowBuilder();
         builder.setId(new FlowId(id));
-        builder.setKey(new FlowKey(builder.getId()));
+        builder.withKey(new FlowKey(builder.getId()));
         builder.addAugmentation(FlowStatisticsData.class, buildFlowStatisticsData());
         return builder.build();
     }
@@ -513,7 +513,7 @@ public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
     private Queue buildQueue() {
         QueueBuilder builder = new QueueBuilder();
         builder.setQueueId(new QueueId(1L));
-        builder.setKey(new QueueKey(builder.getQueueId()));
+        builder.withKey(new QueueKey(builder.getQueueId()));
         builder.addAugmentation(FlowCapableNodeConnectorQueueStatisticsData.class,
                 buildFlowCapableNodeConnectorQueueStatisticsData());
         return builder.build();
