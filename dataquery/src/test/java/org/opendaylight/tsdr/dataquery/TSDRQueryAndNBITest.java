@@ -8,23 +8,16 @@
 package org.opendaylight.tsdr.dataquery;
 
 import com.google.common.util.concurrent.Futures;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.test.framework.AppDescriptor;
-import com.sun.jersey.test.framework.JerseyTest;
-import com.sun.jersey.test.framework.LowLevelAppDescriptor;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import javax.ws.rs.core.Application;
+import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNbiRestAPI;
-import org.opendaylight.tsdr.dataquery.rest.query.TSDRLogQueryAPI;
-import org.opendaylight.tsdr.dataquery.rest.query.TSDRMetricsQueryAPI;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.GetTSDRLogRecordsInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.GetTSDRLogRecordsOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.GetTSDRLogRecordsOutputBuilder;
@@ -60,8 +53,6 @@ public class TSDRQueryAndNBITest extends JerseyTest {
 
     private static TsdrMetricDataService metricDataService = Mockito.mock(TsdrMetricDataService.class);
     private static TsdrLogDataService logDataService = Mockito.mock(TsdrLogDataService.class);
-
-    private QueryResourceConfig config;
 
     public static GetTSDRMetricsOutput createMetricRecords(boolean emptyResult) {
         MetricsBuilder rb = new MetricsBuilder();
@@ -121,56 +112,44 @@ public class TSDRQueryAndNBITest extends JerseyTest {
         return builder.build();
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    protected AppDescriptor configure() {
-        config = new QueryResourceConfig();
-        RpcResult<GetTSDRMetricsOutput> rpcResult = Mockito.mock(RpcResult.class);
-        RpcResult<GetTSDRAggregatedMetricsOutput> rpcResultAggregated = Mockito.mock(RpcResult.class);
-        RpcResult<GetTSDRLogRecordsOutput> rpcResult2 = Mockito.mock(RpcResult.class);
+    protected Application configure() {
         Mockito.when(metricDataService.getTSDRMetrics(Mockito.any(GetTSDRMetricsInput.class)))
-            .thenReturn(Futures.immediateFuture(rpcResult));
+            .thenReturn(Futures.immediateFuture(RpcResultBuilder.success(createMetricRecords(false)).build()));
         Mockito.when(metricDataService.getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class)))
-            .thenReturn(Futures.immediateFuture(rpcResultAggregated));
+            .thenReturn(Futures.immediateFuture(
+                    RpcResultBuilder.success(createAggregatedMetricRecords(false)).build()));
         Mockito.when(logDataService.getTSDRLogRecords(Mockito.any(GetTSDRLogRecordsInput.class)))
-            .thenReturn(Futures.immediateFuture(rpcResult2));
+            .thenReturn(Futures.immediateFuture(RpcResultBuilder.success(createLogRecords()).build()));
 
-        Mockito.when(rpcResult.getResult()).thenReturn(createMetricRecords(false));
-        Mockito.when(rpcResultAggregated.getResult()).thenReturn(createAggregatedMetricRecords(false));
-        Mockito.when(rpcResult2.getResult()).thenReturn(createLogRecords());
-
-        return new LowLevelAppDescriptor.Builder(config).build();
+        return new TSDRQueryServiceApplication(metricDataService, logDataService);
     }
 
     @Test
     public void testQueryForMetrics() {
-        WebResource webResource = resource();
-        String result = webResource.path("/metrics/query").queryParam("tsdrkey", "[NID=127.0.0.1]")
+        String result = target("/metrics/query").queryParam("tsdrkey", "[NID=127.0.0.1]")
                 .queryParam("from","0")
-                .queryParam("until","" + Long.MAX_VALUE).get(String.class);
+                .queryParam("until","" + Long.MAX_VALUE).request().get(String.class);
         Assert.assertTrue(result, result.indexOf("NodeTest") != -1);
-
     }
 
     @Test
     public void testQueryForLogs() {
-        WebResource webResource = resource();
-        String result = webResource.path("/logs/query").queryParam("tsdrkey", "[NID=127.0.0.1]")
+        String result = target("/logs/query").queryParam("tsdrkey", "[NID=127.0.0.1]")
                 .queryParam("from","0")
-                .queryParam("until","" + Long.MAX_VALUE).get(String.class);
+                .queryParam("until","" + Long.MAX_VALUE).request().get(String.class);
         Assert.assertTrue(result.indexOf("NodeTest") != -1);
 
     }
 
     @Test
     public void testNBIForMetrics() {
-        WebResource webResource = resource();
-        String result = webResource.path("/nbi/render").queryParam("tsdrkey", "[NID=127.0.0.1]")
+        String result = target("/nbi/render").queryParam("tsdrkey", "[NID=127.0.0.1]")
                 .queryParam("from","0")
                 .queryParam("until","" + Long.MAX_VALUE)
                 .queryParam("format","json")
                 .queryParam("maxDataPoints","960")
-                .get(String.class);
+                .request().get(String.class);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.startsWith(NBI_RESPONSE));
     }
@@ -184,13 +163,12 @@ public class TSDRQueryAndNBITest extends JerseyTest {
         Mockito.when(metricDataService.getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class)))
             .thenReturn(Futures.immediateFuture(rpcResult));
 
-        WebResource webResource = resource();
-        String result = webResource.path("/nbi/render").queryParam("tsdrkey", "[NID=128.0.0.1]")
+        String result = target("/nbi/render").queryParam("tsdrkey", "[NID=128.0.0.1]")
                 .queryParam("from","0")
                 .queryParam("until","" + Long.MAX_VALUE)
                 .queryParam("format","json")
                 .queryParam("maxDataPoints","960")
-                .get(String.class);
+                .request().get(String.class);
         Assert.assertNotNull(result);
         Assert.assertEquals("{}",result);
         configure();
@@ -210,19 +188,5 @@ public class TSDRQueryAndNBITest extends JerseyTest {
         Assert.assertTrue(time > System.currentTimeMillis() - (60000 * 60 * 24 + 2000));
         time = TSDRNbiRestAPI.getTimeFromString("1");
         Assert.assertTrue(time == 1000);
-    }
-
-    private class QueryResourceConfig extends DefaultResourceConfig {
-        @Override
-        public Set<Object> getSingletons() {
-            HashSet<Object> set = new HashSet<>(1);
-            TSDRMetricsQueryAPI qapi = new TSDRMetricsQueryAPI(metricDataService);
-            TSDRLogQueryAPI lapi = new TSDRLogQueryAPI(logDataService);
-            TSDRNbiRestAPI nbi = new TSDRNbiRestAPI(metricDataService);
-            set.add(qapi);
-            set.add(lapi);
-            set.add(nbi);
-            return set;
-        }
     }
 }

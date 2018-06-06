@@ -12,10 +12,12 @@
 
   <reference id="webServer" interface="org.opendaylight.aaa.web.WebServer" />
   <reference id="webContextSecurer" interface="org.opendaylight.aaa.web.WebContextSecurer" />
+  <reference id="servletSupport" interface="org.opendaylight.aaa.web.servlet.ServletSupport" />
 
   <bean id="webInitializer" class="org.opendaylight.tsdr.dataquery.rest.web.WebInitializer" destroy-method="close">
     <argument ref="webServer"/>
     <argument ref="webContextSecurer"/>
+    <argument ref="servletSupport"/>
     <argument ref="tsdrMetricDataService"/>
     <argument ref="tsdrLogDataService"/>
   </bean>
