@@ -20,6 +20,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.GetTSDRAggregatedMetricsOutput;
@@ -29,14 +30,19 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.Tsdr
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Northbound REST endpoint.
  *
  * @author Sharon Aicler(saichler@gmail.com)
+ * @author Scott Melton (smelton2@uccs.edu)
  **/
 @Path("/nbi")
 public class TSDRNbiRestAPI {
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRNbiRestAPI.class);
+
     private final TsdrMetricDataService metricDataService;
 
     public TSDRNbiRestAPI(TsdrMetricDataService metricDataService) {
@@ -46,20 +52,21 @@ public class TSDRNbiRestAPI {
     @GET
     @Path("/render")
     @Produces("application/json")
-    public Response get(@PathParam("render") String render,
-            @QueryParam("target") String target,
-            @QueryParam("from") String from,
-            @QueryParam("until") String until,
-            @QueryParam("format") String format,
+    public Response get(@PathParam("render") String render, @QueryParam("target") String target,
+            @QueryParam("from") String from, @QueryParam("until") String until, @QueryParam("format") String format,
             @QueryParam("maxDataPoints") String maxDataPoints) throws ExecutionException, InterruptedException {
-        //Example query from Grafana
-        //Get render?target=EXTERNAL.Heap:Memory:Usage.Controller&from=-5min&until=now&format=json&maxDataPoints=1582
+
+        // Example query from Grafana
+        // Get
+        // render?target=EXTERNAL.Heap:Memory:Usage.Controller&from=-5min&until=now&format=json&maxDataPoints=1582
+
         TSDRNbiRequest request = new TSDRNbiRequest();
         request.setFormat(format);
         request.setFrom(from);
         request.setMaxDataPoints(maxDataPoints);
         request.setTarget(target);
         request.setUntil(until);
+
         return execute(request);
     }
 
@@ -67,12 +74,9 @@ public class TSDRNbiRestAPI {
     @Path("/render")
     @Produces("application/json")
     @Consumes("application/x-www-form-urlencoded")
-    public Response post(@FormParam("target") String target,
-            @FormParam("from") String from,
-            @FormParam("until") String until,
-            @FormParam("format") String format,
-            @FormParam("maxDataPoints") String maxDataPoints)
-            throws ExecutionException, InterruptedException {
+    public Response post(@FormParam("target") String target, @FormParam("from") String from,
+            @FormParam("until") String until, @FormParam("format") String format,
+            @FormParam("maxDataPoints") String maxDataPoints) throws ExecutionException, InterruptedException {
 
         TSDRNbiRequest request = new TSDRNbiRequest();
         request.setFormat(format);
@@ -80,16 +84,44 @@ public class TSDRNbiRestAPI {
         request.setMaxDataPoints(maxDataPoints);
         request.setTarget(target);
         request.setUntil(until);
+
         return execute(request);
     }
 
     private Response execute(TSDRNbiRequest request) throws ExecutionException, InterruptedException {
+
         final TSDRNbiReply reply = new TSDRNbiReply();
         reply.setTarget(request.getTarget());
 
-        final long from = getTimeFromString(request.getFrom());
-        final long until = getTimeFromString(request.getUntil());
-        final long maxDataPoints = request.getMaxDataPoints() != null ? Long.parseLong(request.getMaxDataPoints()) : 0;
+        long from = 0;
+        long until = 0;
+        final String fromString = request.getFrom();
+        final String untilString = request.getUntil();
+
+        try {
+            from = getTimeFromString(fromString);
+        } catch (NumberFormatException ex) {
+            String errStr = "Invalid request format. Cannot parse start time == " + fromString;
+            LOG.error(errStr);
+            return Response.status(Response.Status.BAD_REQUEST).entity(toJson(errStr)).build();
+        }
+
+        try {
+            until = getTimeFromString(untilString);
+        } catch (NumberFormatException ex) {
+            String errStr = "Invalid request format. Cannot parse end time == " + untilString;
+            LOG.error(errStr);
+            return Response.status(Response.Status.BAD_REQUEST).entity(toJson(errStr)).build();
+        }
+
+        long maxDataPoints = 0;
+        try {
+            maxDataPoints = Long.parseLong(request.getMaxDataPoints());
+        } catch (NumberFormatException ex) {
+            String errStr = "Invalid request format. Cannot parse maxDataPoints == " + request.getMaxDataPoints();
+            LOG.error(errStr);
+            return Response.status(Response.Status.BAD_REQUEST).entity(toJson(errStr)).build();
+        }
 
         if (maxDataPoints < 1) {
             // Return the points without any aggregation
@@ -99,17 +131,23 @@ public class TSDRNbiRestAPI {
             input.setEndTime(until);
 
             Future<RpcResult<GetTSDRMetricsOutput>> metric = metricDataService.getTSDRMetrics(input.build());
-            if (!metric.get().isSuccessful()) {
-                Response.status(503).entity("{}").build();
+
+            if (metric == null || !metric.get().isSuccessful()) {
+                String errStr = "Error retrieving metrics from " + fromString + " to " + untilString;
+                LOG.error(errStr);
+                return Response.status(Status.SERVICE_UNAVAILABLE).entity(errStr).build();
             }
 
             final GetTSDRMetricsOutput result = metric.get().getResult();
-            if (result != null) {
+
+            if (result == null) {
+                String errStr = "Metric result is null from " + fromString + " to " + untilString;
+                LOG.error(errStr);
+                return Response.status(Status.SERVICE_UNAVAILABLE).entity(errStr).build();
+            } else {
                 List<Metrics> metrics = result.getMetrics();
-                if (metrics != null) {
-                    for (Metrics m : metrics) {
-                        reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
-                    }
+                for (Metrics m : metrics) {
+                    reply.addDataPoint(m.getTimeStamp(), m.getMetricValue().doubleValue());
                 }
             }
         } else {
@@ -123,12 +161,20 @@ public class TSDRNbiRestAPI {
 
             Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = metricDataService
                     .getTSDRAggregatedMetrics(input.build());
-            if (metric == null) {
-                return Response.status(501).entity("{}").build();
+
+            if (metric == null || !metric.get().isSuccessful()) {
+                String errStr = "Error retrieving metrics from " + fromString + " to " + untilString;
+                LOG.error(errStr);
+                return Response.status(Status.SERVICE_UNAVAILABLE).entity(errStr).build();
             }
 
             List<AggregatedMetrics> metrics = metric.get().getResult().getAggregatedMetrics();
-            if (metrics != null) {
+
+            if (metrics == null) {
+                String errStr = "Error retrieving aggregated metrics. from " + fromString + " to " + untilString;
+                LOG.error(errStr);
+                return Response.status(Status.SERVICE_UNAVAILABLE).entity(errStr).build();
+            } else {
                 for (AggregatedMetrics m : metrics) {
                     reply.addDataPoint(m.getTimeStamp(),
                             m.getMetricValue() != null ? m.getMetricValue().doubleValue() : null);
@@ -137,12 +183,14 @@ public class TSDRNbiRestAPI {
         }
 
         if (reply.getDatapoints().size() < 1) {
-            return Response.status(201).entity("{}").build();
+            String errStr = "No data points were found from " + fromString + " to " + untilString;
+            return Response.status(Status.OK).entity(errStr).build();
         }
-        return Response.status(201).entity(toJson(new TSDRNbiReply[]{reply})).build();
+
+        return Response.status(Status.OK).entity(toJson(new TSDRNbiReply[] { reply })).build();
     }
 
-    public static long getTimeFromString(String str) {
+    public static long getTimeFromString(String str) throws NumberFormatException {
         if (str == null) {
             return System.currentTimeMillis();
         }
@@ -150,8 +198,7 @@ public class TSDRNbiRestAPI {
         if (index1 != -1) {
             int index2 = str.indexOf("min");
             if (index2 != -1) {
-                int min = Integer.parseInt(str.substring(index1 + 1, index2)
-                        .trim());
+                int min = Integer.parseInt(str.substring(index1 + 1, index2).trim());
                 return System.currentTimeMillis() - min * 60000L;
             }
             index2 = str.indexOf("h");

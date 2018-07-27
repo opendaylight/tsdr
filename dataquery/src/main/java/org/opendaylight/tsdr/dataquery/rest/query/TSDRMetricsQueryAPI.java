@@ -5,6 +5,7 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
+
 package org.opendaylight.tsdr.dataquery.rest.query;
 
 import com.google.gson.Gson;
@@ -20,6 +21,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 import org.opendaylight.tsdr.dataquery.rest.nbi.TSDRNbiRestAPI;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.AggregationType;
@@ -31,14 +33,19 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.Tsdr
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdraggregatedmetrics.output.AggregatedMetrics;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.gettsdrmetrics.output.Metrics;
 import org.opendaylight.yangtools.yang.common.RpcResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Metrics query REST endpoint.
  *
  * @author Sharon Aicler(saichler@gmail.com)
+ * @author Scott Melton (smelton2@uccs.edu)
  */
 @Path("/metrics")
 public class TSDRMetricsQueryAPI {
+
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRMetricsQueryAPI.class);
     private final TsdrMetricDataService metricDataService;
 
     public TSDRMetricsQueryAPI(TsdrMetricDataService newMetricDataService) {
@@ -48,64 +55,96 @@ public class TSDRMetricsQueryAPI {
     @GET
     @Path("/{query}")
     @Produces("application/json")
-    public Response get(@PathParam("query") String query,
-                        @QueryParam("tsdrkey") String tsdrkey,
-                        @QueryParam("from") String from,
-                        @QueryParam("until") String until,
-                        @QueryParam("maxDataPoints") String maxDataPoints,
-                        @QueryParam("aggregation") String aggregation) throws ExecutionException, InterruptedException {
+    public Response get(@PathParam("query") String query, @QueryParam("tsdrkey") String tsdrkey,
+            @QueryParam("from") String from, @QueryParam("until") String until,
+            @QueryParam("maxDataPoints") String maxDataPoints, @QueryParam("aggregation") String aggregation)
+            throws ExecutionException, InterruptedException {
+
         TSDRQueryRequest request = new TSDRQueryRequest();
         request.setTsdrkey(tsdrkey);
         request.setFrom(from);
         request.setUntil(until);
         request.setMaxDataPoints(maxDataPoints);
         request.setAggregation(aggregation);
-        return post(null,request);
+
+        return post(null, request);
     }
 
     @POST
     @Produces("application/json")
     public Response post(@Context UriInfo info, TSDRQueryRequest request)
-                throws ExecutionException, InterruptedException {
+            throws ExecutionException, InterruptedException {
+
+        long from = 0;
+        long until = 0;
+        final String fromString = request.getFrom();
+        final String untilString = request.getUntil();
+
+        try {
+            from = TSDRNbiRestAPI.getTimeFromString(fromString);
+        } catch (NumberFormatException ex) {
+            String errStr = "Invalid request format. Cannot parse start time == " + fromString;
+            LOG.error(errStr);
+            return Response.status(Status.BAD_REQUEST).entity(toJson(errStr)).build();
+        }
+
+        try {
+            until = TSDRNbiRestAPI.getTimeFromString(untilString);
+        } catch (NumberFormatException ex) {
+            String errStr = "Invalid request format. Cannot parse end time == " + untilString;
+            LOG.error(errStr);
+            return Response.status(Status.BAD_REQUEST).entity(toJson(errStr)).build();
+        }
+
         if (request.getMaxDataPoints() != null && request.getAggregation() != null) {
-            final long from = TSDRNbiRestAPI.getTimeFromString(request.getFrom());
-            final long until = TSDRNbiRestAPI.getTimeFromString(request.getUntil());
-            final long maxDataPoints = request.getMaxDataPoints() != null
-                    ? Long.parseLong(request.getMaxDataPoints()) : 0;
+
+            long maxDataPoints = 0;
+            try {
+                maxDataPoints = Long.parseLong(request.getMaxDataPoints());
+            } catch (NumberFormatException ex) {
+                String errStr = "Invalid request format. Cannot parse maxDataPoints == " + request.getMaxDataPoints();
+                LOG.error(errStr);
+                return Response.status(Status.BAD_REQUEST).entity(toJson(errStr)).build();
+            }
+
             final GetTSDRAggregatedMetricsInputBuilder input = new GetTSDRAggregatedMetricsInputBuilder();
             input.setTSDRDataCategory(request.getTsdrkey());
-            input.setStartTime(TSDRNbiRestAPI.getTimeFromString(request.getFrom()));
-            input.setEndTime(TSDRNbiRestAPI.getTimeFromString(request.getUntil()));
+            input.setStartTime(from);
+            input.setEndTime(until);
             input.setInterval(Math.floorDiv(until - from, maxDataPoints) + 1);
             input.setAggregation(AggregationType.valueOf(request.getAggregation()));
 
             Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = metricDataService
                     .getTSDRAggregatedMetrics(input.build());
 
-            if (!metric.get().isSuccessful()) {
-                Response.status(503).entity("{}").build();
+            if (metric == null || !metric.get().isSuccessful()) {
+                String errStr = "Error retrieving aggregated metrics from " + fromString + " to " + untilString;
+                LOG.error(errStr);
+                return Response.status(Status.OK).entity(errStr).build();
             }
 
             List<AggregatedMetrics> metrics = metric.get().getResult().getAggregatedMetrics();
             TSDRMetricsQueryReply reply = new TSDRMetricsQueryReply(request.getTsdrkey(), metrics);
 
-            return Response.status(201).entity(toJson(reply)).build();
+            return Response.status(Status.BAD_REQUEST).entity(toJson(reply)).build();
         } else {
             GetTSDRMetricsInputBuilder input = new GetTSDRMetricsInputBuilder();
             input.setTSDRDataCategory(request.getTsdrkey());
-            input.setStartTime(TSDRNbiRestAPI.getTimeFromString(request.getFrom()));
-            input.setEndTime(TSDRNbiRestAPI.getTimeFromString(request.getUntil()));
+            input.setStartTime(from);
+            input.setEndTime(until);
 
             Future<RpcResult<GetTSDRMetricsOutput>> metric = metricDataService.getTSDRMetrics(input.build());
 
-            if (!metric.get().isSuccessful()) {
-                Response.status(503).entity("{}").build();
+            if (metric == null || !metric.get().isSuccessful()) {
+                String errStr = "Error retrieving metrics from " + fromString + " to " + untilString;
+                LOG.error(errStr);
+                return Response.status(Status.BAD_REQUEST).entity(errStr).build();
             }
 
             List<Metrics> metrics = metric.get().getResult().getMetrics();
             TSDRMetricsQueryReply reply = new TSDRMetricsQueryReply(metrics);
 
-            return Response.status(201).entity(toJson(reply)).build();
+            return Response.status(Status.OK).entity(toJson(reply)).build();
         }
     }
 

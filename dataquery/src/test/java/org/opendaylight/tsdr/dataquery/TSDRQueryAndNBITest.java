@@ -54,6 +54,9 @@ public class TSDRQueryAndNBITest extends JerseyTest {
     private static TsdrMetricDataService metricDataService = Mockito.mock(TsdrMetricDataService.class);
     private static TsdrLogDataService logDataService = Mockito.mock(TsdrLogDataService.class);
 
+    public TSDRQueryAndNBITest() {
+    }
+
     public static GetTSDRMetricsOutput createMetricRecords(boolean emptyResult) {
         MetricsBuilder rb = new MetricsBuilder();
         rb.setMetricValue(new BigDecimal(10D));
@@ -115,41 +118,37 @@ public class TSDRQueryAndNBITest extends JerseyTest {
     @Override
     protected Application configure() {
         Mockito.when(metricDataService.getTSDRMetrics(Mockito.any(GetTSDRMetricsInput.class)))
-            .thenReturn(Futures.immediateFuture(RpcResultBuilder.success(createMetricRecords(false)).build()));
+                .thenReturn(Futures.immediateFuture(RpcResultBuilder.success(createMetricRecords(false)).build()));
         Mockito.when(metricDataService.getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class)))
-            .thenReturn(Futures.immediateFuture(
-                    RpcResultBuilder.success(createAggregatedMetricRecords(false)).build()));
+                .thenReturn(Futures
+                        .immediateFuture(RpcResultBuilder.success(createAggregatedMetricRecords(false)).build()));
         Mockito.when(logDataService.getTSDRLogRecords(Mockito.any(GetTSDRLogRecordsInput.class)))
-            .thenReturn(Futures.immediateFuture(RpcResultBuilder.success(createLogRecords()).build()));
+                .thenReturn(Futures.immediateFuture(RpcResultBuilder.success(createLogRecords()).build()));
 
         return new TSDRQueryServiceApplication(metricDataService, logDataService);
     }
 
     @Test
     public void testQueryForMetrics() {
-        String result = target("/metrics/query").queryParam("tsdrkey", "[NID=127.0.0.1]")
-                .queryParam("from","0")
-                .queryParam("until","" + Long.MAX_VALUE).request().get(String.class);
-        Assert.assertTrue(result, result.indexOf("NodeTest") != -1);
+        String result = target("/metrics/query").queryParam("tsdrkey", "[NID=127.0.0.1]").queryParam("from", "0")
+                .queryParam("until", "" + Long.MAX_VALUE).request().get(String.class);
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.indexOf("NodeTest") != -1);
     }
 
     @Test
     public void testQueryForLogs() {
-        String result = target("/logs/query").queryParam("tsdrkey", "[NID=127.0.0.1]")
-                .queryParam("from","0")
-                .queryParam("until","" + Long.MAX_VALUE).request().get(String.class);
+        String result = target("/logs/query").queryParam("tsdrkey", "[NID=127.0.0.1]").queryParam("from", "0")
+                .queryParam("until", "" + Long.MAX_VALUE).request().get(String.class);
+        Assert.assertNotNull(result);
         Assert.assertTrue(result.indexOf("NodeTest") != -1);
-
     }
 
     @Test
     public void testNBIForMetrics() {
-        String result = target("/nbi/render").queryParam("tsdrkey", "[NID=127.0.0.1]")
-                .queryParam("from","0")
-                .queryParam("until","" + Long.MAX_VALUE)
-                .queryParam("format","json")
-                .queryParam("maxDataPoints","960")
-                .request().get(String.class);
+        String result = target("/nbi/render").queryParam("tsdrkey", "[NID=127.0.0.1]").queryParam("from", "0")
+                .queryParam("until", "" + Long.MAX_VALUE).queryParam("format", "json")
+                .queryParam("maxDataPoints", "960").request().get(String.class);
         Assert.assertNotNull(result);
         Assert.assertTrue(result.startsWith(NBI_RESPONSE));
     }
@@ -157,20 +156,18 @@ public class TSDRQueryAndNBITest extends JerseyTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testNBIEmptyResponseForMetrics() throws InterruptedException, ExecutionException {
-        //Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric = Mockito.mock(Future.class);
-        RpcResult<GetTSDRAggregatedMetricsOutput> rpcResult =
-                RpcResultBuilder.success(createAggregatedMetricRecords(true)).build();
+        // Future<RpcResult<GetTSDRAggregatedMetricsOutput>> metric =
+        // Mockito.mock(Future.class);
+        RpcResult<GetTSDRAggregatedMetricsOutput> rpcResult = RpcResultBuilder
+                .success(createAggregatedMetricRecords(true)).build();
         Mockito.when(metricDataService.getTSDRAggregatedMetrics(Mockito.any(GetTSDRAggregatedMetricsInput.class)))
-            .thenReturn(Futures.immediateFuture(rpcResult));
+                .thenReturn(Futures.immediateFuture(rpcResult));
 
-        String result = target("/nbi/render").queryParam("tsdrkey", "[NID=128.0.0.1]")
-                .queryParam("from","0")
-                .queryParam("until","" + Long.MAX_VALUE)
-                .queryParam("format","json")
-                .queryParam("maxDataPoints","960")
-                .request().get(String.class);
+        String result = target("/nbi/render").queryParam("tsdrkey", "[NID=128.0.0.1]").queryParam("from", "0")
+                .queryParam("until", "" + Long.MAX_VALUE).queryParam("format", "json")
+                .queryParam("maxDataPoints", "960").request().get(String.class);
         Assert.assertNotNull(result);
-        Assert.assertEquals("{}",result);
+        Assert.assertTrue(result.indexOf("No data points were found") != -1);
         configure();
     }
 
