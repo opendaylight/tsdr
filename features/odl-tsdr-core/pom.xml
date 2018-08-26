@@ -23,12 +23,11 @@
         <restconf.version>1.8.0-SNAPSHOT</restconf.version>
         <controller.mdsal.version>1.8.0-SNAPSHOT</controller.mdsal.version>
     </properties>
- 
 
     <dependencyManagement>
         <dependencies>
             <!-- ODL-TSDR-ARTICFACTS -->
-             <dependency>
+            <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>tsdr-artifacts</artifactId>
                 <version>${project.version}</version>
@@ -43,16 +42,14 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
             <!-- ODL-MDSAL-ARTIFACTS -->
-             <dependency>
-                 <groupId>org.opendaylight.mdsal</groupId>
-                 <artifactId>mdsal-artifacts</artifactId>
-                 <version>${mdsal.common.version}</version>
-                 <scope>import</scope>
-                 <type>pom</type>
+            <dependency>
+                <groupId>org.opendaylight.mdsal</groupId>
+                <artifactId>mdsal-artifacts</artifactId>
+                <version>${mdsal.common.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
             </dependency>
-
             <dependency>
                 <groupId>org.opendaylight.mdsal.model</groupId>
                 <artifactId>mdsal-model-artifacts</artifactId>
@@ -60,16 +57,14 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
             <!-- ODL-NETCONF/RESTCONF-ARTIFACTS -->
-             <dependency>
+            <dependency>
                 <groupId>org.opendaylight.netconf</groupId>
                 <artifactId>restconf-artifacts</artifactId>
                 <version>${restconf.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 
@@ -81,18 +76,7 @@
             <type>xml</type>
             <classifier>features</classifier>
         </dependency>
-
-        <!-- MDSAL MODEL -->
-        <dependency>
-            <groupId>org.opendaylight.mdsal.model</groupId>
-            <artifactId>odl-mdsal-models</artifactId>
-            <version>${mdsal.model.version}</version>
-            <type>xml</type>
-            <classifier>features</classifier>
-        </dependency>
-
-        <!-- restconf -->
-
+        <!-- RestConf -->
         <dependency>
             <groupId>org.opendaylight.netconf</groupId>
             <artifactId>odl-restconf-all</artifactId>
@@ -100,8 +84,7 @@
             <classifier>features</classifier>
             <type>xml</type>
         </dependency>
-
-        <!-- TSDR dependencies -->
+        <!-- TSDR -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>tsdr-persistence-spi</artifactId>
@@ -126,7 +109,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>tsdr-dataquery</artifactId>
             <version>${project.version}</version>
-	</dependency>
+        </dependency>
         <dependency>
             <groupId>org.opendaylight.tsdr</groupId>
             <artifactId>tsdr-datapurge</artifactId>
