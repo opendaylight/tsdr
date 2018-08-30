@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="odl-tsdr-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
+    <!-- Log collector -->
+    <feature name='odl-tsdr-log-collector' version='${project.version}' description="OpenDaylight :: TSDR :: ODL Log Collector">
+        <configfile finalname="etc/tsdr-log-collector.properties">mvn:org.opendaylight.tsdr/tsdr-log-collector/${project.version}/xml/config</configfile>
+    </feature>
+</features>

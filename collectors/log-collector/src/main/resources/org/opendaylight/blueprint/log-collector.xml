@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0"
+       odl:use-default-for-reference-types="true">
+
+  <odl:rpc-service id="tsdrCollectorSpiService"
+                   interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
+  <reference id="schedulerService" interface="org.opendaylight.tsdr.spi.scheduler.SchedulerService"/>
+
+  <bean id="tsdrLogCollectorConfig" class="org.opendaylight.tsdr.log.TsdrLogCollectorConfig">
+    <argument value="./etc/tsdr-log-collector.properties" />
+  </bean>
+
+  <bean id="appender"
+        class="org.opendaylight.tsdr.log.TsdrLogCollector">
+    <argument ref="tsdrLogCollectorLogger" />
+    <argument ref="tsdrLogCollectorConfig" />
+  </bean>
+
+  <service ref="appender" interface="org.ops4j.pax.logging.spi.PaxAppender">
+    <service-properties>
+      <entry key="org.ops4j.pax.logging.appender.name" value="LogAppender"/>
+    </service-properties>
+  </service>
+
+</blueprint>

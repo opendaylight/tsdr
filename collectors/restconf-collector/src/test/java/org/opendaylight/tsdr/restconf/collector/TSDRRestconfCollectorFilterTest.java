@@ -9,6 +9,11 @@ package org.opendaylight.tsdr.restconf.collector;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
+
+import com.google.common.util.concurrent.ListenableScheduledFuture;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,12 +22,17 @@ import java.util.List;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Matchers;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
@@ -38,6 +48,7 @@ import org.osgi.service.cm.ConfigurationException;
  *
  */
 public class TSDRRestconfCollectorFilterTest {
+
     /**
      * the filter object on which we want to test.
      */
@@ -56,9 +67,20 @@ public class TSDRRestconfCollectorFilterTest {
     /**
      * an object to mock the filter chain.
      */
+    @Mock
     private FilterChain filterChain;
 
-    private final TsdrCollectorSpiService tsdrCollectorSpiService = Mockito.mock(TsdrCollectorSpiService.class);
+    @Mock
+    private SchedulerService schedulerService;
+
+    @Mock
+    private ListenableScheduledFuture<?> mockFuture;
+
+    @Mock
+    private TsdrCollectorSpiService tsdrCollectorSpiService;
+
+    @Captor
+    private ArgumentCaptor<Runnable> runnableCaptor;
 
     /**
      * called before each test. It initialized the filter, creates mocks, and sets sample values for the configuration
@@ -66,12 +88,16 @@ public class TSDRRestconfCollectorFilterTest {
      */
     @Before
     public void setup() throws ConfigurationException {
-        filterObject = new TSDRRestconfCollectorFilter();
+        MockitoAnnotations.initMocks(this);
 
-        Mockito.doReturn(RpcResultBuilder.<Void>success().buildFuture())
+        filterObject = new TSDRRestconfCollectorFilter();
+        doReturn(RpcResultBuilder.<Void>success().buildFuture())
                 .when(tsdrCollectorSpiService).insertTSDRLogRecord(any());
 
-        tsdrRestconfCollectorLogger = new TSDRRestconfCollectorLogger(tsdrCollectorSpiService);
+        doReturn(mockFuture).when(schedulerService)
+                .scheduleTaskAtFixedRate(runnableCaptor.capture(), anyLong(), anyLong());
+
+        tsdrRestconfCollectorLogger = new TSDRRestconfCollectorLogger(tsdrCollectorSpiService, schedulerService);
         tsdrRestconfCollectorLogger.init();
 
         tsdrRestconfCollectorConfig = new TSDRRestconfCollectorConfig();
@@ -82,13 +108,8 @@ public class TSDRRestconfCollectorFilterTest {
         props.put("CONTENT_TO_LOG", ".*loggable.*");
         tsdrRestconfCollectorConfig.updated(props);
 
-        filterChain = Mockito.mock(FilterChain.class);
     }
 
-    @After
-    public void tearDown() {
-        tsdrRestconfCollectorLogger.close();
-    }
 
     /**
      * tests the case when a request that passes the criteria is received.
@@ -103,7 +124,7 @@ public class TSDRRestconfCollectorFilterTest {
         filterObject.doFilter(httpRequest, null, filterChain);
         filterObject.destroy();
 
-        tsdrRestconfCollectorLogger.run();
+        runnableCaptor.getValue().run();
 
         ArgumentCaptor<InsertTSDRLogRecordInput> argumentCaptor =
                 ArgumentCaptor.forClass(InsertTSDRLogRecordInput.class);
@@ -134,7 +155,7 @@ public class TSDRRestconfCollectorFilterTest {
 
         filterObject.destroy();
 
-        tsdrRestconfCollectorLogger.run();
+        runnableCaptor.getValue().run();
 
         Mockito.verify(tsdrCollectorSpiService, Mockito.never()).insertTSDRLogRecord(any());
     }
@@ -150,19 +171,19 @@ public class TSDRRestconfCollectorFilterTest {
     private HttpServletRequest prepareRequest(String method, String path, String remoteAddress, String content) {
         try {
             HttpServletRequest httpRequest = Mockito.mock(HttpServletRequest.class);
-            Mockito.when(httpRequest.getMethod()).thenReturn(method);
-            Mockito.when(httpRequest.getPathInfo()).thenReturn(path);
-            Mockito.when(httpRequest.getRemoteAddr()).thenReturn(remoteAddress);
+            when(httpRequest.getMethod()).thenReturn(method);
+            when(httpRequest.getPathInfo()).thenReturn(path);
+            when(httpRequest.getRemoteAddr()).thenReturn(remoteAddress);
 
             if (!content.equals("")) {
                 ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(content.getBytes());
                 ServletInputStream servletInputStream = Mockito.mock(ServletInputStream.class);
-                Mockito.when(servletInputStream.read(Matchers.<byte[]>any())).thenAnswer(invocationOnMock -> {
+                when(servletInputStream.read(Matchers.<byte[]>any())).thenAnswer(invocationOnMock -> {
                     Object[] args = invocationOnMock.getArguments();
                     byte[] output = (byte[]) args[0];
                     return byteArrayInputStream.read(output);
                 });
-                Mockito.when(httpRequest.getInputStream()).thenReturn(servletInputStream);
+                when(httpRequest.getInputStream()).thenReturn(servletInputStream);
             }
 
             return httpRequest;
@@ -170,4 +191,11 @@ public class TSDRRestconfCollectorFilterTest {
             return null;
         }
     }
+
+    @After
+    public void tearDown() {
+        tsdrRestconfCollectorLogger.close();
+    }
+
+
 }
