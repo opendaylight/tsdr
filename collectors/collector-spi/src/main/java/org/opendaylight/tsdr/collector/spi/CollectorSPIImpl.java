@@ -11,12 +11,14 @@ package org.opendaylight.tsdr.collector.spi;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.StoreTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TsdrLogDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.StoreTSDRMetricRecordInput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.StoreTSDRMetricRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TsdrMetricDataService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
@@ -54,22 +56,18 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService {
     @Override
     public ListenableFuture<RpcResult<InsertTSDRMetricRecordOutput>> insertTSDRMetricRecord(
             InsertTSDRMetricRecordInput input) {
-        StoreTSDRMetricRecordInputBuilder tsdrServiceInput = new StoreTSDRMetricRecordInputBuilder();
-        List<TSDRMetricRecord> records = new ArrayList<>();
-        for (org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi
-                .rev150915.inserttsdrmetricrecord.input.TSDRMetricRecord inputRec : input.getTSDRMetricRecord()) {
-            TSDRMetricRecordBuilder rec = new TSDRMetricRecordBuilder();
-            rec.setMetricName(inputRec.getMetricName());
-            rec.setMetricValue(inputRec.getMetricValue());
-            rec.setNodeID(inputRec.getNodeID());
-            rec.setRecordKeys(inputRec.getRecordKeys());
-            rec.setTimeStamp(inputRec.getTimeStamp());
-            rec.setTSDRDataCategory(inputRec.getTSDRDataCategory());
-            records.add(rec.build());
-        }
-        tsdrServiceInput.setTSDRMetricRecord(records);
+        List<TSDRMetricRecord> records = input.getTSDRMetricRecord().stream().map(inputRec ->
+            new TSDRMetricRecordBuilder().setMetricName(inputRec.getMetricName())
+                .setMetricValue(inputRec.getMetricValue())
+                .setNodeID(inputRec.getNodeID())
+                .setRecordKeys(inputRec.getRecordKeys())
+                .setTimeStamp(inputRec.getTimeStamp())
+                .setTSDRDataCategory(inputRec.getTSDRDataCategory()).build()).collect(Collectors.toList());
 
-        return Futures.transform(metricDataService.storeTSDRMetricRecord(tsdrServiceInput.build()), result -> {
+        StoreTSDRMetricRecordInput tsdrServiceInput =
+                new StoreTSDRMetricRecordInputBuilder().setTSDRMetricRecord(records).build();
+
+        return Futures.transform(metricDataService.storeTSDRMetricRecord(tsdrServiceInput), result -> {
             return result.isSuccessful() ? RpcResultBuilder.success(new InsertTSDRMetricRecordOutputBuilder().build())
                     .build() : RpcResultBuilder.<InsertTSDRMetricRecordOutput>failed()
                     .withRpcErrors(result.getErrors()).build();
@@ -78,23 +76,19 @@ public class CollectorSPIImpl implements TsdrCollectorSpiService {
 
     @Override
     public ListenableFuture<RpcResult<InsertTSDRLogRecordOutput>> insertTSDRLogRecord(InsertTSDRLogRecordInput input) {
-        StoreTSDRLogRecordInputBuilder tsdrServiceInput = new StoreTSDRLogRecordInputBuilder();
-        List<TSDRLogRecord> records = new ArrayList<>();
-        for (org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi
-                .rev150915.inserttsdrlogrecord.input.TSDRLogRecord inputRec:input.getTSDRLogRecord()) {
-            TSDRLogRecordBuilder rec = new TSDRLogRecordBuilder();
-            rec.setNodeID(inputRec.getNodeID());
-            rec.setRecordAttributes(inputRec.getRecordAttributes());
-            rec.setRecordFullText(inputRec.getRecordFullText());
-            rec.setRecordKeys(inputRec.getRecordKeys());
-            rec.setTimeStamp(inputRec.getTimeStamp());
-            rec.setIndex(inputRec.getIndex());
-            rec.setTSDRDataCategory(inputRec.getTSDRDataCategory());
-            records.add(rec.build());
-        }
-        tsdrServiceInput.setTSDRLogRecord(records);
+        List<TSDRLogRecord> records = input.getTSDRLogRecord().stream().map(inputRec ->
+            new TSDRLogRecordBuilder().setNodeID(inputRec.getNodeID())
+                .setRecordAttributes(inputRec.getRecordAttributes())
+                .setRecordFullText(inputRec.getRecordFullText())
+                .setRecordKeys(inputRec.getRecordKeys())
+                .setTimeStamp(inputRec.getTimeStamp())
+                .setIndex(inputRec.getIndex())
+                .setTSDRDataCategory(inputRec.getTSDRDataCategory()).build()).collect(Collectors.toList());
 
-        return Futures.transform(logDataService.storeTSDRLogRecord(tsdrServiceInput.build()), result -> {
+        StoreTSDRLogRecordInput tsdrServiceInput =
+                new StoreTSDRLogRecordInputBuilder().setTSDRLogRecord(records).build();
+
+        return Futures.transform(logDataService.storeTSDRLogRecord(tsdrServiceInput), result -> {
             return result.isSuccessful() ? RpcResultBuilder.success(new InsertTSDRLogRecordOutputBuilder().build())
                         .build() : RpcResultBuilder.<InsertTSDRLogRecordOutput>failed()
                         .withRpcErrors(result.getErrors()).build();
