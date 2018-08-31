@@ -172,35 +172,23 @@ public class HBaseDataStore  {
      */
     public void createTable(String tableName) throws IOException {
         LOG.debug("Entering createTable(tableName)");
-        HBaseAdmin hbase = null;
+        if (tableName == null) {
+            return;
+        }
+
         ClassLoader ocl = Thread.currentThread().getContextClassLoader();
-        try {
-            Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader());
-            if (tableName != null) {
-                hbase = getNewHBaseAdmin();
-                HTableDescriptor desc = new HTableDescriptor(tableName);
-                HColumnDescriptor column = new HColumnDescriptor("c1".getBytes(StandardCharsets.UTF_8));
-                desc.addFamily(column);
-                if (!hbase.tableExists(tableName)) {
-                    hbase.createTable(desc);
-                }
+        Thread.currentThread().setContextClassLoader(HBaseConfiguration.class.getClassLoader());
+        try (HBaseAdmin hbase = getNewHBaseAdmin()) {
+            HTableDescriptor desc = new HTableDescriptor(tableName);
+            HColumnDescriptor column = new HColumnDescriptor("c1".getBytes(StandardCharsets.UTF_8));
+            desc.addFamily(column);
+            if (!hbase.tableExists(tableName)) {
+                hbase.createTable(desc);
             }
-        } catch (IOException e) {
-            LOG.error("Error creating htable {}", tableName, e.getMessage());
-            LOG.trace("Error creating htable. StackTrace is:", e);
-            throw e;
         } catch (IllegalArgumentException e) {
-            LOG.error("Error creating htable {}", tableName, e);
             throw new IOException("Error creating htable " + tableName, e);
         } finally {
-            try {
-                if (hbase != null) {
-                    hbase.close();
-                }
-                Thread.currentThread().setContextClassLoader(ocl);
-            } catch (IOException ioe) {
-                LOG.error("Error closing HBaseAdmin.", ioe);
-            }
+            Thread.currentThread().setContextClassLoader(ocl);
         }
         LOG.debug("Exiting createTable(tableName)");
     }

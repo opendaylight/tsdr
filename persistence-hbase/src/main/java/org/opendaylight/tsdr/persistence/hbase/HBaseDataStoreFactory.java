@@ -46,22 +46,12 @@ public final class HBaseDataStoreFactory {
         return datastore;
     }
 
-    /*
-     * Setter for UT purpose which is invoked from the factory
-     */
-    static synchronized void setHBaseDataStoreIfAbsent(HBaseDataStore hbaseDataStore) {
-        if (datastore == null) {
-            initializeDatastoreContext();// just for UT purpose
-            datastore = hbaseDataStore;
-        }
-    }
-
     /**
      * Initialize the data store context by reading from an XML
      * configuration file.
      * @return HBaseDataStoreContext
     */
-    private static HBaseDataStoreContext initializeDatastoreContext() {
+    static HBaseDataStoreContext initializeDatastoreContext() {
         HBaseDataStoreContext context = new HBaseDataStoreContext();
         Properties properties = new Properties();
         InputStream inputStream = null;

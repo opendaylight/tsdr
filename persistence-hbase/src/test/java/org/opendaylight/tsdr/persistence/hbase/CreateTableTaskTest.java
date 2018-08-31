@@ -7,74 +7,70 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import java.util.concurrent.ScheduledFuture;
-import org.junit.After;
-import org.junit.Assert;
+import java.io.IOException;
+import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
+import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 
 /**
  * UNnit tests for CreateTableTask.
  *
  * @author <a href="mailto:chaudhry.usama@xflowresearch.com">Chaudhry Muhammad Usama</a>
+ * @author Thomas Pantelis
  */
 public class CreateTableTaskTest {
-    public CreateTableTask tableService;
-    private ScheduledFuture<?> future;
+    private final SchedulerService mockSchedulerService = mock(SchedulerService.class);
+    private final HBaseDataStore mockDataStore = mock(HBaseDataStore.class);
+    private final CreateTableTask tableService = new CreateTableTask(mockDataStore,
+            Arrays.asList("table1", "table2", "table3"), mockSchedulerService, 50);
 
     @Before
     public void setup() {
-        future = mock(ScheduledFuture.class);
-        tableService = new CreateTableTask() {
-            @Override
-            public void runCreateTable(String tableName) {
-                return;
-            }
-        };
-
     }
 
     @Test
-    public void testCreateTables() {
-        tableService.setScheduledFuture(future);
-        Assert.assertNotNull(tableService.future);
-        tableService.createTables();
-        Assert.assertTrue(tableService.pendingTableNames.size() == 0);
+    public void testRun() throws IOException {
+        tableService.start();
+        verify(mockSchedulerService).scheduleTask(tableService);
+        tableService.run();
 
+        assertTrue(tableService.completionFuture().isDone());
+        verify(mockDataStore).createTable("table1");
+        verify(mockDataStore).createTable("table2");
+        verify(mockDataStore).createTable("table3");
+        verifyNoMoreInteractions(mockDataStore, mockSchedulerService);
     }
 
     @Test
-    public void testRunTask() {
-        tableService.setScheduledFuture(future);
-        Assert.assertNotNull(tableService.future);
-        tableService.runTask();
+    public void testRunWithException() throws IOException {
+        doNothing().when(mockDataStore).createTable("table1");
+        doThrow(new IOException("mock")).when(mockDataStore).createTable("table2");
+        doNothing().when(mockDataStore).createTable("table3");
 
-    }
+        tableService.run();
 
-    @Test
-    public void testException() {
-        CreateTableTask tableService1 = new CreateTableTask() {
-            @Override
-            public void runCreateTable(String tableName) throws Exception {
-                throw new Exception();
-            }
-        };
-        tableService1.setScheduledFuture(future);
-        Assert.assertNotNull(tableService1.future);
-        tableService1.createTables();
-        Assert.assertTrue(tableService1.pendingTableNames.size() != 0);
-    }
+        assertFalse(tableService.completionFuture().isDone());
+        verify(mockSchedulerService).scheduleTask(tableService, 50L);
+        verify(mockDataStore).createTable("table1");
+        verify(mockDataStore).createTable("table2");
+        verify(mockDataStore).createTable("table3");
+        verifyNoMoreInteractions(mockDataStore);
 
-    @Test
-    public void testSetScheduledFuture() {
-        tableService.setScheduledFuture(null);
-        Assert.assertNull(tableService.future);
-    }
+        reset(mockDataStore);
+        tableService.run();
 
-    @After
-    public void teardown() {
-        tableService = null;
+        assertTrue(tableService.completionFuture().isDone());
+        verify(mockDataStore).createTable("table2");
+        verifyNoMoreInteractions(mockDataStore, mockSchedulerService);
     }
 }

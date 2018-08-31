@@ -8,14 +8,19 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
+import javax.annotation.Nonnull;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.apache.hadoop.hbase.TableNotFoundException;
@@ -27,7 +32,6 @@ import org.opendaylight.tsdr.spi.util.FormatUtil;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.binary.data.rev160325.storetsdrbinaryrecord.input.TSDRBinaryRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
-import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.TSDRMetric;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.metric.data.rev160325.storetsdrmetricrecord.input.TSDRMetricRecordBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
@@ -42,28 +46,107 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  * @author <a href="mailto:syedbahm@cisco.com">Basheeruddin Ahmed </a>
  * @author <a href="mailto:saichler@gmail.com">Sharon Aicler</a>
+ * @author Thomas Pantelis
  */
 @Singleton
 public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceService, TSDRMetricPersistenceService,
         TSDRBinaryPersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(TsdrHBasePersistenceServiceImpl.class);
 
+    private interface DatabaseOperation {
+        void run() throws TableNotFoundException;
+    }
+
     private final SchedulerService schedulerService;
-    private ScheduledFuture<?> future;
+    private final HBaseDataStore hbaseDataStore;
+
+    @Nonnull
+    private volatile CreateTableTask createTableTask;
 
     /**
      * Constructor.
      */
     @Inject
     public TsdrHBasePersistenceServiceImpl(SchedulerService schedulerService) {
-        LOG.debug("Entering start(timeout)");
-        this.schedulerService = schedulerService;
+        this(HBaseDataStoreFactory.getHBaseDataStore(), schedulerService);
+    }
 
-        //create the HTables used in TSDR.
-        CreateTableTask createTableTask = new CreateTableTask();
-        future = schedulerService.scheduleTask(createTableTask);
-        LOG.debug("Exiting start(timeout)");
+    @VisibleForTesting
+    TsdrHBasePersistenceServiceImpl(HBaseDataStore inHBaseDataStore, SchedulerService inSchedulerService) {
+        this.hbaseDataStore = inHBaseDataStore;
+        this.schedulerService = inSchedulerService;
+
+        createTableTask = startNewCreateTableTask();
+
         LOG.info("TSDR HBase Data Store is initialized.");
+    }
+
+    @PreDestroy
+    public void close() {
+        LOG.debug("Entering close");
+        closeConnections();
+        LOG.debug("Exiting close");
+    }
+
+    private CreateTableTask startNewCreateTableTask() {
+        Long retryInterval = HBaseDataStoreContext
+                .getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
+        return new CreateTableTask(hbaseDataStore, HBasePersistenceUtil.getTsdrHBaseTables(),
+                schedulerService, TimeUnit.SECONDS.toMillis(retryInterval)).start();
+    }
+
+    private void executeDatabaseOperationWithRetries(DatabaseOperation operation) {
+        while (true) {
+            try {
+                createTableTask.completionFuture().get(15, TimeUnit.SECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                LOG.error("Failure creating hbase tables", e);
+                return;
+            }
+
+            try {
+                operation.run();
+                return;
+            } catch (TableNotFoundException e) {
+                LOG.warn("hbase operation failed - attempting retry", e);
+
+                synchronized (this) {
+                    if (createTableTask.completionFuture().isDone()) {
+                        LOG.debug("Triggering CreateTableTask");
+                        createTableTask = startNewCreateTableTask();
+                    }
+                }
+            }
+        }
+    }
+
+    private <T extends TSDRRecord> void storeRecords(List<T> recordList, Function<T, HBaseEntity> convertor) {
+        if (recordList == null || recordList.isEmpty()) {
+            return;
+        }
+
+        Map<String, List<HBaseEntity>> entityListMap = new HashMap<>();
+        for (T record : recordList) {
+            HBaseEntity entity = convertor.apply(record);
+            if (entity == null) {
+                LOG.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
+                return;
+            }
+
+            List<HBaseEntity> entityList = entityListMap.get(entity.getTableName());
+            if (entityList == null) {
+                entityList = new ArrayList<>();
+                entityListMap.put(entity.getTableName(), entityList);
+            }
+
+            entityList.add(entity);
+        }
+
+        executeDatabaseOperationWithRetries(() -> {
+            for (List<HBaseEntity> entry: entityListMap.values()) {
+                hbaseDataStore.create(entry);
+            }
+        });
     }
 
     /**
@@ -72,17 +155,17 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     @Override
     public void storeMetric(TSDRMetricRecord metrics) {
         LOG.debug("Entering store(TSDRMetricRecord)");
+
         // convert TSDRRecord to HBaseEntities
-        try {
-            HBaseEntity entity = convertToHBaseEntity(metrics);
-            if (entity == null) {
-                LOG.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
-                return;
-            }
-            HBaseDataStoreFactory.getHBaseDataStore().create(entity);
-        } catch (TableNotFoundException e) {
-            triggerTableCreatingTask();
+
+        HBaseEntity entity = convertToHBaseEntity(metrics);
+        if (entity == null) {
+            LOG.debug("{} could not be converted to an hbase entity", metrics);
+            return;
         }
+
+        executeDatabaseOperationWithRetries(() -> hbaseDataStore.create(entity));
+
         LOG.debug("Exiting store(TSDRMetricRecord)");
     }
 
@@ -93,53 +176,21 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     public void storeMetric(List<TSDRMetricRecord> recordList) {
         LOG.debug("Entering store(List<TSDRRecord>)");
 
-        //tableName, entityList Map
-        Map<String, List<HBaseEntity>> entityListMap = new HashMap<>();
-        if (recordList != null && recordList.size() != 0) {
-            try {
-                for (TSDRRecord record : recordList) {
-                    HBaseEntity entity = null;
-                    if (record instanceof TSDRMetricRecord) {
-                        entity = convertToHBaseEntity((TSDRMetricRecord) record);
-                    } else if (record instanceof TSDRLogRecord) {
-                        entity = convertToHBaseEntity((TSDRLogRecord) record);
-                    }
-                    if (entity == null) {
-                        LOG.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
-                        return;
-                    }
-                    String tableName = entity.getTableName();
-                    if (entityListMap.get(tableName) == null) {
-                        entityListMap.put(tableName, new ArrayList<HBaseEntity>());
-                    }
-                    entityListMap.get(tableName).add(entity);
-                }
+        storeRecords(recordList, this::convertToHBaseEntity);
 
-                for (List<HBaseEntity> entry: entityListMap.values()) {
-                    HBaseDataStoreFactory.getHBaseDataStore().create(entry);
-
-                }
-
-            } catch (TableNotFoundException e) {
-                triggerTableCreatingTask();
-            }
-        }
         LOG.debug("Exiting store(List<TSDRRecord>)");
     }
 
     @Override
     public void storeLog(TSDRLogRecord logRecord) {
-        // convert TSDRLogRecord to HBaseEntities
-        try {
-            HBaseEntity entity = convertToHBaseEntity(logRecord);
-            if (entity == null) {
-                LOG.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
-                return;
-            }
-            HBaseDataStoreFactory.getHBaseDataStore().create(entity);
-        } catch (TableNotFoundException e) {
-            triggerTableCreatingTask();
+        HBaseEntity entity = convertToHBaseEntity(logRecord);
+        if (entity == null) {
+            LOG.debug("{} could not be converted to an hbase entity", logRecord);
+            return;
         }
+
+        executeDatabaseOperationWithRetries(() -> hbaseDataStore.create(entity));
+
         LOG.debug("Exiting store(TSDRMetricRecord)");
     }
 
@@ -150,46 +201,9 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     public void storeLog(List<TSDRLogRecord> recordList) {
         LOG.debug("Entering store(List<TSDRRecord>)");
 
-        //tableName, entityList Map
-        Map<String, List<HBaseEntity>> entityListMap = new HashMap<>();
-        if (recordList != null && recordList.size() != 0) {
-            try {
-                for (TSDRRecord record : recordList) {
-                    HBaseEntity entity = null;
-                    if (record instanceof TSDRMetricRecord) {
-                        entity = convertToHBaseEntity((TSDRMetricRecord) record);
-                    } else if (record instanceof TSDRLogRecord) {
-                        entity = convertToHBaseEntity((TSDRLogRecord) record);
-                    }
-                    if (entity == null) {
-                        LOG.debug("the entity is null when converting TSDRMetricRecords into hbase entity");
-                        return;
-                    }
-                    String tableName = entity.getTableName();
-                    if (entityListMap.get(tableName) == null) {
-                        entityListMap.put(tableName, new ArrayList<HBaseEntity>());
-                    }
-                    entityListMap.get(tableName).add(entity);
-                }
+        storeRecords(recordList, this::convertToHBaseEntity);
 
-                for (List<HBaseEntity> entry: entityListMap.values()) {
-                    HBaseDataStoreFactory.getHBaseDataStore().create(entry);
-                }
-
-            } catch (TableNotFoundException e) {
-                triggerTableCreatingTask();
-            }
-        }
         LOG.debug("Exiting store(List<TSDRRecord>)");
-    }
-
-    /**
-     * Stop TSDRHBasePersistenceService.
-     */
-    public void stop(int timeout) {
-        LOG.debug("Entering stop(timeout)");
-        closeConnections();
-        LOG.debug("Exiting stop(timeout)");
     }
 
     /**
@@ -212,8 +226,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                 || FormatUtil.isDataCategory(tsdrMetricKey)) {
             String dataCategory = FormatUtil.isDataCategoryKey(tsdrMetricKey)
                     ? FormatUtil.getDataCategoryFromTSDRKey(tsdrMetricKey) : tsdrMetricKey;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore()
-                    .getDataByTimeRange(dataCategory, startTime, endTime);
+            resultEntities = hbaseDataStore.getDataByTimeRange(dataCategory, startTime, endTime);
             for (HBaseEntity e : resultEntities) {
                 resultRecords.add(getTSDRMetricRecord(e));
             }
@@ -261,7 +274,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                 substringFilterList.add(recKeyString);
             }
 
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(
+            resultEntities = hbaseDataStore.getDataByTimeRange(
                     dataCategory,substringFilterList, startTime, endTime);
             for (HBaseEntity e : resultEntities) {
                 resultRecords.add(getTSDRMetricRecord(e));
@@ -290,8 +303,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                 || FormatUtil.isDataCategory(tsdrLogKey)) {
             String dataCategory = FormatUtil.isDataCategoryKey(tsdrLogKey)
                     ? FormatUtil.getDataCategoryFromTSDRKey(tsdrLogKey) : tsdrLogKey;
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore()
-                    .getDataByTimeRange(dataCategory, startTime, endTime);
+            resultEntities = hbaseDataStore.getDataByTimeRange(dataCategory, startTime, endTime);
             for (HBaseEntity e : resultEntities) {
                 resultRecords.add(getTSDRLogRecord(e));
             }
@@ -332,7 +344,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                 substringFilterList.add(recKeyString);
             }
 
-            resultEntities = HBaseDataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory,
+            resultEntities = hbaseDataStore.getDataByTimeRange(dataCategory,
                     substringFilterList, startTime, endTime);
         }
         for (HBaseEntity e : resultEntities) {
@@ -344,34 +356,16 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     @Override
     public void purge(DataCategory category, long retentionTime) {
         try {
-            HBaseDataStoreFactory.getHBaseDataStore().deleteByTimestamp(category.name(), retentionTime);
+            hbaseDataStore.deleteByTimestamp(category.name(), retentionTime);
         } catch (IOException ioe) {
             LOG.error("Error purging TSDR records in HBase data store {}", ioe);
         }
-        return;
     }
 
     @Override
     public void purge(long retentionTime) {
-        DataCategory[] categories = DataCategory.values();
-        for (DataCategory category : categories) {
+        for (DataCategory category : DataCategory.values()) {
             purge(category, retentionTime);
-        }
-        return;
-    }
-
-    /**
-     * Trigger CreateTableTask".
-     */
-    private void triggerTableCreatingTask() {
-        synchronized (this) {
-            if (future == null || future.isDone() || future.isCancelled()) {
-                LOG.info("Triggering CreateTableTask");
-                CreateTableTask createTableTask = new CreateTableTask();
-                Long interval = HBaseDataStoreContext
-                        .getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
-                future = schedulerService.scheduleTaskAtFixedRate(createTableTask, 0L, interval);
-            }
         }
     }
 
@@ -379,18 +373,17 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
      * convert TSDRMetricRecord to HBaseEntity.
      * @return HBaseEntity
     */
-    private HBaseEntity convertToHBaseEntity(TSDRMetricRecord metrics) {
+    private HBaseEntity convertToHBaseEntity(@Nonnull TSDRMetricRecord metric) {
         LOG.debug("Entering convertToHBaseEntity(TSDRMetricRecord)");
-        HBaseEntity entity = new HBaseEntity();
 
-        TSDRMetric metricData = metrics;
-
-        if (metricData != null) {
-            DataCategory dataCategory = metricData.getTSDRDataCategory();
-            if (dataCategory != null) {
-                entity = HBasePersistenceUtil.getEntityFromMetricStats(metricData, dataCategory);
-            }
+        HBaseEntity entity;
+        DataCategory dataCategory = metric.getTSDRDataCategory();
+        if (dataCategory != null) {
+            entity = HBasePersistenceUtil.getEntityFromMetricStats(metric, dataCategory);
+        } else {
+            entity = new HBaseEntity();
         }
+
         LOG.debug("Exiting convertToHBaseEntity(TSDRMetricRecord)");
         return entity;
     }
@@ -399,18 +392,17 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
      * convert TSDRMetricRecord to HBaseEntity.
      * @return HBaseEntity
      */
-    public HBaseEntity convertToHBaseEntity(TSDRLogRecord logRecord) {
+    private HBaseEntity convertToHBaseEntity(@Nonnull TSDRLogRecord logRecord) {
         LOG.debug("Entering convertToHBaseEntity(TSDRLogRecord)");
-        HBaseEntity entity = new HBaseEntity();
 
-        TSDRLogRecord logData = logRecord;
-
-        if (logData != null) {
-            DataCategory dataCategory = logData.getTSDRDataCategory();
-            if (dataCategory != null) {
-                entity = HBasePersistenceUtil.getEntityFromLogRecord(logData, dataCategory);
-            }
+        HBaseEntity entity;
+        DataCategory dataCategory = logRecord.getTSDRDataCategory();
+        if (dataCategory != null) {
+            entity = HBasePersistenceUtil.getEntityFromLogRecord(logRecord, dataCategory);
+        } else {
+            entity = new HBaseEntity();
         }
+
         LOG.debug("Exiting convertToHBaseEntity(TSDRLogRecord)");
         return entity;
     }
@@ -420,38 +412,11 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
      */
     public void closeConnections() {
         LOG.debug("Entering closeConnections()");
-        List<String> tableNames = HBasePersistenceUtil.getTsdrHBaseTables();
-        for (String tableName : tableNames) {
-            HBaseDataStoreFactory.getHBaseDataStore().closeConnection(tableName);
+        for (String tableName : HBasePersistenceUtil.getTsdrHBaseTables()) {
+            hbaseDataStore.closeConnection(tableName);
         }
         LOG.debug("Exiting closeConnections()");
         return;
-    }
-
-    /**
-     * Create TSDR Tables.
-     * @throws Exception - an exception.
-     */
-    public void createTables() throws Exception {
-        LOG.debug("Entering createTables()");
-        List<String> tableNames = HBasePersistenceUtil.getTsdrHBaseTables();
-        for (String tableName : tableNames) {
-            HBaseDataStoreFactory.getHBaseDataStore().createTable(tableName);
-        }
-        LOG.debug("Exiting createTables()");
-        return;
-    }
-
-    private void flushCommit(String tableName) {
-        HBaseDataStoreFactory.getHBaseDataStore().flushCommit(tableName);
-    }
-
-    public void flushCommit(Set<String> tableNames) {
-        LOG.debug("Entering flushing commits");
-        for (String tableName : tableNames) {
-            flushCommit(tableName);
-        }
-        LOG.debug("Exiting flushing commits");
     }
 
     private static TSDRMetricRecord getTSDRMetricRecord(HBaseEntity entity) {

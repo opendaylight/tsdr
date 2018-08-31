@@ -72,6 +72,12 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.opendaylight.tsdr</groupId>
+      <artifactId>tsdr-persistence-impl</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
     </dependency>

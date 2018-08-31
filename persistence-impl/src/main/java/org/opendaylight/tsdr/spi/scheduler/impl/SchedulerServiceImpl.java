@@ -52,7 +52,7 @@ public class SchedulerServiceImpl implements SchedulerService {
     @Override
     public ListenableScheduledFuture<?> scheduleTaskAtFixedRate(Task task, long initialDelay, long retryInterval) {
         final ListenableScheduledFuture<?> scheduledFuture = scheduleExecutor.scheduleAtFixedRate(task, initialDelay,
-                retryInterval, TimeUnit.SECONDS);
+                retryInterval, TimeUnit.MILLISECONDS);
         task.setScheduledFuture(scheduledFuture);
         return scheduledFuture;
     }
@@ -64,7 +64,8 @@ public class SchedulerServiceImpl implements SchedulerService {
 
     @Override
     public ListenableScheduledFuture<?> scheduleTask(Task task, long delay) {
-        final ListenableScheduledFuture<?> scheduledFuture = scheduleExecutor.schedule(task, delay, TimeUnit.SECONDS);
+        final ListenableScheduledFuture<?> scheduledFuture =
+                scheduleExecutor.schedule(task, delay, TimeUnit.MILLISECONDS);
         task.setScheduledFuture(scheduledFuture);
         return scheduledFuture;
     }

@@ -71,7 +71,7 @@ public class PurgingScheduler {
         purgeDataTask = new PurgeDataTask(rpcRegistry);
         purgeDataTask.setRetentionTimeinHours(this.retentionTime);
         this.future = schedulerService.scheduleTaskAtFixedRate(purgeDataTask,
-                TimeUnit.MILLISECONDS.toSeconds(firstTime), TimeUnit.MINUTES.toSeconds(purgingInterval));
+                firstTime, TimeUnit.MINUTES.toMillis(purgingInterval));
     }
 
     /**
