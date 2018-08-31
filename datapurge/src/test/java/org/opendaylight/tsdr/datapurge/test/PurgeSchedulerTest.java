@@ -19,10 +19,20 @@ import org.junit.After;
 import org.junit.Test;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.tsdr.datapurge.PurgingScheduler;
+import org.opendaylight.tsdr.spi.scheduler.impl.SchedulerServiceImpl;
 
 public class PurgeSchedulerTest {
-    private RpcProviderRegistry rpcRegistry = mock(RpcProviderRegistry.class);
-    PurgingScheduler purgingScheduler = new PurgingScheduler(rpcRegistry, true, 24 * 60, "23:59:59", 7 * 24);
+    private final RpcProviderRegistry rpcRegistry = mock(RpcProviderRegistry.class);
+    private final SchedulerServiceImpl schedulerService = new SchedulerServiceImpl();
+    private final PurgingScheduler purgingScheduler = new PurgingScheduler(schedulerService, rpcRegistry,
+            true, 24 * 60, "23:59:59", 7 * 24);
+
+    @After
+    public void teardown() {
+        //make sure no scheduled purging task kicked off by this UT.
+        purgingScheduler.cancelScheduledTask();
+        schedulerService.close();
+    }
 
     /**
      * Test the reSchedule() method.
@@ -73,12 +83,5 @@ public class PurgeSchedulerTest {
     @Test
     public void testGetPurgingInterval() {
         assertTrue(purgingScheduler.getPurgingInterval() == 1440);
-    }
-
-    @After
-    public void teardown() {
-        rpcRegistry = null;
-        //make sure no scheduled purging task kicked off by this UT.
-        purgingScheduler.cancelScheduledTask();
     }
 }

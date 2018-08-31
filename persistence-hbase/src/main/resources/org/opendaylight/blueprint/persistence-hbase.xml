@@ -2,6 +2,8 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+  <reference id="schedulerService" interface="org.opendaylight.tsdr.spi.scheduler.SchedulerService"/>
+
   <bean class="org.opendaylight.tsdr.spi.persistence.TSDRPersistenceServiceRegistrar"
         destroy-method="close">
     <argument ref="tsdrHBasePersistenceServiceImpl" />

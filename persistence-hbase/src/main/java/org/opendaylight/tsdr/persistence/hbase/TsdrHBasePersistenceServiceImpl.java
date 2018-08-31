@@ -8,7 +8,6 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -49,30 +48,22 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
         TSDRBinaryPersistenceService {
     private static final Logger LOG = LoggerFactory.getLogger(TsdrHBasePersistenceServiceImpl.class);
 
-    public ScheduledFuture<?> future;
+    private final SchedulerService schedulerService;
+    private ScheduledFuture<?> future;
 
     /**
      * Constructor.
      */
     @Inject
-    public TsdrHBasePersistenceServiceImpl() {
+    public TsdrHBasePersistenceServiceImpl(SchedulerService schedulerService) {
         LOG.debug("Entering start(timeout)");
+        this.schedulerService = schedulerService;
+
         //create the HTables used in TSDR.
         CreateTableTask createTableTask = new CreateTableTask();
-        future = SchedulerService.getInstance().scheduleTask(createTableTask);
+        future = schedulerService.scheduleTask(createTableTask);
         LOG.debug("Exiting start(timeout)");
         LOG.info("TSDR HBase Data Store is initialized.");
-    }
-
-
-    /*
-     * This overloaded constructor version is added for UT purpose. Refrain from
-     * calling it(except from UT)
-     */
-    @VisibleForTesting
-    TsdrHBasePersistenceServiceImpl(HBaseDataStore hbaseDataStore, ScheduledFuture<?> sfuture) {
-        HBaseDataStoreFactory.setHBaseDataStoreIfAbsent(hbaseDataStore);
-        future = sfuture;
     }
 
     /**
@@ -372,14 +363,14 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     /**
      * Trigger CreateTableTask".
      */
-    public void triggerTableCreatingTask() {
+    private void triggerTableCreatingTask() {
         synchronized (this) {
             if (future == null || future.isDone() || future.isCancelled()) {
                 LOG.info("Triggering CreateTableTask");
                 CreateTableTask createTableTask = new CreateTableTask();
                 Long interval = HBaseDataStoreContext
                         .getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
-                future = SchedulerService.getInstance().scheduleTaskAtFixedRate(createTableTask, 0L, interval);
+                future = schedulerService.scheduleTaskAtFixedRate(createTableTask, 0L, interval);
             }
         }
     }

@@ -31,12 +31,14 @@ public class PurgingScheduler {
     private final int retentionTime;
     private final RpcProviderRegistry rpcRegistry;
     private final boolean isEnabled;
+    private final SchedulerService schedulerService;
 
     private volatile ScheduledFuture<?> future;
     private volatile PurgeDataTask purgeDataTask;
 
-    public PurgingScheduler(RpcProviderRegistry rpcRegistry, boolean isEnabled, int purgingInterval, String purgingTime,
-                            int retentionTime) {
+    public PurgingScheduler(SchedulerService schedulerService, RpcProviderRegistry rpcRegistry,
+            boolean isEnabled, int purgingInterval, String purgingTime, int retentionTime) {
+        this.schedulerService = schedulerService;
         this.rpcRegistry = rpcRegistry;
         this.isEnabled = isEnabled;
         this.purgingInterval = purgingInterval;
@@ -68,9 +70,8 @@ public class PurgingScheduler {
         long firstTime = cal.getTime().getTime() - System.currentTimeMillis();
         purgeDataTask = new PurgeDataTask(rpcRegistry);
         purgeDataTask.setRetentionTimeinHours(this.retentionTime);
-        this.future = SchedulerService.getInstance()
-                .scheduleTaskAtFixedRate(purgeDataTask, TimeUnit.MILLISECONDS.toSeconds(firstTime),
-                                         TimeUnit.MINUTES.toSeconds(purgingInterval));
+        this.future = schedulerService.scheduleTaskAtFixedRate(purgeDataTask,
+                TimeUnit.MILLISECONDS.toSeconds(firstTime), TimeUnit.MINUTES.toSeconds(purgingInterval));
     }
 
     /**

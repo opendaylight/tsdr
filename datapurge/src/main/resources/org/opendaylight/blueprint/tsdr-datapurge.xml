@@ -13,10 +13,12 @@
     </cm:default-properties>
   </cm:property-placeholder>
 
+  <reference id="schedulerService" interface="org.opendaylight.tsdr.spi.scheduler.SchedulerService"/>
   <reference id="rpcProvider" interface="org.opendaylight.controller.sal.binding.api.RpcProviderRegistry"/>
 
   <bean id="purgingScheduler" class="org.opendaylight.tsdr.datapurge.PurgingScheduler"
       init-method="schedule" destroy-method="cancelScheduledTask">
+    <argument ref="schedulerService"/>
     <argument ref="rpcProvider"/>
     <argument value="${data_purge_enabled}"/>
     <argument value="${data_purge_interval_in_minutes}"/>

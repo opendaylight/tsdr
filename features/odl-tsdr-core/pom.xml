@@ -92,6 +92,11 @@
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-persistence-impl</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>tsdr-collector-spi</artifactId>
             <version>${project.version}</version>
         </dependency>

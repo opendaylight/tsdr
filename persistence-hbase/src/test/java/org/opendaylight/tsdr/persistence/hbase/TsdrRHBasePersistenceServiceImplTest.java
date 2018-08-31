@@ -11,8 +11,10 @@ package org.opendaylight.tsdr.persistence.hbase;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import com.google.common.util.concurrent.ListenableScheduledFuture;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,15 +25,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ScheduledFuture;
-import junit.framework.Assert;
-import org.jline.utils.ShutdownHooks.Task;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.opendaylight.tsdr.spi.model.TSDRConstants;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
+import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.TSDRLog;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.storetsdrlogrecord.input.TSDRLogRecordBuilder;
@@ -52,15 +52,21 @@ public class TsdrRHBasePersistenceServiceImplTest {
     private TsdrHBasePersistenceServiceImpl storageService;
     private HBaseDataStore hbaseDataStore;
     private SchedulerService schedulerService;
-    private ScheduledFuture<?> future;
     private static Map<String, Map<String,List<HBaseEntity>>> tableEntityMap;
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Before
     public void setup() throws Exception {
         hbaseDataStore = mock(HBaseDataStore.class);
-        future = mock(ScheduledFuture.class);
+        HBaseDataStoreFactory.setHBaseDataStoreIfAbsent(hbaseDataStore);
+
+        ListenableScheduledFuture scheduledFuture = mock(ListenableScheduledFuture.class);
+        doReturn(true).when(scheduledFuture).isDone();
+
         schedulerService = mock(SchedulerService.class);
-        storageService = new TsdrHBasePersistenceServiceImpl(hbaseDataStore,future);
+        doReturn(scheduledFuture).when(schedulerService).scheduleTask(any(Task.class));
+
+        storageService = new TsdrHBasePersistenceServiceImpl(schedulerService);
         tableEntityMap = new HashMap<>();
         doAnswer(invocation -> {
             Object[] arguments = invocation.getArguments();
@@ -159,17 +165,8 @@ public class TsdrRHBasePersistenceServiceImplTest {
         Mockito.doNothing().when(hbaseDataStore).createTable(any(String.class));//.thenReturn(true);
 
         Mockito.doNothing().when(hbaseDataStore).closeConnection(any(String.class));//.thenReturn(true);
-        Mockito.when(schedulerService.scheduleTask((org.opendaylight.tsdr.spi.scheduler.Task) any(Task.class)))
-            .thenReturn(null);//.thenReturn(true);
-        Mockito.when(future.isDone()).thenReturn(true);
 
         storageService.createTables();
-    }
-
-    @Test
-    public void testTriggerTableCreatingTask() {
-        storageService.triggerTableCreatingTask();
-        Assert.assertNotNull(storageService.future);
     }
 
     @Test
@@ -365,7 +362,7 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.storeMetric((List<TSDRMetricRecord>) null);
         List<TSDRLogRecord> recordList1 = new ArrayList<>();
         storageService.storeLog(recordList1);
-        TsdrHBasePersistenceServiceImpl storageService1 = new TsdrHBasePersistenceServiceImpl(hbaseDataStore, future) {
+        TsdrHBasePersistenceServiceImpl storageService1 = new TsdrHBasePersistenceServiceImpl(schedulerService) {
             @Override
             public HBaseEntity convertToHBaseEntity(TSDRLogRecord logRecord) {
                 return null;

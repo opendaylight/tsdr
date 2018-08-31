@@ -28,6 +28,7 @@
     -->
     <module>parent</module>
     <module>persistence-spi</module>
+    <module>persistence-impl</module>
     <module>persistence-hbase</module>
     <module>persistence-cassandra</module>
     <module>persistence-hsqldb</module>
