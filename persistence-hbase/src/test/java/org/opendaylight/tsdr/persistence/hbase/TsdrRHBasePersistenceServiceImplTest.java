@@ -45,15 +45,18 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.Recor
  */
 public class TsdrRHBasePersistenceServiceImplTest {
     private TsdrHBasePersistenceServiceImpl storageService;
-    private HBaseDataStore hbaseDataStore;
+    private HBaseDataStore mockDataStore;
     private final SchedulerServiceImpl schedulerService = new SchedulerServiceImpl();
 
     @Before
     public void setup() throws Exception {
         HBaseDataStoreContext.addProperty(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL, 1L);
-        hbaseDataStore = mock(HBaseDataStore.class);
+        mockDataStore = mock(HBaseDataStore.class);
 
-        storageService = new TsdrHBasePersistenceServiceImpl(hbaseDataStore, schedulerService);
+        HBaseDataStoreFactory mockDataStoreFactory = mock(HBaseDataStoreFactory.class);
+        doReturn(mockDataStore).when(mockDataStoreFactory).getHBaseDataStore();
+
+        storageService = new TsdrHBasePersistenceServiceImpl(mockDataStoreFactory, schedulerService);
     }
 
     @After
@@ -74,15 +77,15 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.storeLog(tsdrLog);
 
         ArgumentCaptor<HBaseEntity> entity = ArgumentCaptor.forClass(HBaseEntity.class);
-        verify(hbaseDataStore).create(entity.capture());
+        verify(mockDataStore).create(entity.capture());
         assertEquals(DataCategory.SYSLOG.name(), entity.getValue().getTableName());
         assertEquals(tsdrLog.getTimeStamp().longValue(), entity.getValue().getColumns().get(0).getTimeStamp());
         assertEquals(tsdrLog.getRecordFullText(), entity.getValue().getColumns().get(0).getValue());
 
-        reset(hbaseDataStore);
+        reset(mockDataStore);
         storageService.storeLog(builder.setRecordFullText(null).build());
         storageService.storeLog(builder.setNodeID(null).build());
-        verifyNoMoreInteractions(hbaseDataStore);
+        verifyNoMoreInteractions(mockDataStore);
     }
 
     @Test
@@ -98,16 +101,16 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.storeMetric(tsdrMetric);
 
         ArgumentCaptor<HBaseEntity> entity = ArgumentCaptor.forClass(HBaseEntity.class);
-        verify(hbaseDataStore).create(entity.capture());
+        verify(mockDataStore).create(entity.capture());
         assertEquals(DataCategory.FLOWTABLESTATS.name(), entity.getValue().getTableName());
         assertEquals(tsdrMetric.getTimeStamp().longValue(), entity.getValue().getColumns().get(0).getTimeStamp());
         assertEquals(tsdrMetric.getMetricValue().toString(), entity.getValue().getColumns().get(0).getValue());
 
-        reset(hbaseDataStore);
+        reset(mockDataStore);
         storageService.storeMetric(builder.setMetricName(null).build());
         storageService.storeMetric(builder.setNodeID(null).build());
         storageService.storeMetric(builder.setMetricValue(null).build());
-        verifyNoMoreInteractions(hbaseDataStore);
+        verifyNoMoreInteractions(mockDataStore);
     }
 
     @Test
@@ -123,19 +126,19 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.storeMetric(tsdrMetric);
 
         for (String tableName : HBasePersistenceUtil.getTsdrHBaseTables()) {
-            verify(hbaseDataStore).createTable(tableName);
+            verify(mockDataStore).createTable(tableName);
         }
 
-        reset(hbaseDataStore);
-        doThrow(new TableNotFoundException()).doReturn(null).when(hbaseDataStore).create(any(HBaseEntity.class));
+        reset(mockDataStore);
+        doThrow(new TableNotFoundException()).doReturn(null).when(mockDataStore).create(any(HBaseEntity.class));
 
         storageService.storeMetric(tsdrMetric);
 
         for (String tableName : HBasePersistenceUtil.getTsdrHBaseTables()) {
-            verify(hbaseDataStore).createTable(tableName);
+            verify(mockDataStore).createTable(tableName);
         }
 
-        verify(hbaseDataStore, times(2)).create(any(HBaseEntity.class));
+        verify(mockDataStore, times(2)).create(any(HBaseEntity.class));
     }
 
     @Test
@@ -151,9 +154,9 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.storeLog(tsdrLog);
 
         ArgumentCaptor<HBaseEntity> entity = ArgumentCaptor.forClass(HBaseEntity.class);
-        verify(hbaseDataStore).create(entity.capture());
+        verify(mockDataStore).create(entity.capture());
 
-        doReturn(Arrays.asList(entity.getValue())).when(hbaseDataStore).getDataByTimeRange(
+        doReturn(Arrays.asList(entity.getValue())).when(mockDataStore).getDataByTimeRange(
                 DataCategory.FLOWTABLESTATS.name(), 0L, timeStamp);
 
         final List<TSDRLogRecord> records = storageService.getTSDRLogRecords(
@@ -182,9 +185,9 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.storeMetric(tsdrMetric);
 
         ArgumentCaptor<HBaseEntity> entity = ArgumentCaptor.forClass(HBaseEntity.class);
-        verify(hbaseDataStore).create(entity.capture());
+        verify(mockDataStore).create(entity.capture());
 
-        doReturn(Arrays.asList(entity.getValue())).when(hbaseDataStore).getDataByTimeRange(
+        doReturn(Arrays.asList(entity.getValue())).when(mockDataStore).getDataByTimeRange(
                 DataCategory.FLOWTABLESTATS.name(), 0L, timeStamp);
 
         final List<TSDRMetricRecord> records = storageService.getTSDRMetricRecords(
@@ -205,7 +208,7 @@ public class TsdrRHBasePersistenceServiceImplTest {
         final long timeStamp = System.currentTimeMillis();
         storageService.purge(DataCategory.FLOWTABLESTATS, timeStamp);
 
-        verify(hbaseDataStore).deleteByTimestamp(DataCategory.FLOWTABLESTATS.name(), timeStamp);
+        verify(mockDataStore).deleteByTimestamp(DataCategory.FLOWTABLESTATS.name(), timeStamp);
     }
 
     @Test
@@ -214,7 +217,7 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.purge(timeStamp);
 
         for (DataCategory category : DataCategory.values()) {
-            verify(hbaseDataStore).deleteByTimestamp(category.name(), timeStamp);
+            verify(mockDataStore).deleteByTimestamp(category.name(), timeStamp);
         }
     }
 
@@ -236,7 +239,7 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.storeMetric(Arrays.asList(tsdrMetric1, tsdrMetric2));
 
         ArgumentCaptor<List> entitiesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(hbaseDataStore).create(entitiesCaptor.capture());
+        verify(mockDataStore).create(entitiesCaptor.capture());
         final List<HBaseEntity> entities = entitiesCaptor.getValue();
         assertEquals(2, entities.size());
         assertEquals(DataCategory.FLOWTABLESTATS.name(), entities.get(0).getTableName());
@@ -266,7 +269,7 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.storeLog(Arrays.asList(tsdrLog1, tsdrLog2));
 
         ArgumentCaptor<List> entitiesCaptor = ArgumentCaptor.forClass(List.class);
-        verify(hbaseDataStore).create(entitiesCaptor.capture());
+        verify(mockDataStore).create(entitiesCaptor.capture());
         final List<HBaseEntity> entities = entitiesCaptor.getValue();
         assertEquals(2, entities.size());
         assertEquals(DataCategory.SYSLOG.name(), entities.get(0).getTableName());
@@ -283,7 +286,7 @@ public class TsdrRHBasePersistenceServiceImplTest {
         storageService.close();
 
         for (String tableName : HBasePersistenceUtil.getTsdrHBaseTables()) {
-            verify(hbaseDataStore).closeConnection(tableName);
+            verify(mockDataStore).closeConnection(tableName);
         }
     }
 }

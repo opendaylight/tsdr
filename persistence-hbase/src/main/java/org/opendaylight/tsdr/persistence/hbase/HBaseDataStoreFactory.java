@@ -12,6 +12,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,28 +23,23 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  * @author <a href="mailto:hariharan_sethuraman@dell.com">Hariharan Sethuraman</a>
  */
-public final class HBaseDataStoreFactory {
+@Singleton
+public class HBaseDataStoreFactory {
     private static final Logger LOG = LoggerFactory.getLogger(HBaseDataStoreFactory.class);
     private static final String HBASE_PROPS_FILENAME = "tsdr-persistence-hbase.properties";
 
-    private static HBaseDataStore datastore;
+    private final HBaseDataStore datastore;
 
-    /**
-     * Default constructor.
-     */
-    private HBaseDataStoreFactory() {
+    @Inject
+    public HBaseDataStoreFactory() {
+        datastore = new HBaseDataStore(initializeDatastoreContext());
     }
 
     /**
-     * To obtain or create the HBase Data Store.
+     * Obtains the HBase Data Store.
      * @return HBaseDataStore
      */
-    public static synchronized HBaseDataStore getHBaseDataStore() {
-        //load XML and initialize HBase data store
-        if (datastore == null) {
-            HBaseDataStoreContext context = initializeDatastoreContext();
-            datastore = new HBaseDataStore(context);
-        }
+    public HBaseDataStore getHBaseDataStore() {
         return datastore;
     }
 
@@ -51,7 +48,7 @@ public final class HBaseDataStoreFactory {
      * configuration file.
      * @return HBaseDataStoreContext
     */
-    static HBaseDataStoreContext initializeDatastoreContext() {
+    private static HBaseDataStoreContext initializeDatastoreContext() {
         HBaseDataStoreContext context = new HBaseDataStoreContext();
         Properties properties = new Properties();
         InputStream inputStream = null;

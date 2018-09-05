@@ -8,7 +8,6 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -67,14 +66,9 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
      * Constructor.
      */
     @Inject
-    public TsdrHBasePersistenceServiceImpl(SchedulerService schedulerService) {
-        this(HBaseDataStoreFactory.getHBaseDataStore(), schedulerService);
-    }
-
-    @VisibleForTesting
-    TsdrHBasePersistenceServiceImpl(HBaseDataStore inHBaseDataStore, SchedulerService inSchedulerService) {
-        this.hbaseDataStore = inHBaseDataStore;
-        this.schedulerService = inSchedulerService;
+    public TsdrHBasePersistenceServiceImpl(HBaseDataStoreFactory dataStoreFactory, SchedulerService schedulerService) {
+        this.hbaseDataStore = dataStoreFactory.getHBaseDataStore();
+        this.schedulerService = schedulerService;
 
         createTableTask = startNewCreateTableTask();
 
