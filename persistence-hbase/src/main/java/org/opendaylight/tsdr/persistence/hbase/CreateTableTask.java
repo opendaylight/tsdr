@@ -13,9 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ScheduledFuture;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
-import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  * @author Thomas Pantelis
  */
-class CreateTableTask extends Task {
+class CreateTableTask implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(CreateTableTask.class);
 
     private final List<String> pendingTableNames;
@@ -54,7 +52,7 @@ class CreateTableTask extends Task {
     }
 
     @Override
-    public void runTask() {
+    public void run() {
         String oldName = Thread.currentThread().getName();
         Thread.currentThread().setName("TSDR HBase Data Store CreateTableTask");
 
@@ -84,9 +82,5 @@ class CreateTableTask extends Task {
         } else {
             schedulerService.scheduleTask(this, retryInterval);
         }
-    }
-
-    @Override
-    public void setScheduledFuture(ScheduledFuture scheduledFuture) {
     }
 }

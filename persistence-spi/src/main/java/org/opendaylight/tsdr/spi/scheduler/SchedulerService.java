@@ -15,9 +15,9 @@ import com.google.common.util.concurrent.ListenableScheduledFuture;
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  */
 public interface SchedulerService {
-    ListenableScheduledFuture<?> scheduleTaskAtFixedRate(Task task, long initialDelay, long retryInterval);
+    ListenableScheduledFuture<?> scheduleTaskAtFixedRate(Runnable task, long initialDelay, long retryInterval);
 
-    ListenableScheduledFuture<?> scheduleTask(Task task);
+    ListenableScheduledFuture<?> scheduleTask(Runnable task);
 
-    ListenableScheduledFuture<?> scheduleTask(Task task, long delay);
+    ListenableScheduledFuture<?> scheduleTask(Runnable task, long delay);
 }

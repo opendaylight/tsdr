@@ -16,7 +16,6 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
-import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.opendaylight.yangtools.util.concurrent.ThreadFactoryProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,23 +49,17 @@ public class SchedulerServiceImpl implements SchedulerService {
     }
 
     @Override
-    public ListenableScheduledFuture<?> scheduleTaskAtFixedRate(Task task, long initialDelay, long retryInterval) {
-        final ListenableScheduledFuture<?> scheduledFuture = scheduleExecutor.scheduleAtFixedRate(task, initialDelay,
-                retryInterval, TimeUnit.MILLISECONDS);
-        task.setScheduledFuture(scheduledFuture);
-        return scheduledFuture;
+    public ListenableScheduledFuture<?> scheduleTaskAtFixedRate(Runnable task, long initialDelay, long retryInterval) {
+        return scheduleExecutor.scheduleAtFixedRate(task, initialDelay, retryInterval, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public ListenableScheduledFuture<?> scheduleTask(Task task) {
+    public ListenableScheduledFuture<?> scheduleTask(Runnable task) {
         return scheduleTask(task, 0L);
     }
 
     @Override
-    public ListenableScheduledFuture<?> scheduleTask(Task task, long delay) {
-        final ListenableScheduledFuture<?> scheduledFuture =
-                scheduleExecutor.schedule(task, delay, TimeUnit.MILLISECONDS);
-        task.setScheduledFuture(scheduledFuture);
-        return scheduledFuture;
+    public ListenableScheduledFuture<?> scheduleTask(Runnable task, long delay) {
+        return scheduleExecutor.schedule(task, delay, TimeUnit.MILLISECONDS);
     }
 }

@@ -12,9 +12,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.util.concurrent.ScheduledFuture;
 import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
-import org.opendaylight.tsdr.spi.scheduler.Task;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.PurgeAllTSDRRecordOutput;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.TSDRService;
@@ -29,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:rao.shoaib@gmail.com">Shoaib Rao</a>
  *
  */
-public class PurgeDataTask extends Task {
+public class PurgeDataTask implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(PurgeDataTask.class);
     private static final long HOUR_2_MILLI_SECS = 60 * 60 * 1000;
 
@@ -43,7 +41,7 @@ public class PurgeDataTask extends Task {
     }
 
     @Override
-    public void runTask() {
+    public void run() {
         Thread.currentThread().setName("PurgeData Task-thread-" + Thread.currentThread().getId());
         purgeData();
     }
@@ -73,10 +71,6 @@ public class PurgeDataTask extends Task {
         }, MoreExecutors.directExecutor());
 
         LOG.debug("Exiting PurgeData");
-    }
-
-    @Override
-    public void setScheduledFuture(ScheduledFuture scheduledFuture) {
     }
 
     public int getRetentionTimeinHours() {
