@@ -7,8 +7,7 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Properties;
 
 /**
  * The context of HBase Data Store.
@@ -17,76 +16,71 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author <a href="mailto:yuling_c@dell.com">YuLing Chen</a>
  */
 public class HBaseDataStoreContext {
-    public static final String HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL =
-            "hbase-common-prop-create-table-retry-interval";
+    static final String ZOO_KEEPER_QUORUM_PROP = "zoo.keeper.quorum";
+    static final String ZOO_KEEPER_CLIENT_PORT_PROP = "zoo.keeper.client.port";
+    static final String POOL_SIZE_PROP = "poolsize";
+    static final String WRITE_BUFFER_SIZE_PROP = "writebuffersize";
+    static final String AUTO_FLUSH_PROP = "autoflush";
+    static final String CREATE_TABLE_RETRY_INTERVAL_PROP = "createTableRetryInterval";
 
-    /**
+    /*
      * This parameter indicates the host name of the server(Zookeeper node)
      * that HBase client communicates with.
      */
-    private  String zookeeperQuorum = "localhost";
-    /**
+    private final String zookeeperQuorum;
+
+    /*
      * This parameter indicates the port number for the HBase
      * client to communicate with the server(Zookeeper node).
      */
-    private  String zookeeperClientport = "2181";
-    /**
+    private final String zookeeperClientport;
+
+    /*
      * This parameter indicates the size of the pool for the HBase
      * Client to connect with the server(Zookeeper node).
      */
-    private  int poolSize = 5;
+    private final int poolSize;
 
-    private int writeBufferSize = 512;
+    private final int writeBufferSize;
 
-    private boolean autoFlush = false;
+    private final boolean autoFlush;
 
-    private static Map<String,Object> commonHbasePropertiesMap = new ConcurrentHashMap<>();
+    private final long createTableRetryInterval;
 
-    public  String getZookeeperQuorum() {
-        return zookeeperQuorum;
+    HBaseDataStoreContext() {
+        this(new Properties());
     }
 
-    public void setZookeeperQuorum(String zookeeperQuorum) {
-        this.zookeeperQuorum = zookeeperQuorum;
+    HBaseDataStoreContext(Properties from) {
+        zookeeperQuorum = from.getProperty(ZOO_KEEPER_QUORUM_PROP, "localhost");
+        zookeeperClientport = from.getProperty(ZOO_KEEPER_CLIENT_PORT_PROP, "2181");
+        poolSize = Integer.parseInt(from.getProperty(POOL_SIZE_PROP, "20"));
+        writeBufferSize = Integer.parseInt(from.getProperty(WRITE_BUFFER_SIZE_PROP, "512"));
+        autoFlush = Boolean.valueOf(from.getProperty(AUTO_FLUSH_PROP, "false"));
+        createTableRetryInterval = Long.parseLong(from.getProperty("createTableRetryInterval", "300"));
+    }
+
+    public String getZookeeperQuorum() {
+        return zookeeperQuorum;
     }
 
     public String getZookeeperClientport() {
         return zookeeperClientport;
     }
 
-    public void setZookeeperClientport(String zookeeperClientport) {
-        this.zookeeperClientport = zookeeperClientport;
-    }
-
     public int getPoolSize() {
         return poolSize;
-    }
-
-    public void setPoolSize(int poolSize) {
-        this.poolSize = poolSize;
     }
 
     public int getWriteBufferSize() {
         return writeBufferSize;
     }
 
-    public void setWriteBufferSize(int writeBufferSize) {
-        this.writeBufferSize = writeBufferSize;
-    }
-
-    public void setAutoFlush(boolean autoFlush) {
-        this.autoFlush = autoFlush;
-    }
-
     public boolean getAutoFlush() {
         return this.autoFlush;
     }
 
-    public static void addProperty(String property, long createTableRetryInterval) {
-        commonHbasePropertiesMap.put(property, createTableRetryInterval);
-    }
-
-    public static Long getPropertyInLong(String property) {
-        return property != null ? (Long) commonHbasePropertiesMap.get(property) : null;
+    public long getCreateTableRetryInterval() {
+        return createTableRetryInterval;
     }
 }

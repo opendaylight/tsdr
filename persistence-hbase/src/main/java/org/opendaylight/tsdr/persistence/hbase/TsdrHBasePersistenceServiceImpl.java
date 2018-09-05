@@ -57,7 +57,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     }
 
     private final SchedulerService schedulerService;
-    private final HBaseDataStore hbaseDataStore;
+    private final HBaseDataStoreFactory dataStoreFactory;
 
     @Nonnull
     private volatile CreateTableTask createTableTask;
@@ -67,7 +67,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
      */
     @Inject
     public TsdrHBasePersistenceServiceImpl(HBaseDataStoreFactory dataStoreFactory, SchedulerService schedulerService) {
-        this.hbaseDataStore = dataStoreFactory.getHBaseDataStore();
+        this.dataStoreFactory = dataStoreFactory;
         this.schedulerService = schedulerService;
 
         createTableTask = startNewCreateTableTask();
@@ -83,9 +83,8 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     }
 
     private CreateTableTask startNewCreateTableTask() {
-        Long retryInterval = HBaseDataStoreContext
-                .getPropertyInLong(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL);
-        return new CreateTableTask(hbaseDataStore, HBasePersistenceUtil.getTsdrHBaseTables(),
+        long retryInterval = dataStoreFactory.getDataStoreContext().getCreateTableRetryInterval();
+        return new CreateTableTask(dataStoreFactory.getHBaseDataStore(), HBasePersistenceUtil.getTsdrHBaseTables(),
                 schedulerService, TimeUnit.SECONDS.toMillis(retryInterval)).start();
     }
 
@@ -138,7 +137,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
 
         executeDatabaseOperationWithRetries(() -> {
             for (List<HBaseEntity> entry: entityListMap.values()) {
-                hbaseDataStore.create(entry);
+                dataStoreFactory.getHBaseDataStore().create(entry);
             }
         });
     }
@@ -158,7 +157,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
             return;
         }
 
-        executeDatabaseOperationWithRetries(() -> hbaseDataStore.create(entity));
+        executeDatabaseOperationWithRetries(() -> dataStoreFactory.getHBaseDataStore().create(entity));
 
         LOG.debug("Exiting store(TSDRMetricRecord)");
     }
@@ -183,7 +182,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
             return;
         }
 
-        executeDatabaseOperationWithRetries(() -> hbaseDataStore.create(entity));
+        executeDatabaseOperationWithRetries(() -> dataStoreFactory.getHBaseDataStore().create(entity));
 
         LOG.debug("Exiting store(TSDRMetricRecord)");
     }
@@ -220,7 +219,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                 || FormatUtil.isDataCategory(tsdrMetricKey)) {
             String dataCategory = FormatUtil.isDataCategoryKey(tsdrMetricKey)
                     ? FormatUtil.getDataCategoryFromTSDRKey(tsdrMetricKey) : tsdrMetricKey;
-            resultEntities = hbaseDataStore.getDataByTimeRange(dataCategory, startTime, endTime);
+            resultEntities = dataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory, startTime, endTime);
             for (HBaseEntity e : resultEntities) {
                 resultRecords.add(getTSDRMetricRecord(e));
             }
@@ -268,7 +267,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                 substringFilterList.add(recKeyString);
             }
 
-            resultEntities = hbaseDataStore.getDataByTimeRange(
+            resultEntities = dataStoreFactory.getHBaseDataStore().getDataByTimeRange(
                     dataCategory,substringFilterList, startTime, endTime);
             for (HBaseEntity e : resultEntities) {
                 resultRecords.add(getTSDRMetricRecord(e));
@@ -297,7 +296,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                 || FormatUtil.isDataCategory(tsdrLogKey)) {
             String dataCategory = FormatUtil.isDataCategoryKey(tsdrLogKey)
                     ? FormatUtil.getDataCategoryFromTSDRKey(tsdrLogKey) : tsdrLogKey;
-            resultEntities = hbaseDataStore.getDataByTimeRange(dataCategory, startTime, endTime);
+            resultEntities = dataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory, startTime, endTime);
             for (HBaseEntity e : resultEntities) {
                 resultRecords.add(getTSDRLogRecord(e));
             }
@@ -338,7 +337,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
                 substringFilterList.add(recKeyString);
             }
 
-            resultEntities = hbaseDataStore.getDataByTimeRange(dataCategory,
+            resultEntities = dataStoreFactory.getHBaseDataStore().getDataByTimeRange(dataCategory,
                     substringFilterList, startTime, endTime);
         }
         for (HBaseEntity e : resultEntities) {
@@ -350,7 +349,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     @Override
     public void purge(DataCategory category, long retentionTime) {
         try {
-            hbaseDataStore.deleteByTimestamp(category.name(), retentionTime);
+            dataStoreFactory.getHBaseDataStore().deleteByTimestamp(category.name(), retentionTime);
         } catch (IOException ioe) {
             LOG.error("Error purging TSDR records in HBase data store {}", ioe);
         }
@@ -407,7 +406,7 @@ public class TsdrHBasePersistenceServiceImpl implements TSDRLogPersistenceServic
     public void closeConnections() {
         LOG.debug("Entering closeConnections()");
         for (String tableName : HBasePersistenceUtil.getTsdrHBaseTables()) {
-            hbaseDataStore.closeConnection(tableName);
+            dataStoreFactory.getHBaseDataStore().closeConnection(tableName);
         }
         LOG.debug("Exiting closeConnections()");
         return;

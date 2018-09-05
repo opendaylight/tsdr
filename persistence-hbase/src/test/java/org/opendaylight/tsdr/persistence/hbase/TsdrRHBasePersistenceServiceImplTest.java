@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.junit.After;
 import org.junit.Before;
@@ -50,11 +51,15 @@ public class TsdrRHBasePersistenceServiceImplTest {
 
     @Before
     public void setup() throws Exception {
-        HBaseDataStoreContext.addProperty(HBaseDataStoreContext.HBASE_COMMON_PROP_CREATE_TABLE_RETRY_INTERVAL, 1L);
         mockDataStore = mock(HBaseDataStore.class);
+
+        Properties props = new Properties();
+        props.setProperty(HBaseDataStoreContext.CREATE_TABLE_RETRY_INTERVAL_PROP, "1");
+        HBaseDataStoreContext context = new HBaseDataStoreContext(props);
 
         HBaseDataStoreFactory mockDataStoreFactory = mock(HBaseDataStoreFactory.class);
         doReturn(mockDataStore).when(mockDataStoreFactory).getHBaseDataStore();
+        doReturn(context).when(mockDataStoreFactory).getDataStoreContext();
 
         storageService = new TsdrHBasePersistenceServiceImpl(mockDataStoreFactory, schedulerService);
     }

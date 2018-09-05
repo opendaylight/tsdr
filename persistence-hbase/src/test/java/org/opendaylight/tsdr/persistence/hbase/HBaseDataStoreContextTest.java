@@ -32,7 +32,7 @@ public class HBaseDataStoreContextTest {
 
     @Test
     public void testGetPoolSize() {
-        assertTrue(contextService.getPoolSize() == 5);
+        assertTrue(contextService.getPoolSize() == 20);
     }
 
     @Test
@@ -43,10 +43,5 @@ public class HBaseDataStoreContextTest {
     @Test
     public void testGetAutoFlush() {
         assertFalse(contextService.getAutoFlush());
-    }
-
-    @Test
-    public void testGetPropertyInLong() {
-        assertTrue(HBaseDataStoreContext.getPropertyInLong(null) == null);
     }
 }
