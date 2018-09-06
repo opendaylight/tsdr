@@ -68,6 +68,11 @@
         </dependency>
             <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>tsdr-persistence-kafka</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+            <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>tsdr-persistence-hbase</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -215,6 +220,13 @@
       <dependency>
           <groupId>org.opendaylight.tsdr</groupId>
           <artifactId>tsdr-persistence-cassandra</artifactId>
+          <version>${project.version}</version>
+          <type>xml</type>
+          <classifier>config</classifier>
+      </dependency>
+            <dependency>
+          <groupId>org.opendaylight.tsdr</groupId>
+          <artifactId>tsdr-persistence-kafka</artifactId>
           <version>${project.version}</version>
           <type>xml</type>
           <classifier>config</classifier>
