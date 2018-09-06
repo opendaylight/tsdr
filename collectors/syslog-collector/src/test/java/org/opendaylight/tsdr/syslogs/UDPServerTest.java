@@ -22,6 +22,7 @@ import org.opendaylight.controller.md.sal.binding.api.DataBroker;
 import org.opendaylight.tsdr.syslogs.server.SyslogUDPServer;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfigBuilder;
 
 /**
  * This is the test for UDP Server.
@@ -30,8 +31,9 @@ import org.opendaylight.tsdr.syslogs.server.decoder.Message;
  */
 public class UDPServerTest {
     private final Deque<Message> messageList = new LinkedList<>();
-    private final SyslogDatastoreManager manager = SyslogDatastoreManager.getInstance(
-            mock(DataBroker.class), 1, 10, 10, 10);
+    private final SyslogDatastoreManager manager = new SyslogDatastoreManager(
+            mock(DataBroker.class), new SyslogCollectorConfigBuilder().setCoreThreadpoolSize(1)
+            .setMaxThreadpoolSize(1).setKeepAliveTime(10).setQueueSize(10).build());
     private final SyslogUDPServer server = new SyslogUDPServer(messageList, manager);
 
     @Before

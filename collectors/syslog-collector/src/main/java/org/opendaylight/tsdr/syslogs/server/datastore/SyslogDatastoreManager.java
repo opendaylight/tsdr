@@ -9,7 +9,6 @@
 
 package org.opendaylight.tsdr.syslogs.server.datastore;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
@@ -46,7 +45,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfigBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.TsdrSyslogCollectorService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.RegisteredSyslogFilter;
@@ -87,14 +85,6 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
     private final Map<String, String> registerMap = new ConcurrentHashMap<>();
     private final Map<String, RegisteredListener> listenerMap = new ConcurrentHashMap<>();
 
-    @VisibleForTesting
-    public static SyslogDatastoreManager getInstance(DataBroker dataBroker, int coreThreadPoolSize,
-            int maxThreadPoolSize, long keepAliveTime, int queueSize) {
-        return new SyslogDatastoreManager(dataBroker, new SyslogCollectorConfigBuilder()
-                .setCoreThreadpoolSize(coreThreadPoolSize).setMaxThreadpoolSize(maxThreadPoolSize)
-                .setKeepAliveTime((int)keepAliveTime).setQueueSize(queueSize).build());
-    }
-
     @Inject
     public SyslogDatastoreManager(DataBroker dataBroker, SyslogCollectorConfig collectorConfig) {
         this.dataBroker = Objects.requireNonNull(dataBroker);
@@ -127,10 +117,6 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         int currentThreadpoolQueueSize = threadPool.getQueue().size();
         int currentThreadpoolQueueRemainingCapacity = threadPool.getQueue().remainingCapacity();
         long currentThreadpoolKeepAliveTime = threadPool.getKeepAliveTime(TimeUnit.SECONDS);
-
-        LOG.info("currentThreadpoolKeepAliveTime" + currentThreadpoolKeepAliveTime);
-        LOG.info("currentThreadpoolQueueSize" + currentThreadpoolQueueSize);
-        LOG.info("currentThreadpoolQueueRemainingCapacity" + currentThreadpoolQueueRemainingCapacity);
 
         ShowThreadpoolConfigurationOutput output = new ShowThreadpoolConfigurationOutputBuilder()
                 .setCoreThreadNumber(threadPool.getCorePoolSize())
@@ -185,26 +171,6 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         return RpcResultBuilder.success(output).buildFuture();
     }
 
-    @VisibleForTesting
-    public Map<String, String> getRegisterMap() {
-        return registerMap;
-    }
-
-    @VisibleForTesting
-    public void setRegisterMap(Map<String, String> registerMap) {
-        this.registerMap.putAll(registerMap);
-    }
-
-    @VisibleForTesting
-    public Map<String, RegisteredListener> getListenerMap() {
-        return listenerMap;
-    }
-
-    @VisibleForTesting
-    public void setListenerMap(Map<String, RegisteredListener> listenerMap) {
-        this.listenerMap.putAll(listenerMap);
-    }
-
     @Override
     public ListenableFuture<RpcResult<ShowRegisterFilterOutput>> showRegisterFilter(ShowRegisterFilterInput input) {
 
@@ -224,15 +190,10 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         }
 
         if (optional.isPresent() && !optional.get().getSyslogFilter().isEmpty()) {
-
-            LOG.info("reading filter success");
-
             List<SyslogFilter> filters = optional.get().getSyslogFilter();
-            LOG.info("currently registered filters are:     " + filters);
             List<RegisteredSyslogFilter> registeredSyslogFiltersList = new ArrayList<>();
             for (SyslogFilter filter : filters) {
-                LOG.info("filter entity:  " + filter.getFilterEntity());
-                LOG.info("filter ID:  " + filter.getFilterId());
+                LOG.debug("Adding filter: {}" + filter);
 
                 RegisteredFilterEntity registeredFilterEntity = new RegisteredFilterEntityBuilder()
                         .setApplication(filter.getFilterEntity().getApplication())
@@ -288,8 +249,8 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
 
     @Override
     public ListenableFuture<RpcResult<RegisterFilterOutput>> registerFilter(RegisterFilterInput input) {
+        LOG.info("registerFilter: {}", input);
 
-        LOG.info("Received a new Register");
         String url = input.getCallbackUrl();
         WriteTransaction transaction = dataBroker.newWriteOnlyTransaction();
         String filterID = UUID.randomUUID().toString();
@@ -304,19 +265,21 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
                 .setPid(input.getPid())
                 .setContent(input.getContent())
                 .build();
-        InstanceIdentifier<SyslogFilter> filterIID = InstanceIdentifier.create(SyslogDispatcher.class)
-                .child(SyslogFilter.class, new SyslogFilterKey(filterID));
         SyslogFilter filter = new SyslogFilterBuilder()
                 .setFilterId(filterID)
                 .setFilterEntity(filterEntity)
                 .setCallbackUrl(url)
                 .build();
+
+        InstanceIdentifier<SyslogFilter> filterIID = InstanceIdentifier.create(SyslogDispatcher.class)
+                .child(SyslogFilter.class, new SyslogFilterKey(filterID));
         transaction.merge(LogicalDatastoreType.CONFIGURATION, filterIID, filter);
 
         InstanceIdentifier<Listener> listenerIID =
                 filterIID.child(Listener.class, new ListenerKey(listenerUUID));
         Listener listener = new ListenerBuilder().setListenerId(listenerUUID).build();
         transaction.merge(LogicalDatastoreType.CONFIGURATION, listenerIID, listener);
+
         //Create Listener on Operational Tree
         InstanceIdentifier<SyslogListener> syslogListenerIID =
                 InstanceIdentifier.create(SyslogDispatcher.class)
@@ -334,14 +297,12 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
 
         final RegisterFilterOutput output = new RegisterFilterOutputBuilder().setListenerId(listenerUUID).build();
 
-        RegisteredListener newRrgisteredListener = new RegisteredListener(dataBroker, listenerUUID, url);
+        RegisteredListener newRegisteredListener = new RegisteredListener(dataBroker, listenerUUID, url);
 
         registerMap.put(filterID, listenerUUID);
-        listenerMap.put(listenerUUID, newRrgisteredListener);
+        listenerMap.put(listenerUUID, newRegisteredListener);
 
-        newRrgisteredListener.listen();
-
-        LOG.info(newRrgisteredListener.toString());
+        newRegisteredListener.listen();
 
         return RpcResultBuilder.success(output).buildFuture();
     }

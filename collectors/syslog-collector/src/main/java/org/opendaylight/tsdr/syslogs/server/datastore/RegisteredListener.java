@@ -9,12 +9,12 @@
 
 package org.opendaylight.tsdr.syslogs.server.datastore;
 
+import com.google.common.base.Strings;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collection;
@@ -86,8 +86,8 @@ public class RegisteredListener implements DataTreeChangeListener<SyslogListener
             switch (rootNode.getModificationType()) {
                 case WRITE:
                 case SUBTREE_MODIFIED:
-                    if (this.callBackUrl != null) {
-                        final SyslogListener listener = rootNode.getDataAfter();
+                    final SyslogListener listener = rootNode.getDataAfter();
+                    if (this.callBackUrl != null && !Strings.isNullOrEmpty(listener.getSyslogMessage())) {
                         LOG.info("Got updated message from {}: {} ", listener.getListenerId(),
                                 listener.getSyslogMessage());
 
@@ -103,14 +103,11 @@ public class RegisteredListener implements DataTreeChangeListener<SyslogListener
                                 out.flush();
                             }
 
-                            int responseCode = ((HttpURLConnection) urlConnection).getResponseCode();
-                            if (HttpURLConnection.HTTP_OK == responseCode) {
-                                String readLine;
-                                try (BufferedReader responseReader = new BufferedReader(
-                                        new InputStreamReader(urlConnection.getInputStream()))) {
-                                    while ((readLine = responseReader.readLine()) != null) {
-                                        LOG.info("The updated message response is: " + readLine);
-                                    }
+                            String readLine;
+                            try (BufferedReader responseReader = new BufferedReader(
+                                    new InputStreamReader(urlConnection.getInputStream()))) {
+                                while ((readLine = responseReader.readLine()) != null) {
+                                    LOG.info("The updated message response is: " + readLine);
                                 }
                             }
                         } catch (IOException e) {
