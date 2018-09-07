@@ -14,8 +14,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.util.CharsetUtil;
-import java.util.Deque;
-import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,12 +30,10 @@ import org.slf4j.LoggerFactory;
 public class UDPMessageHandler extends SimpleChannelInboundHandler<DatagramPacket> {
     private static final Logger LOG = LoggerFactory.getLogger(UDPMessageHandler.class);
 
-    private final SyslogDatastoreManager manager;
-    private final Deque<Message> incomingSyslogs;
+    private final MessageQueue messageQueue;
 
-    public UDPMessageHandler(Deque<Message> incomingSyslogs, SyslogDatastoreManager manager) {
-        this.incomingSyslogs = incomingSyslogs;
-        this.manager = manager;
+    public UDPMessageHandler(MessageQueue messageQueue) {
+        this.messageQueue = messageQueue;
     }
 
     @Override
@@ -55,10 +51,6 @@ public class UDPMessageHandler extends SimpleChannelInboundHandler<DatagramPacke
                     .build();
         }
 
-        synchronized (incomingSyslogs) {
-            incomingSyslogs.add(message);
-            incomingSyslogs.notifyAll();
-        }
-        manager.execute(ipaddress, message);
+        messageQueue.enqueue(message);
     }
 }

@@ -10,23 +10,22 @@ package org.opendaylight.tsdr.syslogs;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.opendaylight.tsdr.collector.spi.RPCFutures;
+import org.opendaylight.tsdr.collector.spi.logger.AbstractBatchingLogCollector;
+import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.opendaylight.tsdr.syslogs.filters.SyslogFilterManager;
 import org.opendaylight.tsdr.syslogs.server.SyslogTCPServer;
 import org.opendaylight.tsdr.syslogs.server.SyslogUDPServer;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
+import org.opendaylight.tsdr.syslogs.server.decoder.MessageQueue;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
@@ -43,37 +42,40 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 public class TSDRSyslogCollectorImpl implements AutoCloseable {
-    public static final long QUEUE_WAIT_INTERVAL = 2000;
-
     private static final Logger LOG = LoggerFactory.getLogger(TSDRSyslogCollectorImpl.class);
 
     private final SyslogTCPServer tcpServer;
     private final SyslogUDPServer udpServer;
-    private int udpPort;
     private final int tcpPort;
-    private final long storeFlushInterval;
 
-    private final TsdrCollectorSpiService collectorSPIService;
     private final SyslogFilterManager filterManager = new SyslogFilterManager();
-    private final SyslogDatastoreManager manager;
-
-    private final Deque<Message> messageList = new LinkedList<>();
-
     private final AtomicBoolean running = new AtomicBoolean();
+
+    private final AbstractBatchingLogCollector<Message> logCollector;
+
+    private int udpPort;
 
     @Inject
     public TSDRSyslogCollectorImpl(TsdrCollectorSpiService collectorSPIService, SyslogDatastoreManager manager,
-            SyslogCollectorConfig collectorConfig) {
-        this.collectorSPIService = collectorSPIService;
-        this.manager = manager;
-
+            SchedulerService schedulerService, SyslogCollectorConfig collectorConfig) {
         this.udpPort = collectorConfig.getUdpport();
         this.tcpPort = collectorConfig.getTcpport();
 
-        tcpServer = new SyslogTCPServer(messageList, this.manager);
-        udpServer = new SyslogUDPServer(messageList, this.manager);
+        logCollector = new AbstractBatchingLogCollector<Message>(collectorSPIService, schedulerService,
+                "SyslogCollector", collectorConfig.getStoreFlushInterval().intValue()) {
+            @Override
+            protected List<TSDRLogRecord> transform(List<Message> from) {
+                return from.stream().flatMap(msg -> filter(msg)).collect(Collectors.toList());
+            }
+        };
 
-        storeFlushInterval = collectorConfig.getStoreFlushInterval().intValue();
+        MessageQueue messageQueue = message -> {
+            logCollector.enqueue(message);
+            manager.execute(message);
+        };
+
+        tcpServer = new SyslogTCPServer(messageQueue);
+        udpServer = new SyslogUDPServer(messageQueue);
     }
 
     public boolean isRunning() {
@@ -85,8 +87,6 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
         if (!running.compareAndSet(false, true)) {
             return;
         }
-
-        new SyslogProcessor().start();
 
         LOG.info("Syslog Collector Session Initiated");
 
@@ -141,71 +141,14 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
             } catch (InterruptedException e) {
                 LOG.debug("Interrupted stopping server", e);
             }
+
+            logCollector.close();
         }
     }
 
-    private class SyslogProcessor extends Thread {
-        SyslogProcessor() {
-            super("TSDR Syslog Processor");
-            this.setDaemon(true);
-        }
-
-        @Override
-        public void run() {
-            List<TSDRLogRecord> syslogQueue = new ArrayList<>();
-            long lastPersisted = System.currentTimeMillis();
-            Message message = null;
-            while (running.get()) {
-                synchronized (messageList) {
-                    if (messageList.isEmpty()) {
-                        try {
-                            messageList.wait(QUEUE_WAIT_INTERVAL);
-                        } catch (InterruptedException e) {
-                            // no-op
-                        }
-                    }
-                    if (!messageList.isEmpty()) {
-                        message = messageList.removeFirst();
-                    }
-                }
-
-                if (message != null) {
-                    TSDRLogRecord logRecord = filterManager.applyFilters(message);
-                    if (logRecord != null) {
-                        syslogQueue.add(logRecord);
-                    }
-                }
-
-                if (System.currentTimeMillis() - lastPersisted > storeFlushInterval && !syslogQueue.isEmpty()) {
-                    List<TSDRLogRecord> queue = null;
-                    synchronized (filterManager) {
-                        //Currently there is only one SyslogProcessor thread so this check seems meaningless
-                        //If the future if we decide to have a few of those we need to make sure the queue
-                        //has something and the interval has passed inside the synchronize block.
-                        if (System.currentTimeMillis() - lastPersisted > storeFlushInterval
-                                && !syslogQueue.isEmpty()) {
-                            lastPersisted = System.currentTimeMillis();
-                            queue = syslogQueue;
-                            syslogQueue = new ArrayList<>();
-                        }
-                    }
-                    if (queue != null) {
-                        store(queue);
-                    }
-                }
-
-                message = null;
-            }
-        }
-    }
-
-    private void store(List<TSDRLogRecord> queue) {
-        InsertTSDRLogRecordInput input = new InsertTSDRLogRecordInputBuilder().setTSDRLogRecord(queue)
-                .setCollectorCodeName("SyslogCollector").build();
-
-        LOG.debug("Storing records {}", input);
-
-        RPCFutures.logResult(collectorSPIService.insertTSDRLogRecord(input), "insertTSDRLogRecord", LOG);
+    private Stream<TSDRLogRecord> filter(Message message) {
+        TSDRLogRecord logRecord = filterManager.applyFilters(message);
+        return logRecord != null ? Stream.of(logRecord) : Stream.empty();
     }
 
     public int getUdpPort() {

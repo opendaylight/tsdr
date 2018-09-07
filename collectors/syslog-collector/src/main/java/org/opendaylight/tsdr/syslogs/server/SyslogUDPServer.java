@@ -13,11 +13,9 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
-import org.opendaylight.tsdr.syslogs.server.decoder.Message;
+import org.opendaylight.tsdr.syslogs.server.decoder.MessageQueue;
 import org.opendaylight.tsdr.syslogs.server.decoder.UDPMessageHandler;
 
 /**
@@ -34,10 +32,10 @@ public class SyslogUDPServer implements SyslogServer {
     private final AtomicBoolean status = new AtomicBoolean(false);
     private final UDPMessageHandler udpMessageHandler;
 
-    public SyslogUDPServer(Deque<Message> incomingSyslogs, SyslogDatastoreManager manager) {
+    public SyslogUDPServer(MessageQueue messageQueue) {
         bootstrap = new Bootstrap();
         group = new NioEventLoopGroup();
-        udpMessageHandler = new UDPMessageHandler(incomingSyslogs, manager);
+        udpMessageHandler = new UDPMessageHandler(messageQueue);
         bootstrap.group(group)
                 .channel(NioDatagramChannel.class)
                 .handler(udpMessageHandler);

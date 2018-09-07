@@ -103,7 +103,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         LOG.info("SyslogDatastoreManager closed");
     }
 
-    public void execute(String ipaddress, Message message) {
+    public void execute(Message message) {
         threadPool.execute(new WorkerThread(dataBroker, message));
     }
 

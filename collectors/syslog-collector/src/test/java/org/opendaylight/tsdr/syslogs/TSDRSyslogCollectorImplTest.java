@@ -13,6 +13,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -26,7 +28,10 @@ import java.util.stream.Collectors;
 import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.opendaylight.tsdr.spi.scheduler.impl.SchedulerServiceImpl;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
+import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
@@ -44,12 +49,16 @@ public class TSDRSyslogCollectorImplTest {
 
     private final TsdrCollectorSpiService mockSpiService = mock(TsdrCollectorSpiService.class);
     private final SyslogDatastoreManager mockManager = mock(SyslogDatastoreManager.class);
+    private final SchedulerServiceImpl schedulerService = new SchedulerServiceImpl();
     private final TSDRSyslogCollectorImpl impl = new TSDRSyslogCollectorImpl(mockSpiService, mockManager,
-        new SyslogCollectorConfigBuilder().setUdpport(UDP_PORT).setTcpport(6514).setStoreFlushInterval(200).build());
+        schedulerService, new SyslogCollectorConfigBuilder().setUdpport(UDP_PORT).setTcpport(6514)
+            .setStoreFlushInterval(100).build());
 
     @After
     public void tearDown() {
+        schedulerService.close();
         impl.close();
+
     }
 
     @Test
@@ -66,6 +75,7 @@ public class TSDRSyslogCollectorImplTest {
         try (SyslogGenerator generator = new SyslogGenerator("localhost", impl.getUdpPort())) {
             List<String> messages = ImmutableList.of("Hello", "World", "This is a syslog message",
                     "This is another syslog message");
+
             for (String msg : messages) {
                 generator.sendSyslog(msg, 1);
             }
@@ -77,6 +87,12 @@ public class TSDRSyslogCollectorImplTest {
             final List<String> storedMessages = storedRecords.stream().map(
                 rec -> rec.getRecordFullText()).collect(Collectors.toList());
             assertEquals(storedMessages, messages);
+
+            ArgumentCaptor<Message> messageCaptor = ArgumentCaptor.forClass(Message.class);
+            verify(mockManager, times(4)).execute(messageCaptor.capture());
+            final List<String> executedMessages = messageCaptor.getAllValues().stream().map(
+                msg -> msg.getContent()).collect(Collectors.toList());
+            assertEquals(executedMessages, messages);
         }
     }
 

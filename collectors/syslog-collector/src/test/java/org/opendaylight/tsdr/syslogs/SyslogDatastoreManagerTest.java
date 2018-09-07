@@ -216,7 +216,7 @@ public class SyslogDatastoreManagerTest {
         assertTrue(regResult.isSuccessful());
 
         String content = "Hello";
-        manager.execute("10.0.0.1", Message.MessageBuilder.create().applicationName("app").hostname("host")
+        manager.execute(Message.MessageBuilder.create().applicationName("app").hostname("host")
                 .processId("pid").sequenceId("sid").content(content).build());
 
         final String message = outputFuture.get(5, TimeUnit.SECONDS);

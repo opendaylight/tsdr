@@ -19,12 +19,10 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
-import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
-import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.tsdr.syslogs.server.decoder.MessageHandler;
+import org.opendaylight.tsdr.syslogs.server.decoder.MessageQueue;
 
 /**
  * This is the TCP server using io.netty to start
@@ -41,11 +39,11 @@ public class SyslogTCPServer implements SyslogServer {
     private final StringDecoder stringDecoder;
     private final MessageHandler messageHandler;
 
-    public SyslogTCPServer(Deque<Message> messages, SyslogDatastoreManager manager) {
+    public SyslogTCPServer(MessageQueue messageQueue) {
         serverBootstrap = new ServerBootstrap();
         groups = new EventLoopGroup[]{new NioEventLoopGroup(), new NioEventLoopGroup()};
         stringDecoder = new StringDecoder();
-        messageHandler = new MessageHandler(messages, manager);
+        messageHandler = new MessageHandler(messageQueue);
         serverBootstrap.group(groups[0], groups[1])
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
