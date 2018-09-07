@@ -10,27 +10,27 @@
   <parent>
       <groupId>org.opendaylight.mdsal</groupId>
       <artifactId>binding-parent</artifactId>
-      <version>0.13.0-SNAPSHOT</version>
+      <version>0.14.0-SNAPSHOT</version>
       <relativePath/>
   </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>tsdr-parent</artifactId>
-    <version>1.6.0-SNAPSHOT</version>
+    <version>1.7.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>ODL :: tsdr :: ${project.artifactId}</name>
 
     <properties>
-        <mdsal.java.binding.version>0.13.0-SNAPSHOT</mdsal.java.binding.version>
-        <mdsal.model.version>0.13.0-SNAPSHOT</mdsal.model.version>
-        <config.version>0.9.0-SNAPSHOT</config.version>
-        <controller.mdsal.version>1.8.0-SNAPSHOT</controller.mdsal.version>
-        <snmp.version>1.6.0-SNAPSHOT</snmp.version>
+        <mdsal.java.binding.version>0.14.0-SNAPSHOT</mdsal.java.binding.version>
+        <mdsal.model.version>0.14.0-SNAPSHOT</mdsal.model.version>
+        <config.version>0.10.0-SNAPSHOT</config.version>
+        <controller.mdsal.version>1.9.0-SNAPSHOT</controller.mdsal.version>
+        <snmp.version>1.7.0-SNAPSHOT</snmp.version>
         <guava.old.version>19.0</guava.old.version>
         <hbase.version>0.94.15</hbase.version>
         <hadoop.version>1.2.0</hadoop.version>
-        <model.flow.statistics>0.7.0-SNAPSHOT</model.flow.statistics>
+        <model.flow.statistics>0.8.0-SNAPSHOT</model.flow.statistics>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <protobuf.version>2.4.1</protobuf.version>
         <com.codahale.metrics.version>3.0.2</com.codahale.metrics.version>
