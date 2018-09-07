@@ -29,9 +29,6 @@ import org.opendaylight.controller.md.sal.binding.api.ReadTransaction;
 import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
 import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolInput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolOutput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterOutputBuilder;
@@ -224,27 +221,6 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
                     .build();
             return RpcResultBuilder.success(output).buildFuture();
         }
-    }
-
-    @Override
-    public ListenableFuture<RpcResult<ConfigThreadpoolOutput>> configThreadpool(ConfigThreadpoolInput input) {
-
-        if (input.getCoreThreadNumber() != 0) {
-            threadPool.setCorePoolSize(input.getCoreThreadNumber());
-        }
-
-        if (input.getMaxThreadNumber() != 0) {
-            threadPool.setMaximumPoolSize(input.getMaxThreadNumber());
-        }
-        if (input.getKeepAliveTime() != 0) {
-
-            threadPool.setKeepAliveTime(input.getKeepAliveTime(), TimeUnit.SECONDS);
-        }
-        ConfigThreadpoolOutput output = new ConfigThreadpoolOutputBuilder()
-                .setResult("success")
-                .build();
-
-        return RpcResultBuilder.success(output).buildFuture();
     }
 
     @Override

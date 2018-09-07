@@ -191,30 +191,6 @@ module tsdr-syslog-collector {
         }
     }
 
-    rpc config-threadpool {
-        input {
-            leaf core-thread-number {
-                type uint16;
-                description "config the number of the core thread of the threadpool.";
-            }
-            leaf max-thread-number {
-                type uint16;
-                description "config the number of the max thread of the threadpool.";
-            }
-            leaf keep-alive-time {
-                type uint16;
-                description "config the keep alive time.";
-            }
-        }
-
-        output {
-            leaf result {
-                type string;
-                description "RPC result.";
-            }
-        }
-    }
-
     container syslog-dispatcher {
         list syslog-filter {
             config true;

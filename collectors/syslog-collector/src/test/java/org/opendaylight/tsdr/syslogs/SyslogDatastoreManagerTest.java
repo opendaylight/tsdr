@@ -45,9 +45,6 @@ import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
 import org.opendaylight.mdsal.binding.spec.reflect.BindingReflections;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolInput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolInputBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ConfigThreadpoolOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterInput;
@@ -177,22 +174,6 @@ public class SyslogDatastoreManagerTest {
         assertEquals(config.getKeepAliveTime(), showResult.getResult().getKeepAliveTime());
         assertEquals(config.getQueueSize().intValue(), showResult.getResult().getQueueUsedCapacity().intValue()
                 + showResult.getResult().getQueueRemainingCapacity().intValue());
-    }
-
-    @Test
-    public void testConfigThreadpool() throws InterruptedException, ExecutionException, TimeoutException {
-        ConfigThreadpoolInput input = new ConfigThreadpoolInputBuilder().setCoreThreadNumber(10).setMaxThreadNumber(20)
-                .setKeepAliveTime(20).build();
-        RpcResult<ConfigThreadpoolOutput> configResult = manager.configThreadpool(input).get(5, TimeUnit.SECONDS);
-        assertTrue(configResult.isSuccessful());
-
-        RpcResult<ShowThreadpoolConfigurationOutput> showResult = manager.showThreadpoolConfiguration(
-                new ShowThreadpoolConfigurationInputBuilder().build()).get(5, TimeUnit.SECONDS);
-
-        assertTrue(showResult.isSuccessful());
-        assertEquals(input.getCoreThreadNumber(), showResult.getResult().getCoreThreadNumber());
-        assertEquals(input.getMaxThreadNumber(), showResult.getResult().getMaxThreadNumber());
-        assertEquals(input.getKeepAliveTime(), showResult.getResult().getKeepAliveTime());
     }
 
     @Test
