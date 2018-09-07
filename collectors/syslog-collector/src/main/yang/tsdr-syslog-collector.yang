@@ -53,6 +53,11 @@ module tsdr-syslog-collector {
             type uint16;
             default 20;
         }
+
+        leaf store-flush-interval {
+            type uint16;
+            default 2500;
+        }
     }
 
     typedef severity-id {

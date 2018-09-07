@@ -14,6 +14,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import java.util.Deque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
@@ -30,13 +31,12 @@ import org.opendaylight.tsdr.syslogs.server.decoder.UDPMessageHandler;
 public class SyslogUDPServer implements SyslogServer {
     private final Bootstrap bootstrap;
     private final EventLoopGroup group;
-    private final AtomicBoolean status;
+    private final AtomicBoolean status = new AtomicBoolean(false);
     private final UDPMessageHandler udpMessageHandler;
 
     public SyslogUDPServer(Deque<Message> incomingSyslogs, SyslogDatastoreManager manager) {
         bootstrap = new Bootstrap();
         group = new NioEventLoopGroup();
-        status = new AtomicBoolean(false);
         udpMessageHandler = new UDPMessageHandler(incomingSyslogs, manager);
         bootstrap.group(group)
                 .channel(NioDatagramChannel.class)
@@ -50,14 +50,16 @@ public class SyslogUDPServer implements SyslogServer {
      */
     @Override
     public void startServer(int port) throws InterruptedException {
-        bootstrap.bind(port).sync();
-        status.set(true);
+        if (status.compareAndSet(false, true)) {
+            bootstrap.bind(port).sync();
+        }
     }
 
     @Override
     public void stopServer() throws InterruptedException {
-        group.shutdownGracefully().sync();
-        status.set(false);
+        if (status.compareAndSet(true, false)) {
+            group.shutdownGracefully(500, 5000, TimeUnit.MILLISECONDS).sync();
+        }
     }
 
     @Override

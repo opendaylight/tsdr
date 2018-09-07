@@ -20,6 +20,7 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import java.util.Deque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
@@ -36,14 +37,13 @@ import org.opendaylight.tsdr.syslogs.server.decoder.MessageHandler;
 public class SyslogTCPServer implements SyslogServer {
     private final ServerBootstrap serverBootstrap;
     private final EventLoopGroup[] groups;
-    private final AtomicBoolean status;
+    private final AtomicBoolean status = new AtomicBoolean(false);
     private final StringDecoder stringDecoder;
     private final MessageHandler messageHandler;
 
     public SyslogTCPServer(Deque<Message> messages, SyslogDatastoreManager manager) {
         serverBootstrap = new ServerBootstrap();
         groups = new EventLoopGroup[]{new NioEventLoopGroup(), new NioEventLoopGroup()};
-        status = new AtomicBoolean(false);
         stringDecoder = new StringDecoder();
         messageHandler = new MessageHandler(messages, manager);
         serverBootstrap.group(groups[0], groups[1])
@@ -67,16 +67,18 @@ public class SyslogTCPServer implements SyslogServer {
      */
     @Override
     public void startServer(int port) throws InterruptedException {
-        serverBootstrap.bind(port).sync();
-        status.set(true);
+        if (status.compareAndSet(false, true)) {
+            serverBootstrap.bind(port).sync();
+        }
     }
 
     @Override
     public void stopServer() throws InterruptedException {
-        for (EventLoopGroup g : groups) {
-            g.shutdownGracefully().sync();
+        if (status.compareAndSet(true, false)) {
+            for (EventLoopGroup g : groups) {
+                g.shutdownGracefully(500, 5000, TimeUnit.MILLISECONDS).sync();
+            }
         }
-        status.set(false);
     }
 
     @Override

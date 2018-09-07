@@ -36,13 +36,15 @@ import org.opendaylight.tsdr.syslogs.server.decoder.Message;
  * @author Kun Chen(kunch@tethrnet.com)
  */
 public class SyslogUDPServerTest {
+    private static int PORT = 8989;
+
     private final Deque<Message> messageList = new LinkedList<>();
     private final SyslogDatastoreManager mockManager = mock(SyslogDatastoreManager.class);
     private final SyslogUDPServer server = new SyslogUDPServer(messageList, mockManager);
 
     @Before
     public void setUp() throws InterruptedException {
-        server.startServer(8989);
+        server.startServer(PORT);
     }
 
     @After
@@ -55,9 +57,10 @@ public class SyslogUDPServerTest {
         assertTrue(server.isRunning());
         assertEquals("UDP", server.getProtocol());
 
-        SyslogGenerator generator = new SyslogGenerator("localhost",8989);
         final String messageText = "This is a test message.";
-        generator.sendSyslog(messageText, 4);
+        try (SyslogGenerator generator = new SyslogGenerator("localhost", PORT)) {
+            generator.sendSyslog(messageText, 4);
+        }
 
         Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
             return messageList.size() == 4;

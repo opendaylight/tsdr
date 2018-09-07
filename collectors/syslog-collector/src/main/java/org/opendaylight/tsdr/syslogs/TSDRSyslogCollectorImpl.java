@@ -8,13 +8,13 @@
  */
 package org.opendaylight.tsdr.syslogs;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -25,11 +25,11 @@ import org.opendaylight.tsdr.syslogs.server.SyslogTCPServer;
 import org.opendaylight.tsdr.syslogs.server.SyslogUDPServer;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfigBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class TSDRSyslogCollectorImpl implements AutoCloseable {
     public static final long QUEUE_WAIT_INTERVAL = 2000;
-    public static final long STORE_FLUSH_INTERVAL = 2500;
 
     private static final Logger LOG = LoggerFactory.getLogger(TSDRSyslogCollectorImpl.class);
 
@@ -52,6 +51,7 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
     private final SyslogUDPServer udpServer;
     private int udpPort;
     private final int tcpPort;
+    private final long storeFlushInterval;
 
     private final TsdrCollectorSpiService collectorSPIService;
     private final SyslogFilterManager filterManager = new SyslogFilterManager();
@@ -59,7 +59,7 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
 
     private final Deque<Message> messageList = new LinkedList<>();
 
-    private volatile boolean running = true;
+    private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
     public TSDRSyslogCollectorImpl(TsdrCollectorSpiService collectorSPIService, SyslogDatastoreManager manager,
@@ -72,34 +72,23 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
 
         tcpServer = new SyslogTCPServer(messageList, this.manager);
         udpServer = new SyslogUDPServer(messageList, this.manager);
-    }
 
-    @VisibleForTesting
-    TSDRSyslogCollectorImpl(TsdrCollectorSpiService collectorSPIService, SyslogDatastoreManager manager,
-            int udpPort, int tcpPort) {
-        this(collectorSPIService, manager, new SyslogCollectorConfigBuilder().setUdpport(udpPort)
-                .setTcpport(tcpPort).build());
+        storeFlushInterval = collectorConfig.getStoreFlushInterval().intValue();
     }
 
     public boolean isRunning() {
-        return this.running;
+        return this.running.get();
     }
 
     @PostConstruct
     public void init() {
+        if (!running.compareAndSet(false, true)) {
+            return;
+        }
+
         new SyslogProcessor().start();
 
         LOG.info("Syslog Collector Session Initiated");
-
-        //Start TCP syslog server
-        LOG.info("Start TCP server");
-        try {
-            tcpServer.startServer(tcpPort);
-            LOG.info("TCP server started at port: {}", tcpPort);
-        } catch (InterruptedException e) {
-            LOG.error("Error starting TCP srver on port {}", tcpPort, e);
-            this.close();
-        }
 
         //Test If port is available
         boolean udpPortAvailable = false;
@@ -129,22 +118,29 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
             } catch (InterruptedException e) {
                 LOG.error("Failed to start UDP server on port {}", udpPort, e);
             }
+
+            //Start TCP syslog server
+            LOG.info("Start TCP server");
+            try {
+                tcpServer.startServer(tcpPort);
+                LOG.info("TCP server started at port: {}", tcpPort);
+            } catch (InterruptedException e) {
+                LOG.error("Error starting TCP srver on port {}", tcpPort, e);
+                this.close();
+            }
         }
     }
 
     @Override
     @PreDestroy
     public void close() {
-        running = false;
-        try {
-            if (tcpServer != null) {
+        if (running.compareAndSet(true, false)) {
+            try {
                 tcpServer.stopServer();
-            }
-            if (udpServer != null) {
                 udpServer.stopServer();
+            } catch (InterruptedException e) {
+                LOG.debug("Interrupted stopping server", e);
             }
-        } catch (InterruptedException e) {
-            LOG.error(e.getMessage());
         }
     }
 
@@ -159,7 +155,7 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
             List<TSDRLogRecord> syslogQueue = new ArrayList<>();
             long lastPersisted = System.currentTimeMillis();
             Message message = null;
-            while (running) {
+            while (running.get()) {
                 synchronized (messageList) {
                     if (messageList.isEmpty()) {
                         try {
@@ -180,17 +176,17 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
                     }
                 }
 
-                if (System.currentTimeMillis() - lastPersisted > STORE_FLUSH_INTERVAL && !syslogQueue.isEmpty()) {
+                if (System.currentTimeMillis() - lastPersisted > storeFlushInterval && !syslogQueue.isEmpty()) {
                     List<TSDRLogRecord> queue = null;
                     synchronized (filterManager) {
                         //Currently there is only one SyslogProcessor thread so this check seems meaningless
                         //If the future if we decide to have a few of those we need to make sure the queue
                         //has something and the interval has passed inside the synchronize block.
-                        if (System.currentTimeMillis() - lastPersisted > STORE_FLUSH_INTERVAL
+                        if (System.currentTimeMillis() - lastPersisted > storeFlushInterval
                                 && !syslogQueue.isEmpty()) {
                             lastPersisted = System.currentTimeMillis();
                             queue = syslogQueue;
-                            syslogQueue = new LinkedList<>();
+                            syslogQueue = new ArrayList<>();
                         }
                     }
                     if (queue != null) {
@@ -204,11 +200,12 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
     }
 
     private void store(List<TSDRLogRecord> queue) {
-        InsertTSDRLogRecordInputBuilder input = new InsertTSDRLogRecordInputBuilder();
-        input.setTSDRLogRecord(queue);
-        input.setCollectorCodeName("SyslogCollector");
+        InsertTSDRLogRecordInput input = new InsertTSDRLogRecordInputBuilder().setTSDRLogRecord(queue)
+                .setCollectorCodeName("SyslogCollector").build();
 
-        RPCFutures.logResult(collectorSPIService.insertTSDRLogRecord(input.build()), "insertTSDRLogRecord", LOG);
+        LOG.debug("Storing records {}", input);
+
+        RPCFutures.logResult(collectorSPIService.insertTSDRLogRecord(input), "insertTSDRLogRecord", LOG);
     }
 
     public int getUdpPort() {

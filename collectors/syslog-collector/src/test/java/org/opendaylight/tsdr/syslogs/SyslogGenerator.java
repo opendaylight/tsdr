@@ -15,6 +15,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This Class is for Syslog Message generating.
@@ -22,7 +24,9 @@ import java.net.UnknownHostException;
  * @author Sharon Aicler(saichler@gmail.com)
  */
 @SuppressWarnings("checkstyle:RegexpSingleLineJava")
-public class SyslogGenerator {
+public class SyslogGenerator implements AutoCloseable {
+    private static final Logger LOG = LoggerFactory.getLogger(SyslogGenerator.class);
+
     public static final int DEFAULT_SYSLOG_PORT = 514;
 
     private final DatagramSocket socket;
@@ -36,6 +40,13 @@ public class SyslogGenerator {
         this.destHost = InetAddress.getByName(destHost);
     }
 
+    @Override
+    public void close() {
+        if (socket != null) {
+            socket.close();
+        }
+    }
+
     public final void sendSyslog(String syslogMessageText, int numberOfSyslogsToSend, long delayBetweenSyslogs,
             int numberOfIteration, long delayBetweenIterations) throws InterruptedException, IOException {
         for (int i = 0; i < numberOfIteration; i++) {
@@ -43,7 +54,7 @@ public class SyslogGenerator {
                 byte[] data = syslogMessageText.getBytes();
                 DatagramPacket packet = new DatagramPacket(data, data.length, destHost, destPort);
                 socket.send(packet);
-                System.out.println(syslogMessageText + " has been sent.");
+                LOG.info("Sent message \"{}\" to host {}, port {}", syslogMessageText, destHost, destPort);
                 Thread.sleep(delayBetweenSyslogs);
             }
             Thread.sleep(delayBetweenIterations);
@@ -65,20 +76,24 @@ public class SyslogGenerator {
             System.out.println("Usage: sendSyslog <message> - Send syslog to local host on port 514");
             System.out.println("       sendSyslog <message> <count> - Send <count> syslog to local host on port 514");
             System.out.println("       sendSyslog <message> <host> <port> - Send syslog to <host> on <port>");
+            return;
         }
 
         if (args.length == 1) {
-            SyslogGenerator generator = new SyslogGenerator("127.0.0.1", DEFAULT_SYSLOG_PORT);
-            generator.sendSyslog(args[0]);
+            try (SyslogGenerator generator = new SyslogGenerator("127.0.0.1", DEFAULT_SYSLOG_PORT)) {
+                generator.sendSyslog(args[0]);
+            }
         } else if (args.length == 2) {
-            SyslogGenerator generator = new SyslogGenerator("127.0.0.1", DEFAULT_SYSLOG_PORT);
-            for (int i = 0; i < Integer.parseInt(args[1]); i++) {
-                generator.sendSyslog("" + i + ":" + args[0]);
-                Thread.sleep(100);
+            try (SyslogGenerator generator = new SyslogGenerator("127.0.0.1", DEFAULT_SYSLOG_PORT)) {
+                for (int i = 0; i < Integer.parseInt(args[1]); i++) {
+                    generator.sendSyslog("" + i + ":" + args[0]);
+                    Thread.sleep(100);
+                }
             }
         } else if (args.length == 3) {
-            SyslogGenerator generator = new SyslogGenerator(args[1], Integer.parseInt(args[2]));
-            generator.sendSyslog(args[0]);
+            try (SyslogGenerator generator = new SyslogGenerator(args[1], Integer.parseInt(args[2]))) {
+                generator.sendSyslog(args[0]);
+            }
         }
     }
 }
