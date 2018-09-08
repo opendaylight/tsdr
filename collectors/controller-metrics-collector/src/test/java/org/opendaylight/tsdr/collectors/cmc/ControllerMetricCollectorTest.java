@@ -26,7 +26,7 @@ import com.google.common.util.concurrent.ListenableScheduledFuture;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+import java.util.OptionalDouble;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -42,12 +42,12 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
  * Unit tests for ControllerMetricCollector.
  *
  * @author Sharon Aicler(saichler@gmail.com)
- **/
+ * @author Thomas Pantelis
+ */
 public class ControllerMetricCollectorTest {
     private static final long POLL_INTERVAL = 100;
     private final TsdrCollectorSpiService mockSpiService = mock(TsdrCollectorSpiService.class);
     private final SchedulerService mockSchedulerService = mock(SchedulerService.class);
-    private final SigarCollectorMock mockCPUCollector = new SigarCollectorMock();
     private final Map<String, TSDRMetricRecord> storedRecords = new HashMap<>();
 
     @Before
@@ -64,15 +64,19 @@ public class ControllerMetricCollectorTest {
         ListenableScheduledFuture<?> mockFuture = mock(ListenableScheduledFuture.class);
         doReturn(mockFuture).when(mockSchedulerService).scheduleTaskAtFixedRate(any(), anyLong(), anyLong());
 
+        CpuDataCollector mockCPUCollector = mock(CpuDataCollector.class);
+        doReturn(OptionalDouble.of(0.123d)).when(mockCPUCollector).getControllerCpu();
+        doReturn(OptionalDouble.of(0.456d)).when(mockCPUCollector).getMachineCpu();
+
         try (ControllerMetricCollector collector = new ControllerMetricCollector(mockSpiService,
-                mockSchedulerService, Optional.of(mockCPUCollector), POLL_INTERVAL)) {
+                mockSchedulerService, mockCPUCollector, POLL_INTERVAL)) {
             collector.init();
 
             runScheduledTask();
 
             verifyMetric(storedRecords, CPU_USAGE_NAME, CONTROLLER_ID, mockCPUCollector.getControllerCpu());
             verifyMetric(storedRecords, CPU_USAGE_NAME, MACHINE_ID, mockCPUCollector.getMachineCpu());
-            verifyMetric(storedRecords, MEMORY_USAGE_NAME, CONTROLLER_ID, Optional.empty());
+            verifyMetric(storedRecords, MEMORY_USAGE_NAME, CONTROLLER_ID, OptionalDouble.empty());
 
             assertEquals(3, storedRecords.size());
         }
@@ -81,14 +85,14 @@ public class ControllerMetricCollectorTest {
     }
 
     @Test
-    public void testCollectMetricsSansCPUCollector() {
+    public void testCollectMetricsSansCPUData() {
         try (ControllerMetricCollector collector = new ControllerMetricCollector(mockSpiService,
-                mockSchedulerService, Optional.empty(), POLL_INTERVAL)) {
+                mockSchedulerService, CpuDataCollector.getNullCpuDataCollector(), POLL_INTERVAL)) {
             collector.init();
 
             runScheduledTask();
 
-            verifyMetric(storedRecords, MEMORY_USAGE_NAME, CONTROLLER_ID, Optional.empty());
+            verifyMetric(storedRecords, MEMORY_USAGE_NAME, CONTROLLER_ID, OptionalDouble.empty());
 
             assertEquals(1, storedRecords.size());
         }
@@ -103,30 +107,18 @@ public class ControllerMetricCollectorTest {
     }
 
     private static void verifyMetric(Map<String, TSDRMetricRecord> records, String name,
-            String nodeID, Optional<Double> expValue) {
+            String nodeID, OptionalDouble expValue) {
         String key = key(name, nodeID);
         TSDRMetricRecord record = records.get(key);
         assertNotNull("Missing record for " + key, record);
         assertEquals(key + " DataCategory", DataCategory.EXTERNAL, record.getTSDRDataCategory());
 
         if (expValue.isPresent()) {
-            assertEquals(key + " value", new BigDecimal(expValue.get()), record.getMetricValue());
+            assertEquals(key + " value", new BigDecimal(expValue.getAsDouble()), record.getMetricValue());
         }
     }
 
     private static String key(String name, String id) {
         return name + "/" + id;
-    }
-
-    private static class SigarCollectorMock extends CpuDataCollector {
-        @Override
-        public Optional<Double> getControllerCpu() {
-            return Optional.of(0.123d);
-        }
-
-        @Override
-        public Optional<Double> getMachineCpu() {
-            return Optional.of(0.456d);
-        }
     }
 }

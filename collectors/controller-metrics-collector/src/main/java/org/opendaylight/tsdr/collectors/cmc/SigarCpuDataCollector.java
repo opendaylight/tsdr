@@ -14,6 +14,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +64,7 @@ public class SigarCpuDataCollector extends CpuDataCollector {
     }
 
     @Override
-    public Optional<Double> getControllerCpu() {
+    public OptionalDouble getControllerCpu() {
         LOG.debug("Getting controller CPU data");
         try {
             Method pidM = sigar.getClass().getMethod("getPid", (Class<?>[]) null);
@@ -71,27 +72,27 @@ public class SigarCpuDataCollector extends CpuDataCollector {
             Method cpuM = sigar.getClass().getMethod("getProcCpu", long.class);
             Object procCPU = cpuM.invoke(sigar, pid);
             Method procM = procCPU.getClass().getMethod("getPercent", (Class<?>[]) null);
-            return Optional.of((Double) procM.invoke(procCPU, (Object[]) null));
+            return OptionalDouble.of((Double) procM.invoke(procCPU, (Object[]) null));
         } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException err) {
             LOG.error("Failed to get Controller CPU, Sigar library is probably not installed...", err);
         }
 
-        return Optional.empty();
+        return OptionalDouble.empty();
     }
 
     @Override
-    public Optional<Double> getMachineCpu() {
+    public OptionalDouble getMachineCpu() {
         LOG.debug("Getting machine CPU data");
         try {
             Method cpuM = sigar.getClass().getMethod("getCpuPerc", (Class<?>[])null);
             Object cpu = cpuM.invoke(sigar, (Object[])null);
             Method combineM = cpu.getClass().getMethod("getCombined",(Class<?>[])null);
-            return Optional.of((Double) combineM.invoke(cpu, (Object[])null));
+            return OptionalDouble.of((Double) combineM.invoke(cpu, (Object[])null));
         } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException err) {
             LOG.error("Failed to get Machine CPU, Sigar library is probably not installed...", err);
         }
 
-        return Optional.empty();
+        return OptionalDouble.empty();
     }
 
     @Override

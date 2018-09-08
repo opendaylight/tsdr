@@ -12,6 +12,7 @@ import java.lang.management.OperatingSystemMXBean;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,36 +76,37 @@ public class SunCpuDataCollector extends CpuDataCollector {
     }
 
     @Override
-    public Optional<Double> getControllerCpu() {
+    public OptionalDouble getControllerCpu() {
         if (!procCpuMethod.isPresent()) {
             LOG.error("Tried to get controller CPU from Sun OS MBean's getProcessCpuLoad() method but it is not "
                     + "present! (this should not happen)");
-            return Optional.empty();
+            return OptionalDouble.empty();
         }
 
         try {
-            return Optional.of((Double)procCpuMethod.get().invoke(ManagementFactory.getOperatingSystemMXBean()));
+            return OptionalDouble.of((Double)procCpuMethod.get().invoke(ManagementFactory.getOperatingSystemMXBean()));
         } catch (final IllegalAccessException | InvocationTargetException e) {
             LOG.warn("Got exception while getting controller CPU usage from Sun OS MBean", e);
         }
 
-        return Optional.empty();
+        return OptionalDouble.empty();
     }
 
     @Override
-    public Optional<Double> getMachineCpu() {
+    public OptionalDouble getMachineCpu() {
         if (!machineCpuMethod.isPresent()) {
             LOG.error("Tried to get machine CPU from Sun OS MBean's getSystemCpuLoad() method but it is not present! "
                     + "(this should not happen)");
-            return Optional.empty();
+            return OptionalDouble.empty();
         }
 
         try {
-            return Optional.of((Double)machineCpuMethod.get().invoke(ManagementFactory.getOperatingSystemMXBean()));
+            return OptionalDouble.of((Double)machineCpuMethod.get().invoke(
+                    ManagementFactory.getOperatingSystemMXBean()));
         } catch (IllegalAccessException | InvocationTargetException e) {
             LOG.warn("Got exception while getting controller CPU usage from Sun OS MBean", e);
         }
 
-        return Optional.empty();
+        return OptionalDouble.empty();
     }
 }
