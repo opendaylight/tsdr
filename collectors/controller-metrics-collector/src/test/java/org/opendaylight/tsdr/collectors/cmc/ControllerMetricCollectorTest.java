@@ -10,10 +10,12 @@ package org.opendaylight.tsdr.collectors.cmc;
 import static org.mockito.Matchers.any;
 
 import java.util.Optional;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.opendaylight.tsdr.spi.scheduler.impl.SchedulerServiceImpl;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
@@ -26,8 +28,9 @@ import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
  **/
 public class ControllerMetricCollectorTest {
     private final TsdrCollectorSpiService tsdrService = Mockito.mock(TsdrCollectorSpiService.class);
+    private final SchedulerServiceImpl schedulerService = new SchedulerServiceImpl();
     private final ControllerMetricCollector collector = new ControllerMetricCollector(tsdrService,
-            Optional.of(new SigarCollectorMock()));
+            schedulerService, Optional.of(new SigarCollectorMock()));
 
     @Before
     public void setup() {
@@ -35,6 +38,12 @@ public class ControllerMetricCollectorTest {
                 .thenReturn(RpcResultBuilder.success(new InsertTSDRLogRecordOutputBuilder().build()).buildFuture());
         Mockito.when(tsdrService.insertTSDRMetricRecord(any()))
                 .thenReturn(RpcResultBuilder.success(new InsertTSDRMetricRecordOutputBuilder().build()).buildFuture());
+    }
+
+    @After
+    public void tearDown() {
+        collector.close();
+        schedulerService.close();
     }
 
     @Test
