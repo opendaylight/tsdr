@@ -17,3 +17,8 @@ yang-gen-config/
 #Intellij
 .idea
 *.iml
+
+# Sphinx documentation
+.tox/
+docs/_build/
+
