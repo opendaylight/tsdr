@@ -13,11 +13,13 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ScheduledFuture;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
+import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRMetricRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
@@ -32,32 +34,36 @@ import org.slf4j.LoggerFactory;
  * @author Sharon Aicler(saichler@gmail.com)
  */
 @Singleton
-public class ControllerMetricCollector extends Thread implements AutoCloseable {
+public class ControllerMetricCollector implements AutoCloseable {
 
     private static final Logger LOG = LoggerFactory.getLogger(ControllerMetricCollector.class);
 
     private static final String COLLECTOR_CODE_NAME = ControllerMetricCollector.class.getSimpleName();
+    private static final long POLL_INTERVAL = 5000;
 
     private final Optional<CpuDataCollector> cpuDataCollector;
     private final TsdrCollectorSpiService collectorSPIService;
+    private final SchedulerService schedulerService;
+
+    private ScheduledFuture<?> scheduledFuture;
 
     @Inject
-    public ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService) {
-        this(collectorSPIService, CpuDataCollector.getCpuDataCollector());
+    public ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService,
+            final SchedulerService schedulerService) {
+        this(collectorSPIService, schedulerService, CpuDataCollector.getCpuDataCollector());
     }
 
     @VisibleForTesting
     ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService,
-            final Optional<CpuDataCollector> cpuDataCollector) {
+            final SchedulerService schedulerService, final Optional<CpuDataCollector> cpuDataCollector) {
         this.collectorSPIService = collectorSPIService;
+        this.schedulerService = schedulerService;
         this.cpuDataCollector = cpuDataCollector;
-
-        this.setDaemon(true);
     }
 
     @PostConstruct
     public void init() {
-        this.start();
+        scheduledFuture = schedulerService.scheduleTaskAtFixedRate(this::poll, POLL_INTERVAL, POLL_INTERVAL);
         LOG.info("Controller Metrics Collector started");
     }
 
@@ -65,8 +71,6 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
     @PreDestroy
     @SuppressWarnings("checkstyle:IllegalCatch")
     public void close() {
-        interrupt();
-
         if (cpuDataCollector.isPresent()) {
             try {
                 cpuDataCollector.get().close();
@@ -75,24 +79,19 @@ public class ControllerMetricCollector extends Thread implements AutoCloseable {
             }
         }
 
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(true);
+        }
+
         LOG.info("Controller Metrics Collector closed");
     }
 
-    @Override
-    public void run() {
-        try {
-            while (!interrupted()) {
-                LOG.debug("inserting new set of TSDR records");
-                insertMemorySample();
-                insertControllerCPUSample();
-                insertMachineCPUSample();
+    private void poll() {
+        LOG.debug("Inserting new set of TSDR records");
 
-                Thread.sleep(5000);
-            }
-        } catch (final InterruptedException err) {
-            LOG.info("ControllerMetricCollector thread has been interrupted and is now exiting");
-            Thread.currentThread().interrupt();
-        }
+        insertMemorySample();
+        insertControllerCPUSample();
+        insertMachineCPUSample();
     }
 
 
