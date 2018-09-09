@@ -36,34 +36,42 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class ControllerMetricCollector implements AutoCloseable {
 
+    static final String MACHINE_ID = "Machine";
+    static final String CONTROLLER_ID = "Controller";
+    static final String CPU_USAGE_NAME = "CPU:Usage";
+    static final String MEMORY_USAGE_NAME = "Heap:Memory:Usage";
+
     private static final Logger LOG = LoggerFactory.getLogger(ControllerMetricCollector.class);
 
     private static final String COLLECTOR_CODE_NAME = ControllerMetricCollector.class.getSimpleName();
-    private static final long POLL_INTERVAL = 5000;
+    private static final long DEFAULT_POLL_INTERVAL = 5000;
 
     private final Optional<CpuDataCollector> cpuDataCollector;
     private final TsdrCollectorSpiService collectorSPIService;
     private final SchedulerService schedulerService;
+    private final long pollInterval;
 
     private ScheduledFuture<?> scheduledFuture;
 
     @Inject
     public ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService,
             final SchedulerService schedulerService) {
-        this(collectorSPIService, schedulerService, CpuDataCollector.getCpuDataCollector());
+        this(collectorSPIService, schedulerService, CpuDataCollector.getCpuDataCollector(), DEFAULT_POLL_INTERVAL);
     }
 
     @VisibleForTesting
     ControllerMetricCollector(final TsdrCollectorSpiService collectorSPIService,
-            final SchedulerService schedulerService, final Optional<CpuDataCollector> cpuDataCollector) {
+            final SchedulerService schedulerService, final Optional<CpuDataCollector> cpuDataCollector,
+            final long pollInterval) {
         this.collectorSPIService = collectorSPIService;
         this.schedulerService = schedulerService;
         this.cpuDataCollector = cpuDataCollector;
+        this.pollInterval = pollInterval;
     }
 
     @PostConstruct
     public void init() {
-        scheduledFuture = schedulerService.scheduleTaskAtFixedRate(this::poll, POLL_INTERVAL, POLL_INTERVAL);
+        scheduledFuture = schedulerService.scheduleTaskAtFixedRate(this::poll, pollInterval, pollInterval);
         LOG.info("Controller Metrics Collector started");
     }
 
@@ -119,9 +127,9 @@ public class ControllerMetricCollector implements AutoCloseable {
 
     protected void insertMemorySample() {
         TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
-        builder.setMetricName("Heap:Memory:Usage");
+        builder.setMetricName(MEMORY_USAGE_NAME);
         builder.setTSDRDataCategory(DataCategory.EXTERNAL);
-        builder.setNodeID("Controller");
+        builder.setNodeID(CONTROLLER_ID);
         builder.setRecordKeys(new ArrayList<>());
         builder.setTimeStamp(System.currentTimeMillis());
         builder.setMetricValue(new BigDecimal(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
@@ -142,9 +150,9 @@ public class ControllerMetricCollector implements AutoCloseable {
         }
 
         TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
-        builder.setMetricName("CPU:Usage");
+        builder.setMetricName(CPU_USAGE_NAME);
         builder.setTSDRDataCategory(DataCategory.EXTERNAL);
-        builder.setNodeID("Controller");
+        builder.setNodeID(CONTROLLER_ID);
         builder.setRecordKeys(new ArrayList<>());
         builder.setTimeStamp(System.currentTimeMillis());
         builder.setMetricValue(new BigDecimal(cpuValue.get()));
@@ -165,9 +173,9 @@ public class ControllerMetricCollector implements AutoCloseable {
         }
 
         TSDRMetricRecordBuilder builder = new TSDRMetricRecordBuilder();
-        builder.setMetricName("CPU:Usage");
+        builder.setMetricName(CPU_USAGE_NAME);
         builder.setTSDRDataCategory(DataCategory.EXTERNAL);
-        builder.setNodeID("Machine");
+        builder.setNodeID(MACHINE_ID);
         builder.setRecordKeys(new ArrayList<>());
         builder.setTimeStamp(System.currentTimeMillis());
         builder.setMetricValue(new BigDecimal(cpuValue.get()));
