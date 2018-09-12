@@ -5,6 +5,9 @@
   <odl:rpc-service id="tsdrCollectorSpiService"
       interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
 
+  <reference id="schedulerService" interface="org.opendaylight.tsdr.spi.scheduler.SchedulerService"/>
+
+
   <service ref="tSDRRestconfCollectorConfig" interface="org.osgi.service.cm.ManagedService">
     <service-properties>
       <entry key="service.pid" value="tsdr.restconf.collector"/>
