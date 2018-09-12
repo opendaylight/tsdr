@@ -33,9 +33,6 @@ import org.slf4j.LoggerFactory;
  * do. That's why it is safer to place the configuration in a configuration file.
  *
  * @author <a href="mailto:a.alhamali93@gmail.com">AbdulRahman AlHamali</a>
- *
- *         Created: Dec 16th, 2016
- *
  */
 @Singleton
 public class TSDRRestconfCollectorConfig implements ManagedService {
@@ -80,7 +77,6 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
     @VisibleForTesting
     TSDRRestconfCollectorConfig(Logger log) {
         this.log = log;
-        TSDRRestconfCollectorFilter.setTSDRRestconfCollectorConfig(this);
     }
 
     /**
