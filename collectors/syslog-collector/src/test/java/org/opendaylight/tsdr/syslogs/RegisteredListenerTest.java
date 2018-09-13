@@ -18,11 +18,11 @@ import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
-import org.opendaylight.controller.md.sal.binding.api.DataObjectModification;
-import org.opendaylight.controller.md.sal.binding.api.DataTreeIdentifier;
-import org.opendaylight.controller.md.sal.binding.api.DataTreeModification;
-import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
+import org.opendaylight.mdsal.binding.api.DataBroker;
+import org.opendaylight.mdsal.binding.api.DataObjectModification;
+import org.opendaylight.mdsal.binding.api.DataTreeIdentifier;
+import org.opendaylight.mdsal.binding.api.DataTreeModification;
+import org.opendaylight.mdsal.common.api.LogicalDatastoreType;
 import org.opendaylight.tsdr.syslogs.server.datastore.RegisteredListener;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogListener;
@@ -50,7 +50,7 @@ public class RegisteredListenerTest {
     public void testCloseSuccessfully() {
         RegisteredListener registeredListener = new RegisteredListener(dataBroker,"123","http://localhost:9001/server");
 
-        doReturn(listener).when(dataBroker).registerDataTreeChangeListener(new DataTreeIdentifier<>(
+        doReturn(listener).when(dataBroker).registerDataTreeChangeListener(DataTreeIdentifier.create(
                 LogicalDatastoreType.OPERATIONAL, iid), registeredListener);
 
         doNothing().when(listener).close();
@@ -64,7 +64,7 @@ public class RegisteredListenerTest {
     public void testOndataChangedWithNoCallbackURL() throws IOException {
         RegisteredListener registeredListener = new RegisteredListener(dataBroker,"123", null);
 
-        doReturn(listener).when(dataBroker).registerDataTreeChangeListener(new DataTreeIdentifier<>(
+        doReturn(listener).when(dataBroker).registerDataTreeChangeListener(DataTreeIdentifier.create(
                 LogicalDatastoreType.OPERATIONAL, iid), registeredListener);
 
         DataTreeModification<SyslogListener> mockDataTreeModification = mock(DataTreeModification.class);

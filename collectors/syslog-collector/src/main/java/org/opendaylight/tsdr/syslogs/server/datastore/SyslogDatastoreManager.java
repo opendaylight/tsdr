@@ -9,12 +9,12 @@
 
 package org.opendaylight.tsdr.syslogs.server.datastore;
 
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,10 +24,10 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
-import org.opendaylight.controller.md.sal.binding.api.ReadTransaction;
-import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
-import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
+import org.opendaylight.mdsal.binding.api.DataBroker;
+import org.opendaylight.mdsal.binding.api.ReadTransaction;
+import org.opendaylight.mdsal.binding.api.WriteTransaction;
+import org.opendaylight.mdsal.common.api.LogicalDatastoreType;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterOutput;
@@ -153,7 +153,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         deleteTransaction.delete(LogicalDatastoreType.OPERATIONAL, syslogListenerIID);
 
         try {
-            deleteTransaction.submit().get();
+            deleteTransaction.commit().get();
         } catch (InterruptedException | ExecutionException e) {
             LOG.error("filter delete failed");
             DeleteRegisteredFilterOutput output = new DeleteRegisteredFilterOutputBuilder()
@@ -266,7 +266,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         transaction.merge(LogicalDatastoreType.OPERATIONAL, syslogListenerIID, syslogListener);
 
         try {
-            transaction.submit().get();
+            transaction.commit().get();
         } catch (InterruptedException | ExecutionException e) {
             LOG.error(e.getMessage());
         }
@@ -325,7 +325,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
                     .child(SyslogFilter.class, new SyslogFilterKey(filterID));
             ListenableFuture<Optional<SyslogFilter>> future =
                     transaction.read(LogicalDatastoreType.CONFIGURATION, iid);
-            Optional<SyslogFilter> optional = Optional.absent();
+            Optional<SyslogFilter> optional = Optional.empty();
             try {
                 optional = future.get();
             } catch (InterruptedException | ExecutionException e) {
@@ -355,7 +355,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
                         .build();
                 transaction.put(LogicalDatastoreType.OPERATIONAL, iid, listener);
             }
-            transaction.submit();
+            transaction.commit();
 
         }
 

@@ -17,7 +17,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType.OPERATIONAL;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
@@ -37,12 +36,13 @@ import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.opendaylight.controller.md.sal.binding.api.DataBroker;
-import org.opendaylight.controller.md.sal.binding.api.DataTreeIdentifier;
-import org.opendaylight.controller.md.sal.binding.api.ReadOnlyTransaction;
-import org.opendaylight.controller.md.sal.binding.test.AbstractConcurrentDataBrokerTest;
-import org.opendaylight.controller.md.sal.common.api.data.ReadFailedException;
+import org.opendaylight.mdsal.binding.api.DataBroker;
+import org.opendaylight.mdsal.binding.api.DataTreeIdentifier;
+import org.opendaylight.mdsal.binding.api.ReadTransaction;
+import org.opendaylight.mdsal.binding.dom.adapter.test.AbstractConcurrentDataBrokerTest;
 import org.opendaylight.mdsal.binding.spec.reflect.BindingReflections;
+import org.opendaylight.mdsal.common.api.LogicalDatastoreType;
+import org.opendaylight.mdsal.common.api.ReadFailedException;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterInputBuilder;
@@ -115,7 +115,7 @@ public class SyslogDatastoreManagerTest {
         final String listenerId = regResult.getResult().getListenerId();
         assertNotNull(listenerId);
 
-        verify(dataBroker).registerDataTreeChangeListener(eq(new DataTreeIdentifier<>(OPERATIONAL,
+        verify(dataBroker).registerDataTreeChangeListener(eq(DataTreeIdentifier.create(LogicalDatastoreType.OPERATIONAL,
                 InstanceIdentifier.create(SyslogDispatcher.class).child(SyslogListener.class,
                         new SyslogListenerKey(listenerId)))), any());
 
@@ -153,7 +153,7 @@ public class SyslogDatastoreManagerTest {
     @Test
     public void testShowRegisterFilterWithReadException()
             throws InterruptedException, ExecutionException, TimeoutException {
-        ReadOnlyTransaction mockReadTx = mock(ReadOnlyTransaction.class);
+        ReadTransaction mockReadTx = mock(ReadTransaction.class);
         doReturn(Futures.immediateFailedCheckedFuture(new ReadFailedException("mock")))
             .when(mockReadTx).read(any(), any());
         doReturn(mockReadTx).when(dataBroker).newReadOnlyTransaction();
