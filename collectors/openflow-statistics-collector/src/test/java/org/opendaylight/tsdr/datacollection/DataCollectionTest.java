@@ -38,9 +38,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.opendaylight.controller.md.sal.binding.api.WriteTransaction;
-import org.opendaylight.controller.md.sal.binding.test.ConstantSchemaAbstractDataBrokerTest;
-import org.opendaylight.controller.md.sal.common.api.data.LogicalDatastoreType;
+import org.opendaylight.mdsal.binding.api.WriteTransaction;
+import org.opendaylight.mdsal.binding.dom.adapter.test.AbstractConcurrentDataBrokerTest;
+import org.opendaylight.mdsal.common.api.LogicalDatastoreType;
 import org.opendaylight.tsdr.osc.TSDROpenflowCollector;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.tsdrrecord.RecordKeys;
@@ -114,7 +114,7 @@ import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.opendaylight.yangtools.yang.common.RpcResult;
 import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
-public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
+public class DataCollectionTest extends AbstractConcurrentDataBrokerTest {
     private final TsdrCollectorSpiService collectorSPIService = mock(TsdrCollectorSpiService.class);
     private TSDROpenflowCollector collector;
 
@@ -131,7 +131,7 @@ public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
     public void testPolling() throws InterruptedException, ExecutionException, TimeoutException {
         WriteTransaction writeTx = getDataBroker().newWriteOnlyTransaction();
         writeTx.put(LogicalDatastoreType.OPERATIONAL, InstanceIdentifier.create(Nodes.class), buildNodes());
-        writeTx.submit().get(5, TimeUnit.SECONDS);
+        writeTx.commit().get(5, TimeUnit.SECONDS);
 
         Collection<TSDRMetricRecord> metricRecords = Collections.synchronizedList(new ArrayList<>());
         AtomicReference<CountDownLatch> storeMetricsLatchRef = new AtomicReference<>(new CountDownLatch(2));
@@ -182,7 +182,7 @@ public class DataCollectionTest extends ConstantSchemaAbstractDataBrokerTest {
         writeTx = getDataBroker().newWriteOnlyTransaction();
         writeTx.delete(LogicalDatastoreType.OPERATIONAL, InstanceIdentifier.create(Nodes.class)
                 .child(Node.class, new NodeKey(new NodeId("openflow:1"))));
-        writeTx.submit().get(5, TimeUnit.SECONDS);
+        writeTx.commit().get(5, TimeUnit.SECONDS);
 
         synchronized (storeMetricsContinue) {
             storeMetricsContinue.set(true);

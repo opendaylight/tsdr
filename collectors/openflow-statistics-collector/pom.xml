@@ -34,14 +34,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.opendaylight.controller</groupId>
-      <artifactId>sal-binding-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.opendaylight.controller</groupId>
-      <artifactId>sal-common-util</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.opendaylight.controller.model</groupId>
       <artifactId>model-inventory</artifactId>
     </dependency>
@@ -65,16 +57,16 @@
        <artifactId>junit</artifactId>
        <scope>test</scope>
      </dependency>
-     <dependency>
-       <groupId>org.opendaylight.controller</groupId>
-       <artifactId>sal-binding-broker-impl</artifactId>
-       <scope>test</scope>
-     </dependency>
-     <dependency>
-       <groupId>org.opendaylight.controller</groupId>
-       <artifactId>sal-binding-broker-impl</artifactId>
-       <scope>test</scope>
-       <type>test-jar</type>
-     </dependency>
+    <dependency>
+      <groupId>org.opendaylight.mdsal</groupId>
+      <artifactId>mdsal-binding-dom-adapter</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.opendaylight.mdsal</groupId>
+      <artifactId>mdsal-binding-dom-adapter</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
