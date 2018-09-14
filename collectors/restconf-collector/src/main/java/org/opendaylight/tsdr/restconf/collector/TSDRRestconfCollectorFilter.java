@@ -18,6 +18,8 @@ import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -38,10 +40,8 @@ import org.slf4j.LoggerFactory;
  * here: http://wetfeetblog.com/servlet-filer-to-log-request-and-response-details-and-payload/431
  *
  * @author <a href="mailto:a.alhamali93@gmail.com">AbdulRahman AlHamali</a>
- *
- *         Created: Dec 16th, 2016
- *
  */
+@Singleton
 public class TSDRRestconfCollectorFilter implements Filter {
 
     /**
@@ -52,19 +52,18 @@ public class TSDRRestconfCollectorFilter implements Filter {
     /**
      * a reference to the restconf collector logger singleton.
      */
-    private static TSDRRestconfCollectorLogger tsdrRestconfCollectorLogger;
+    private final TSDRRestconfCollectorLogger tsdrRestconfCollectorLogger;
 
     /**
      * a reference to the restconf collector config singleton.
      */
-    private static TSDRRestconfCollectorConfig tsdrRestconfCollectorConfig;
+    private final TSDRRestconfCollectorConfig tsdrRestconfCollectorConfig;
 
-    static void setTSDRRestconfCollectorLogger(TSDRRestconfCollectorLogger logger) {
-        tsdrRestconfCollectorLogger = logger;
-    }
-
-    static void setTSDRRestconfCollectorConfig(TSDRRestconfCollectorConfig config) {
-        tsdrRestconfCollectorConfig = config;
+    @Inject
+    public TSDRRestconfCollectorFilter(TSDRRestconfCollectorLogger tsdrRestconfCollectorLogger,
+            TSDRRestconfCollectorConfig tsdrRestconfCollectorConfig) {
+        this.tsdrRestconfCollectorLogger = tsdrRestconfCollectorLogger;
+        this.tsdrRestconfCollectorConfig = tsdrRestconfCollectorConfig;
     }
 
     /**
@@ -98,7 +97,10 @@ public class TSDRRestconfCollectorFilter implements Filter {
             String address = httpServletRequest.getRemoteAddr();
             String body = bufferedRequest.getRequestBody();
 
+            LOG.debug("doFilter - {}, {}, {}", method, path, address);
+
             if (requestPassesCriteria(method, path, address, body)) {
+                LOG.debug("requestPassesCriteria - inserting log");
                 tsdrRestconfCollectorLogger.insertLog(method, path, address, body);
             }
 

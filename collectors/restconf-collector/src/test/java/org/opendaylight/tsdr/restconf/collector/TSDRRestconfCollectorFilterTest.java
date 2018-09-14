@@ -11,10 +11,10 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.util.concurrent.ListenableScheduledFuture;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Hashtable;
@@ -22,7 +22,6 @@ import java.util.List;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,17 +89,17 @@ public class TSDRRestconfCollectorFilterTest {
     public void setup() throws ConfigurationException {
         MockitoAnnotations.initMocks(this);
 
-        filterObject = new TSDRRestconfCollectorFilter();
         doReturn(RpcResultBuilder.<Void>success().buildFuture())
-                .when(tsdrCollectorSpiService).insertTSDRLogRecord(any());
+            .when(tsdrCollectorSpiService).insertTSDRLogRecord(any());
 
-        doReturn(mockFuture).when(schedulerService)
-                .scheduleTaskAtFixedRate(runnableCaptor.capture(), anyLong(), anyLong());
+        doReturn(mockFuture).when(schedulerService).scheduleTaskAtFixedRate(any(), anyLong(), anyLong());
 
         tsdrRestconfCollectorLogger = new TSDRRestconfCollectorLogger(tsdrCollectorSpiService, schedulerService);
-        tsdrRestconfCollectorLogger.init();
+
+        verify(schedulerService).scheduleTaskAtFixedRate(runnableCaptor.capture(), anyLong(), anyLong());
 
         tsdrRestconfCollectorConfig = new TSDRRestconfCollectorConfig();
+
         Hashtable<String, String> props = new Hashtable<>();
         props.put("METHODS_TO_LOG", "POST,PUT,DELETE");
         props.put("PATHS_TO_LOG", "/operations/.*");
@@ -108,8 +107,13 @@ public class TSDRRestconfCollectorFilterTest {
         props.put("CONTENT_TO_LOG", ".*loggable.*");
         tsdrRestconfCollectorConfig.updated(props);
 
+        filterObject = new TSDRRestconfCollectorFilter(tsdrRestconfCollectorLogger, tsdrRestconfCollectorConfig);
     }
 
+    @After
+    public void tearDown() {
+        tsdrRestconfCollectorLogger.close();
+    }
 
     /**
      * tests the case when a request that passes the criteria is received.
@@ -191,11 +195,4 @@ public class TSDRRestconfCollectorFilterTest {
             return null;
         }
     }
-
-    @After
-    public void tearDown() {
-        tsdrRestconfCollectorLogger.close();
-    }
-
-
 }

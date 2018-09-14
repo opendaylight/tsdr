@@ -8,10 +8,8 @@
 
 package org.opendaylight.tsdr.restconf.collector;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
 import org.opendaylight.tsdr.collector.spi.logger.BatchingLogCollector;
 import org.opendaylight.tsdr.spi.scheduler.SchedulerService;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
@@ -22,9 +20,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
  * It maintains a cached queue of the logs, that is persisted every pre-set amount of time, and then emptied
  *
  * @author <a href="mailto:a.alhamali93@gmail.com">AbdulRahman AlHamali</a>
- *
- *         Created: Dec 16th, 2016
- *
  */
 @Singleton
 public class TSDRRestconfCollectorLogger extends BatchingLogCollector {
@@ -33,11 +28,6 @@ public class TSDRRestconfCollectorLogger extends BatchingLogCollector {
     public TSDRRestconfCollectorLogger(TsdrCollectorSpiService tsdrCollectorSpiService,
                                        SchedulerService schedulerService) {
         super(tsdrCollectorSpiService, schedulerService, "TSDRRestconfCollector");
-    }
-
-    @PostConstruct
-    public void init() {
-        TSDRRestconfCollectorFilter.setTSDRRestconfCollectorLogger(this);
     }
 
     /**

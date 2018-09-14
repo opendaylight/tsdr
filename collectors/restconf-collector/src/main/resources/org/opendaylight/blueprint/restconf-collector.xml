@@ -7,11 +7,12 @@
 
   <reference id="schedulerService" interface="org.opendaylight.tsdr.spi.scheduler.SchedulerService"/>
 
-
   <service ref="tSDRRestconfCollectorConfig" interface="org.osgi.service.cm.ManagedService">
     <service-properties>
       <entry key="service.pid" value="tsdr.restconf.collector"/>
     </service-properties>
   </service>
+
+  <service ref="tSDRRestconfCollectorFilter" interface="javax.servlet.Filter"/>
 
 </blueprint>

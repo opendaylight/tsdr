@@ -16,9 +16,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
 import com.google.common.util.concurrent.ListenableScheduledFuture;
-
 import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -71,17 +69,14 @@ public class TSDRRestconfCollectorLoggerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
-        when(tsdrCollectorSpiService.insertTSDRLogRecord(any()))
-                .thenReturn(RpcResultBuilder.success(new InsertTSDRLogRecordOutputBuilder().build()).buildFuture());
-        when(tsdrCollectorSpiService.insertTSDRMetricRecord(any()))
-                .thenReturn(RpcResultBuilder.success(new InsertTSDRMetricRecordOutputBuilder().build()).buildFuture());
+        doReturn(RpcResultBuilder.<Void>success().buildFuture())
+            .when(tsdrCollectorSpiService).insertTSDRLogRecord(any());
 
-        doReturn(mockFuture).when(schedulerService)
-                .scheduleTaskAtFixedRate(runnableCaptor.capture(), anyLong(), anyLong());
+        doReturn(mockFuture).when(schedulerService).scheduleTaskAtFixedRate(any(), anyLong(), anyLong());
 
         loggerObject = new TSDRRestconfCollectorLogger(tsdrCollectorSpiService, schedulerService);
 
-        loggerObject.init();
+        verify(schedulerService).scheduleTaskAtFixedRate(runnableCaptor.capture(), anyLong(), anyLong());
     }
 
     /**
