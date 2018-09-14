@@ -7,13 +7,16 @@
  */
 package org.opendaylight.tsdr.restconf.collector;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.osgi.service.cm.ConfigurationException;
@@ -36,11 +39,18 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 public class TSDRRestconfCollectorConfig implements ManagedService {
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRRestconfCollectorConfig.class);
+
+    static final String METHODS_TO_LOG = "METHODS_TO_LOG";
+    static final String CONTENT_TO_LOG = "CONTENT_TO_LOG";
+    static final String ADDRESSES_TO_LOG = "REMOTE_ADDRESSES_TO_LOG";
+    static final String PATHS_TO_LOG = "PATHS_TO_LOG";
+
     /**
      * The default value for which http methods should be logged. GET has been omitted, since there are many GET
-     * requests that are usually sent everytime DLUX is started, which will result in a lot of noisy data.
+     * requests which can result in a lot of noisy data.
      */
-    private static final String DEFAULT_METHODS_TO_LOG = "POST,PUT,DELETE";
+    private static final String DEFAULT_METHODS_TO_LOG = "POST,PUT,DELETE,PATCH";
 
     /**
      * The default value for which paths in the tree should be logged.
@@ -50,7 +60,7 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
     /**
      * The default value for which IP addresses to log from.
      */
-    private static final String DEFAULT_REMOTE_ADDRESSES_TO_LOG = ".*";
+    private static final String DEFAULT_ADDRESSES_TO_LOG = ".*";
 
     /**
      * The default value for what content of requests should be logged.
@@ -58,190 +68,91 @@ public class TSDRRestconfCollectorConfig implements ManagedService {
     private static final String DEFAULT_CONTENT_TO_LOG = ".*";
 
     /**
-     * An array of possible http methods. There are other methods but they are not used in RESTCONF.
+     * The set of possible http methods. There are other methods but they are not used in RESTCONF.
      */
-    private static final String[] HTTP_METHODS = {"POST", "PUT", "GET", "DELETE"};
+    private static final Set<String> ALLOWED_HTTP_METHODS = ImmutableSet.of("POST", "PUT", "GET", "DELETE", "PATCH");
 
-    private final Logger log;
-
-    /**
-     * The cached values of the configurations.
-     */
-    private final Dictionary<String, String> configurations = new Hashtable<>();
+    private volatile Set<String> methodsToLog;
+    private volatile Pattern pathsToLog;
+    private volatile Pattern addressesToLog;
+    private volatile Pattern contentToLog;
 
     @Inject
     public TSDRRestconfCollectorConfig() {
-        this(LoggerFactory.getLogger(TSDRRestconfCollectorConfig.class));
     }
 
-    @VisibleForTesting
-    TSDRRestconfCollectorConfig(Logger log) {
-        this.log = log;
+    @PostConstruct
+    public void init() throws ConfigurationException {
+        parseProperties(null);
     }
 
     /**
-     * this function is called automatically everytime the configuration of the collector changes, and when the module
+     * this function is called automatically every time the configuration of the collector changes, and when the module
      * is first started. The function validates the configuration values and caches them for later use.
      * @param properties the properties of the collector
      */
-    @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT")
+    @Override
     public synchronized void updated(Dictionary properties) throws ConfigurationException {
-        if (properties != null && !properties.isEmpty()) {
+        parseProperties(properties);
 
-            String methods = (String)properties.get("METHODS_TO_LOG");
-            if (!validateMethods(methods)) {
-                log.error("Value specified for METHODS_TO_LOG: " + methods + " is invalid. Will use default value of "
-                    + DEFAULT_METHODS_TO_LOG);
-                methods = DEFAULT_METHODS_TO_LOG;
-            }
-            configurations.put("METHODS_TO_LOG", methods);
+        LOG.info("TSDRRestconfCollectorConfig updated with: {} : {}, {} : {}, {} : {}, {} : {}",
+            METHODS_TO_LOG, methodsToLog, PATHS_TO_LOG, pathsToLog, ADDRESSES_TO_LOG, addressesToLog,
+            CONTENT_TO_LOG, contentToLog);
+    }
 
-            String paths = (String)properties.get("PATHS_TO_LOG");
-            if (!validatePaths(paths)) {
-                log.error("Value specified for PATHS_TO_LOG: " + paths + " is invalid. Will use default value of "
-                    + DEFAULT_PATHS_TO_LOG);
-                paths = DEFAULT_PATHS_TO_LOG;
-            }
-            configurations.put("PATHS_TO_LOG", paths);
+    public Set<String> getMethodsToLog() {
+        return methodsToLog;
+    }
 
-            String remoteAddresses = (String)properties.get("REMOTE_ADDRESSES_TO_LOG");
-            if (!validateRemoteAddresses(remoteAddresses)) {
-                log.error("Value specified for REMOTE_ADDRESSES_TO_LOG: " + remoteAddresses
-                    + " is invalid. Will use default value of " + DEFAULT_REMOTE_ADDRESSES_TO_LOG);
-                remoteAddresses = DEFAULT_REMOTE_ADDRESSES_TO_LOG;
-            }
-            configurations.put("REMOTE_ADDRESSES_TO_LOG", remoteAddresses);
+    public Pattern getPathsToLog() {
+        return pathsToLog;
+    }
 
-            String content = (String)properties.get("CONTENT_TO_LOG");
-            if (!validateContent(content)) {
-                log.error("Value specified for CONTENT_TO_LOG: " + content + " is invalid. Will use default value of "
-                    + DEFAULT_CONTENT_TO_LOG);
-                content = DEFAULT_CONTENT_TO_LOG;
-            }
-            configurations.put("CONTENT_TO_LOG", content);
+    public Pattern getAddressesToLog() {
+        return addressesToLog;
+    }
 
-            log.info("TSDRRestconfCollectorConfig updated with {}", configurations);
+    public Pattern getContentToLog() {
+        return contentToLog;
+    }
 
-        } else {
+    private void parseProperties(Dictionary<String, String> properties) throws ConfigurationException {
+        if (properties == null) {
+            properties = new Hashtable<>();
+        }
 
-            log.warn("The configuration properties are either empty or non-existent will use default values of: "
-                + "METHODS_TO_LOG=" + DEFAULT_METHODS_TO_LOG + " PATHS_TO_LOG=" + DEFAULT_PATHS_TO_LOG
-                + " REMOTE_ADDRESSES_TO_LOG=" + DEFAULT_REMOTE_ADDRESSES_TO_LOG + " CONTENT_TO_LOG="
-                + DEFAULT_CONTENT_TO_LOG);
+        methodsToLog = parseProperty(properties, METHODS_TO_LOG, DEFAULT_METHODS_TO_LOG, methods ->
+            ImmutableSet.copyOf(Arrays.asList(methods.split(",")).stream().peek(
+                TSDRRestconfCollectorConfig::validateMethod).iterator()));
 
-            configurations.put("METHODS_TO_LOG", DEFAULT_METHODS_TO_LOG);
-            configurations.put("PATHS_TO_LOG", DEFAULT_PATHS_TO_LOG);
-            configurations.put("REMOTE_ADDRESSES_TO_LOG", DEFAULT_REMOTE_ADDRESSES_TO_LOG);
-            configurations.put("CONTENT_TO_LOG", DEFAULT_CONTENT_TO_LOG);
+        pathsToLog = parseProperty(properties, PATHS_TO_LOG, DEFAULT_PATHS_TO_LOG, Pattern::compile);
+
+        addressesToLog = parseProperty(properties, ADDRESSES_TO_LOG, DEFAULT_ADDRESSES_TO_LOG, Pattern::compile);
+
+        contentToLog = parseProperty(properties, CONTENT_TO_LOG, DEFAULT_CONTENT_TO_LOG, Pattern::compile);
+    }
+
+    @SuppressWarnings("checkstyle:IllegalCatch")
+    private static <T> T parseProperty(Dictionary<String, String> from, String name, String defaultValue,
+            Function<String, T> parser) throws ConfigurationException {
+        String value = from.get(name);
+        if (Strings.isNullOrEmpty(value)) {
+            LOG.debug("{} is either empty or non-existent - using default setting of {}", name, defaultValue);
+            value = defaultValue;
+        }
+
+        try {
+            return parser.apply(value);
+        } catch (RuntimeException e) {
+            throw new ConfigurationException(name, "Value \"" + value + "\" is invalid", e);
         }
     }
 
-    /**
-     * called by users of the class to retrieve properties of the collector.
-     * @param name the name of the property whose value we want to retrieve
-     * @return the value of the property
-     */
-    public String getProperty(String name) {
-        return this.configurations.get(name);
-    }
-
-    /**
-     * validates that the list of http methods is valid to be used.
-     * the list should be comma-separated, should contain valid HTTP methods, and should not have the methods repeated
-     * multiple times
-     * @param methds the list of http methods to validate
-     * @return returns true if the list is valid
-     */
-    private boolean validateMethods(String methods) {
-        if (methods != null && !methods.equals("")) {
-
-            // We check the format of the methods
-            String[] methodsArray = methods.split(",");
-
-            // Each element in the array needs to be one of the known HTTP methods,
-            // and needs to be unique
-            for (int i = 0; i < methodsArray.length; i++) {
-                if (!Arrays.asList(HTTP_METHODS).contains(methodsArray[i])) {
-                    log.error("HTTP method " + methodsArray[i] + " is not recognized");
-                    return false;
-                }
-
-                for (int j = 0; j < methodsArray.length; j++) {
-                    if (i == j) {
-                        continue;
-                    }
-
-                    if (methodsArray[i].equals(methodsArray[j])) {
-                        log.error("HTTP method " + methodsArray[i] + " is repeated multiple times");
-                        return false;
-                    }
-                }
-            }
-            return true;
+    private static void validateMethod(String method) {
+        if (!ALLOWED_HTTP_METHODS.contains(method)) {
+            throw new IllegalArgumentException("Invalid HTTP method " + method);
         }
-        log.error("HTTP_METHODS_TO_LOG is either empty or non-existent");
-        return false;
     }
-
-    /**
-     * validates that the path specified is valid to be used.
-     * the path should be a valid regular expression
-     * @param paths the regular expression of the paths
-     * @return returns true if the paths expression is a valid regular expression
-     */
-    private boolean validatePaths(String paths) {
-        if (paths != null && !paths.equals("")) {
-            try {
-                Pattern.compile(paths);
-            } catch (PatternSyntaxException exception) {
-                log.error("Pattern " + paths + " is not parsable. Error: " + exception.toString());
-                return false;
-            }
-            return true;
-        }
-        log.error("PATHS_TO_LOG is either empty or non-existent");
-        return false;
-    }
-
-    /**
-     * validates that the remote addresses specified is valid to be used.
-     * the remote addresses expression should be a valid regular expression
-     * @param addresses the regular expression of the remote addresses
-     * @return returns true if the remote addresses expression is a valid regular expression
-     */
-    private boolean validateRemoteAddresses(String addresses) {
-        if (addresses != null && !addresses.equals("")) {
-            try {
-                Pattern.compile(addresses);
-            } catch (PatternSyntaxException exception) {
-                log.error("Pattern " + addresses + " is not parsable. Error: " + exception.toString());
-                return false;
-            }
-            return true;
-        }
-        log.error("REMOTE_ADDRESSES_TO_LOG is either empty or non-existent");
-        return false;
-    }
-
-    /**
-     * validates that the content specified is valid to be used.
-     * the content should be a valid regular expression
-     * @param content the regular expression of the paths
-     * @return returns true if the content expression is a valid regular expression
-     */
-    private boolean validateContent(String content) {
-        if (content != null && !content.equals("")) {
-            try {
-                Pattern.compile(content);
-            } catch (PatternSyntaxException exception) {
-                log.error("Pattern " + content + " is not parsable. Error: " + exception.toString());
-                return false;
-            }
-            return true;
-        }
-        log.error("CONTENT_TO_LOG is either empty or non-existent");
-        return false;
-    }
-
 }
