@@ -13,6 +13,10 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.opendaylight.tsdr.restconf.collector.TSDRRestconfCollectorConfig.ADDRESSES_TO_LOG;
+import static org.opendaylight.tsdr.restconf.collector.TSDRRestconfCollectorConfig.CONTENT_TO_LOG;
+import static org.opendaylight.tsdr.restconf.collector.TSDRRestconfCollectorConfig.METHODS_TO_LOG;
+import static org.opendaylight.tsdr.restconf.collector.TSDRRestconfCollectorConfig.PATHS_TO_LOG;
 
 import com.google.common.util.concurrent.ListenableScheduledFuture;
 import java.io.ByteArrayInputStream;
@@ -101,10 +105,10 @@ public class TSDRRestconfCollectorFilterTest {
         tsdrRestconfCollectorConfig = new TSDRRestconfCollectorConfig();
 
         Hashtable<String, String> props = new Hashtable<>();
-        props.put("METHODS_TO_LOG", "POST,PUT,DELETE");
-        props.put("PATHS_TO_LOG", "/operations/.*");
-        props.put("REMOTE_ADDRESSES_TO_LOG", "127\\.0\\.0\\.1");
-        props.put("CONTENT_TO_LOG", ".*loggable.*");
+        props.put(METHODS_TO_LOG, "POST,PUT,DELETE");
+        props.put(PATHS_TO_LOG, "/operations/.*");
+        props.put(ADDRESSES_TO_LOG, "127\\.0\\.0\\.1");
+        props.put(CONTENT_TO_LOG, ".*loggable.*");
         tsdrRestconfCollectorConfig.updated(props);
 
         filterObject = new TSDRRestconfCollectorFilter(tsdrRestconfCollectorLogger, tsdrRestconfCollectorConfig);

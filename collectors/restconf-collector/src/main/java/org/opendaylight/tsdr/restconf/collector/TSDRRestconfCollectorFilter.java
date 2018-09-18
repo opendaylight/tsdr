@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandles;
-import java.util.Arrays;
-import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.Filter;
@@ -127,23 +125,19 @@ public class TSDRRestconfCollectorFilter implements Filter {
      * @return returns true if the request passes the criteria
      */
     private boolean requestPassesCriteria(String method, String path, String address, String body) {
-        String methods = tsdrRestconfCollectorConfig.getProperty("METHODS_TO_LOG");
-        if (!Arrays.asList(methods.split(",")).contains(method)) {
+        if (!tsdrRestconfCollectorConfig.getMethodsToLog().contains(method)) {
             return false;
         }
 
-        String paths = tsdrRestconfCollectorConfig.getProperty("PATHS_TO_LOG");
-        if (!Pattern.compile(paths).matcher(path).matches()) {
+        if (!tsdrRestconfCollectorConfig.getPathsToLog().matcher(path).matches()) {
             return false;
         }
 
-        String addresses = tsdrRestconfCollectorConfig.getProperty("REMOTE_ADDRESSES_TO_LOG");
-        if (!Pattern.compile(addresses).matcher(address).matches()) {
+        if (!tsdrRestconfCollectorConfig.getAddressesToLog().matcher(address).matches()) {
             return false;
         }
 
-        String content = tsdrRestconfCollectorConfig.getProperty("CONTENT_TO_LOG");
-        if (!Pattern.compile(content).matcher(body).matches()) {
+        if (!tsdrRestconfCollectorConfig.getContentToLog().matcher(body).matches()) {
             return false;
         }
 
