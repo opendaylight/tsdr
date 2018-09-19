@@ -16,7 +16,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.opendaylight.tsdr.syslogs.server.datastore.MessageFilter;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.FilterEntity;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.Filter;
 
 /**
  * Test of message filter.
@@ -26,7 +26,7 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 public class MessageFilterTest {
     @Test
     public void testFilterMatch() {
-        FilterEntity entity = mock(FilterEntity.class);
+        Filter entity = mock(Filter.class);
         when(entity.getApplication()).thenReturn(".*");
         when(entity.getContent()).thenReturn("cisco");
         when(entity.getFacility()).thenReturn(null);

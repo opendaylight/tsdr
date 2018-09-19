@@ -11,7 +11,7 @@ package org.opendaylight.tsdr.syslogs.server.datastore;
 
 import java.util.regex.Pattern;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.FilterEntity;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.Filter;
 
 /**
  * This Class is for filter building and
@@ -120,7 +120,7 @@ public final class MessageFilter {
         private String sequenceId = ".*";
         private String content = ".*";
 
-        public static MessageFilter create(FilterEntity filterEntity) {
+        public static MessageFilter create(Filter filterEntity) {
             FilterBuilder builder = new FilterBuilder();
             if (filterEntity.getSeverity() != null) {
                 builder.severity = Message.Severity.values()[filterEntity.getSeverity().getValue()];

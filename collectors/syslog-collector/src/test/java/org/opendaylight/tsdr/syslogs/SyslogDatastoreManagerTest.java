@@ -8,18 +8,10 @@
 package org.opendaylight.tsdr.syslogs;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,35 +25,26 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.opendaylight.mdsal.binding.api.DataBroker;
-import org.opendaylight.mdsal.binding.api.DataTreeIdentifier;
-import org.opendaylight.mdsal.binding.api.ReadTransaction;
+import org.opendaylight.mdsal.binding.api.WriteTransaction;
 import org.opendaylight.mdsal.binding.dom.adapter.test.AbstractConcurrentDataBrokerTest;
 import org.opendaylight.mdsal.binding.spec.reflect.BindingReflections;
 import org.opendaylight.mdsal.common.api.LogicalDatastoreType;
-import org.opendaylight.mdsal.common.api.ReadFailedException;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterInputBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.DeleteRegisteredFilterOutput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterInput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterInputBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.RegisterFilterOutput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SeverityId;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterInputBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowRegisterFilterOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfigBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.show.register.filter.output.RegisteredSyslogFilter;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogListener;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogListenerKey;
-import org.opendaylight.yangtools.concepts.ListenerRegistration;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilter;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilterBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilterKey;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.FilterBuilder;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.opendaylight.yangtools.yang.binding.YangModuleInfo;
 import org.opendaylight.yangtools.yang.common.RpcResult;
@@ -81,14 +64,14 @@ public class SyslogDatastoreManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        AbstractConcurrentDataBrokerTest dataBrokerTest = new AbstractConcurrentDataBrokerTest(true) {
+        AbstractConcurrentDataBrokerTest dataBrokerTest = new AbstractConcurrentDataBrokerTest(false) {
             @Override
             protected Set<YangModuleInfo> getModuleInfos() throws Exception {
                 return ImmutableSet.of(BindingReflections.getModuleInfo(SyslogDispatcher.class));
             }
         };
         dataBrokerTest.setup();
-        dataBroker = spy(dataBrokerTest.getDataBroker());
+        dataBroker = dataBrokerTest.getDataBroker();
 
         manager = new SyslogDatastoreManager(dataBroker, config);
     }
@@ -96,71 +79,6 @@ public class SyslogDatastoreManagerTest {
     @After
     public void tearDown() {
         manager.close();
-    }
-
-    @SuppressWarnings("rawtypes")
-    @Test
-    public void testFilterRegistration() throws InterruptedException, ExecutionException, TimeoutException {
-        ListenerRegistration mockListenerReg = mock(ListenerRegistration.class);
-        doReturn(mockListenerReg).when(dataBroker).registerDataTreeChangeListener(any(), any());
-
-        RegisterFilterInput input = new RegisterFilterInputBuilder().setCallbackUrl("http://localhost:9001/server")
-                .setContent(".*foo.*").setApplication("app").setHost("host").setPid("123")
-                .setSeverity(new SeverityId(1)).setSid("sid").build();
-
-        // Test registerFilter
-
-        RpcResult<RegisterFilterOutput> regResult = manager.registerFilter(input).get(5, TimeUnit.SECONDS);
-        assertTrue(regResult.isSuccessful());
-        final String listenerId = regResult.getResult().getListenerId();
-        assertNotNull(listenerId);
-
-        verify(dataBroker).registerDataTreeChangeListener(eq(DataTreeIdentifier.create(LogicalDatastoreType.OPERATIONAL,
-                InstanceIdentifier.create(SyslogDispatcher.class).child(SyslogListener.class,
-                        new SyslogListenerKey(listenerId)))), any());
-
-        // Test showRegisterFilter
-
-        RpcResult<ShowRegisterFilterOutput> showResult =
-                manager.showRegisterFilter(new ShowRegisterFilterInputBuilder().build()).get(5, TimeUnit.SECONDS);
-        assertTrue(showResult.isSuccessful());
-
-        assertEquals(1, showResult.getResult().getRegisteredSyslogFilter().size());
-
-        RegisteredSyslogFilter filter = showResult.getResult().getRegisteredSyslogFilter().get(0);
-        assertEquals(input.getCallbackUrl(), filter.getCallbackUrl());
-        assertEquals(input.getApplication(), filter.getRegisteredFilterEntity().getApplication());
-        assertEquals(input.getContent(), filter.getRegisteredFilterEntity().getContent());
-        assertEquals(input.getHost(), filter.getRegisteredFilterEntity().getHost());
-        assertEquals(input.getPid(), filter.getRegisteredFilterEntity().getPid());
-        assertEquals(input.getSeverity(), filter.getRegisteredFilterEntity().getSeverity());
-        assertEquals(input.getSid(), filter.getRegisteredFilterEntity().getSid());
-
-        // Test deleteRegisteredFilter
-
-        RpcResult<DeleteRegisteredFilterOutput> deleteResult = manager.deleteRegisteredFilter(
-            new DeleteRegisteredFilterInputBuilder().setFilterId(filter.getFilterId()).build())
-                .get(5, TimeUnit.SECONDS);
-        assertTrue(deleteResult.isSuccessful());
-
-        showResult = manager.showRegisterFilter(new ShowRegisterFilterInputBuilder().build()).get(5, TimeUnit.SECONDS);
-        assertTrue(showResult.isSuccessful());
-        assertNull(showResult.getResult().getRegisteredSyslogFilter());
-
-        verify(mockListenerReg).close();
-    }
-
-    @Test
-    public void testShowRegisterFilterWithReadException()
-            throws InterruptedException, ExecutionException, TimeoutException {
-        ReadTransaction mockReadTx = mock(ReadTransaction.class);
-        doReturn(Futures.immediateFailedCheckedFuture(new ReadFailedException("mock")))
-            .when(mockReadTx).read(any(), any());
-        doReturn(mockReadTx).when(dataBroker).newReadOnlyTransaction();
-
-        RpcResult<ShowRegisterFilterOutput> result =
-                manager.showRegisterFilter(new ShowRegisterFilterInputBuilder().build()).get(5, TimeUnit.SECONDS);
-        assertEquals("Reading Filter failed", result.getResult().getResult());
     }
 
     @Test
@@ -177,8 +95,8 @@ public class SyslogDatastoreManagerTest {
     }
 
     @Test
-    public void testExecute() throws InterruptedException, ExecutionException, TimeoutException {
-        SettableFuture<String> outputFuture = SettableFuture.create();
+    public void testCallback() throws InterruptedException, ExecutionException, TimeoutException {
+        AtomicReference<SettableFuture<String>> outputFuture = new AtomicReference<>(SettableFuture.create());
         URL.setURLStreamHandlerFactory(protocol -> "test".equals(protocol) ? new URLStreamHandler() {
             @Override
             protected URLConnection openConnection(URL url) throws IOException {
@@ -196,7 +114,7 @@ public class SyslogDatastoreManagerTest {
                                 try {
                                     super.flush();
                                 } finally {
-                                    outputFuture.set(new String(toByteArray()));
+                                    outputFuture.get().set(new String(toByteArray()));
                                 }
                             }
                         };
@@ -209,17 +127,57 @@ public class SyslogDatastoreManagerTest {
             }
         } : null);
 
-        RegisterFilterInput input = new RegisterFilterInputBuilder().setCallbackUrl("test://localhost")
-                .setContent(".*").setApplication(".*").setHost(".*").setPid(".*").setSid(".*").build();
+        manager.init();
 
-        RpcResult<RegisterFilterOutput> regResult = manager.registerFilter(input).get(5, TimeUnit.SECONDS);
-        assertTrue(regResult.isSuccessful());
+        String filterId = "test-filter";
+        WriteTransaction tx = dataBroker.newWriteOnlyTransaction();
+        InstanceIdentifier<SyslogFilter> filterIID = InstanceIdentifier.create(SyslogDispatcher.class)
+                .child(SyslogFilter.class, new SyslogFilterKey(filterId));
+        SyslogFilter filter = new SyslogFilterBuilder().setFilterId(filterId).setCallbackUrl("test://localhost")
+                .setFilter(new FilterBuilder().setContent("^\\[test\\].*").build()).build();
 
-        String content = "Hello";
+        tx.merge(LogicalDatastoreType.CONFIGURATION, filterIID, filter);
+        tx.commit().get(5, TimeUnit.SECONDS);
+
+        // Send matching message
+
+        String content = "[test] : Hello";
         manager.execute(Message.MessageBuilder.create().applicationName("app").hostname("host")
                 .processId("pid").sequenceId("sid").content(content).build());
 
-        final String message = outputFuture.get(5, TimeUnit.SECONDS);
-        assertTrue("Received unexpected message: " + message, message.endsWith(content));
+        final String message = outputFuture.get().get(5, TimeUnit.SECONDS);
+        assertEquals(content, message);
+
+        // Send non-matching message
+
+        outputFuture.set(SettableFuture.create());
+
+        manager.execute(Message.MessageBuilder.create().applicationName("app").hostname("host")
+                .processId("pid").sequenceId("sid").content("hello").build());
+
+        try {
+            outputFuture.get().get(500, TimeUnit.MILLISECONDS);
+            fail("Callback received unexpected message");
+        } catch (TimeoutException e) {
+            // expected
+        }
+
+        // Delete the filter
+
+        tx = dataBroker.newWriteOnlyTransaction();
+        tx.delete(LogicalDatastoreType.CONFIGURATION, filterIID);
+        tx.commit().get(5, TimeUnit.SECONDS);
+
+        outputFuture.set(SettableFuture.create());
+
+        manager.execute(Message.MessageBuilder.create().applicationName("app").hostname("host")
+                .processId("pid").sequenceId("sid").content(content).build());
+
+        try {
+            outputFuture.get().get(500, TimeUnit.MILLISECONDS);
+            fail("Callback received unexpected message");
+        } catch (TimeoutException e) {
+            // expected
+        }
     }
 }

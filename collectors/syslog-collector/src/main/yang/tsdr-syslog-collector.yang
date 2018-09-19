@@ -108,64 +108,6 @@ module tsdr-syslog-collector {
         }
     }
 
-    rpc register-filter {
-        description "register a specific severity, return a listener id to listen.";
-        input {
-            uses meta-filter;
-            leaf callback-url {
-                type string;
-                description "The callback URL of your app.";
-            }
-        }
-        output {
-            leaf listener-id {
-                type string;
-                description "The listener ID for data change listener.";
-            }
-        }
-    }
-
-    rpc show-register-filter {
-        description "show registered filter";
-        output {
-            leaf result {
-                type string;
-                description "the result of show-register-filter RPC.";
-            }
-            list registered-syslog-filter {
-
-                key "filter-id";
-                leaf filter-id {
-                    type string;
-                    description "the unique ID of each registered filter.";
-                }
-                leaf callback-url {
-                    type string;
-                    description "The callback URL of your app.";
-                }
-                container registered-filter-entity {
-                    uses meta-filter;
-                }
-            }
-        }
-    }
-
-    rpc delete-registered-filter {
-        description "delete registered filter";
-        input {
-            leaf filter-id {
-                type string;
-                description "the filter with the input filterID will be deleted.";
-            }
-        }
-        output {
-            leaf result {
-                type string;
-                description "RPC result.";
-            }
-        }
-    }
-
     rpc show-threadpool-configuration {
         output {
             leaf queue-remaining-capacity {
@@ -204,33 +146,16 @@ module tsdr-syslog-collector {
                 type string;
                 description "the unique ID of registered filter.";
             }
-            container filter-entity {
+
+            container filter {
                 uses meta-filter;
             }
+
             leaf callback-url {
                 type string;
+                mandatory true;
                 description "callback URL of your app.";
-            }
-            list listener {
-                key "listener-id";
-                leaf listener-id {
-                    type string;
-                    description "the unique ID of each listener node.";
-                }
-            }
-        }
-        list syslog-listener {
-            config false;
-            key "listener-id";
-            leaf listener-id {
-                type string;
-                description "the unique ID of each listener node.";
-            }
-            leaf syslog-message {
-                type string;
-                description "the message match certain filter will be installed here.";
             }
         }
     }
-
 }
