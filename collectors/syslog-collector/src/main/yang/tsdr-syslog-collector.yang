@@ -60,26 +60,58 @@ module tsdr-syslog-collector {
         }
     }
 
-    typedef severity-id {
-        type uint16 {
-            range 0..7;
+    typedef severity {
+        type enumeration {
+            enum EMERGENCY;
+            enum ALERT;
+            enum CRITICAL;
+            enum ERROR;
+            enum WARNING;
+            enum NOTICE;
+            enum INFORMATION;
+            enum DEBUG;
         }
-        description "Severity from 0 to 7";
+
+        description "Severity enumeration";
     }
 
-    typedef facility-id {
-        type uint16 {
-            range 0..23;
+    typedef facility {
+        type enumeration {
+            enum KERNEL;
+            enum USER_LEVEL;
+            enum MAIL;
+            enum SYSTEM_DAEMON;
+            enum SECURITY;
+            enum SYSLOGD;
+            enum LINE_PRINTER;
+            enum NETWORK_NEWS;
+            enum UUCP;
+            enum CLOCK;
+            enum SECURITY2;
+            enum FTP;
+            enum NTP;
+            enum LOG_AUDIT;
+            enum LOG_ALERTY;
+            enum CLOCK2;
+            enum LOCAL0;
+            enum LOCAL1;
+            enum LOCAL2;
+            enum LOCAL3;
+            enum LOCAL4;
+            enum LOCAL5;
+            enum LOCAL6;
+            enum LOCAL7;
         }
-        description "Facility from 0 to 23";
+
+        description "Facility enumeration";
     }
 
     grouping meta-filter {
         leaf severity {
-            type severity-id;
+            type severity;
         }
         leaf facility {
-            type facility-id;
+            type facility;
         }
         leaf sid {
             type string;

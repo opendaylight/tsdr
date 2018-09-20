@@ -9,10 +9,14 @@
 
 package org.opendaylight.tsdr.syslogs;
 
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.tsdr.syslogs.server.decoder.MessageDecoder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.Facility;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.Severity;
 
 /**
  * Test of MessageDecoder.
@@ -29,18 +33,18 @@ public class MessgeDecoderTest {
     public void testMessageDecoder() {
         String str = "<30>1:quentin:May 24 12:22:25:TestProcess[1787]:%3-6-1:This is a test log of cisco.";
 
-        Assert.assertTrue(MessageDecoder.matches(str));
+        assertTrue(MessageDecoder.matches(str));
 
         Message message = MessageDecoder.decode(str);
 
-        Assert.assertEquals("TestProcess",message.getApplicationName());
-        Assert.assertEquals("1 : This is a test log of cisco.",message.getContent());
-        Assert.assertEquals("1787",message.getProcessId());
-        Assert.assertEquals("1",message.getSequenceId());
-        Assert.assertEquals("May 24 12:22:25",message.getTimestamp());
-        Assert.assertEquals("quentin",message.getHostname());
-        Assert.assertEquals(Message.Facility.SYSTEM_DAEMON,message.getFacility());
-        Assert.assertEquals(Message.Severity.INFORMATION,message.getSeverity());
+        assertEquals("TestProcess", message.getApplicationName());
+        assertEquals("1 : This is a test log of cisco.", message.getContent());
+        assertEquals("1787", message.getProcessId());
+        assertEquals("1", message.getSequenceId());
+        assertEquals("May 24 12:22:25", message.getTimestamp());
+        assertEquals("quentin", message.getHostname());
+        assertEquals(Facility.SYSTEMDAEMON, message.getFacility());
+        assertEquals(Severity.INFORMATION, message.getSeverity());
     }
 
     /**
@@ -50,6 +54,6 @@ public class MessgeDecoderTest {
     @Test
     public void testUnrecognizableMessage() {
         String str = "Simple string.";
-        Assert.assertTrue(!MessageDecoder.matches(str));
+        assertTrue(!MessageDecoder.matches(str));
     }
 }

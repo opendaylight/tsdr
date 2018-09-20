@@ -9,6 +9,9 @@
 
 package org.opendaylight.tsdr.syslogs.server.decoder;
 
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.Facility;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.Severity;
+
 /**
  * Format of Syslog
  * &lt;PRI&gt;SEQ NO:HostName:Timestamp:Application[ProcessID]:%Facility-Severity-MNEMONIC:description
@@ -19,45 +22,6 @@ package org.opendaylight.tsdr.syslogs.server.decoder;
  * @author Kun Chen(kunch@tethrnet.com)
  */
 public final class Message {
-    // <PRI>SEQ NO:HostName:Timestamp:Application[ProcessID]:%Facility-Severity-MNEMONIC:description
-    public enum Facility {
-        KERNEL,
-        USER_LEVEL,
-        MAIL,
-        SYSTEM_DAEMON,
-        SECURITY,
-        SYSLOGD,
-        LINE_PRINTER,
-        NETWORK_NEWS,
-        UUCP,
-        CLOCK,
-        SECURITY2,
-        FTP,
-        NTP,
-        LOG_AUDIT,
-        LOG_ALERTY,
-        CLOCK2,
-        LOCAL0,
-        LOCAL1,
-        LOCAL2,
-        LOCAL3,
-        LOCAL4,
-        LOCAL5,
-        LOCAL6,
-        LOCAL7
-    }
-
-    public enum Severity {
-        EMERGENCY,
-        ALERT,
-        CRITICAL,
-        ERROR,
-        WARNING,
-        NOTICE,
-        INFORMATION,
-        DEBUG
-    }
-
     private final Facility facility;
     private final Severity severity;
     private final String sequenceId;

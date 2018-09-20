@@ -12,6 +12,8 @@ package org.opendaylight.tsdr.syslogs.server.decoder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message.MessageBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.Facility;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.Severity;
 
 /**
  * This Class is for message format decoding. Messages meet RFC5424 can be parsed:
@@ -48,8 +50,8 @@ public final class MessageDecoder {
         int pri = Integer.parseInt(matcher.group(1));
         int facility = pri / 8;
         int severity = pri % 8;
-        builder.facility(Message.Facility.values()[facility])
-                .severity(Message.Severity.values()[severity])
+        builder.facility(Facility.values()[facility])
+                .severity(Severity.values()[severity])
                 .sequenceId(matcher.group(2).trim())
                 .hostname(matcher.group(3).trim())
                 .timestamp(matcher.group(4).trim())
