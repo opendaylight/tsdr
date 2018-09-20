@@ -35,7 +35,7 @@ public class MessageFilterTest {
         when(entity.getSeverity()).thenReturn(null);
         when(entity.getSid()).thenReturn(".*");
 
-        MessageFilter filter = MessageFilter.FilterBuilder.create(entity);
+        MessageFilter filter = MessageFilter.from(entity);
         Message msg = Message.MessageBuilder.create()
                 .facility(null)
                 .severity(null)
@@ -45,7 +45,7 @@ public class MessageFilterTest {
                 .sequenceId(".*")
                 .content("cisco\n")
                 .build();
-        Assert.assertTrue(filter.equals(msg));
+        Assert.assertTrue(filter.matches(msg));
 
     }
 }

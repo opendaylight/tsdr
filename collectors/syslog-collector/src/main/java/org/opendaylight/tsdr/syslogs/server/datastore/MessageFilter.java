@@ -9,7 +9,11 @@
 
 package org.opendaylight.tsdr.syslogs.server.datastore;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.Facility;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.Severity;
@@ -27,32 +31,31 @@ public final class MessageFilter {
     //String type should support regex match
     private final Facility facility;
     private final Severity severity;
-    private final String hostname;
-    private final String applicationName;
-    private final String processId;
-    private final String sequenceId;
-    private final String content;
+    private final Pattern hostname;
+    private final Pattern applicationName;
+    private final Pattern processId;
+    private final Pattern sequenceId;
+    private final Pattern content;
 
     private MessageFilter(Facility facility, Severity severity, String hostname,
-            String applicationName, String processId, String messageId, String content) {
+            String applicationName, String processId, String messageId, String content) throws PatternSyntaxException {
         this.facility = facility;
         this.severity = severity;
-        this.hostname = hostname;
-        this.applicationName = applicationName;
-        this.processId = processId;
-        this.sequenceId = messageId;
-        this.content = content;
+        this.hostname = Pattern.compile(requireNonNull(hostname));
+        this.applicationName = Pattern.compile(requireNonNull(applicationName));
+        this.processId = Pattern.compile(requireNonNull(processId));
+        this.sequenceId = Pattern.compile(requireNonNull(messageId));
+        this.content = Pattern.compile(requireNonNull(content));
+    }
+
+    public static MessageFilter from(Filter filter) throws PatternSyntaxException {
+        return new MessageFilter(filter.getFacility(), filter.getSeverity(), filter.getHost(), filter.getApplication(),
+                filter.getPid(), filter.getSid(), ".*" + filter.getContent() + ".*\n?");
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (content == null ? 0 : content.hashCode());
-        result = prime * result + (facility == null ? 0 : facility.hashCode());
-        result = prime * result + (hostname == null ? 0 : hostname.hashCode());
-        result = prime * result + (severity == null ? 0 : severity.hashCode());
-        return result;
+        return Objects.hash(content, facility, hostname, severity);
     }
 
     @Override
@@ -60,82 +63,41 @@ public final class MessageFilter {
         if (this == obj) {
             return true;
         }
+
         if (obj == null) {
             return false;
         }
+
         if (getClass() != obj.getClass()) {
             return false;
         }
+
         MessageFilter other = (MessageFilter) obj;
-        if (content == null) {
-            if (other.content != null) {
-                return false;
-            }
-        } else if (!content.equals(other.content)) {
-            return false;
-        }
-        if (facility != other.facility) {
-            return false;
-        }
-        if (hostname == null) {
-            if (other.hostname != null) {
-                return false;
-            }
-        } else if (!hostname.equals(other.hostname)) {
-            return false;
-        }
-        if (severity != other.severity) {
-            return false;
-        }
-        return true;
+        return Objects.equals(content, other.content) && Objects.equals(hostname, other.hostname)
+                && facility == other.facility && severity == other.severity;
     }
 
-    public boolean equals(Message msg) {
+    public boolean matches(Message msg) {
         if (facility != null && !facility.equals(msg.getFacility())) {
             return false;
         }
+
         if (severity != null && !severity.equals(msg.getSeverity())) {
             return false;
         }
-        if (!Pattern.matches(hostname, msg.getHostname())
-                && !Pattern.matches(applicationName, msg.getApplicationName())
-                && !Pattern.matches(processId, msg.getProcessId())
-                && !Pattern.matches(sequenceId, msg.getSequenceId())) {
+
+        if (!hostname.matcher(msg.getHostname()).matches()
+                && !applicationName.matcher(msg.getApplicationName()).matches()
+                && !processId.matcher(msg.getProcessId()).matches()
+                && !sequenceId.matcher(msg.getSequenceId()).matches()) {
             return false;
         }
-        if (!Pattern.matches(content, msg.getContent())) {
+
+        if (!content.matcher(msg.getContent()).matches()) {
             return false;
         }
+
         //All fields are matched!
         return true;
-    }
-
-    /**
-     * This the builder of filter.
-     */
-    public static class FilterBuilder {
-        private Facility facility = null;
-        private Severity severity;
-        private String hostname = ".*";
-        private String applicationName = ".*";
-        private String processId = ".*";
-        private String sequenceId = ".*";
-        private String content = ".*";
-
-        public static MessageFilter create(Filter filterEntity) {
-            FilterBuilder builder = new FilterBuilder();
-            builder.severity = filterEntity.getSeverity();
-            builder.facility = filterEntity.getFacility();
-            builder.hostname = filterEntity.getHost();
-            builder.applicationName = filterEntity.getApplication();
-            builder.processId = filterEntity.getPid();
-            builder.sequenceId = filterEntity.getSid();
-            builder.content = ".*" + filterEntity.getContent() + ".*\n?";
-            return builder.build();
-        }
-
-        private MessageFilter build() {
-            return new MessageFilter(facility, severity, hostname, applicationName, processId, sequenceId, content);
-        }
     }
 }

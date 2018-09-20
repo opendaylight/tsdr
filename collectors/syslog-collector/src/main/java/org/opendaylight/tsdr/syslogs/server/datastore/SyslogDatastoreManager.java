@@ -27,6 +27,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.PatternSyntaxException;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -123,7 +124,7 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
 
     @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     private void notifyCallback(CallbackRegistrationInfo regInfo, Message message) {
-        if (!regInfo.messageFilter.equals(message)) {
+        if (!regInfo.messageFilter.matches(message)) {
             LOG.debug("Syslog message \"{}\" does not match filter for URL {}", message.getContent(),
                     regInfo.callbackURL);
             return;
@@ -163,9 +164,11 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         if (!Strings.isNullOrEmpty(callbackUrl)) {
             try {
                 callbackRegMap.put(filter.getFilterId(), new CallbackRegistrationInfo(
-                        MessageFilter.FilterBuilder.create(filter.getFilter()), new URL(callbackUrl)));
+                        MessageFilter.from(filter.getFilter()), new URL(callbackUrl)));
             } catch (MalformedURLException e) {
                 LOG.error("Invalid callback URL {}", callbackUrl, e);
+            } catch (PatternSyntaxException e) {
+                LOG.error("Invalid filter expression", e);
             }
         }
     }
