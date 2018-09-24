@@ -34,24 +34,19 @@ module tsdr-syslog-collector {
             default 6514;
         }
 
-        leaf core-threadpool-size {
-            type uint16;
-            default 5;
-        }
-
-        leaf max-threadpool-size {
+        leaf max-dispatcher-executor-pool-size {
             type uint16;
             default 10;
         }
 
-        leaf keep-alive-time {
+        leaf max-dispatcher-executor-queue-size {
             type uint16;
-            default 10;
+            default 1000;
         }
 
-        leaf queue-size {
+        leaf max-dispatcher-notification-queue-size {
             type uint16;
-            default 20;
+            default 1000;
         }
 
         leaf store-flush-interval {
@@ -137,36 +132,6 @@ module tsdr-syslog-collector {
             type string;
             default ".*";
             description "Content Body of syslog";
-        }
-    }
-
-    rpc show-threadpool-configuration {
-        output {
-            leaf queue-remaining-capacity {
-                type uint16;
-                description "the remaining capacity of the task queue.";
-            }
-            leaf queue-used-capacity {
-                type uint16;
-                description "the used capacity of the task queue.";
-            }
-            leaf keep-alive-time {
-                type uint16;
-                description "maximum time that excess idle threads will wait for new tasks
-                                before terminating.Time Unit:Second.";
-            }
-            leaf current-alive-thread-number {
-                type uint16;
-                description "current alive thread in the threadpool.";
-            }
-            leaf core-thread-number {
-                type uint16;
-                description "the number of threads to keep in the pool, even if they are idle.";
-            }
-            leaf Max-thread-number {
-                type uint16;
-                description "the maximum number of threads to allow in the pool.";
-            }
         }
     }
 

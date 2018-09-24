@@ -12,6 +12,4 @@
   <odl:clustered-app-config id="syslogCollectorConfig"
       binding-class="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig"/>
 
-  <odl:rpc-implementation ref="syslogDatastoreManager"/>
-
 </blueprint>

@@ -12,7 +12,6 @@ package org.opendaylight.tsdr.syslogs.server.datastore;
 import static org.opendaylight.mdsal.common.api.LogicalDatastoreType.CONFIGURATION;
 
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.ListenableFuture;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,13 +20,14 @@ import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -38,17 +38,13 @@ import org.opendaylight.mdsal.binding.api.DataObjectModification;
 import org.opendaylight.mdsal.binding.api.DataTreeIdentifier;
 import org.opendaylight.mdsal.binding.api.DataTreeModification;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationInput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutput;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.TsdrSyslogCollectorService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.SyslogFilter;
 import org.opendaylight.yangtools.concepts.ListenerRegistration;
+import org.opendaylight.yangtools.util.concurrent.QueuedNotificationManager;
+import org.opendaylight.yangtools.util.concurrent.SpecialExecutors;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
-import org.opendaylight.yangtools.yang.common.RpcResult;
-import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,24 +57,30 @@ import org.slf4j.LoggerFactory;
  * @author Wenbo Hu(wenbhu@tethrnet.com)
  */
 @Singleton
-public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoCloseable {
+public class SyslogDatastoreManager implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(SyslogDatastoreManager.class);
 
-    private final ThreadPoolExecutor threadPool;
+    private final ExecutorService executor;
     private final DataBroker dataBroker;
     private final Map<String, CallbackRegistrationInfo> callbackRegMap = new ConcurrentHashMap<>();
+    private final QueuedNotificationManager<CallbackRegistrationInfo, Message> notificationManager;
     private ListenerRegistration<?> listenerReg;
 
     @Inject
     public SyslogDatastoreManager(DataBroker dataBroker, SyslogCollectorConfig collectorConfig) {
         this.dataBroker = Objects.requireNonNull(dataBroker);
-        this.threadPool = new ThreadPoolExecutor(collectorConfig.getCoreThreadpoolSize(),
-                collectorConfig.getMaxThreadpoolSize(), collectorConfig.getKeepAliveTime(),
-                TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(collectorConfig.getQueueSize()));
 
-        LOG.info("SyslogDatastoreManager created: coreThreadPoolSize: {}, maxThreadpoolSize: {}, keepAliveTime: {}, "
-            + "queueSize: {}", collectorConfig.getCoreThreadpoolSize(), collectorConfig.getMaxThreadpoolSize(),
-            collectorConfig.getKeepAliveTime(), collectorConfig.getQueueSize());
+        executor = SpecialExecutors.newBlockingBoundedCachedThreadPool(
+                collectorConfig.getMaxDispatcherExecutorPoolSize(), collectorConfig.getMaxDispatcherExecutorQueueSize(),
+                "SyslogDatastoreMgr", SyslogDatastoreManager.class);
+        notificationManager = QueuedNotificationManager.create(executor,
+            (regInfo, messages) -> regInfo.notifyCallback(messages),
+            collectorConfig.getMaxDispatcherNotificationQueueSize(), "SyslogDatastoreQueueMgr");
+
+        LOG.info("SyslogDatastoreManager created: maxDispatcherExecutorPoolSize: {}, "
+            + "maxDispatcherExecutorQueueSize: {}, maxDispatcherNotificationQueueSize: {}",
+            collectorConfig.getMaxDispatcherExecutorPoolSize(), collectorConfig.getMaxDispatcherExecutorQueueSize(),
+            collectorConfig.getMaxDispatcherNotificationQueueSize());
     }
 
     @PostConstruct
@@ -113,48 +115,13 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
             listenerReg.close();
         }
 
-        threadPool.shutdown();
+        executor.shutdown();
 
         LOG.info("SyslogDatastoreManager closed");
     }
 
     public void execute(Message message) {
-        callbackRegMap.values().forEach(reg -> threadPool.execute(() -> notifyCallback(reg, message)));
-    }
-
-    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
-    private void notifyCallback(CallbackRegistrationInfo regInfo, Message message) {
-        if (!regInfo.messageFilter.matches(message)) {
-            LOG.debug("Syslog message \"{}\" does not match filter for URL {}", message.getContent(),
-                    regInfo.callbackURL);
-            return;
-        }
-
-        try {
-            LOG.debug("Sending syslog message \"{}\" to URL {}", message.getContent(), regInfo.callbackURL);
-
-            URLConnection urlConnection = regInfo.callbackURL.openConnection();
-            urlConnection.setDoOutput(true);
-            urlConnection.setDoInput(true);
-            urlConnection.setRequestProperty("content-type", "application/x-www-form-urlencoded");
-
-            try (OutputStreamWriter out = new OutputStreamWriter(urlConnection.getOutputStream())) {
-                out.write(message.getContent());
-                out.flush();
-            }
-
-            if (LOG.isDebugEnabled()) {
-                String line;
-                try (BufferedReader responseReader = new BufferedReader(
-                        new InputStreamReader(urlConnection.getInputStream()))) {
-                    while ((line = responseReader.readLine()) != null) {
-                        LOG.debug("Response from URL: {}", line);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            LOG.error("Error notifying callback URL {}", regInfo.callbackURL, e);
-        }
+        callbackRegMap.values().forEach(regInfo -> notificationManager.submitNotification(regInfo, message));
     }
 
     private void onFilterUpdated(SyslogFilter filter) {
@@ -173,26 +140,6 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         }
     }
 
-    @Override
-    public ListenableFuture<RpcResult<ShowThreadpoolConfigurationOutput>> showThreadpoolConfiguration(
-            ShowThreadpoolConfigurationInput input) {
-
-        int currentThreadpoolQueueSize = threadPool.getQueue().size();
-        int currentThreadpoolQueueRemainingCapacity = threadPool.getQueue().remainingCapacity();
-        long currentThreadpoolKeepAliveTime = threadPool.getKeepAliveTime(TimeUnit.SECONDS);
-
-        ShowThreadpoolConfigurationOutput output = new ShowThreadpoolConfigurationOutputBuilder()
-                .setCoreThreadNumber(threadPool.getCorePoolSize())
-                .setMaxThreadNumber(threadPool.getMaximumPoolSize())
-                .setCurrentAliveThreadNumber(threadPool.getPoolSize())
-                .setKeepAliveTime((int) currentThreadpoolKeepAliveTime)
-                .setQueueRemainingCapacity(currentThreadpoolQueueRemainingCapacity)
-                .setQueueUsedCapacity(currentThreadpoolQueueSize)
-                .build();
-
-        return RpcResultBuilder.success(output).buildFuture();
-    }
-
     private static class CallbackRegistrationInfo {
         MessageFilter messageFilter;
         URL callbackURL;
@@ -200,6 +147,50 @@ public class SyslogDatastoreManager implements TsdrSyslogCollectorService, AutoC
         CallbackRegistrationInfo(MessageFilter messageFilter, URL callbackURL) {
             this.messageFilter = messageFilter;
             this.callbackURL = callbackURL;
+        }
+
+        @SuppressFBWarnings("DM_DEFAULT_ENCODING")
+        void notifyCallback(Collection<? extends Message> messages) {
+            final List<Message> toSend = messages.stream().filter(messageFilter::matches)
+                    .collect(Collectors.toList());
+
+            if (LOG.isDebugEnabled()) {
+                messages.stream().collect(Collectors.collectingAndThen(Collectors.toList(), list -> {
+                    list.removeAll(toSend);
+                    return list;
+                })).forEach(msg -> LOG.debug("Syslog message \"{}\" does not match filter for URL {}",
+                        msg.getContent(), callbackURL));
+            }
+
+            if (toSend.isEmpty()) {
+                return;
+
+            }
+
+            try {
+                URLConnection urlConnection = callbackURL.openConnection();
+                urlConnection.setDoOutput(true);
+                urlConnection.setDoInput(true);
+                urlConnection.setRequestProperty("content-type", "application/x-www-form-urlencoded");
+
+                try (OutputStreamWriter out = new OutputStreamWriter(urlConnection.getOutputStream());
+                        BufferedReader responseReader = new BufferedReader(
+                                new InputStreamReader(urlConnection.getInputStream()))) {
+                    for (Message message: toSend) {
+                        LOG.debug("Sending syslog message \"{}\" to URL {}", message.getContent(), callbackURL);
+
+                        out.write(message.getContent());
+                        out.flush();
+
+                        String line;
+                        while ((line = responseReader.readLine()) != null) {
+                            LOG.debug("Response from URL: {}", line);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                LOG.error("Error notifying callback URL {}", callbackURL, e);
+            }
         }
     }
 }

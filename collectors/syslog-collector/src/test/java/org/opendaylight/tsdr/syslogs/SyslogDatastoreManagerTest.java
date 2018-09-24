@@ -8,7 +8,6 @@
 package org.opendaylight.tsdr.syslogs;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
@@ -36,8 +35,6 @@ import org.opendaylight.mdsal.binding.spec.reflect.BindingReflections;
 import org.opendaylight.mdsal.common.api.LogicalDatastoreType;
 import org.opendaylight.tsdr.syslogs.server.datastore.SyslogDatastoreManager;
 import org.opendaylight.tsdr.syslogs.server.decoder.Message;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationInputBuilder;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.ShowThreadpoolConfigurationOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfig;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogCollectorConfigBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.SyslogDispatcher;
@@ -47,7 +44,6 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.syslog.collector.rev151007.syslog.dispatcher.syslog.filter.FilterBuilder;
 import org.opendaylight.yangtools.yang.binding.InstanceIdentifier;
 import org.opendaylight.yangtools.yang.binding.YangModuleInfo;
-import org.opendaylight.yangtools.yang.common.RpcResult;
 
 /**
  * Unit tests for SyslogDatastoreManager.
@@ -57,8 +53,9 @@ import org.opendaylight.yangtools.yang.common.RpcResult;
  */
 public class SyslogDatastoreManagerTest {
 
-    private final SyslogCollectorConfig config = new SyslogCollectorConfigBuilder().setCoreThreadpoolSize(1)
-            .setMaxThreadpoolSize(1).setKeepAliveTime(10).setQueueSize(10).build();
+    private final SyslogCollectorConfig config = new SyslogCollectorConfigBuilder()
+            .setMaxDispatcherExecutorPoolSize(1).setMaxDispatcherExecutorQueueSize(10)
+            .setMaxDispatcherNotificationQueueSize(20).build();
     private SyslogDatastoreManager manager;
     private DataBroker dataBroker;
 
@@ -79,19 +76,6 @@ public class SyslogDatastoreManagerTest {
     @After
     public void tearDown() {
         manager.close();
-    }
-
-    @Test
-    public void testShowThreadpoolConfiguration() throws InterruptedException, ExecutionException, TimeoutException {
-        RpcResult<ShowThreadpoolConfigurationOutput> showResult = manager.showThreadpoolConfiguration(
-                new ShowThreadpoolConfigurationInputBuilder().build()).get(5, TimeUnit.SECONDS);
-
-        assertTrue(showResult.isSuccessful());
-        assertEquals(config.getCoreThreadpoolSize(), showResult.getResult().getCoreThreadNumber());
-        assertEquals(config.getMaxThreadpoolSize(), showResult.getResult().getMaxThreadNumber());
-        assertEquals(config.getKeepAliveTime(), showResult.getResult().getKeepAliveTime());
-        assertEquals(config.getQueueSize().intValue(), showResult.getResult().getQueueUsedCapacity().intValue()
-                + showResult.getResult().getQueueRemainingCapacity().intValue());
     }
 
     @Test
