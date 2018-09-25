@@ -7,29 +7,38 @@
  */
 package org.opendaylight.tsdr.netflow;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.util.concurrent.Uninterruptibles;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doAnswer;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.awaitility.Awaitility;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordOutputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
+import org.opendaylight.yangtools.yang.common.RpcResultBuilder;
 
 /**
  * Unit test for Netflow statistics collector.
  *
  * @author Muhammad Umair(muhammad.umair@xflowresearch.com)
-**/
-
+*/
 public class TSDRNetflowCollectorImplTest {
-    private final TsdrCollectorSpiService collectorSPIService = Mockito.mock(TsdrCollectorSpiService.class);
-    private final TSDRNetflowCollectorImpl implObj = new TSDRNetflowCollectorImpl(collectorSPIService);
+    private final TsdrCollectorSpiService mockSpiService = Mockito.mock(TsdrCollectorSpiService.class);
+    private final TSDRNetflowCollectorImpl implObj = new TSDRNetflowCollectorImpl(mockSpiService);
     private DatagramSocket socket;
 
     @Before
@@ -61,11 +70,18 @@ public class TSDRNetflowCollectorImplTest {
 
     @Test
     public void sendPacketsTest() throws InterruptedException, IOException {
-        byte[] data = new byte[1000];
+        List<TSDRLogRecord> storedRecords = Collections.synchronizedList(new ArrayList<>());
+        doAnswer(invocation -> {
+            storedRecords.addAll(((InsertTSDRLogRecordInput) invocation.getArguments()[0]).getTSDRLogRecord());
+            return RpcResultBuilder.success(new InsertTSDRLogRecordOutputBuilder().build()).buildFuture();
+        }).when(mockSpiService).insertTSDRLogRecord(any());
+
         // netflow v5 data
-        data = hexStringToByteArray("0005000101bc454657a03ec60000000000000046000000000a0000020a0000030000000000030005"
+        byte[] data = hexStringToByteArray(
+                "0005000101bc454657a03ec60000000000000046000000000a0000020a0000030000000000030005"
                 + "000000010000004001bb5ae601bc4546109200500000110100020003201f0000");
         sendNetflowData(data);
+
         // netflow v9 packet
         data = hexStringToByteArray(
                 "000900124a3d1d5857961622000168b700000000010003644a3cb4984a3cb498000000490000000100090000c0a80110080"
@@ -89,29 +105,33 @@ public class TSDRNetflowCollectorImplTest {
                 + "000073bab0ad0016100000000000");
         sendNetflowData(data);
 
-        assertPacketCount(2);
-    }
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            return storedRecords.size() == 19;
+        });
 
-    private void assertPacketCount(int expCount) {
-        AssertionError lastError = null;
-        Stopwatch sw = Stopwatch.createStarted();
-        while (sw.elapsed(TimeUnit.SECONDS) <= 10) {
-            try {
-                Assert.assertEquals(expCount, implObj.getPacketCount());
-                return;
-            } catch (AssertionError e) {
-                lastError = e;
-                Uninterruptibles.sleepUninterruptibly(50, TimeUnit.MILLISECONDS);
-            }
-        }
+        List<RecordAttributes> recordAttributes = storedRecords.get(0).getRecordAttributes();
+        assertEquals(27, recordAttributes.size());
+        assertEquals("version", recordAttributes.get(0).getName());
+        assertEquals("5", recordAttributes.get(0).getValue());
+        assertEquals("flowDuration", recordAttributes.get(26).getName());
+        assertEquals("60000", recordAttributes.get(26).getValue());
 
-        throw lastError;
+        recordAttributes = storedRecords.get(1).getRecordAttributes();
+        assertEquals(26, recordAttributes.size());
+        assertEquals("version", recordAttributes.get(0).getName());
+        assertEquals("9", recordAttributes.get(0).getValue());
+        assertEquals("Packets", recordAttributes.get(8).getName());
+        assertEquals("73", recordAttributes.get(8).getValue());
+        assertEquals("dstAS", recordAttributes.get(24).getName());
+        assertEquals("24", recordAttributes.get(24).getValue());
 
-    }
-
-    @Test
-    public void getIncomingNetflowSizeTest() {
-        long packetCount = implObj.getIncomingNetflowSize();
-        Assert.assertEquals(implObj.getPacketCount(), packetCount);
+        recordAttributes = storedRecords.get(storedRecords.size() - 1).getRecordAttributes();
+        assertEquals(26, recordAttributes.size());
+        assertEquals("version", recordAttributes.get(0).getName());
+        assertEquals("9", recordAttributes.get(0).getValue());
+        assertEquals("Packets", recordAttributes.get(8).getName());
+        assertEquals("89", recordAttributes.get(8).getValue());
+        assertEquals("dstAS", recordAttributes.get(24).getName());
+        assertEquals("22", recordAttributes.get(24).getValue());
     }
 }

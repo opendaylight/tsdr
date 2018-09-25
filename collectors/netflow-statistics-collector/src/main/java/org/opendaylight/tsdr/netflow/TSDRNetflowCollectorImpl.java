@@ -8,7 +8,6 @@
  */
 package org.opendaylight.tsdr.netflow;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.GuardedBy;
@@ -47,8 +45,8 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
 
-    private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 5000;
-    private static final long INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS = 2000;
+    private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 1000;
+    private static final long INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS = 500;
     private static final int FLOW_SIZE_FOR_NETFLOW_PACKET = 48;
     private static final Logger LOG = LoggerFactory.getLogger(TSDRNetflowCollectorImpl.class);
 
@@ -58,9 +56,6 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
     @GuardedBy("incomingNetFlow")
     private final LinkedList<DatagramPacket> incomingNetFlow = new LinkedList<>();
 
-    @VisibleForTesting
-    private final AtomicLong packetsCountForTests = new AtomicLong();
-
     /**
      * Constructor.
      */
@@ -69,15 +64,6 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
         super("TSDR NetFlow Listener");
         this.setDaemon(true);
         this.collectorSPIService = collectorSPIService;
-    }
-
-    public long getIncomingNetflowSize() {
-        return incomingNetFlow.size();
-    }
-
-    @VisibleForTesting
-    public long getPacketCount() {
-        return packetsCountForTests.get();
     }
 
     @PostConstruct
@@ -145,8 +131,6 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
             incomingNetFlow.add(packet);
             incomingNetFlow.notifyAll();
         }
-
-        packetsCountForTests.incrementAndGet();
     }
 
     private class NetFlowProcessor extends Thread {
@@ -161,10 +145,10 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
 
         @Override
         public void run() {
-            DatagramPacket packet = null;
             LinkedList<TSDRLogRecord> netFlowQueue = new LinkedList<>();
             long lastPersisted = System.currentTimeMillis();
             while (running.get()) {
+                DatagramPacket packet = null;
                 synchronized (incomingNetFlow) {
                     if (incomingNetFlow.isEmpty()) {
                         LOG.debug("No Pkts in queue");
@@ -256,21 +240,20 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
                             flowCounter += 1;
                         }
                     }
+                }
 
+                if (System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS
+                        && !netFlowQueue.isEmpty()) {
+                    LinkedList<TSDRLogRecord> queue = null;
                     if (System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS
                             && !netFlowQueue.isEmpty()) {
-                        LinkedList<TSDRLogRecord> queue = null;
-                        if (System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS
-                                && !netFlowQueue.isEmpty()) {
-                            lastPersisted = System.currentTimeMillis();
-                            queue = netFlowQueue;
-                            netFlowQueue = new LinkedList<>();
-                        }
-                        if (queue != null) {
-                            store(queue);
-                        }
+                        lastPersisted = System.currentTimeMillis();
+                        queue = netFlowQueue;
+                        netFlowQueue = new LinkedList<>();
                     }
-                    packet = null;
+                    if (queue != null) {
+                        store(queue);
+                    }
                 }
             }
         }
