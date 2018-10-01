@@ -65,7 +65,7 @@ public class TSDRSyslogCollectorImpl implements AutoCloseable {
                 "SyslogCollector", collectorConfig.getStoreFlushInterval().intValue()) {
             @Override
             protected List<TSDRLogRecord> transform(List<Message> from) {
-                return from.stream().flatMap(msg -> filter(msg)).collect(Collectors.toList());
+                return from.stream().flatMap(TSDRSyslogCollectorImpl.this::filter).collect(Collectors.toList());
             }
         };
 
