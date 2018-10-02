@@ -18,17 +18,27 @@ import org.slf4j.LoggerFactory;
 public class NetflowPacketParserFactory {
     private static final Logger LOG = LoggerFactory.getLogger(NetflowPacketParserFactory.class);
 
+    private final NetflowPacketV9ParserFactory v9ParserFactory = new NetflowPacketV9ParserFactory();
+
     public NetflowPacketParser newInstance(final byte[] bytes) {
         int version = (int) AbstractNetflowPacketParser.parseLong(bytes, 0, 2);
         switch (version) {
             case 5:
                 return new NetflowV5PacketParser(bytes, 2);
             case 9:
-                return new NetflowV9PacketParser(bytes, 2);
+                return v9ParserFactory.newInstance(bytes);
             default:
                 LOG.warn("Received netflow packet with unknown/unsupported version {}", version);
                 return callback -> {
                 };
+        }
+    }
+
+    private static class NetflowPacketV9ParserFactory {
+        private final FlowsetTemplateCache flowsetTemplateCache = new FlowsetTemplateCache();
+
+        NetflowPacketParser newInstance(final byte[] bytes) {
+            return new NetflowV9PacketParser(bytes, 2, flowsetTemplateCache);
         }
     }
 }
