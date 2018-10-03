@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2015 xFlow Research Inc. and others.  All rights reserved.
+ * Copyright (c) 2018 Inocybe Technologies and others.  All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package org.opendaylight.tsdr.netflow;
+package org.opendaylight.tsdr.netflow.parser;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -21,13 +21,13 @@ import org.junit.Test;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
 
 /**
- * Unit tests for Netflow data parser.
+ * Unit tests for NetflowPacketParserFactory.
  *
- * @author Muhammad Umair(muhammad.umair@xflowresearch.com)
  * @author Thomas Pantelis
-**/
+ */
+public class NetflowPacketParserFactoryTest {
+    private final NetflowPacketParserFactory factory = new NetflowPacketParserFactory();
 
-public class NetflowPacketParserTest {
     @Test
     public void testVersion5() throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -91,7 +91,7 @@ public class NetflowPacketParserTest {
         out.writeByte(0);         // padding
         out.close();
 
-        NetflowPacketParser parser = NetflowPacketParser.newInstance(bos.toByteArray());
+        NetflowPacketParser parser = factory.newInstance(bos.toByteArray());
 
         List<List<RecordAttributes>> records = new ArrayList<>();
         parser.parseRecords(r -> records.add(r));
@@ -232,7 +232,7 @@ public class NetflowPacketParserTest {
 
         out.writeByte(0);   // padding
 
-        NetflowPacketParser parser = NetflowPacketParser.newInstance(bos.toByteArray());
+        NetflowPacketParser parser = factory.newInstance(bos.toByteArray());
 
         List<List<RecordAttributes>> records = new ArrayList<>();
         parser.parseRecords(r -> records.add(r));
@@ -296,7 +296,7 @@ public class NetflowPacketParserTest {
         out.writeShort(5);      // length
         out.writeByte(1);
 
-        NetflowPacketParser parser = NetflowPacketParser.newInstance(bos.toByteArray());
+        NetflowPacketParser parser = factory.newInstance(bos.toByteArray());
 
         List<List<RecordAttributes>> records = new ArrayList<>();
         parser.parseRecords(r -> records.add(r));
@@ -316,7 +316,7 @@ public class NetflowPacketParserTest {
         out.writeInt(1470119622); // unix_secs
         out.close();
 
-        NetflowPacketParser parser = NetflowPacketParser.newInstance(bos.toByteArray());
+        NetflowPacketParser parser = factory.newInstance(bos.toByteArray());
 
         List<List<RecordAttributes>> records = new ArrayList<>();
         parser.parseRecords(r -> records.add(r));

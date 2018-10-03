@@ -26,6 +26,8 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
+import org.opendaylight.tsdr.netflow.parser.NetflowPacketParser;
+import org.opendaylight.tsdr.netflow.parser.NetflowPacketParserFactory;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
@@ -55,6 +57,8 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
     private final AtomicBoolean running = new AtomicBoolean(true);
     @GuardedBy("incomingNetFlow")
     private final LinkedList<DatagramPacket> incomingNetFlow = new LinkedList<>();
+
+    private final NetflowPacketParserFactory parserFactory = new NetflowPacketParserFactory();
 
     /**
      * Constructor.
@@ -190,7 +194,7 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
 
             LOG.debug("Received packet - srcIp: {}, data length: {}", srcIp, data.length);
 
-            NetflowPacketParser parser = NetflowPacketParser.newInstance(data);
+            NetflowPacketParser parser = parserFactory.newInstance(data);
             parser.parseRecords(recordAttrs -> {
                 final TSDRLogRecord record = new TSDRLogRecordBuilder().setNodeID(srcIp)
                         .setTimeStamp(currentTimeStamp).setIndex(counter.getAndIncrement())
