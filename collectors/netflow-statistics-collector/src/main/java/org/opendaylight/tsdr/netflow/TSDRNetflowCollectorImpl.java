@@ -17,9 +17,9 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.concurrent.GuardedBy;
@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.opendaylight.tsdr.collector.spi.RPCFutures;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInputBuilder;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecord;
@@ -47,7 +48,6 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
 
     private static final long PERSIST_CHECK_INTERVAL_IN_MILLISECONDS = 1000;
     private static final long INCOMING_QUEUE_WAIT_INTERVAL_IN_MILLISECONDS = 500;
-    private static final int FLOW_SIZE_FOR_NETFLOW_PACKET = 48;
     private static final Logger LOG = LoggerFactory.getLogger(TSDRNetflowCollectorImpl.class);
 
     private final TsdrCollectorSpiService collectorSPIService;
@@ -134,8 +134,6 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
     }
 
     private class NetFlowProcessor extends Thread {
-        private TSDRLogRecordBuilder recordbuilder;
-
         NetFlowProcessor() {
             super("TSDR NetFlow Processor");
             this.setDaemon(true);
@@ -145,8 +143,9 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
 
         @Override
         public void run() {
-            LinkedList<TSDRLogRecord> netFlowQueue = new LinkedList<>();
+            List<TSDRLogRecord> netFlowQueue = new LinkedList<>();
             long lastPersisted = System.currentTimeMillis();
+            AtomicInteger counter = new AtomicInteger(1);
             while (running.get()) {
                 DatagramPacket packet = null;
                 synchronized (incomingNetFlow) {
@@ -164,87 +163,12 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
                 }
 
                 if (packet != null) {
-                    LOG.debug("Pkts found");
-                    byte[] buff = packet.getData();
-                    String srcIp = packet.getAddress().getHostAddress().trim();
-                    int netFlowVersion = Integer.parseInt(NetflowPacketParser.convert(buff, 0, 2));
-                    long currentTimeStamp = System.currentTimeMillis();
-                    if (netFlowVersion == 9) {
-                        int flowCount = Integer.parseInt(NetflowPacketParser.convert(buff, 2, 2));
-                        int flowCounter = 1;
-                        int dataBufferOffset = 20;
-                        int flowsetid = Integer.parseInt(NetflowPacketParser.convert(buff, dataBufferOffset, 2));
-                        int flowsetLength = Integer
-                                .parseInt(NetflowPacketParser.convert(buff, dataBufferOffset + 2, 2));
-                        Map<Integer, Integer> templateMap = null;
-                        if (flowsetid == 0) {
-                            dataBufferOffset += 4;
-                            templateMap = NetflowPacketParser.createFlowSetTemplateMap(
-                                    buff, dataBufferOffset, flowCount);
-                            dataBufferOffset += flowsetLength;
-                            flowsetid = Integer.parseInt(NetflowPacketParser.convert(buff, dataBufferOffset, 2));
-                            flowsetLength = Integer
-                                    .parseInt(NetflowPacketParser.convert(buff, dataBufferOffset + 2, 2));
-                            dataBufferOffset += 4;
-                        }
-                        int packetLength = (flowsetLength - 4) / flowCount;
-                        while (flowCounter <= flowCount && dataBufferOffset + packetLength < buff.length) {
-                            recordbuilder = new TSDRLogRecordBuilder();
-                            NetflowPacketParser parser = new NetflowPacketParser(buff);
-                            parser.addFormat(buff, dataBufferOffset, templateMap);
-                            /*Fill up the RecordBuilder object*/
-                            recordbuilder.setNodeID(srcIp);
-                            recordbuilder.setTimeStamp(currentTimeStamp);
-                            recordbuilder.setIndex(flowCounter);
-                            recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
-                            recordbuilder.setRecordFullText(parser.toString());
-
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug(parser.toString());
-                            }
-
-                            recordbuilder.setRecordAttributes(parser.getRecordAttributes());
-                            TSDRLogRecord logRecord =  recordbuilder.build();
-                            if (logRecord != null) {
-                                netFlowQueue.add(logRecord);
-                            }
-                            dataBufferOffset += packetLength;
-                            flowCounter += 1;
-                        }
-                    } else {
-                        int flowCount = Integer.parseInt(NetflowPacketParser.convert(buff, 2, 2));
-                        int flowCounter = 1;
-                        int dataBufferOffset = 0;
-                        while (flowCounter <= flowCount
-                                && dataBufferOffset + FLOW_SIZE_FOR_NETFLOW_PACKET < buff.length) {
-                            recordbuilder = new TSDRLogRecordBuilder();
-                            NetflowPacketParser parser = new NetflowPacketParser(buff);
-                            parser.addFormat(buff, dataBufferOffset, null);
-                            dataBufferOffset += FLOW_SIZE_FOR_NETFLOW_PACKET;
-                            /*Fill up the RecordBuilder object*/
-                            recordbuilder.setNodeID(srcIp);
-                            recordbuilder.setTimeStamp(currentTimeStamp);
-                            recordbuilder.setIndex(flowCounter);
-                            recordbuilder.setTSDRDataCategory(DataCategory.NETFLOW);
-                            recordbuilder.setRecordFullText(parser.toString());
-
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug(parser.toString());
-                            }
-
-                            recordbuilder.setRecordAttributes(parser.getRecordAttributes());
-                            TSDRLogRecord logRecord =  recordbuilder.build();
-                            if (logRecord != null) {
-                                netFlowQueue.add(logRecord);
-                            }
-                            flowCounter += 1;
-                        }
-                    }
+                    parseRecords(netFlowQueue, counter, packet);
                 }
 
                 if (System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS
                         && !netFlowQueue.isEmpty()) {
-                    LinkedList<TSDRLogRecord> queue = null;
+                    List<TSDRLogRecord> queue = null;
                     if (System.currentTimeMillis() - lastPersisted > PERSIST_CHECK_INTERVAL_IN_MILLISECONDS
                             && !netFlowQueue.isEmpty()) {
                         lastPersisted = System.currentTimeMillis();
@@ -257,6 +181,24 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
                 }
             }
         }
+
+        private void parseRecords(final List<TSDRLogRecord> netFlowQueue, final AtomicInteger counter,
+                final DatagramPacket packet) {
+            final byte[] data = packet.getData();
+            String srcIp = packet.getAddress().getHostAddress().trim();
+            long currentTimeStamp = System.currentTimeMillis();
+
+            LOG.debug("Received packet - srcIp: {}, data length: {}", srcIp, data.length);
+
+            NetflowPacketParser parser = NetflowPacketParser.newInstance(data);
+            parser.parseRecords(recordAttrs -> {
+                final TSDRLogRecord record = new TSDRLogRecordBuilder().setNodeID(srcIp)
+                        .setTimeStamp(currentTimeStamp).setIndex(counter.getAndIncrement())
+                        .setTSDRDataCategory(DataCategory.NETFLOW).setRecordFullText("Netflow packet")
+                        .setRecordAttributes(recordAttrs).build();
+                netFlowQueue.add(record);
+            });
+        }
     }
 
    /**
@@ -265,10 +207,11 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
      * @param queue the data to store
     */
     private void store(List<TSDRLogRecord> queue) {
-        InsertTSDRLogRecordInputBuilder input = new InsertTSDRLogRecordInputBuilder();
-        input.setTSDRLogRecord(queue);
-        input.setCollectorCodeName("TSDRNetFlowCollector");
+        InsertTSDRLogRecordInput input = new InsertTSDRLogRecordInputBuilder().setTSDRLogRecord(queue)
+                .setCollectorCodeName("TSDRNetFlowCollector").build();
 
-        RPCFutures.logResult(collectorSPIService.insertTSDRLogRecord(input.build()), "insertTSDRLogRecord", LOG);
+        LOG.debug("Storing {} log records: {}", queue.size(), input);
+
+        RPCFutures.logResult(collectorSPIService.insertTSDRLogRecord(input), "insertTSDRLogRecord", LOG);
     }
 }
