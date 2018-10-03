@@ -7,6 +7,8 @@
  */
 package org.opendaylight.tsdr.netflow.parser;
 
+import org.opendaylight.tsdr.netflow.parser.v5.NetflowV5PacketParser;
+import org.opendaylight.tsdr.netflow.parser.v9.NetflowPacketV9ParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,14 +33,6 @@ public class NetflowPacketParserFactory {
                 LOG.warn("Received netflow packet with unknown/unsupported version {}", version);
                 return callback -> {
                 };
-        }
-    }
-
-    private static class NetflowPacketV9ParserFactory {
-        private final FlowsetTemplateCache flowsetTemplateCache = new FlowsetTemplateCache();
-
-        NetflowPacketParser newInstance(final byte[] bytes) {
-            return new NetflowV9PacketParser(bytes, 2, flowsetTemplateCache);
         }
     }
 }

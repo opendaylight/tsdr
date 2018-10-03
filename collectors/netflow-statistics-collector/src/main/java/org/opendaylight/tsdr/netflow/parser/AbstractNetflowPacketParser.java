@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Thomas Pantelis
  */
-abstract class AbstractNetflowPacketParser implements NetflowPacketParser {
+public abstract class AbstractNetflowPacketParser implements NetflowPacketParser {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractNetflowPacketParser.class);
 
     private final List<RecordAttributes> headerAttributes = new ArrayList<>();
