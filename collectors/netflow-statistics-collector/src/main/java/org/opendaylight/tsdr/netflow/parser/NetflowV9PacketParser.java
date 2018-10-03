@@ -8,7 +8,6 @@
 package org.opendaylight.tsdr.netflow.parser;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,12 +28,12 @@ public class NetflowV9PacketParser extends AbstractNetflowPacketParser {
 
     private static final int TEMPLATE_FLOWSET_ID = 0;
 
-    // TODO - this should be shared
-    private final Map<TemmplateKey, Map<Integer, Integer>> templateMap = new HashMap<>();
+    private final FlowsetTemplateCache templateCache;
     private final long sourceId;
 
-    NetflowV9PacketParser(byte[] data, int initialPosition) {
+    NetflowV9PacketParser(byte[] data, int initialPosition, FlowsetTemplateCache templateCache) {
         super(data, 9, initialPosition);
+        this.templateCache = templateCache;
 
         addHeaderAttribute("flow_sequence", parseIntString());
 
@@ -61,28 +60,19 @@ public class NetflowV9PacketParser extends AbstractNetflowPacketParser {
             return OptionalInt.of(parseTemplateFlowset(start, flowsetLength));
         }
 
-        final Map<Integer, Integer> template = templateMap.get(new TemmplateKey(sourceId, flowsetId));
+        final Map<Integer, Integer> template = templateCache.get(sourceId, flowsetId);
         if (template == null) {
             LOG.warn("No flow set template found for source Id {}, template Id {}", sourceId, flowsetId);
             return OptionalInt.empty();
         }
 
-        int recordLength = 0;
-        for (Integer len: template.values()) {
-            recordLength += len;
-        }
+        int recordLength = template.values().stream().mapToInt(len -> len).sum();
 
         LOG.debug("Found template {} - recordLength: {}: {}", flowsetId, recordLength, template);
 
-        int recordCount = (flowsetLength - (position() - start)) / recordLength;
+        int recordCount = recordLength > 0 ? (flowsetLength - (position() - start)) / recordLength : 0;
 
         LOG.debug("Parsing {} records", recordCount);
-
-        if (recordCount <= 0) {
-            // Probably shouldn't happen.
-            LOG.debug("No records in the flow set");
-            return OptionalInt.of(0);
-        }
 
         for (int i = 0; i < recordCount; i++) {
             callback.accept(parseDataFlowsetRecord(template));
@@ -120,7 +110,6 @@ public class NetflowV9PacketParser extends AbstractNetflowPacketParser {
             int templateId = parseShort();
             int fieldCount = parseShort();
 
-            final TemmplateKey key = new TemmplateKey(sourceId, templateId);
             Map<Integer, Integer> template = new LinkedHashMap<>();
             for (int i = 0; i < fieldCount; i++) {
                 int attrId = parseShort();
@@ -136,10 +125,8 @@ public class NetflowV9PacketParser extends AbstractNetflowPacketParser {
                 template.put(Integer.valueOf(attrId), Integer.valueOf(attrLen));
             }
 
-            templateMap.put(key, template);
+            templateCache.put(sourceId, templateId, template);
             recordCount++;
-
-            LOG.debug("Parsed template - key: {}, {}", key, template);
         } while (position() - start < flowsetLength);
 
         return recordCount;
@@ -333,44 +320,6 @@ public class NetflowV9PacketParser extends AbstractNetflowPacketParser {
 
         String toStringValue(NetflowV9PacketParser parser, int length) {
             return Long.toString(parser.parseLong(length));
-        }
-    }
-
-    private static class TemmplateKey {
-        private final long sourceId;
-        private final int templateId;
-
-        TemmplateKey(long sourceId, int templateId) {
-            this.sourceId = sourceId;
-            this.templateId = templateId;
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + (int) (sourceId ^ sourceId >>> 32);
-            result = prime * result + templateId;
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-
-            TemmplateKey other = (TemmplateKey) obj;
-            return sourceId == other.sourceId && templateId == other.templateId;
-        }
-
-        @Override
-        public String toString() {
-            return "TemmplateKey [sourceId=" + sourceId + ", templateId=" + templateId + "]";
         }
     }
 }

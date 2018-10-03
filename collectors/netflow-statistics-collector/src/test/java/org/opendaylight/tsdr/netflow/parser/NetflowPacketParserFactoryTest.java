@@ -91,12 +91,9 @@ public class NetflowPacketParserFactoryTest {
         out.writeByte(0);         // padding
         out.close();
 
-        NetflowPacketParser parser = factory.newInstance(bos.toByteArray());
-
-        List<List<RecordAttributes>> records = new ArrayList<>();
-        parser.parseRecords(r -> records.add(r));
-
+        List<List<RecordAttributes>> records = parseRecords(bos.toByteArray());
         assertEquals(2, records.size());
+
         Map<String, String> attrs = toMap(records.get(0));
         assertEquals("5", attrs.remove("version"));
         assertEquals("29115718", attrs.remove("sys_uptime"));
@@ -219,25 +216,8 @@ public class NetflowPacketParserFactoryTest {
         out.writeByte(0);     // padding
         out.writeByte(0);     // padding
 
-        // Data flow set 2
-        out.writeShort(257);  // flowset_id == template 2
-        out.writeShort(38);   // length
-
-        // Record
-        out.writeInt(0xa0000020);
-        out.writeShort(99);
-        out.writeBytes("FE1/0");
-        out.write(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf});
-        out.write(new byte[]{0xa, 0xb, 0xc, 0xd, 0x12, 0x4});
-
-        out.writeByte(0);   // padding
-
-        NetflowPacketParser parser = factory.newInstance(bos.toByteArray());
-
-        List<List<RecordAttributes>> records = new ArrayList<>();
-        parser.parseRecords(r -> records.add(r));
-
-        assertEquals(3, records.size());
+        List<List<RecordAttributes>> records = parseRecords(bos.toByteArray());
+        assertEquals(2, records.size());
 
         Map<String, String> attrs = toMap(records.get(0));
         assertEquals("9", attrs.remove("version"));
@@ -263,7 +243,34 @@ public class NetflowPacketParserFactoryTest {
         assertEquals("5137183", attrs.remove("OUT_BYTES"));
         assertEmpty(attrs);
 
-        attrs = toMap(records.get(2));
+        bos = new ByteArrayOutputStream();
+        out = new DataOutputStream(bos);
+
+        // Header
+        out.writeShort(9);         // version
+        out.writeShort(5);         // count
+        out.writeInt(289584773);   // sys_uptime
+        out.writeInt(691368492);   // unix_secs
+        out.writeInt(168);         // package_sequence
+        out.writeInt(20);          // source_id
+
+        // Data flow set 2
+        out.writeShort(257);  // flowset_id == template 2
+        out.writeShort(38);   // length
+
+        // Record
+        out.writeInt(0xa0000020);
+        out.writeShort(99);
+        out.writeBytes("FE1/0");
+        out.write(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf});
+        out.write(new byte[]{0xa, 0xb, 0xc, 0xd, 0x12, 0x4});
+
+        out.writeByte(0);   // padding
+
+        records = parseRecords(bos.toByteArray());
+        assertEquals(1, records.size());
+
+        attrs = toMap(records.get(0));
         assertEquals("9", attrs.remove("version"));
         assertEquals("289584773", attrs.remove("sys_uptime"));
         assertEquals("691368492", attrs.remove("unix_secs"));
@@ -296,11 +303,7 @@ public class NetflowPacketParserFactoryTest {
         out.writeShort(5);      // length
         out.writeByte(1);
 
-        NetflowPacketParser parser = factory.newInstance(bos.toByteArray());
-
-        List<List<RecordAttributes>> records = new ArrayList<>();
-        parser.parseRecords(r -> records.add(r));
-
+        List<List<RecordAttributes>> records = parseRecords(bos.toByteArray());
         assertEquals(0, records.size());
     }
 
@@ -318,10 +321,16 @@ public class NetflowPacketParserFactoryTest {
 
         NetflowPacketParser parser = factory.newInstance(bos.toByteArray());
 
-        List<List<RecordAttributes>> records = new ArrayList<>();
-        parser.parseRecords(r -> records.add(r));
-
+        List<List<RecordAttributes>> records = parseRecords(bos.toByteArray());
         assertEquals(0, records.size());
+    }
+
+    private List<List<RecordAttributes>> parseRecords(byte[] data) {
+        NetflowPacketParser parser = factory.newInstance(data);
+
+        final List<List<RecordAttributes>> records = new ArrayList<>();
+        parser.parseRecords(r -> records.add(r));
+        return records;
     }
 
     private static void assertEmpty(Map<String, String> attrs) {
