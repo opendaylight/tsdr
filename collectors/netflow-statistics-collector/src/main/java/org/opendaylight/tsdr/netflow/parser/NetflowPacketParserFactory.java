@@ -22,13 +22,13 @@ public class NetflowPacketParserFactory {
 
     private final NetflowPacketV9ParserFactory v9ParserFactory = new NetflowPacketV9ParserFactory();
 
-    public NetflowPacketParser newInstance(final byte[] bytes) {
+    public NetflowPacketParser newInstance(final byte[] bytes, String sourceIP) {
         int version = (int) AbstractNetflowPacketParser.parseLong(bytes, 0, 2);
         switch (version) {
             case 5:
                 return new NetflowV5PacketParser(bytes, 2);
             case 9:
-                return v9ParserFactory.newInstance(bytes);
+                return v9ParserFactory.newInstance(bytes, sourceIP);
             default:
                 LOG.warn("Received netflow packet with unknown/unsupported version {}", version);
                 return callback -> {

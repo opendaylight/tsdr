@@ -19,12 +19,12 @@ import org.slf4j.LoggerFactory;
 public class TemplateCache<T> {
     private final Map<TemplateKey, T> templateMap = new ConcurrentHashMap<>();
 
-    public T get(long sourceId, int templateId) {
-        return templateMap.get(new TemplateKey(sourceId, templateId));
+    public T get(long sourceId, int templateId, String sourceIP) {
+        return templateMap.get(new TemplateKey(sourceId, templateId, sourceIP));
     }
 
-    public void put(long sourceId, int templateId, T template) {
-        final TemplateKey key = new TemplateKey(sourceId, templateId);
+    public void put(long sourceId, int templateId, String sourceIP, T template) {
+        final TemplateKey key = new TemplateKey(sourceId, templateId, sourceIP);
         templateMap.put(key, template);
 
         LoggerFactory.getLogger(getClass()).debug("Added template - key: {}, {}", key, template);
