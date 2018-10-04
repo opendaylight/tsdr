@@ -45,6 +45,7 @@
     <module>collectors/syslog-collector</module>
     <module>collectors/restconf-collector</module>
     <module>collectors/log-collector</module>
+    <module>collectors/yang-notification-collector</module>
     <module>features</module>
     <module>artifacts</module>
     <module>karaf</module>

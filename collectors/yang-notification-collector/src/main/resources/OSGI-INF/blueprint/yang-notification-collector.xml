@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0"
+       odl:use-default-for-reference-types="true">
+
+  <reference id="dataBroker"
+             interface="org.opendaylight.mdsal.binding.api.DataBroker"/>
+  <odl:rpc-service id="tsdrCollectorSpiService"
+                   interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
+  <reference id="schedulerService" interface="org.opendaylight.tsdr.spi.scheduler.SchedulerService"/>
+  <reference id="dOMNotificationService"
+             interface="org.opendaylight.mdsal.dom.api.DOMNotificationService" />
+
+  <odl:static-reference id="dOMSchemaService" interface="org.opendaylight.mdsal.dom.api.DOMSchemaService"/>
+
+</blueprint>

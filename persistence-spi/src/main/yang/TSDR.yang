@@ -41,6 +41,7 @@ module TSDR {
             enum SNMP_INTERFACES;
             enum RESTCONF;
             enum ODL_LOG;
+            enum YANG_NOTIFICATION;
         }
     }
 

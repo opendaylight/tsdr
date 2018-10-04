@@ -25,6 +25,7 @@
       <module>odl-tsdr-netflow-statistics-collector</module>
       <module>odl-tsdr-syslog-collector</module>
       <module>odl-tsdr-restconf-collector</module>
+      <module>odl-tsdr-yang-notification-collector</module>
       <module>odl-tsdr-controller-metrics-collector</module>
       <module>odl-tsdr-log-collector</module>
       <module>odl-tsdr-cassandra</module>
