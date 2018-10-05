@@ -35,8 +35,6 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         this.totalRecordCount = parseShort();
 
         addHeaderAttribute("version", Integer.toString(version));
-        addHeaderAttribute("sys_uptime", parseIntString());
-        addHeaderAttribute("unix_secs", parseIntString());
 
         LOG.debug("Packet version: {}, total record count: {}, headers: {}", version, totalRecordCount,
                 headerAttributes);

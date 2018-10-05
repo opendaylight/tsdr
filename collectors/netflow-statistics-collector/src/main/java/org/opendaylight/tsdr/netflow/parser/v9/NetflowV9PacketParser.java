@@ -10,9 +10,10 @@ package org.opendaylight.tsdr.netflow.parser.v9;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import org.opendaylight.tsdr.netflow.parser.AbstractNetflowPacketParser;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,8 @@ import org.slf4j.LoggerFactory;
  * @author Thomas Pantelis
  */
 class NetflowV9PacketParser extends AbstractNetflowPacketParser {
+    static final String FLOW_SET_LOG_TEXT = "Data FlowSet";
+
     private static final Logger LOG = LoggerFactory.getLogger(NetflowV9PacketParser.class);
 
     private static final int TEMPLATE_FLOWSET_ID = 0;
@@ -32,6 +35,7 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
     private final OptionsTemplateCache optionsTemplateCache;
     private final long sourceId;
     private final String sourceIP;
+    private final Long timestamp;
 
     NetflowV9PacketParser(byte[] data, int initialPosition, String sourceIP, FlowsetTemplateCache flowsetTemplateCache,
             OptionsTemplateCache optionsTemplateCache) {
@@ -40,6 +44,8 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
         this.flowsetTemplateCache = flowsetTemplateCache;
         this.optionsTemplateCache = optionsTemplateCache;
 
+        addHeaderAttribute("sys_uptime", parseIntString());
+        timestamp = parseInt() * 1000;
         addHeaderAttribute("package_sequence", parseIntString());
 
         sourceId = parseInt();
@@ -47,14 +53,14 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
     }
 
     @Override
-    public void parseRecords(BiConsumer<List<RecordAttributes>, String> callback) {
+    public void parseRecords(TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
         int recordCounter = 0;
         while (recordCounter < totalRecordCount() && !endOfData()) {
-            recordCounter += parseNextRecords(callback).orElse(totalRecordCount());
+            recordCounter += parseNextRecords(recordBuilder, callback).orElse(totalRecordCount());
         }
     }
 
-    private OptionalInt parseNextRecords(BiConsumer<List<RecordAttributes>, String> callback) {
+    private OptionalInt parseNextRecords(TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
         int start = position();
         int flowsetId = parseShort();
         int flowsetLength = parseShort();
@@ -69,20 +75,20 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
                 return OptionalInt.of(parseOptionsTemplate(start, flowsetLength));
 
             default:
-                return parseDataFlowset(start, flowsetId, flowsetLength, callback);
+                return parseDataFlowset(start, flowsetId, flowsetLength, recordBuilder, callback);
         }
     }
 
     private OptionalInt parseDataFlowset(int start, int flowsetId, int flowsetLength,
-            BiConsumer<List<RecordAttributes>, String> callback) {
+            TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
         Template flowsetTemplate = flowsetTemplateCache.get(sourceId, flowsetId, sourceIP);
         if (flowsetTemplate != null) {
-            return parseDataFlowsetRecords(start, flowsetId, flowsetLength, flowsetTemplate, callback);
+            return parseDataFlowsetRecords(start, flowsetId, flowsetLength, flowsetTemplate, recordBuilder, callback);
         }
 
         OptionsTemplate optionsTemplate = optionsTemplateCache.get(sourceId, flowsetId, sourceIP);
         if (optionsTemplate != null) {
-            return parseOptionDataRecords(start, flowsetId, flowsetLength, optionsTemplate, callback);
+            return parseOptionDataRecords(start, flowsetId, flowsetLength, optionsTemplate, recordBuilder, callback);
         }
 
         LOG.warn("No template found for source Id {}, template Id {}", sourceId, flowsetId);
@@ -90,7 +96,7 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
     }
 
     private OptionalInt parseOptionDataRecords(int start, int templateId, int flowsetLength, OptionsTemplate template,
-            BiConsumer<List<RecordAttributes>, String> callback) {
+            TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
         LOG.debug("Found options template {} - {}", templateId, template);
 
         int recordCount = template.getTotalLength() > 0
@@ -119,8 +125,8 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
                 recordText.append(' ').append(parseLong(length));
             }
 
-            List<RecordAttributes> recordAttrs = parseRecordAttributes(template.getOptionTemplate());
-            callback.accept(recordAttrs, recordText.toString());
+            callback.accept(recordBuilder.setRecordFullText(recordText.toString()).setTimeStamp(timestamp)
+                    .setRecordAttributes(parseRecordAttributes(template.getOptionTemplate())));
         }
 
         skipPadding(start, flowsetLength);
@@ -129,7 +135,7 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
     }
 
     private OptionalInt parseDataFlowsetRecords(int start, int templateId, int flowsetLength, Template template,
-            BiConsumer<List<RecordAttributes>, String> callback) {
+            TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
         LOG.debug("Found data flowset template {} - {}", templateId, template);
 
         int recordCount = template.getTotalLength() > 0
@@ -138,7 +144,8 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
         LOG.debug("Parsing {} data flowset records", recordCount);
 
         for (int i = 0; i < recordCount; i++) {
-            callback.accept(parseRecordAttributes(template), "Data FlowSet");
+            callback.accept(recordBuilder.setRecordFullText(FLOW_SET_LOG_TEXT).setTimeStamp(timestamp)
+                    .setRecordAttributes(parseRecordAttributes(template)));
         }
 
         skipPadding(start, flowsetLength);

@@ -89,9 +89,10 @@ public class NetflowV9PacketParserTest extends NetflowPacketParserTestBase {
         assertEquals(2, records.size());
 
         Map<String, String> attrs = toMap(records.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(691368492L * 1000), records.get(0).getTimeStamp());
+        assertEquals(NetflowV9PacketParser.FLOW_SET_LOG_TEXT, records.get(0).getRecordFullText());
         assertEquals("9", attrs.remove("version"));
         assertEquals("289584773", attrs.remove("sys_uptime"));
-        assertEquals("691368492", attrs.remove("unix_secs"));
         assertEquals("168", attrs.remove("package_sequence"));
         assertEquals("20", attrs.remove("source_id"));
 
@@ -101,9 +102,10 @@ public class NetflowV9PacketParserTest extends NetflowPacketParserTestBase {
         assertEmpty(attrs);
 
         attrs = toMap(records.get(1).getRecordAttributes());
+        assertEquals(Long.valueOf(691368492L * 1000), records.get(1).getTimeStamp());
+        assertEquals(NetflowV9PacketParser.FLOW_SET_LOG_TEXT, records.get(1).getRecordFullText());
         assertEquals("9", attrs.remove("version"));
         assertEquals("289584773", attrs.remove("sys_uptime"));
-        assertEquals("691368492", attrs.remove("unix_secs"));
         assertEquals("168", attrs.remove("package_sequence"));
         assertEquals("20", attrs.remove("source_id"));
 
@@ -120,8 +122,8 @@ public class NetflowV9PacketParserTest extends NetflowPacketParserTestBase {
         // Header
         out.writeShort(9);         // version
         out.writeShort(5);         // count
-        out.writeInt(289584773);   // sys_uptime
-        out.writeInt(691368492);   // unix_secs
+        out.writeInt(289584780);   // sys_uptime
+        out.writeInt(691368500);   // unix_secs
         out.writeInt(168);         // package_sequence
         out.writeInt(20);          // source_id
 
@@ -142,9 +144,10 @@ public class NetflowV9PacketParserTest extends NetflowPacketParserTestBase {
         assertEquals(1, records.size());
 
         attrs = toMap(records.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(691368500L * 1000), records.get(0).getTimeStamp());
+        assertEquals(NetflowV9PacketParser.FLOW_SET_LOG_TEXT, records.get(0).getRecordFullText());
         assertEquals("9", attrs.remove("version"));
-        assertEquals("289584773", attrs.remove("sys_uptime"));
-        assertEquals("691368492", attrs.remove("unix_secs"));
+        assertEquals("289584780", attrs.remove("sys_uptime"));
         assertEquals("168", attrs.remove("package_sequence"));
         assertEquals("20", attrs.remove("source_id"));
 
@@ -216,9 +219,9 @@ public class NetflowV9PacketParserTest extends NetflowPacketParserTestBase {
         assertEquals(1, records.size());
 
         Map<String, String> attrs = toMap(records.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(582747597L * 1000), records.get(0).getTimeStamp());
         assertEquals("9", attrs.remove("version"));
         assertEquals("372829489", attrs.remove("sys_uptime"));
-        assertEquals("582747597", attrs.remove("unix_secs"));
         assertEquals("34", attrs.remove("package_sequence"));
         assertEquals("12", attrs.remove("source_id"));
 
@@ -258,9 +261,9 @@ public class NetflowV9PacketParserTest extends NetflowPacketParserTestBase {
         assertEquals(2, records.size());
 
         attrs = toMap(records.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(582747598L * 1000), records.get(0).getTimeStamp());
         assertEquals("9", attrs.remove("version"));
         assertEquals("372829490", attrs.remove("sys_uptime"));
-        assertEquals("582747598", attrs.remove("unix_secs"));
         assertEquals("35", attrs.remove("package_sequence"));
         assertEquals("12", attrs.remove("source_id"));
 
@@ -272,7 +275,6 @@ public class NetflowV9PacketParserTest extends NetflowPacketParserTestBase {
         attrs = toMap(records.get(1).getRecordAttributes());
         assertEquals("9", attrs.remove("version"));
         assertEquals("372829490", attrs.remove("sys_uptime"));
-        assertEquals("582747598", attrs.remove("unix_secs"));
         assertEquals("35", attrs.remove("package_sequence"));
         assertEquals("12", attrs.remove("source_id"));
 

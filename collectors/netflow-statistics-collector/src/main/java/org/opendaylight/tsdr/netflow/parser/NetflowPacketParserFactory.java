@@ -31,8 +31,7 @@ public class NetflowPacketParserFactory {
                 return v9ParserFactory.newInstance(bytes, sourceIP);
             default:
                 LOG.warn("Received netflow packet with unknown/unsupported version {}", version);
-                return callback -> {
-                };
+                return (recordBuilder, callback) -> { };
         }
     }
 }

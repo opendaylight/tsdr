@@ -29,8 +29,7 @@ public class NetflowPacketParserTestBase {
         NetflowPacketParser parser = factory.newInstance(data, "10.253.4.5");
 
         final List<TSDRLogRecord> records = new ArrayList<>();
-        parser.parseRecords((attrs, text) -> records.add(new TSDRLogRecordBuilder().setRecordAttributes(attrs)
-                .setRecordFullText(text).build()));
+        parser.parseRecords(new TSDRLogRecordBuilder(), builder -> records.add(builder.build()));
         return records;
     }
 

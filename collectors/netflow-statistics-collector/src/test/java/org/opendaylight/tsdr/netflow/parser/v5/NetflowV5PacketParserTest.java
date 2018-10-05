@@ -91,9 +91,10 @@ public class NetflowV5PacketParserTest extends NetflowPacketParserTestBase {
         assertEquals(2, records.size());
 
         Map<String, String> attrs = toMap(records.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(1470119622L * 1000), records.get(0).getTimeStamp());
+        assertEquals(NetflowV5PacketParser.LOG_RECORD_TEXT, records.get(0).getRecordFullText());
         assertEquals("5", attrs.remove("version"));
         assertEquals("29115718", attrs.remove("sys_uptime"));
-        assertEquals("1470119622", attrs.remove("unix_secs"));
         assertEquals("0", attrs.remove("unix_nsecs"));
         assertEquals("70", attrs.remove("flow_sequence"));
         assertEquals("0", attrs.remove("engine_type"));
@@ -122,9 +123,10 @@ public class NetflowV5PacketParserTest extends NetflowPacketParserTestBase {
         assertEmpty(attrs);
 
         attrs = toMap(records.get(1).getRecordAttributes());
+        assertEquals(Long.valueOf(1470119622L * 1000), records.get(1).getTimeStamp());
+        assertEquals(NetflowV5PacketParser.LOG_RECORD_TEXT, records.get(1).getRecordFullText());
         assertEquals("5", attrs.remove("version"));
         assertEquals("29115718", attrs.remove("sys_uptime"));
-        assertEquals("1470119622", attrs.remove("unix_secs"));
         assertEquals("0", attrs.remove("unix_nsecs"));
         assertEquals("70", attrs.remove("flow_sequence"));
         assertEquals("0", attrs.remove("engine_type"));
