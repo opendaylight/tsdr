@@ -196,10 +196,11 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
             final TSDRLogRecordBuilder recordBuilder = new TSDRLogRecordBuilder().setNodeID(sourceIP)
                     .setTSDRDataCategory(DataCategory.NETFLOW);
 
-            NetflowPacketParser parser = parserFactory.newInstance(data, sourceIP);
-            parser.parseRecords(recordBuilder, builder -> {
+            NetflowPacketParser parser = parserFactory.newInstance(data, sourceIP, recordBuilder, builder -> {
                 netFlowQueue.add(builder.setIndex(counter.getAndIncrement()).build());
             });
+
+            parser.parseRecords();
         }
     }
 

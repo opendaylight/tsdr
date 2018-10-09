@@ -7,8 +7,10 @@
  */
 package org.opendaylight.tsdr.netflow.parser;
 
+import java.util.function.Consumer;
 import org.opendaylight.tsdr.netflow.parser.v5.NetflowV5PacketParser;
 import org.opendaylight.tsdr.netflow.parser.v9.NetflowPacketV9ParserFactory;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,16 +24,17 @@ public class NetflowPacketParserFactory {
 
     private final NetflowPacketV9ParserFactory v9ParserFactory = new NetflowPacketV9ParserFactory();
 
-    public NetflowPacketParser newInstance(final byte[] bytes, String sourceIP) {
+    public NetflowPacketParser newInstance(final byte[] bytes, String sourceIP, TSDRLogRecordBuilder recordBuilder,
+            Consumer<TSDRLogRecordBuilder> callback) {
         int version = (int) AbstractNetflowPacketParser.parseLong(bytes, 0, 2);
         switch (version) {
             case 5:
-                return new NetflowV5PacketParser(bytes, 2);
+                return new NetflowV5PacketParser(bytes, 2, recordBuilder, callback);
             case 9:
-                return v9ParserFactory.newInstance(bytes, sourceIP);
+                return v9ParserFactory.newInstance(bytes, sourceIP, recordBuilder, callback);
             default:
                 LOG.warn("Received netflow packet with unknown/unsupported version {}", version);
-                return (recordBuilder, callback) -> { };
+                return () -> { };
         }
     }
 }

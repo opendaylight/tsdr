@@ -286,24 +286,233 @@ public class NetflowV9PacketParserTest extends NetflowPacketParserTestBase {
     }
 
     @Test
-    public void testUnknownTemplate() throws IOException {
+    public void testMissingFlowsetTemplate() throws IOException {
+
+        // First packet - data flow set with missing template
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(bos);
+
+        // Header
+        out.writeShort(9);         // version
+        out.writeShort(2);         // count
+        out.writeInt(10);          // sys_uptime
+        out.writeInt(20);          // unix_secs
+        out.writeInt(1);           // package_sequence
+        out.writeInt(20);          // source_id
+
+        // Data flow set
+        out.writeShort(256);    // flowset_id == missing template
+        out.writeShort(12);     // length
+
+        // Record 1
+        out.writeInt(111);
+
+        // Record 2
+        out.writeInt(222);
+
+        List<TSDRLogRecord> records1 = parseRecords(bos.toByteArray());
+        assertEquals(0, records1.size());
+
+        // Second packet - another data flow set with missing template plus a second template
+
+        bos = new ByteArrayOutputStream();
+        out = new DataOutputStream(bos);
+
+        // Header
+        out.writeShort(9);         // version
+        out.writeShort(2);         // count
+        out.writeInt(20);          // sys_uptime
+        out.writeInt(30);          // unix_secs
+        out.writeInt(2);           // package_sequence
+        out.writeInt(20);          // source_id
+
+        // Data flow set
+        out.writeShort(256);    // flowset_id == missing template
+        out.writeShort(8);      // length
+
+        // Record
+        out.writeInt(333);
+
+        // Template flow set
+        out.writeShort(0);    // flowset_id == 0
+        out.writeShort(12);   // length
+
+        // Template
+        out.writeShort(257);  // template_id
+        out.writeShort(1);    // field_count
+        out.writeShort(1);    // field 1 type - IN_BYTES
+        out.writeShort(4);    // field 1 length
+
+        List<TSDRLogRecord> records2 = parseRecords(bos.toByteArray());
+        assertEquals(0, records2.size());
+        assertEquals(0, records1.size());
+
+        // Third packet - third template
+
+        bos = new ByteArrayOutputStream();
+        out = new DataOutputStream(bos);
+
+        // Header
+        out.writeShort(9);         // version
+        out.writeShort(1);         // count
+        out.writeInt(35);          // sys_uptime
+        out.writeInt(45);          // unix_secs
+        out.writeInt(3);           // package_sequence
+        out.writeInt(20);          // source_id
+
+        // Template flow set
+        out.writeShort(0);    // flowset_id == 0
+        out.writeShort(12);   // length
+
+        // Template
+        out.writeShort(258);  // template_id
+        out.writeShort(1);    // field_count
+        out.writeShort(1);    // field 1 type - PROTOCOL
+        out.writeShort(1);    // field 1 length
+
+        assertEquals(0, parseRecords(bos.toByteArray()).size());
+        assertEquals(0, records1.size());
+        assertEquals(0, records2.size());
+
+        // Fourth packet - data flowset for second template
+
+        bos = new ByteArrayOutputStream();
+        out = new DataOutputStream(bos);
+
+        // Header
+        out.writeShort(9);         // version
+        out.writeShort(1);         // count
+        out.writeInt(40);          // sys_uptime
+        out.writeInt(50);          // unix_secs
+        out.writeInt(4);           // package_sequence
+        out.writeInt(20);          // source_id
+
+        // Data flow set
+        out.writeShort(257);    // flowset_id == second template
+        out.writeShort(8);      // length
+
+        // Record
+        out.writeInt(999);
+
+        List<TSDRLogRecord> records3 = parseRecords(bos.toByteArray());
+        assertEquals(1, records3.size());
+
+        Map<String, String> attrs = toMap(records3.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(50L * 1000), records3.get(0).getTimeStamp());
+        assertEquals("40", attrs.remove("sys_uptime"));
+        assertEquals("4", attrs.remove("package_sequence"));
+        assertEquals("20", attrs.remove("source_id"));
+        assertEquals("999", attrs.remove("IN_BYTES"));
+
+        // Fifth packet - missing template
+
+        bos = new ByteArrayOutputStream();
+        out = new DataOutputStream(bos);
+
+        // Header
+        out.writeShort(9);         // version
+        out.writeShort(1);         // count
+        out.writeInt(5);           // sys_uptime
+        out.writeInt(5);           // unix_secs
+        out.writeInt(5);           // package_sequence
+        out.writeInt(20);          // source_id
+
+        // Template flow set
+        out.writeShort(0);    // flowset_id == 0
+        out.writeShort(12);   // length
+
+        // Template
+        out.writeShort(256);  // template_id
+        out.writeShort(1);    // field_count
+        out.writeShort(2);    // field 1 type - IN_PKTS
+        out.writeShort(4);    // field 1 length
+
+        assertEquals(0, parseRecords(bos.toByteArray()).size());
+
+        assertEquals(2, records1.size());
+        attrs = toMap(records1.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(20L * 1000), records1.get(0).getTimeStamp());
+        assertEquals("10", attrs.remove("sys_uptime"));
+        assertEquals("1", attrs.remove("package_sequence"));
+        assertEquals("20", attrs.remove("source_id"));
+        assertEquals("111", attrs.remove("IN_PKTS"));
+
+        attrs = toMap(records1.get(1).getRecordAttributes());
+        assertEquals(Long.valueOf(20L * 1000), records1.get(1).getTimeStamp());
+        assertEquals("10", attrs.remove("sys_uptime"));
+        assertEquals("1", attrs.remove("package_sequence"));
+        assertEquals("20", attrs.remove("source_id"));
+        assertEquals("222", attrs.remove("IN_PKTS"));
+
+        assertEquals(1, records2.size());
+        attrs = toMap(records2.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(30L * 1000), records2.get(0).getTimeStamp());
+        assertEquals("20", attrs.remove("sys_uptime"));
+        assertEquals("2", attrs.remove("package_sequence"));
+        assertEquals("20", attrs.remove("source_id"));
+        assertEquals("333", attrs.remove("IN_PKTS"));
+    }
+
+    @Test
+    public void testMissingOptionsTemplate() throws IOException {
+        // First packet - options data record with missing template
+
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(bos);
 
         // Header
         out.writeShort(9);         // version
         out.writeShort(1);         // count
-        out.writeInt(123);         // sys_uptime
-        out.writeInt(456);         // unix_secs
-        out.writeInt(168);         // package_sequence
+        out.writeInt(10);          // sys_uptime
+        out.writeInt(20);          // unix_secs
+        out.writeInt(1);           // package_sequence
         out.writeInt(20);          // source_id
 
-        // Data flow set
-        out.writeShort(256);    // flowset_id == unknown template
-        out.writeShort(5);      // length
-        out.writeByte(1);
+        // Options data record set
+        out.writeShort(260);  // flowset_id == missing template
+        out.writeShort(8);    // length
+
+        // Record
+        out.writeShort(7);
+        out.writeShort(765);
 
         List<TSDRLogRecord> records = parseRecords(bos.toByteArray());
         assertEquals(0, records.size());
+
+        // Second packet - missing template
+
+        bos = new ByteArrayOutputStream();
+        out = new DataOutputStream(bos);
+
+        // Header
+        out.writeShort(9);         // version
+        out.writeShort(1);         // count
+        out.writeInt(30);          // sys_uptime
+        out.writeInt(40);          // unix_secs
+        out.writeInt(2);           // package_sequence
+        out.writeInt(20);          // source_id
+
+        // Options template
+        out.writeShort(1);      // flowset_id == 1
+        out.writeShort(24);     // length
+        out.writeShort(260);    // template_id
+        out.writeShort(4);      // Scope length
+        out.writeShort(4);      // Option length
+        out.writeShort(4);      // Scope field 1 type - "Cache"
+        out.writeShort(2);      // Scope field 1 length
+        out.writeShort(41);     // Option field 1 type - TOTAL_PKTS_EXP
+        out.writeShort(2);      // Option field 1 length
+
+        assertEquals(0, parseRecords(bos.toByteArray()).size());
+
+        assertEquals(1, records.size());
+        Map<String, String> attrs = toMap(records.get(0).getRecordAttributes());
+        assertEquals(Long.valueOf(20L * 1000), records.get(0).getTimeStamp());
+        assertEquals("10", attrs.remove("sys_uptime"));
+        assertEquals("1", attrs.remove("package_sequence"));
+        assertEquals("20", attrs.remove("source_id"));
+        assertEquals("765", attrs.remove("TOTAL_PKTS_EXP"));
+        assertEquals("Options record for Cache 7", records.get(0).getRecordFullText());
     }
 }

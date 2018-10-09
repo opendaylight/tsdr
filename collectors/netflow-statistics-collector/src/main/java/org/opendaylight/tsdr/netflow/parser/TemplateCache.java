@@ -19,6 +19,10 @@ import org.slf4j.LoggerFactory;
 public class TemplateCache<T> {
     private final Map<TemplateKey, T> templateMap = new ConcurrentHashMap<>();
 
+    public boolean contains(TemplateKey key) {
+        return templateMap.containsKey(key);
+    }
+
     public T get(long sourceId, int templateId, String sourceIP) {
         return templateMap.get(new TemplateKey(sourceId, templateId, sourceIP));
     }

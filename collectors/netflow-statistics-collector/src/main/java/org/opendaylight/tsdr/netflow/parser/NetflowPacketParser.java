@@ -7,14 +7,11 @@
  */
 package org.opendaylight.tsdr.netflow.parser;
 
-import java.util.function.Consumer;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecordBuilder;
-
 /**
  * Interface that parses netflow packets into log records.
  *
  * @author Thomas Pantelis
  */
 public interface NetflowPacketParser {
-    void parseRecords(TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback);
+    void parseRecords();
 }

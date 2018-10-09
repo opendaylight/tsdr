@@ -26,8 +26,9 @@ public class NetflowV5PacketParser extends AbstractNetflowPacketParser {
 
     private final Long timestamp;
 
-    public NetflowV5PacketParser(byte[] data, int initialPosition) {
-        super(data, 5, initialPosition);
+    public NetflowV5PacketParser(byte[] data, int initialPosition, TSDRLogRecordBuilder recordBuilder,
+            Consumer<TSDRLogRecordBuilder> callback) {
+        super(data, 5, initialPosition, recordBuilder, callback);
 
         addHeaderAttribute("sys_uptime", parseIntString());
         timestamp = parseInt() * 1000;
@@ -41,13 +42,13 @@ public class NetflowV5PacketParser extends AbstractNetflowPacketParser {
     }
 
     @Override
-    public void parseRecords(TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
+    public void parseRecords() {
         for (int i = 0; i < totalRecordCount(); i++) {
-            parseNextRecord(recordBuilder, callback);
+            parseNextRecord();
         }
     }
 
-    private void parseNextRecord(TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
+    private void parseNextRecord() {
         final int start = position();
 
         List<RecordAttributes> recordAttrs = new ArrayList<>(headerAttributes());
@@ -79,7 +80,7 @@ public class NetflowV5PacketParser extends AbstractNetflowPacketParser {
 
         skip(FLOW_SIZE - (position() - start));
 
-        callback.accept(recordBuilder.setRecordFullText(LOG_RECORD_TEXT).setTimeStamp(timestamp)
+        callback().accept(recordBuilder().setRecordFullText(LOG_RECORD_TEXT).setTimeStamp(timestamp)
                 .setRecordAttributes(recordAttrs));
     }
 }

@@ -10,8 +10,10 @@ package org.opendaylight.tsdr.netflow.parser;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributesBuilder;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,14 +25,19 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractNetflowPacketParser implements NetflowPacketParser {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractNetflowPacketParser.class);
 
+    private final TSDRLogRecordBuilder recordBuilder;
+    private final Consumer<TSDRLogRecordBuilder> callback;
     private final List<RecordAttributes> headerAttributes = new ArrayList<>();
     private final byte[] data;
     private final int totalRecordCount;
     private int position;
 
-    protected AbstractNetflowPacketParser(final byte[] data, final int version, final int initialPosition) {
+    protected AbstractNetflowPacketParser(final byte[] data, final int version, final int initialPosition,
+            TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
         this.data = data;
         this.position = initialPosition;
+        this.recordBuilder = recordBuilder;
+        this.callback = callback;
 
         this.totalRecordCount = parseShort();
 
@@ -38,6 +45,26 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
 
         LOG.debug("Packet version: {}, total record count: {}, headers: {}", version, totalRecordCount,
                 headerAttributes);
+    }
+
+    protected AbstractNetflowPacketParser(AbstractNetflowPacketParser other, int fromPosition, int bytesToCopy) {
+        data = new byte[bytesToCopy];
+        System.arraycopy(other.data, fromPosition, data, 0, bytesToCopy);
+
+        this.position = 0;
+        this.recordBuilder = other.recordBuilder;
+        this.callback = other.callback;
+        this.totalRecordCount = Integer.MAX_VALUE;
+
+        headerAttributes.addAll(other.headerAttributes);
+    }
+
+    protected TSDRLogRecordBuilder recordBuilder() {
+        return recordBuilder;
+    }
+
+    protected Consumer<TSDRLogRecordBuilder> callback() {
+        return callback;
     }
 
     protected int totalRecordCount() {
