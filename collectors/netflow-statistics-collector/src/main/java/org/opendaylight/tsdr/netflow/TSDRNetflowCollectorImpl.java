@@ -195,10 +195,10 @@ public class TSDRNetflowCollectorImpl extends Thread implements AutoCloseable {
             LOG.debug("Received packet - srcIp: {}, data length: {}", srcIp, data.length);
 
             NetflowPacketParser parser = parserFactory.newInstance(data);
-            parser.parseRecords(recordAttrs -> {
+            parser.parseRecords((recordAttrs, recordText) -> {
                 final TSDRLogRecord record = new TSDRLogRecordBuilder().setNodeID(srcIp)
                         .setTimeStamp(currentTimeStamp).setIndex(counter.getAndIncrement())
-                        .setTSDRDataCategory(DataCategory.NETFLOW).setRecordFullText("Netflow packet")
+                        .setTSDRDataCategory(DataCategory.NETFLOW).setRecordFullText(recordText)
                         .setRecordAttributes(recordAttrs).build();
                 netFlowQueue.add(record);
             });

@@ -8,7 +8,7 @@
 package org.opendaylight.tsdr.netflow.parser;
 
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
 
 /**
@@ -17,5 +17,5 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog
  * @author Thomas Pantelis
  */
 public interface NetflowPacketParser {
-    void parseRecords(Consumer<List<RecordAttributes>> callback);
+    void parseRecords(BiConsumer<List<RecordAttributes>, String> callback);
 }
