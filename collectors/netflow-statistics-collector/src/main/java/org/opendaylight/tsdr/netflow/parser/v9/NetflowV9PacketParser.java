@@ -31,10 +31,12 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
     private final FlowsetTemplateCache flowsetTemplateCache;
     private final OptionsTemplateCache optionsTemplateCache;
     private final long sourceId;
+    private final String sourceIP;
 
-    NetflowV9PacketParser(byte[] data, int initialPosition, FlowsetTemplateCache flowsetTemplateCache,
+    NetflowV9PacketParser(byte[] data, int initialPosition, String sourceIP, FlowsetTemplateCache flowsetTemplateCache,
             OptionsTemplateCache optionsTemplateCache) {
         super(data, 9, initialPosition);
+        this.sourceIP = sourceIP;
         this.flowsetTemplateCache = flowsetTemplateCache;
         this.optionsTemplateCache = optionsTemplateCache;
 
@@ -73,12 +75,12 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
 
     private OptionalInt parseDataFlowset(int start, int flowsetId, int flowsetLength,
             BiConsumer<List<RecordAttributes>, String> callback) {
-        Template flowsetTemplate = flowsetTemplateCache.get(sourceId, flowsetId);
+        Template flowsetTemplate = flowsetTemplateCache.get(sourceId, flowsetId, sourceIP);
         if (flowsetTemplate != null) {
             return parseDataFlowsetRecords(start, flowsetId, flowsetLength, flowsetTemplate, callback);
         }
 
-        OptionsTemplate optionsTemplate = optionsTemplateCache.get(sourceId, flowsetId);
+        OptionsTemplate optionsTemplate = optionsTemplateCache.get(sourceId, flowsetId, sourceIP);
         if (optionsTemplate != null) {
             return parseOptionDataRecords(start, flowsetId, flowsetLength, optionsTemplate, callback);
         }
@@ -184,7 +186,7 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
                 templateBuilder.addField(type, length);
             }
 
-            flowsetTemplateCache.put(sourceId, templateId, templateBuilder.build());
+            flowsetTemplateCache.put(sourceId, templateId, sourceIP, templateBuilder.build());
             recordCount++;
         } while (position() - start < totalLength);
 
@@ -212,7 +214,7 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
 
         skipPadding(start, totalLength);
 
-        optionsTemplateCache.put(sourceId, templateId, templateBuilder.build());
+        optionsTemplateCache.put(sourceId, templateId, sourceIP, templateBuilder.build());
         return 1;
     }
 

@@ -18,7 +18,7 @@ public class NetflowPacketV9ParserFactory {
     private final FlowsetTemplateCache flowsetTemplateCache = new FlowsetTemplateCache();
     private final OptionsTemplateCache optionsTemplateCache = new OptionsTemplateCache();
 
-    public NetflowPacketParser newInstance(final byte[] bytes) {
-        return new NetflowV9PacketParser(bytes, 2, flowsetTemplateCache, optionsTemplateCache);
+    public NetflowPacketParser newInstance(final byte[] bytes, String sourceIP) {
+        return new NetflowV9PacketParser(bytes, 2, sourceIP, flowsetTemplateCache, optionsTemplateCache);
     }
 }

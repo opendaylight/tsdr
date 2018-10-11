@@ -15,10 +15,12 @@ package org.opendaylight.tsdr.netflow.parser;
 class TemplateKey {
     private final long sourceId;
     private final int templateId;
+    private final String sourceIP;
 
-    TemplateKey(long sourceId, int templateId) {
+    TemplateKey(long sourceId, int templateId, String sourceIP) {
         this.sourceId = sourceId;
         this.templateId = templateId;
+        this.sourceIP = sourceIP;
     }
 
     @Override
@@ -27,6 +29,7 @@ class TemplateKey {
         int result = 1;
         result = prime * result + (int) (sourceId ^ sourceId >>> 32);
         result = prime * result + templateId;
+        result = prime * result + sourceIP.hashCode();
         return result;
     }
 
@@ -41,11 +44,11 @@ class TemplateKey {
         }
 
         TemplateKey other = (TemplateKey) obj;
-        return sourceId == other.sourceId && templateId == other.templateId;
+        return sourceId == other.sourceId && templateId == other.templateId && sourceIP.equals(other.sourceIP);
     }
 
     @Override
     public String toString() {
-        return "TemmplateKey [sourceId=" + sourceId + ", templateId=" + templateId + "]";
+        return "TemplateKey [sourceId=" + sourceId + ", templateId=" + templateId + ", sourceIP=" + sourceIP + "]";
     }
 }
