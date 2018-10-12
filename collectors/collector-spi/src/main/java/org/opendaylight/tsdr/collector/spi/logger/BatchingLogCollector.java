@@ -62,6 +62,10 @@ public class BatchingLogCollector extends AbstractBatchingLogCollector<TSDRLogRe
                 .setTSDRDataCategory(dataCategory).setIndex(currentIndex.getAndIncrement()).build());
     }
 
+    public void insertLog(TSDRLogRecordBuilder builder) {
+        enqueue(builder.setIndex(currentIndex.getAndIncrement()).build());
+    }
+
     @Override
     protected List<TSDRLogRecord> transform(List<TSDRLogRecord> from) {
         currentIndex.set(0);

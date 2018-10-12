@@ -57,5 +57,11 @@
       <artifactId>awaitility</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.opendaylight.tsdr</groupId>
+      <artifactId>tsdr-persistence-impl</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>

@@ -26,6 +26,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.opendaylight.tsdr.spi.scheduler.impl.SchedulerServiceImpl;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.rev150219.DataCategory;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordInput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.InsertTSDRLogRecordOutputBuilder;
@@ -43,7 +44,8 @@ public class TSDRNetflowCollectorImplTest {
     private static final String SOURCE_IP = "127.0.0.1";
 
     private final TsdrCollectorSpiService mockSpiService = Mockito.mock(TsdrCollectorSpiService.class);
-    private final TSDRNetflowCollectorImpl implObj = new TSDRNetflowCollectorImpl(mockSpiService);
+    private final SchedulerServiceImpl schedulerService = new SchedulerServiceImpl();
+    private final TSDRNetflowCollectorImpl implObj = new TSDRNetflowCollectorImpl(mockSpiService, schedulerService);
     private DatagramSocket socket;
 
     @Before
@@ -57,6 +59,7 @@ public class TSDRNetflowCollectorImplTest {
         this.socket.close();
 
         implObj.close();
+        schedulerService.close();
     }
 
     public void sendNetflowData(byte[] data) throws IOException {
@@ -84,7 +87,6 @@ public class TSDRNetflowCollectorImplTest {
         assertEquals("version", storedRecords.get(0).getRecordAttributes().get(0).getName());
         assertEquals("5", storedRecords.get(0).getRecordAttributes().get(0).getValue());
         assertEquals(SOURCE_IP, storedRecords.get(0).getNodeID());
-        assertEquals(Integer.valueOf(1), storedRecords.get(0).getIndex());
         assertEquals(Long.valueOf(timestamp * 1000L), storedRecords.get(0).getTimeStamp());
         assertEquals(DataCategory.NETFLOW, storedRecords.get(0).getTSDRDataCategory());
 
@@ -92,7 +94,6 @@ public class TSDRNetflowCollectorImplTest {
         assertEquals("version", storedRecords.get(0).getRecordAttributes().get(0).getName());
         assertEquals("5", storedRecords.get(0).getRecordAttributes().get(0).getValue());
         assertEquals(SOURCE_IP, storedRecords.get(1).getNodeID());
-        assertEquals(Integer.valueOf(2), storedRecords.get(1).getIndex());
         assertEquals(Long.valueOf(timestamp * 1000L), storedRecords.get(1).getTimeStamp());
         assertEquals(DataCategory.NETFLOW, storedRecords.get(1).getTSDRDataCategory());
     }

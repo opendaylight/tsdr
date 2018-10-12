@@ -2,6 +2,8 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
            xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0">
 
+  <reference id="schedulerService" interface="org.opendaylight.tsdr.spi.scheduler.SchedulerService"/>
+
   <odl:rpc-service id="tsdrCollectorSpiService"
       interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
 
