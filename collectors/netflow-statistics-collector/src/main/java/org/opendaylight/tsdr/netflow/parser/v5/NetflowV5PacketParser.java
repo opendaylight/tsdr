@@ -9,9 +9,10 @@ package org.opendaylight.tsdr.netflow.parser.v5;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import org.opendaylight.tsdr.netflow.parser.AbstractNetflowPacketParser;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecordBuilder;
 
 /**
  * Netflow version 5 packet parser - see http://netflow.caligare.com/netflow_v5.htm.
@@ -19,11 +20,18 @@ import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog
  * @author Thomas Pantelis
  */
 public class NetflowV5PacketParser extends AbstractNetflowPacketParser {
+    static final String LOG_RECORD_TEXT = "Flow record";
+
     private static final int FLOW_SIZE = 48;
 
-    public NetflowV5PacketParser(byte[] data, int initialPosition) {
-        super(data, 5, initialPosition);
+    private final Long timestamp;
 
+    public NetflowV5PacketParser(byte[] data, int initialPosition, TSDRLogRecordBuilder recordBuilder,
+            Consumer<TSDRLogRecordBuilder> callback) {
+        super(data, 5, initialPosition, recordBuilder, callback);
+
+        addHeaderAttribute("sys_uptime", parseIntString());
+        timestamp = parseInt() * 1000;
         addHeaderAttribute("unix_nsecs", parseIntString());
         addHeaderAttribute("flow_sequence", parseIntString());
         addHeaderAttribute("engine_type", parseByteString());
@@ -34,13 +42,13 @@ public class NetflowV5PacketParser extends AbstractNetflowPacketParser {
     }
 
     @Override
-    public void parseRecords(BiConsumer<List<RecordAttributes>, String> callback) {
+    public void parseRecords() {
         for (int i = 0; i < totalRecordCount(); i++) {
-            parseNextRecord(callback);
+            parseNextRecord();
         }
     }
 
-    private void parseNextRecord(BiConsumer<List<RecordAttributes>, String> callback) {
+    private void parseNextRecord() {
         final int start = position();
 
         List<RecordAttributes> recordAttrs = new ArrayList<>(headerAttributes());
@@ -72,6 +80,7 @@ public class NetflowV5PacketParser extends AbstractNetflowPacketParser {
 
         skip(FLOW_SIZE - (position() - start));
 
-        callback.accept(recordAttrs, "Flow record");
+        callback().accept(recordBuilder().setRecordFullText(LOG_RECORD_TEXT).setTimeStamp(timestamp)
+                .setRecordAttributes(recordAttrs));
     }
 }

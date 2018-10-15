@@ -10,9 +10,11 @@ package org.opendaylight.tsdr.netflow.parser.v9;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalInt;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import org.opendaylight.tsdr.netflow.parser.AbstractNetflowPacketParser;
+import org.opendaylight.tsdr.netflow.parser.MissingTemplateCache;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecordBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +25,8 @@ import org.slf4j.LoggerFactory;
  * @author Thomas Pantelis
  */
 class NetflowV9PacketParser extends AbstractNetflowPacketParser {
+    static final String FLOW_SET_LOG_TEXT = "Data FlowSet";
+
     private static final Logger LOG = LoggerFactory.getLogger(NetflowV9PacketParser.class);
 
     private static final int TEMPLATE_FLOWSET_ID = 0;
@@ -30,36 +34,64 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
 
     private final FlowsetTemplateCache flowsetTemplateCache;
     private final OptionsTemplateCache optionsTemplateCache;
+    private final MissingTemplateCache missingTemplateCache;
     private final long sourceId;
     private final String sourceIP;
+    private final Long timestamp;
+    private int recordCounter;
 
     NetflowV9PacketParser(byte[] data, int initialPosition, String sourceIP, FlowsetTemplateCache flowsetTemplateCache,
-            OptionsTemplateCache optionsTemplateCache) {
-        super(data, 9, initialPosition);
+            OptionsTemplateCache optionsTemplateCache, MissingTemplateCache missingTemplateCache,
+            TSDRLogRecordBuilder recordBuilder, Consumer<TSDRLogRecordBuilder> callback) {
+        super(data, 9, initialPosition, recordBuilder, callback);
         this.sourceIP = sourceIP;
         this.flowsetTemplateCache = flowsetTemplateCache;
         this.optionsTemplateCache = optionsTemplateCache;
+        this.missingTemplateCache = missingTemplateCache;
 
+        addHeaderAttribute("sys_uptime", parseIntString());
+        timestamp = parseInt() * 1000;
         addHeaderAttribute("package_sequence", parseIntString());
 
         sourceId = parseInt();
         addHeaderAttribute("source_id", Long.toString(sourceId));
     }
 
-    @Override
-    public void parseRecords(BiConsumer<List<RecordAttributes>, String> callback) {
-        int recordCounter = 0;
-        while (recordCounter < totalRecordCount() && !endOfData()) {
-            recordCounter += parseNextRecords(callback).orElse(totalRecordCount());
-        }
+    private NetflowV9PacketParser(NetflowV9PacketParser other, int fromPosition, int bytesToCopy) {
+        super(other, fromPosition, bytesToCopy);
+
+        this.sourceIP = other.sourceIP;
+        this.flowsetTemplateCache = other.flowsetTemplateCache;
+        this.optionsTemplateCache = other.optionsTemplateCache;
+        this.missingTemplateCache = other.missingTemplateCache;
+        this.timestamp = other.timestamp;
+        this.sourceId = other.sourceId;
     }
 
-    private OptionalInt parseNextRecords(BiConsumer<List<RecordAttributes>, String> callback) {
+    @Override
+    public void parseRecords() {
+        while (recordCounter < totalRecordCount() && !endOfData()) {
+            final OptionalInt possibleCount = parseNextRecords();
+            if (!possibleCount.isPresent()) {
+                return;
+            }
+
+            recordCounter += possibleCount.getAsInt();
+        }
+
+        missingTemplateCache.checkTemplates();
+    }
+
+    private OptionalInt parseNextRecords() {
         int start = position();
         int flowsetId = parseShort();
         int flowsetLength = parseShort();
 
         LOG.debug("parseNextRecord - flowsetId: {}, flowsetLength: {}, start: {}", flowsetId, flowsetLength, start);
+
+        if (flowsetLength == 0) {
+            return OptionalInt.empty();
+        }
 
         switch (flowsetId) {
             case TEMPLATE_FLOWSET_ID:
@@ -69,28 +101,29 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
                 return OptionalInt.of(parseOptionsTemplate(start, flowsetLength));
 
             default:
-                return parseDataFlowset(start, flowsetId, flowsetLength, callback);
+                return parseDataFlowset(start, flowsetId, flowsetLength);
         }
     }
 
-    private OptionalInt parseDataFlowset(int start, int flowsetId, int flowsetLength,
-            BiConsumer<List<RecordAttributes>, String> callback) {
+    private OptionalInt parseDataFlowset(int start, int flowsetId, int flowsetLength) {
         Template flowsetTemplate = flowsetTemplateCache.get(sourceId, flowsetId, sourceIP);
         if (flowsetTemplate != null) {
-            return parseDataFlowsetRecords(start, flowsetId, flowsetLength, flowsetTemplate, callback);
+            return parseDataFlowsetRecords(start, flowsetId, flowsetLength, flowsetTemplate);
         }
 
         OptionsTemplate optionsTemplate = optionsTemplateCache.get(sourceId, flowsetId, sourceIP);
         if (optionsTemplate != null) {
-            return parseOptionDataRecords(start, flowsetId, flowsetLength, optionsTemplate, callback);
+            return parseOptionDataRecords(start, flowsetId, flowsetLength, optionsTemplate);
         }
 
-        LOG.warn("No template found for source Id {}, template Id {}", sourceId, flowsetId);
-        return OptionalInt.empty();
+        LOG.debug("No template found for source Id {}, template Id {} - caching parser", sourceId, flowsetId);
+
+        missingTemplateCache.put(sourceId, flowsetId, sourceIP, new NetflowV9PacketParser(this, start, flowsetLength));
+        skip(flowsetLength - (position() - start));
+        return OptionalInt.of(0);
     }
 
-    private OptionalInt parseOptionDataRecords(int start, int templateId, int flowsetLength, OptionsTemplate template,
-            BiConsumer<List<RecordAttributes>, String> callback) {
+    private OptionalInt parseOptionDataRecords(int start, int templateId, int flowsetLength, OptionsTemplate template) {
         LOG.debug("Found options template {} - {}", templateId, template);
 
         int recordCount = template.getTotalLength() > 0
@@ -119,8 +152,8 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
                 recordText.append(' ').append(parseLong(length));
             }
 
-            List<RecordAttributes> recordAttrs = parseRecordAttributes(template.getOptionTemplate());
-            callback.accept(recordAttrs, recordText.toString());
+            callback().accept(recordBuilder().setRecordFullText(recordText.toString()).setTimeStamp(timestamp)
+                    .setRecordAttributes(parseRecordAttributes(template.getOptionTemplate())));
         }
 
         skipPadding(start, flowsetLength);
@@ -128,8 +161,7 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
         return OptionalInt.of(1);
     }
 
-    private OptionalInt parseDataFlowsetRecords(int start, int templateId, int flowsetLength, Template template,
-            BiConsumer<List<RecordAttributes>, String> callback) {
+    private OptionalInt parseDataFlowsetRecords(int start, int templateId, int flowsetLength, Template template) {
         LOG.debug("Found data flowset template {} - {}", templateId, template);
 
         int recordCount = template.getTotalLength() > 0
@@ -138,7 +170,8 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
         LOG.debug("Parsing {} data flowset records", recordCount);
 
         for (int i = 0; i < recordCount; i++) {
-            callback.accept(parseRecordAttributes(template), "Data FlowSet");
+            callback().accept(recordBuilder().setRecordFullText(FLOW_SET_LOG_TEXT).setTimeStamp(timestamp)
+                    .setRecordAttributes(parseRecordAttributes(template)));
         }
 
         skipPadding(start, flowsetLength);
@@ -421,7 +454,7 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
         SYSTEM("System"),
         INTERFACE("Interface"),
         LINE_CARD("Line Card"),
-        NETFLOW_CACHE("NetFlow Cache"),
+        CACHE("Cache"),
         TEMPLATE("Template");
 
         private String displayName;

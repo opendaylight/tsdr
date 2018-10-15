@@ -11,6 +11,8 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -70,32 +72,40 @@ public class TSDRNetflowCollectorImplTest {
             return RpcResultBuilder.success(new InsertTSDRLogRecordOutputBuilder().build()).buildFuture();
         }).when(mockSpiService).insertTSDRLogRecord(any());
 
-        sendNetflowData(generateV5Data());
-        sendNetflowData(generateV5Data());
+        int timestamp = 1234567;
+        sendNetflowData(generateV5Data(timestamp));
+        sendNetflowData(generateV5Data(timestamp));
 
         Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
             return storedRecords.size() == 2;
         });
 
-        assertEquals(27, storedRecords.get(0).getRecordAttributes().size());
+        assertEquals(26, storedRecords.get(0).getRecordAttributes().size());
         assertEquals("version", storedRecords.get(0).getRecordAttributes().get(0).getName());
         assertEquals("5", storedRecords.get(0).getRecordAttributes().get(0).getValue());
         assertEquals(SOURCE_IP, storedRecords.get(0).getNodeID());
         assertEquals(Integer.valueOf(1), storedRecords.get(0).getIndex());
+        assertEquals(Long.valueOf(timestamp * 1000L), storedRecords.get(0).getTimeStamp());
         assertEquals(DataCategory.NETFLOW, storedRecords.get(0).getTSDRDataCategory());
 
-        assertEquals(27, storedRecords.get(1).getRecordAttributes().size());
+        assertEquals(26, storedRecords.get(1).getRecordAttributes().size());
         assertEquals("version", storedRecords.get(0).getRecordAttributes().get(0).getName());
         assertEquals("5", storedRecords.get(0).getRecordAttributes().get(0).getValue());
         assertEquals(SOURCE_IP, storedRecords.get(1).getNodeID());
         assertEquals(Integer.valueOf(2), storedRecords.get(1).getIndex());
+        assertEquals(Long.valueOf(timestamp * 1000L), storedRecords.get(1).getTimeStamp());
         assertEquals(DataCategory.NETFLOW, storedRecords.get(1).getTSDRDataCategory());
     }
 
-    private byte[] generateV5Data() {
-        byte[] data = new byte[72];
-        data[1] = 5;  // version
-        data[3] = 1;  // flow count
-        return data;
+    private byte[] generateV5Data(int timestamp) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(bos);
+
+        out.writeShort(5);        // version
+        out.writeShort(1);        // flow count
+        out.writeInt(0);          // sys_uptime
+        out.writeInt(timestamp);  // unix_secs
+        out.write(new byte[60]);  // fill the rest with 0's
+        return bos.toByteArray();
     }
 }

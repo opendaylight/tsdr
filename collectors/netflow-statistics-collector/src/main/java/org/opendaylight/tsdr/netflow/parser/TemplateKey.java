@@ -12,12 +12,12 @@ package org.opendaylight.tsdr.netflow.parser;
  *
  * @author Thomas Pantelis
  */
-class TemplateKey {
+public class TemplateKey {
     private final long sourceId;
     private final int templateId;
     private final String sourceIP;
 
-    TemplateKey(long sourceId, int templateId, String sourceIP) {
+    public TemplateKey(long sourceId, int templateId, String sourceIP) {
         this.sourceId = sourceId;
         this.templateId = templateId;
         this.sourceIP = sourceIP;
