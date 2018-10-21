@@ -35,6 +35,7 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
     private final FlowsetTemplateCache flowsetTemplateCache;
     private final OptionsTemplateCache optionsTemplateCache;
     private final MissingTemplateCache missingTemplateCache;
+    private final int totalRecordCount;
     private final long sourceId;
     private final String sourceIP;
     private final Long timestamp;
@@ -49,12 +50,16 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
         this.optionsTemplateCache = optionsTemplateCache;
         this.missingTemplateCache = missingTemplateCache;
 
+        this.totalRecordCount = parseShort();
+
         addHeaderAttribute("sys_uptime", parseIntString());
-        timestamp = parseInt() * 1000;
+        this.timestamp = parseInt() * 1000;
         addHeaderAttribute("package_sequence", parseIntString());
 
-        sourceId = parseInt();
-        addHeaderAttribute("source_id", Long.toString(sourceId));
+        this.sourceId = parseInt();
+        addHeaderAttribute("source_id", Long.toString(this.sourceId));
+
+        LOG.debug("Packet version 9, total record count {}, headers: {}", totalRecordCount, headerAttributes());
     }
 
     private NetflowV9PacketParser(NetflowV9PacketParser other, int fromPosition, int bytesToCopy) {
@@ -66,11 +71,12 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
         this.missingTemplateCache = other.missingTemplateCache;
         this.timestamp = other.timestamp;
         this.sourceId = other.sourceId;
+        this.totalRecordCount = Integer.MAX_VALUE;
     }
 
     @Override
     public void parseRecords() {
-        while (recordCounter < totalRecordCount() && !endOfData()) {
+        while (recordCounter < totalRecordCount && !endOfData()) {
             final OptionalInt possibleCount = parseNextRecords();
             if (!possibleCount.isPresent()) {
                 return;
@@ -249,13 +255,6 @@ class NetflowV9PacketParser extends AbstractNetflowPacketParser {
 
         optionsTemplateCache.put(sourceId, templateId, sourceIP, templateBuilder.build());
         return 1;
-    }
-
-    private void skipPadding(int start, int totalLength) {
-        int padding = totalLength - (position() - start);
-        skip(padding);
-
-        LOG.debug("Skip padding: {}", padding);
     }
 
     private enum FieldType {

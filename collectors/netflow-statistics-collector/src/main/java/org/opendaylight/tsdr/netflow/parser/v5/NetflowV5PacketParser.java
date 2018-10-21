@@ -13,6 +13,8 @@ import java.util.function.Consumer;
 import org.opendaylight.tsdr.netflow.parser.AbstractNetflowPacketParser;
 import org.opendaylight.yang.gen.v1.opendaylight.tsdr.log.data.rev160325.tsdrlog.RecordAttributes;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.inserttsdrlogrecord.input.TSDRLogRecordBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Netflow version 5 packet parser - see http://netflow.caligare.com/netflow_v5.htm.
@@ -22,13 +24,18 @@ import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controll
 public class NetflowV5PacketParser extends AbstractNetflowPacketParser {
     static final String LOG_RECORD_TEXT = "Flow record";
 
+    private static final Logger LOG = LoggerFactory.getLogger(NetflowV5PacketParser.class);
+
     private static final int FLOW_SIZE = 48;
 
     private final Long timestamp;
+    private final int totalRecordCount;
 
     public NetflowV5PacketParser(byte[] data, int initialPosition, TSDRLogRecordBuilder recordBuilder,
             Consumer<TSDRLogRecordBuilder> callback) {
         super(data, 5, initialPosition, recordBuilder, callback);
+
+        this.totalRecordCount = parseShort();
 
         addHeaderAttribute("sys_uptime", parseIntString());
         timestamp = parseInt() * 1000;
@@ -39,11 +46,13 @@ public class NetflowV5PacketParser extends AbstractNetflowPacketParser {
 
         // sampling interval is 14 bits
         addHeaderAttribute("sampling_interval", Integer.toString(parseShort() & 0x3ff));
+
+        LOG.debug("Packet version 5, total record count {}, headers: {}", totalRecordCount, headerAttributes());
     }
 
     @Override
     public void parseRecords() {
-        for (int i = 0; i < totalRecordCount(); i++) {
+        for (int i = 0; i < totalRecordCount; i++) {
             parseNextRecord();
         }
     }
