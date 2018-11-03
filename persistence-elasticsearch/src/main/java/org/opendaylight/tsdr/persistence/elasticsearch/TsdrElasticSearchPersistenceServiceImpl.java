@@ -48,7 +48,7 @@ public class TsdrElasticSearchPersistenceServiceImpl implements TSDRMetricPersis
         try {
             store.store(record);
         } catch (IllegalStateException ise) {
-            LOGGER.error("Cannot store the record: {}, cause: {}", record, ise);
+            LOGGER.error("Cannot store the record: {}", record, ise);
         }
     }
 
@@ -56,7 +56,7 @@ public class TsdrElasticSearchPersistenceServiceImpl implements TSDRMetricPersis
         try {
             store.storeAll(records);
         } catch (IllegalStateException ise) {
-            LOGGER.error("Cannot store the records: {}, cause: {}", records.toArray(), ise);
+            LOGGER.error("Cannot store the records: {}", records.toArray(), ise);
         }
     }
 

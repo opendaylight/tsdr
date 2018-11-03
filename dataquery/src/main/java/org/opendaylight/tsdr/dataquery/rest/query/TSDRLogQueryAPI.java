@@ -77,7 +77,6 @@ public class TSDRLogQueryAPI {
             input.setStartTime(TSDRNbiRestAPI.getTimeFromString(fromString));
         } catch (NumberFormatException ex) {
             String errStr = "Invalid request format. Cannot parse start time == " + fromString;
-            LOG.error(errStr);
             return Response.status(Response.Status.BAD_REQUEST).entity(toJson(errStr)).build();
         }
 
@@ -85,7 +84,6 @@ public class TSDRLogQueryAPI {
             input.setEndTime(TSDRNbiRestAPI.getTimeFromString(untilString));
         } catch (NumberFormatException ex) {
             String errStr = "Invalid request format. Cannot parse end time == " + untilString;
-            LOG.error(errStr);
             return Response.status(Response.Status.BAD_REQUEST).entity(toJson(errStr)).build();
         }
 
@@ -93,7 +91,6 @@ public class TSDRLogQueryAPI {
 
         if (metric == null || !metric.get().isSuccessful()) {
             String errStr = "Error retrieving metrics from " + fromString + " to " + untilString;
-            LOG.error(errStr);
             return Response.status(Status.SERVICE_UNAVAILABLE).entity(errStr).build();
         }
 

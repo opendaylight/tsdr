@@ -31,7 +31,7 @@
     <dependency>
       <groupId>org.fusesource</groupId>
       <artifactId>sigar</artifactId>
-      <version>${sigar.version}</version>
+      <version>1.6.4</version>
     </dependency>
     <dependency>
       <groupId>org.opendaylight.tsdr</groupId>

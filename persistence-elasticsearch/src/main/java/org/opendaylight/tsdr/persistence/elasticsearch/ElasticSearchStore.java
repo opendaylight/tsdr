@@ -123,7 +123,7 @@ public class ElasticSearchStore extends AbstractScheduledService implements Auto
                         + name + "_mapping.json");
                 json = Files.asCharSource(file, StandardCharsets.UTF_8).read();
             } catch (IOException | IllegalArgumentException e) {
-                LOGGER.error("Mapping for {} cannot be set: {}", name, e);
+                LOGGER.error("Mapping for {} cannot be set", name, e);
                 LOGGER.warn("Using the default mapping strategy for {} type "
                         + "that may result it suboptimal types representation", name);
             }
@@ -197,7 +197,7 @@ public class ElasticSearchStore extends AbstractScheduledService implements Auto
             }
             return result;
         } catch (IOException ioe) {
-            LOGGER.error("Failed to execute action {}, cause: {}", action, ioe);
+            LOGGER.error("Failed to execute action {}", action, ioe);
         }
         return null;
     }
@@ -221,7 +221,7 @@ public class ElasticSearchStore extends AbstractScheduledService implements Auto
 
             @Override
             public void failed(Exception ex) {
-                LOGGER.error("Failed to execute action: {}, cause: {}", action, ex);
+                LOGGER.error("Failed to execute action: {}", action, ex);
             }
         });
     }
@@ -239,7 +239,7 @@ public class ElasticSearchStore extends AbstractScheduledService implements Auto
                         RecordType type = RecordType.resolve(r);
                         bulk.addAction(new Index.Builder(r).index(INDEX).type(type.name).build());
                     } catch (IllegalArgumentException iae) {
-                        LOGGER.error("Cannot resolve type: {}, {}", r, iae);
+                        LOGGER.error("Cannot resolve type: {}", r, iae);
                     }
                 }
                 BulkResult result = execute(bulk.build());

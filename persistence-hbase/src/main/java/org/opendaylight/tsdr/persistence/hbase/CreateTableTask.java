@@ -76,7 +76,7 @@ class CreateTableTask implements Runnable {
             }
         }
 
-        LOG.info("Exiting createTables() - pending tables count:" + pendingTableNames.size());
+        LOG.info("Exiting createTables() - pending tables count: {}", pendingTableNames.size());
         if (pendingTableNames.isEmpty()) {
             completionFuture.set(null);
         } else {

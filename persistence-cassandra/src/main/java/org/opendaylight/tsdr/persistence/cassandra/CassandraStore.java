@@ -108,7 +108,7 @@ public class CassandraStore implements AutoCloseable {
         boolean isMaster = Boolean.parseBoolean(config.get("master"));
         int replicationFactor = Integer.parseInt(config.get("replication_factor"));
 
-        LOG.info("Trying to work with " + host + ", Which cassandra master is set to=" + isMaster);
+        LOG.info("Trying to work with {}, Which cassandra master is set to {}", host, isMaster);
         Cluster cluster = Cluster.builder().addContactPoint(host).build();
 
         // Try 5 times to connect to cassandra with a 5 seconds delay

@@ -148,7 +148,7 @@ public class HBaseDataStore  {
             }
             if (htablePool != null) {
                 htableResult = htablePool.getTable(tableName);
-                LOG.debug("Obtained connection to table:" + tableName);
+                LOG.debug("Obtained connection to table {}", tableName);
                 htableResult.setAutoFlush(autoFlush);
                 htableResult.setWriteBufferSize(writeBufferSize);
             }
@@ -233,7 +233,7 @@ public class HBaseDataStore  {
             } catch (TableNotFoundException nfe) {
                 throw nfe;
             } catch (IOException ioe) {
-                LOG.error("Cannot put Data into HBase", ioe.getMessage());
+                LOG.error("Cannot put Data into HBase", ioe);
                 closeConnection(entity.getTableName());
                 HConnectionManager.deleteAllConnections();
             } finally {
@@ -295,7 +295,7 @@ public class HBaseDataStore  {
         } catch (TableNotFoundException nfe) {
             throw nfe;
         } catch (IOException ioe) {
-            LOG.error("Cannot put Data into HBase", ioe.getMessage());
+            LOG.error("Cannot put Data into HBase", ioe);
             closeConnection(tableName);
             HConnectionManager.deleteAllConnections();
         } finally {
@@ -564,7 +564,7 @@ public class HBaseDataStore  {
         } catch (TableNotFoundException nfe) {
             throw nfe;
         } catch (IOException ioe) {
-            LOG.error("Deletion from HBase Data Store failed!", ioe.getMessage());
+            LOG.error("Deletion from HBase Data Store failed!", ioe);
             closeConnection(tableName);
             HConnectionManager.deleteAllConnections();
         } finally {

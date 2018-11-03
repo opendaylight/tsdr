@@ -72,7 +72,7 @@ public class ListMetricsCommand implements Action {
         } catch (ParseException e) {
             //Note we will log just a warning for this exception without stack trace
             // As this is expected in some cases
-            LOG.warn("getDate for " + dateTime + "caused exception {}", e);
+            LOG.warn("Error parsing date {}", dateTime, e);
             return 0;
         }
         return date.getTime();

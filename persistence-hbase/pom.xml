@@ -59,12 +59,12 @@
     <dependency>
       <groupId>org.apache.hbase</groupId>
       <artifactId>hbase</artifactId>
-      <version>${hbase.version}</version>
+      <version>0.94.15</version>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-core</artifactId>
-      <version>${hadoop.version}</version>
+      <version>1.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.opendaylight.tsdr</groupId>

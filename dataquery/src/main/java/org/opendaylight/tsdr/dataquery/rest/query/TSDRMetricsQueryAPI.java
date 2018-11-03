@@ -84,7 +84,6 @@ public class TSDRMetricsQueryAPI {
             from = TSDRNbiRestAPI.getTimeFromString(fromString);
         } catch (NumberFormatException ex) {
             String errStr = "Invalid request format. Cannot parse start time == " + fromString;
-            LOG.error(errStr);
             return Response.status(Status.BAD_REQUEST).entity(toJson(errStr)).build();
         }
 
@@ -92,7 +91,6 @@ public class TSDRMetricsQueryAPI {
             until = TSDRNbiRestAPI.getTimeFromString(untilString);
         } catch (NumberFormatException ex) {
             String errStr = "Invalid request format. Cannot parse end time == " + untilString;
-            LOG.error(errStr);
             return Response.status(Status.BAD_REQUEST).entity(toJson(errStr)).build();
         }
 
@@ -103,7 +101,6 @@ public class TSDRMetricsQueryAPI {
                 maxDataPoints = Long.parseLong(request.getMaxDataPoints());
             } catch (NumberFormatException ex) {
                 String errStr = "Invalid request format. Cannot parse maxDataPoints == " + request.getMaxDataPoints();
-                LOG.error(errStr);
                 return Response.status(Status.BAD_REQUEST).entity(toJson(errStr)).build();
             }
 
@@ -119,7 +116,6 @@ public class TSDRMetricsQueryAPI {
 
             if (metric == null || !metric.get().isSuccessful()) {
                 String errStr = "Error retrieving aggregated metrics from " + fromString + " to " + untilString;
-                LOG.error(errStr);
                 return Response.status(Status.OK).entity(errStr).build();
             }
 
@@ -137,7 +133,6 @@ public class TSDRMetricsQueryAPI {
 
             if (metric == null || !metric.get().isSuccessful()) {
                 String errStr = "Error retrieving metrics from " + fromString + " to " + untilString;
-                LOG.error(errStr);
                 return Response.status(Status.BAD_REQUEST).entity(errStr).build();
             }
 

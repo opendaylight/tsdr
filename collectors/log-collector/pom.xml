@@ -16,11 +16,6 @@
   <name>ODL :: tsdr :: ${project.artifactId}</name>
   <dependencies>
     <dependency>
-      <groupId>org.fusesource</groupId>
-      <artifactId>sigar</artifactId>
-      <version>${sigar.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.opendaylight.tsdr</groupId>
       <artifactId>tsdr-collector-spi</artifactId>
       <version>${project.version}</version>

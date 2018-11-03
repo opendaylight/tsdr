@@ -163,7 +163,7 @@ public class ElasticSearchStoreTest {
                 0L,
                 1000);
         assertThat(result).isEqualTo(Collections.emptyList());
-        Mockito.verify(CLIENT, Mockito.atLeastOnce()).execute(Mockito.any(Bulk.class));
+        Mockito.verify(CLIENT, Mockito.atLeastOnce()).execute(Mockito.any());
     }
 
     /**

@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
-    private static Logger LOG = LoggerFactory.getLogger(TSDRNbiServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TSDRNbiServiceImpl.class);
 
     private final TsdrMetricDataService metricDataService;
     private final TsdrLogDataService logDataService;
@@ -106,7 +106,7 @@ public class TSDRNbiServiceImpl implements TSDRDataqueryImplService {
         Futures.addCallback(future, new FutureCallback<RpcResult<T>>() {
             @Override
             public void onSuccess(RpcResult<T> result) {
-                LOG.debug("RPC {} returned result {]", rpc, result);
+                LOG.debug("RPC {} returned result {}", rpc, result);
             }
 
             @Override

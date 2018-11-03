@@ -7,7 +7,7 @@
  */
 package org.opendaylight.tsdr.persistence.hbase;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -326,7 +326,6 @@ public class HBaseDataStoreTest {
 
     @Test(expected = TableNotFoundException.class)
     public void testCreateEntityException() throws TableNotFoundException {
-        HBaseDataStore hbasedatastore1 = null;
         HBaseEntity dentity = new HBaseEntity();
         dentity.setRowKey("rowKey1");
         dentity.setTableName("tableName1");
@@ -339,7 +338,7 @@ public class HBaseDataStoreTest {
         columnList1.add(column);
         dentity.setColumns(columnList1);
 
-        hbasedatastore1 = new HBaseDataStore() {
+        HBaseDataStore hbasedatastore1 = new HBaseDataStore() {
             @Override
             public HTableInterface getConnection(String tableName) throws IOException {
                 throw new IOException();
@@ -368,7 +367,6 @@ public class HBaseDataStoreTest {
 
     @Test(expected = TableNotFoundException.class)
     public void testCreateEntityListException() throws TableNotFoundException {
-        HBaseDataStore hbasedatastore1 = null;
         HBaseEntity dentity = new HBaseEntity();
         dentity.setRowKey("rowKey1");
         dentity.setTableName("tableName1");
@@ -383,7 +381,7 @@ public class HBaseDataStoreTest {
         List<HBaseEntity> entityList = new ArrayList<>();
         entityList.add(dentity);
 
-        hbasedatastore1 = new HBaseDataStore() {
+        HBaseDataStore hbasedatastore1 = new HBaseDataStore() {
             @Override
             public HTableInterface getConnection(String tableName) throws IOException {
                 throw new IOException();

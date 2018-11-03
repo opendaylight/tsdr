@@ -14,9 +14,6 @@
     <!-- <name> formatting is used by autorelease to parse and notify projects on
          build failure. Please do not modify this unless you have a good reason. -->
   <name>ODL :: tsdr :: ${project.artifactId}</name>
-  <properties>
-    <com.datastax.cassandra.version>3.2.0</com.datastax.cassandra.version>
-  </properties>
   <build>
     <plugins>
       <plugin>
@@ -75,12 +72,12 @@
     <dependency>
       <groupId>com.codahale.metrics</groupId>
       <artifactId>metrics-core</artifactId>
-      <version>${com.codahale.metrics.version}</version>
+      <version>3.0.2</version>
     </dependency>
     <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty</artifactId>
-      <version>${io.netty.version}</version>
+      <version>3.10.6.Final</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -89,7 +86,7 @@
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
-      <version>${com.datastax.cassandra.version}</version>
+      <version>3.2.0</version>
     </dependency>
   </dependencies>
 </project>

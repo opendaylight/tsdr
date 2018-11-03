@@ -10,7 +10,7 @@ package org.opendaylight.tsdr.datacollection;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -137,7 +137,7 @@ public class DataCollectionTest extends AbstractConcurrentDataBrokerTest {
         AtomicReference<CountDownLatch> storeMetricsLatchRef = new AtomicReference<>(new CountDownLatch(2));
         AtomicBoolean storeMetricsContinue = new AtomicBoolean();
         doAnswer(invocation -> {
-            metricRecords.addAll(invocation.getArgumentAt(0, InsertTSDRMetricRecordInput.class).getTSDRMetricRecord());
+            metricRecords.addAll(((InsertTSDRMetricRecordInput) invocation.getArgument(0)).getTSDRMetricRecord());
             CountDownLatch storeMetricsLatch = storeMetricsLatchRef.get();
             storeMetricsLatch.countDown();
             if (storeMetricsLatch.getCount() == 0) {

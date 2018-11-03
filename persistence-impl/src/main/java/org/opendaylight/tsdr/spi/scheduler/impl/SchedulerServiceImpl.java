@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 public class SchedulerServiceImpl implements SchedulerService {
-    private static final Logger LOG = LoggerFactory.getLogger(SchedulerService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SchedulerServiceImpl.class);
 
     private static final int THREADS_COUNT = 10;
 

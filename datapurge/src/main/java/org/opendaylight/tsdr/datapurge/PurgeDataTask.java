@@ -61,7 +61,7 @@ public class PurgeDataTask implements Runnable {
         Futures.addCallback(future, new FutureCallback<RpcResult<PurgeAllTSDRRecordOutput>>() {
             @Override
             public void onSuccess(RpcResult<PurgeAllTSDRRecordOutput> result) {
-                LOG.debug("RPC purgeAllTSDRRecord returned result {]", result);
+                LOG.debug("RPC purgeAllTSDRRecord returned result {}", result);
             }
 
             @Override
