@@ -3,14 +3,14 @@
            xmlns:odl="http://opendaylight.org/xmlns/blueprint/v1.0.0"
        odl:use-default-for-reference-types="true">
 
-  <reference id="dataBroker"
-             interface="org.opendaylight.mdsal.binding.api.DataBroker"/>
-  <odl:rpc-service id="tsdrCollectorSpiService"
-                   interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
   <reference id="schedulerService" interface="org.opendaylight.tsdr.spi.scheduler.SchedulerService"/>
-  <reference id="dOMNotificationService"
-             interface="org.opendaylight.mdsal.dom.api.DOMNotificationService" />
+  <reference id="dOMNotificationService" interface="org.opendaylight.mdsal.dom.api.DOMNotificationService" />
+  <reference id="dOMSchemaService" interface="org.opendaylight.mdsal.dom.api.DOMSchemaService"/>
 
-  <odl:static-reference id="dOMSchemaService" interface="org.opendaylight.mdsal.dom.api.DOMSchemaService"/>
+  <odl:rpc-service id="tsdrCollectorSpiService"
+      interface="org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.controller.config.tsdr.collector.spi.rev150915.TsdrCollectorSpiService"/>
+
+  <odl:clustered-app-config id="notificationSubscription"
+      binding-class="org.opendaylight.yang.gen.v1.urn.opendaylight.tsdr.yang.notification.collector.config.rev181005.NotificationSubscription"/>
 
 </blueprint>
