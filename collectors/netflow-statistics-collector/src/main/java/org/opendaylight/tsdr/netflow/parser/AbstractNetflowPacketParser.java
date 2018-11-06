@@ -7,6 +7,9 @@
  */
 package org.opendaylight.tsdr.netflow.parser;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +32,6 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
     private final Consumer<TSDRLogRecordBuilder> callback;
     private final List<RecordAttributes> headerAttributes = new ArrayList<>();
     private final byte[] data;
-    private final int totalRecordCount;
     private int position;
 
     protected AbstractNetflowPacketParser(final byte[] data, final int version, final int initialPosition,
@@ -39,12 +41,7 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         this.recordBuilder = recordBuilder;
         this.callback = callback;
 
-        this.totalRecordCount = parseShort();
-
         addHeaderAttribute("version", Integer.toString(version));
-
-        LOG.debug("Packet version: {}, total record count: {}, headers: {}", version, totalRecordCount,
-                headerAttributes);
     }
 
     protected AbstractNetflowPacketParser(AbstractNetflowPacketParser other, int fromPosition, int bytesToCopy) {
@@ -54,7 +51,6 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         this.position = 0;
         this.recordBuilder = other.recordBuilder;
         this.callback = other.callback;
-        this.totalRecordCount = Integer.MAX_VALUE;
 
         headerAttributes.addAll(other.headerAttributes);
     }
@@ -65,10 +61,6 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
 
     protected Consumer<TSDRLogRecordBuilder> callback() {
         return callback;
-    }
-
-    protected int totalRecordCount() {
-        return totalRecordCount;
     }
 
     protected List<RecordAttributes> headerAttributes() {
@@ -95,7 +87,7 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         return position;
     }
 
-    protected long parseInt() {
+    public long parseInt() {
         return parseLong(4);
     }
 
@@ -103,7 +95,7 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         return Long.toString(parseInt());
     }
 
-    protected int parseShort() {
+    public int parseShort() {
         return (int) parseLong(2);
     }
 
@@ -112,12 +104,20 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
     }
 
     protected String parseByteString() {
-        return Integer.toString((int) parseLong(1));
+        return Integer.toString(parseByte());
     }
 
-    protected String parseIPv4Address() {
+    public int parseByte() {
+        return (int) parseLong(1);
+    }
+
+    public String parseIPv4Address() {
+        return parseOctetString(4);
+    }
+
+    public String parseOctetString(int length) {
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < 4; i++, position++) {
+        for (int i = 0; i < length; i++, position++) {
             if (i > 0) {
                 builder.append('.');
             }
@@ -128,7 +128,7 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         return builder.toString();
     }
 
-    protected String parseIPv6Address() {
+    public String parseIPv6Address() {
         StringBuilder builder = new StringBuilder(39);
         for (int i = 0; i < 8; i++) {
             builder.append(Integer.toHexString(data[position + (i << 1)] << 8 & 0xff00
@@ -143,7 +143,7 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         return builder.toString();
     }
 
-    protected String parseMACAddress() {
+    public String parseMACAddress() {
         StringBuilder builder = new StringBuilder(17);
         for (int i = 0; i < 6; i++, position++) {
             if (i > 0) {
@@ -161,18 +161,18 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         return builder.toString();
     }
 
-    protected String parseString(int length) {
+    public String parseString(int length) {
         return new String(parseBytes(length), Charset.defaultCharset());
     }
 
-    protected byte[] parseBytes(int len) {
+    public byte[] parseBytes(int len) {
         byte[] ret = new byte[len];
         System.arraycopy(data, position, ret, 0, len);
         position += len;
         return ret;
     }
 
-    protected long parseLong(int len) {
+    public long parseLong(int len) {
         long value = parseLong(data, position, len);
         position += len;
         return value;
@@ -186,5 +186,32 @@ public abstract class AbstractNetflowPacketParser implements NetflowPacketParser
         }
 
         return ret;
+    }
+
+    public long parseSignedLong(int len) {
+        try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(parseBytes(len)))) {
+            switch (len) {
+                case 1:
+                    return in.readByte();
+                case 2:
+                    return in.readShort();
+                case 4:
+                    return in.readInt();
+                case 8:
+                    return in.readLong();
+                default:
+                    return 0;
+            }
+        } catch (IOException e) {
+            LOG.error("Error parsing signed long", e);
+            return 0;
+        }
+    }
+
+    protected void skipPadding(int start, int totalLength) {
+        int padding = totalLength - (position() - start);
+        skip(padding);
+
+        LOG.debug("Skip padding: {}", padding);
     }
 }
