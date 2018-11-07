@@ -1,6 +1,6 @@
 module yang-notification {
-    yang-version 1.1;
-    namespace "urn:opendaylight:tsdr:yang:collector:config:yang-notification";
+    yang-version 1;
+    namespace "urn:opendaylight:tsdr:yang:notification:collector:config";
     prefix "yang-notification";
 
     revision "2018-10-05" {
