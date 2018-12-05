@@ -11,12 +11,12 @@
 
     <groupId>org.opendaylight.tsdr</groupId>
     <artifactId>odl-tsdr-openflow-statistics-collector</artifactId>
-    <version>1.5.4-SNAPSHOT</version>
+    <version>1.5.4</version>
     <packaging>feature</packaging>
 
     <name>ODL :: tsdr :: openflowcollector</name>
     <properties>
-          <openflowplugin.version>0.6.4-SNAPSHOT</openflowplugin.version>
+          <openflowplugin.version>0.6.4</openflowplugin.version>
     </properties>
 
     <dependencyManagement>
