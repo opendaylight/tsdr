@@ -1,0 +1,58 @@
+---
+project: 'tsdr'
+project_creation_date: '2014-12-11'
+project_category: ''
+lifecycle_state: 'Incubation'
+project_lead: &odl_tsdr_ptl
+    name: 'Scott Melton'
+    email: 'smelton2@uccs.edu'
+    company: 'uccs'
+    id: 'scottmelton'
+    timezone: 'Unknown/Unknown'
+primary_contact: *odl_tsdr_ptl
+issue_tracking:
+    type: 'jira'
+    url: 'https://jira.opendaylight.org/projects/'
+    key: 'tsdr'
+mailing_list:
+    type: 'groups.io'
+    url: 'app-dev@lists.opendaylight.org'
+    tag: '[]'
+realtime_discussion:
+    type: 'irc'
+    server: 'freenode.net'
+    channel: '#opendaylight'
+meetings:
+    - type: 'gotomeeting+irc'
+      agenda: 'https://wiki.opendaylight.org'
+      url: ''
+      server: 'freenode.net'
+      channel: '#opendaylight'
+      repeats: ''
+      time: ''
+repositories:
+    - tsdr
+committers:
+    - <<: *odl_tsdr_ptl
+    - name: 'Syed B.  Ahmed'
+      email: 'sbua2003@yahoo.com'
+      company: 'yahoo'
+      id: 'sbua2003'
+      timezone: 'Unknown/Unknown'
+    - name: 'Tom Pantelis'
+      email: 'tompantelis@gmail.com'
+      company: ''
+      id: 'tpantelis'
+      timezone: 'Unknown/Unknown'
+    - name: 'YuLing Chen'
+      email: 'yulingchen54@gmail.com'
+      company: ''
+      id: 'yulingchen54'
+      timezone: 'Unknown/Unknown'
+tsc:
+    # yamllint disable rule:line-length
+    approval: 'https://meetings.opendaylight.org/opendaylight-meeting/2014/tsc/opendaylight-meeting-tsc.2014-12-11-17.59.html'
+    changes:
+        - type: ''
+          name: ''
+          link: ''
